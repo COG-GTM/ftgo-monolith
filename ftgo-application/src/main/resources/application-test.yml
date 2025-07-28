@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    password: ${SPRING_DATASOURCE_PASSWORD:mysqlpw}
+
+ftgo:
+  order:
+    delivery:
+      window-minutes: 15

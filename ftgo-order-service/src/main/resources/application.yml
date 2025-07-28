@@ -1,0 +1,6 @@
+ftgo:
+  order:
+    delivery:
+      window-minutes: 30
+    defaults:
+      consumer-id: 1511300065921
