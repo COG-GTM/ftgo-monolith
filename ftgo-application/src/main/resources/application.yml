@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ftgo-application
+  jpa:
+    generate-ddl: false
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}/ftgo?useSSL=false
+    username: ${SPRING_DATASOURCE_USERNAME:mysqluser}
+    password: ${SPRING_DATASOURCE_PASSWORD:mysqlpw}
+    driver-class-name: com.mysql.jdbc.Driver
+
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: DEBUG
+
+ftgo:
+  order:
+    delivery:
+      window-minutes: 30
