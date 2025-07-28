@@ -3,6 +3,21 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Logging Configuration
+
+The application uses structured JSON logging to enable centralized log aggregation. All logs are output to stdout in JSON format using the Logstash encoder.
+
+**Key Features:**
+- Structured JSON output to stdout (no file-based logging)
+- Application name included in all log entries: `"application_name":"ftgo-monolith"`
+- MDC field support for `requestId` and `userId` when available
+- Configurable via `logback-spring.xml` in the ftgo-application module
+
+**Dependencies:**
+- `logstash-logback-encoder:7.3` for JSON log formatting
+
+This configuration supports modern log aggregation systems and centralized monitoring.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
