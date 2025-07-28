@@ -1,36 +1,35 @@
 
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven {
-            url 'https://repo.spring.io/libs-milestone'
-        }
-    }
-    dependencies {
-        classpath "com.avast.gradle:gradle-docker-compose-plugin:$dockerComposePluginVersion"
-    }
-}
+// Temporarily commenting out docker-compose plugin to allow basic building
+// buildscript {
+//     repositories {
+//         mavenCentral()
+//         jcenter()
+//     }
+//     dependencies {
+//         classpath "com.avast.gradle:gradle-docker-compose-plugin:0.14.13"
+//     }
+// }
 
-apply plugin: 'docker-compose'
+// apply plugin: 'docker-compose'
 apply plugin:'io.spring.dependency-management'
 
 apply plugin: IntegrationTestsPlugin
 
-dockerCompose {
-
-    startedServices = [ 'not-used']
-
-    integrationTests {
-        if (System.getenv("FTGO_DOCKER_COMPOSE_FILES") != null)
-            useComposeFiles = System.getenv("FTGO_DOCKER_COMPOSE_FILES").split(",").collect { "../" + it }
-
-        startedServices = [ 'mysql']
-        stopContainers = false
-    }
-}
-
-integrationTest.dependsOn(integrationTestsComposeUp)
+// Temporarily commenting out docker-compose configuration
+// dockerCompose {
+//
+//     startedServices = [ 'not-used']
+//
+//     integrationTests {
+//         if (System.getenv("FTGO_DOCKER_COMPOSE_FILES") != null)
+//             useComposeFiles = System.getenv("FTGO_DOCKER_COMPOSE_FILES").split(",").collect { "../" + it }
+//
+//         startedServices = [ 'mysql']
+//         stopContainers = false
+//     }
+// }
+//
+// integrationTest.dependsOn(integrationTestsComposeUp)
 
 dependencies {
 

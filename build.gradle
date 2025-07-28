@@ -27,11 +27,12 @@ subprojects {
         mavenCentral()
         jcenter()
 
-        eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+        // Commenting out problematic repositories that require authentication or are no longer available
+        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
 
-        maven {
-            url 'https://repo.spring.io/libs-milestone'
-        }
+        // maven {
+        //     url 'https://repo.spring.io/libs-milestone'
+        // }
 
         maven {
             url "${project.rootDir}/build/repo"
