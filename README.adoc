@@ -3,6 +3,35 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## API Authentication
+
+All API endpoints except health checks require API key authentication.
+
+### Authentication Requirements
+* *Header*: `X-API-Key: your-api-key-here`
+* *Required for*: All endpoints except `/actuator/health`
+* *Response codes*: 
+** `401 Unauthorized` for missing or invalid API keys
+** Standard response codes for authenticated requests
+
+### Configuration
+The API key is configured in `application.properties`:
+```
+ftgo.api.key=your-api-key-here
+```
+
+### Error Response Format
+Authentication failures return JSON responses:
+```json
+{
+  "error": "Unauthorized",
+  "message": "Missing API key",
+  "status": 401
+}
+```
+
+*Note*: Remember to include the `X-API-Key` header in all API requests except health checks.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
