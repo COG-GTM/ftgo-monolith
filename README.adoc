@@ -8,3 +8,20 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+## API Authentication
+
+All API endpoints require authentication via API key, except for health checks.
+
+### Authentication Header
+Include the API key in the `X-API-Key` header:
+```
+X-API-Key: your-api-key-here
+```
+
+### Endpoints
+- **Protected**: All endpoints (`/consumers`, `/orders`, `/restaurants`, `/couriers`, etc.)
+- **Public**: Health check endpoint (`/actuator/health`)
+
+### Response Codes
+- `401 Unauthorized`: Missing or invalid API key
