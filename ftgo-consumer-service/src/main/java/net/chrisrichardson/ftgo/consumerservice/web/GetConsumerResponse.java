@@ -14,4 +14,9 @@ public class GetConsumerResponse extends CreateConsumerResponse {
 
     this.name = name;
   }
+
+  public GetConsumerResponse(long consumerId, PersonName name) {
+    super(consumerId);
+    this.name = name;
+  }
 }
