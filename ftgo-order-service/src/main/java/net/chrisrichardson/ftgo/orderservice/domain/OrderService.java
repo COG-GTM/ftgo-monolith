@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.restaurant.RestaurantInfo;
+import net.chrisrichardson.ftgo.orderservice.restaurant.RestaurantServiceProxy;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,7 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantServiceProxy restaurantServiceProxy;
 
   private Optional<MeterRegistry> meterRegistry;
 
@@ -32,12 +34,12 @@ public class OrderService {
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantServiceProxy restaurantServiceProxy,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService, CourierRepository courierRepository) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantServiceProxy = restaurantServiceProxy;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
     this.courierRepository = courierRepository;
@@ -46,11 +48,16 @@ public class OrderService {
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+    RestaurantInfo restaurantInfo = restaurantServiceProxy.findRestaurantById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
+    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurantInfo);
 
-    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
+    Restaurant restaurant = new Restaurant(restaurantId, restaurantInfo.getName(), new RestaurantMenu(
+            restaurantInfo.getMenuItems().stream()
+                    .map(mi -> new MenuItem(mi.getId(), mi.getName(), mi.getPrice()))
+                    .collect(toList())
+    ));
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
@@ -67,10 +74,11 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, RestaurantInfo restaurantInfo) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
-      return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
+      RestaurantServiceProxy.MenuItemInfo mi = restaurantInfo.findMenuItem(li.getMenuItemId())
+              .orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      return new OrderLineItem(li.getMenuItemId(), mi.getName(), mi.getPrice(), li.getQuantity());
     }).collect(toList());
   }
 
