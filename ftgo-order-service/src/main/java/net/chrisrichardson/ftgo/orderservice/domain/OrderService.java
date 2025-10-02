@@ -1,8 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.clients.ConsumerClient;
+import net.chrisrichardson.ftgo.orderservice.clients.CourierClient;
+import net.chrisrichardson.ftgo.orderservice.clients.RestaurantClient;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,30 +25,31 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantClient restaurantClient;
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private ConsumerClient consumerClient;
+  private CourierClient courierClient;
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantClient restaurantClient,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerClient consumerClient,
+                      CourierClient courierClient) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantClient = restaurantClient;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.consumerClient = consumerClient;
+    this.courierClient = courierClient;
   }
 
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+    Restaurant restaurant = restaurantClient.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
 
@@ -54,7 +57,7 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerClient.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
@@ -100,7 +103,7 @@ public class OrderService {
 
     // Stupid implementation
 
-    List<Courier> couriers = courierRepository.findAllAvailable();
+    List<Courier> couriers = courierClient.findAllAvailable();
     Courier courier = couriers.get(random.nextInt(couriers.size()));
     courier.addAction(Action.makePickup(order));
     courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));
