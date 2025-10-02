@@ -1,0 +1,36 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+    compile project(":ftgo-restaurant-service-api")
+    compile project(":ftgo-common")
+    compile project(":ftgo-common-jpa")
+    compile project(":common-swagger")
+
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    
+    compile "org.flywaydb:flyway-core:5.2.1"
+    
+    runtime "mysql:mysql-connector-java:8.0.13"
+
+    compile 'javax.el:javax.el-api:2.2.5'
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
+    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+}
+
+bootJar {
+    mainClassName = 'net.chrisrichardson.ftgo.restaurant.RestaurantServiceApplication'
+}
