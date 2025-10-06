@@ -1,8 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.clients.ConsumerServiceClient;
+import net.chrisrichardson.ftgo.orderservice.clients.CourierServiceClient;
+import net.chrisrichardson.ftgo.orderservice.clients.RestaurantServiceClient;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,38 +25,38 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantServiceClient restaurantServiceClient;
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private ConsumerServiceClient consumerServiceClient;
+  private CourierServiceClient courierServiceClient;
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantServiceClient restaurantServiceClient,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerServiceClient consumerServiceClient, CourierServiceClient courierServiceClient) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantServiceClient = restaurantServiceClient;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.consumerServiceClient = consumerServiceClient;
+    this.courierServiceClient = courierServiceClient;
   }
 
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+    Restaurant restaurant = restaurantServiceClient.findRestaurant(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
 
-    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
+    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurantId);
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerServiceClient.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
@@ -67,9 +69,9 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, long restaurantId) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      MenuItem om = restaurantServiceClient.findMenuItem(restaurantId, li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
@@ -98,14 +100,13 @@ public class OrderService {
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
 
-    // Stupid implementation
-
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = couriers.get(random.nextInt(couriers.size()));
-    courier.addAction(Action.makePickup(order));
-    courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));
-
-    order.schedule(courier);
+    List<Long> availableCourierIds = courierServiceClient.findAllAvailable();
+    if (availableCourierIds.isEmpty()) {
+      throw new IllegalStateException("No available couriers");
+    }
+    Long courierId = availableCourierIds.get(random.nextInt(availableCourierIds.size()));
+    
+    order.schedule(courierId);
 
   }
 

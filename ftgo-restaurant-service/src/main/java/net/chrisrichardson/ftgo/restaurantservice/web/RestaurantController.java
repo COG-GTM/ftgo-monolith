@@ -1,6 +1,8 @@
 package net.chrisrichardson.ftgo.restaurantservice.web;
 
 import net.chrisrichardson.ftgo.domain.Restaurant;
+import net.chrisrichardson.ftgo.restaurantservice.api.GetRestaurantResponse;
+import net.chrisrichardson.ftgo.restaurantservice.api.MenuItemResponse;
 import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,14 @@ public class RestaurantController {
     return restaurantService.findById(restaurantId)
             .map(r -> new ResponseEntity<>(makeGetRestaurantResponse(r), HttpStatus.OK))
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
+  @RequestMapping(path="/{restaurantId}/menu-items/{menuItemId}", method=RequestMethod.GET)
+  public ResponseEntity<MenuItemResponse> getMenuItem(@PathVariable long restaurantId, @PathVariable String menuItemId) {
+    return restaurantService.findById(restaurantId)
+        .flatMap(r -> r.findMenuItem(menuItemId))
+        .map(mi -> new ResponseEntity<>(new MenuItemResponse(mi.getId(), mi.getName(), mi.getPrice()), HttpStatus.OK))
+        .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   private GetRestaurantResponse makeGetRestaurantResponse(Restaurant r) {
