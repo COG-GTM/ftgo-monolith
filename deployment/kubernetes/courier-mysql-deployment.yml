@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: courier-mysql
+  labels:
+    name: courier-mysql
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    role: courier-mysql
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: courier-mysql
+spec:
+  serviceName: "courier-mysql"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: courier-mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: courier-mysql
+          image: mysql:5.7
+          ports:
+              - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: courier-mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: ftgo_courier
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: courier-mysql-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: courier-mysql-secret
+                  key: password
+          volumeMounts:
+            - name: courier-mysql-storage
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: courier-mysql-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
