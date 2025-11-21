@@ -1,5 +1,9 @@
 apply plugin: FtgoServicePlugin
 
+tasks.named('bootJar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 dependencies {
     implementation project(":ftgo-consumer-service")
     implementation project(":ftgo-order-service")
