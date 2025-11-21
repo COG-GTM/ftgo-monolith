@@ -5,8 +5,8 @@ import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
@@ -26,7 +26,7 @@ public class OrderControllerTest {
   private OrderRepository orderRepository;
   private OrderController orderController;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
