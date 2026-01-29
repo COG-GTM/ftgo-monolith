@@ -1,13 +1,16 @@
 dependencies {
     compile project(":common-swagger")
     compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-domain")
+    compile project(":ftgo-common")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
 
     compile 'javax.el:javax.el-api:2.2.5'
+
+    // Flyway for database migrations
+    compile "org.flywaydb:flyway-core:5.2.4"
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
