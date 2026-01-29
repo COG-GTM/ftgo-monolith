@@ -8,7 +8,9 @@ create table consumers
 
 create table hibernate_sequence
 (
-  next_val bigint
+  sequence_name varchar(255) not null,
+  next_val bigint,
+  primary key (sequence_name)
 );
 
-insert into hibernate_sequence values (1);
+insert into hibernate_sequence (sequence_name, next_val) values ('default', 1);
