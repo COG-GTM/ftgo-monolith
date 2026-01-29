@@ -1,11 +1,11 @@
 package net.chrisrichardson.ftgo.courierservice.domain;
 
-
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.domain.Courier;
-import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class CourierService {
 
@@ -42,4 +42,13 @@ public class CourierService {
     return courierRepository.findById(courierId).get();
   }
 
+  public List<Courier> findAllAvailable() {
+    return courierRepository.findAllAvailable();
+  }
+
+  @Transactional
+  public void addActionToCourier(long courierId, Long orderId, ActionType actionType, LocalDateTime time) {
+    Courier courier = courierRepository.findById(courierId).get();
+    courier.addAction(new CourierAction(actionType, orderId, time));
+  }
 }
