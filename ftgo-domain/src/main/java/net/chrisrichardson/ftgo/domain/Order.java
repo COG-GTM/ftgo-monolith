@@ -65,6 +65,14 @@ public class Order {
     this.orderState = APPROVED;
   }
 
+  public Order(long consumerId, long restaurantId, List<OrderLineItem> orderLineItems) {
+    this.consumerId = consumerId;
+    this.restaurant = new Restaurant();
+    this.restaurant.setId(restaurantId);
+    this.orderLineItems = new OrderLineItems(orderLineItems);
+    this.orderState = APPROVED;
+  }
+
   public Long getId() {
     return id;
   }

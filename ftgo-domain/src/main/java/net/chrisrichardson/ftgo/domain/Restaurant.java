@@ -66,6 +66,10 @@ public class Restaurant {
     return menuItems.stream().filter(mi -> mi.getId().equals(menuItemId)).findFirst();
   }
 
+  public List<MenuItem> findAllMenuItems() {
+    return menuItems;
+  }
+
   public void reviseMenu(RestaurantMenu revisedMenu) {
     throw new UnsupportedOperationException();
   }
