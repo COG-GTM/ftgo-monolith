@@ -23,7 +23,7 @@ public class Courier {
   private Address address;
 
   @Embedded
-  private Plan plan;
+  private Plan plan = new Plan();
 
   private Boolean available;
 
@@ -37,15 +37,17 @@ public class Courier {
 
   public void noteAvailable() {
     this.available = true;
-
   }
 
   public void addAction(Action action) {
+    if (plan == null) {
+      plan = new Plan();
+    }
     plan.add(action);
   }
 
-  public void cancelDelivery(Order order) {
-    plan.removeDelivery(order);
+  public void cancelDeliveryByOrderId(Long orderId) {
+    plan.removeDeliveryByOrderId(orderId);
   }
 
   public boolean isAvailable() {
@@ -60,11 +62,19 @@ public class Courier {
     return id;
   }
 
+  public PersonName getName() {
+    return name;
+  }
+
+  public Address getAddress() {
+    return address;
+  }
+
   public void noteUnavailable() {
     this.available = false;
   }
 
-  public List<Action> actionsForDelivery(Order order) {
-    return plan.actionsForDelivery(order);
+  public List<Action> actionsForOrderId(Long orderId) {
+    return plan.actionsForOrderId(orderId);
   }
 }

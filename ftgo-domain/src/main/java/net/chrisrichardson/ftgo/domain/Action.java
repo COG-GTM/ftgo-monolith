@@ -3,7 +3,6 @@ package net.chrisrichardson.ftgo.domain;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.ManyToOne;
 import java.time.LocalDateTime;
 
 @Embeddable
@@ -13,33 +12,39 @@ public class Action {
   private ActionType type;
   private LocalDateTime time;
 
-  @ManyToOne
-  private Order order;
+  private Long orderId;
 
   private Action() {
   }
 
-  public Action(ActionType type, Order order, LocalDateTime time) {
+  public Action(ActionType type, Long orderId, LocalDateTime time) {
     this.type = type;
-    this.order = order;
+    this.orderId = orderId;
     this.time = time;
   }
 
-  public boolean actionFor(Order order) {
-    return this.order.getId().equals(order.getId());
+  public boolean actionForOrderId(Long orderId) {
+    return this.orderId != null && this.orderId.equals(orderId);
   }
 
-  public static Action makePickup(Order order) {
-    return new Action(ActionType.PICKUP, order, null);
+  public static Action makePickupForOrder(Long orderId, LocalDateTime pickupTime) {
+    return new Action(ActionType.PICKUP, orderId, pickupTime);
   }
 
-  public static Action makeDropoff(Order order, LocalDateTime deliveryTime) {
-    return new Action(ActionType.DROPOFF, order, deliveryTime);
+  public static Action makeDropoffForOrder(Long orderId, LocalDateTime deliveryTime) {
+    return new Action(ActionType.DROPOFF, orderId, deliveryTime);
   }
-
 
   public ActionType getType() {
     return type;
+  }
+
+  public Long getOrderId() {
+    return orderId;
+  }
+
+  public LocalDateTime getTime() {
+    return time;
   }
 
 }
