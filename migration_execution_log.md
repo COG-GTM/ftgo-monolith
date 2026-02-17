@@ -17,12 +17,12 @@
 | 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Complete | Direct | Success |
 | 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | Phase 4 | Complete | Direct | Success |
 | 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | Phase 5 | Complete | Direct | Success |
-| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Pending | — | — |
-| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Pending | — | — |
-| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Pending | — | — |
-| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | Phase 3 | Pending | — | — |
-| 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | Phase 4 | Pending | — | — |
-| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | Phase 5 | Pending | — | — |
+| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Complete | Direct | Success |
+| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Complete | Direct | Success |
+| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Complete | Direct | Success |
+| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | Phase 3 | Complete | Direct | Success |
+| 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | Phase 4 | Complete | Direct | Success |
+| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | Phase 5 | Complete | Direct | Success |
 | 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | Phase 2 | Pending | — | — |
 | 5 | EM-37 | Implement Role-Based Authorization Framework | Phase 3 | Pending | — | — |
 | 5 | EM-46 | Establish Centralized Error Handling and Exception Patterns | Phase 5 | Pending | — | — |
