@@ -1,0 +1,13 @@
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+    compile "io.github.resilience4j:resilience4j-spring-boot2:0.13.2"
+    compile "io.github.resilience4j:resilience4j-circuitbreaker:0.13.2"
+    compile "io.github.resilience4j:resilience4j-retry:0.13.2"
+    compile "io.github.resilience4j:resilience4j-bulkhead:0.13.2"
+    compile "io.github.resilience4j:resilience4j-timelimiter:0.13.2"
+    compile "org.springframework.boot:spring-boot-starter-aop:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
