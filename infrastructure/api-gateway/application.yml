@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ftgo-api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 50
+            redis-rate-limiter.burstCapacity: 100
+            redis-rate-limiter.requestedTokens: 1
+        - AddResponseHeader=X-Gateway-Version, 1.0
+      routes:
+        - id: order-service
+          uri: lb://ftgo-order-service
+          predicates:
+            - Path=/api/v1/orders/**
+          filters:
+            - StripPrefix=0
+
+        - id: consumer-service
+          uri: lb://ftgo-consumer-service
+          predicates:
+            - Path=/api/v1/consumers/**
+          filters:
+            - StripPrefix=0
+
+        - id: restaurant-service
+          uri: lb://ftgo-restaurant-service
+          predicates:
+            - Path=/api/v1/restaurants/**
+          filters:
+            - StripPrefix=0
+
+        - id: courier-service
+          uri: lb://ftgo-courier-service
+          predicates:
+            - Path=/api/v1/couriers/**
+          filters:
+            - StripPrefix=0
+
+        - id: swagger-ui
+          uri: lb://ftgo-order-service
+          predicates:
+            - Path=/swagger-ui/**, /v3/api-docs/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
