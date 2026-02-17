@@ -1,8 +1,32 @@
+// =============================================================================
+// FTGO Monolith — Gradle Module Declarations
+// =============================================================================
+//
+// Current: Flat module layout (monolith)
+// Target:  Nested layout under services/, apis/, libs/, infrastructure/
+//
+// See docs/adr/0001-microservices-repository-structure-and-naming-conventions.md
+// for the planned migration to:
+//
+//   libs/ftgo-common                       -> :libs:ftgo-common
+//   libs/ftgo-common-jpa                   -> :libs:ftgo-common-jpa
+//   libs/ftgo-domain                       -> :libs:ftgo-domain
+//   libs/ftgo-test-util                    -> :libs:ftgo-test-util
+//   libs/common-swagger                    -> :libs:common-swagger
+//   services/ftgo-order-service            -> :services:ftgo-order-service
+//   services/ftgo-consumer-service         -> :services:ftgo-consumer-service
+//   services/ftgo-restaurant-service       -> :services:ftgo-restaurant-service
+//   services/ftgo-courier-service          -> :services:ftgo-courier-service
+//   apis/ftgo-order-service-api            -> :apis:ftgo-order-service-api
+//   apis/ftgo-consumer-service-api         -> :apis:ftgo-consumer-service-api
+//   apis/ftgo-restaurant-service-api       -> :apis:ftgo-restaurant-service-api
+//   apis/ftgo-courier-service-api          -> :apis:ftgo-courier-service-api
+//   infrastructure/flyway                  -> :infrastructure:flyway
+//
+// =============================================================================
 
-
+// --- Shared Libraries ---
 include "common-swagger"
-
-include "ftgo-flyway"
 
 include "ftgo-test-util"
 include "ftgo-common"
@@ -10,21 +34,25 @@ include "ftgo-common-jpa"
 
 include "ftgo-domain"
 
+// --- Database Migrations ---
+include "ftgo-flyway"
 
-include "ftgo-order-service"
+// --- Service API Contracts ---
 include "ftgo-order-service-api"
-
 include "ftgo-consumer-service-api"
-include "ftgo-consumer-service"
-
 include "ftgo-restaurant-service-api"
-include "ftgo-restaurant-service"
-
 include "ftgo-courier-service-api"
+
+// --- Services (Bounded Contexts) ---
+include "ftgo-order-service"
+include "ftgo-consumer-service"
+include "ftgo-restaurant-service"
 include "ftgo-courier-service"
 
+// --- Monolith Application (to be retired after migration) ---
 include "ftgo-application"
 
+// --- End-to-End Tests ---
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
