@@ -1,0 +1,37 @@
+plugins {
+    id 'ftgo.java-conventions'
+    id 'maven-publish'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = project.name
+                description = "FTGO ${project.name} library"
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}

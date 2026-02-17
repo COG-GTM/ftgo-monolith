@@ -1,0 +1,43 @@
+plugins {
+    id 'ftgo.java-conventions'
+}
+
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    reports {
+        html.required = true
+        junitXml.required = true
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+
+    shouldRunAfter test
+}
