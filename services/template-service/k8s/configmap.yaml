@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-template-service-config
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  DB_HOST: "mysql"
+  DB_PORT: "3306"
+  DB_NAME: "ftgo_template"
+  DB_USER: "ftgo"
