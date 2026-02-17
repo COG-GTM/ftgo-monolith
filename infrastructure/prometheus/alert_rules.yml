@@ -26,3 +26,41 @@ groups:
           severity: critical
         annotations:
           summary: "Service {{ $labels.job }} is down"
+
+  - name: ftgo-business-alerts
+    rules:
+      - alert: HighOrderFailureRate
+        expr: rate(ftgo_order_failed_total[5m]) / rate(ftgo_order_created_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High order failure rate"
+          description: "Order failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: HighTicketRejectionRate
+        expr: rate(ftgo_restaurant_tickets_rejected_total[5m]) / rate(ftgo_restaurant_tickets_created_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ticket rejection rate"
+          description: "Ticket rejection rate is {{ $value | humanizePercentage }}"
+
+      - alert: HighDeliveryFailureRate
+        expr: rate(ftgo_courier_deliveries_failed_total[5m]) / rate(ftgo_courier_deliveries_assigned_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High delivery failure rate"
+          description: "Delivery failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: HighConsumerValidationFailureRate
+        expr: rate(ftgo_consumer_validations_failed_total[5m]) / rate(ftgo_consumer_validations_total[5m]) > 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High consumer validation failure rate"
+          description: "Consumer validation failure rate is {{ $value | humanizePercentage }}"

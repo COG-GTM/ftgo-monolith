@@ -13,6 +13,9 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - ftgo-monitoring
     restart: unless-stopped
 
   grafana:
@@ -30,7 +33,13 @@ services:
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
+    networks:
+      - ftgo-monitoring
     restart: unless-stopped
+
+networks:
+  ftgo-monitoring:
+    driver: bridge
 
 volumes:
   prometheus-data:

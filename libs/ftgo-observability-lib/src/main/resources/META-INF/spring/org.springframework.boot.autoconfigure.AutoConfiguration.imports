@@ -1,1 +1,4 @@
 net.chrisrichardson.ftgo.observability.FtgoMetricsConfiguration
+net.chrisrichardson.ftgo.observability.metrics.FtgoBusinessMetricsConfiguration
+net.chrisrichardson.ftgo.observability.health.FtgoHealthConfiguration
+net.chrisrichardson.ftgo.observability.tracing.FtgoTracingConfiguration

@@ -15,8 +15,8 @@ repositories {
 
 dependencies {
     // Micrometer + Prometheus
-    api 'io.micrometer:micrometer-core:1.12.2'
-    api 'io.micrometer:micrometer-registry-prometheus:1.12.2'
+    api 'io.micrometer:micrometer-core:1.12.3'
+    api 'io.micrometer:micrometer-registry-prometheus:1.12.3'
 
     // Spring Boot Actuator
     api 'org.springframework.boot:spring-boot-starter-actuator:3.2.0'
