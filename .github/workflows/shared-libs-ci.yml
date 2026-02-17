@@ -24,6 +24,7 @@ jobs:
       ftgo-common-lib: ${{ steps.filter.outputs.ftgo-common-lib }}
       ftgo-common-jpa: ${{ steps.filter.outputs.ftgo-common-jpa }}
       ftgo-domain: ${{ steps.filter.outputs.ftgo-domain }}
+      ftgo-security-lib: ${{ steps.filter.outputs.ftgo-security-lib }}
       platform: ${{ steps.filter.outputs.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +41,8 @@ jobs:
             ftgo-domain:
               - 'libs/ftgo-domain/**'
               - 'libs/ftgo-domain-lib/**'
+            ftgo-security-lib:
+              - 'libs/ftgo-security-lib/**'
             platform:
               - 'buildSrc-platform/**'
               - 'gradle/libs.versions.toml'
@@ -75,6 +78,38 @@ jobs:
         with:
           name: ftgo-common-lib-test-reports
           path: 'libs/ftgo-common-lib/build/reports/tests/'
+          retention-days: 14
+
+  build-ftgo-security-lib:
+    name: Build ftgo-security-lib
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ftgo-security-lib == 'true' || needs.detect-changes.outputs.platform == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-security-lib-${{ hashFiles('libs/ftgo-security-lib/**/*.gradle', 'gradle/platform/libs.versions.toml') }}
+          restore-keys: ${{ runner.os }}-gradle-security-lib-
+      - name: Build and test
+        run: |
+          chmod +x gradlew
+          cd libs/ftgo-security-lib && ../../gradlew compileJava test
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ftgo-security-lib-test-reports
+          path: 'libs/ftgo-security-lib/build/reports/tests/'
           retention-days: 14
 
   build-monolith-regression:

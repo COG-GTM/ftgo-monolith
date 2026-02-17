@@ -34,10 +34,6 @@ include "ftgo-common-jpa"
 
 include "ftgo-domain"
 
-// --- New Shared Libraries (microservices migration) ---
-include "ftgo-security-lib"
-project(":ftgo-security-lib").projectDir = file("libs/ftgo-security-lib")
-
 // --- Database Migrations ---
 include "ftgo-flyway"
 
