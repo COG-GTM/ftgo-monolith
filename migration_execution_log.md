@@ -10,8 +10,8 @@
 | Batch | Jira Key | Summary | Phase | Session Status | PR Link | Squash Status |
 |-------|----------|---------|-------|----------------|---------|---------------|
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | Phase 1 | Complete | [PR #28](https://github.com/COG-GTM/ftgo-monolith/pull/28) | Success |
-| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | Phase 1 | Pending | — | — |
-| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Pending | — | — |
+| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | Phase 1 | Complete | [PR #29](https://github.com/COG-GTM/ftgo-monolith/pull/29) | Success |
+| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Complete | [PR #30](https://github.com/COG-GTM/ftgo-monolith/pull/30) | Success |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | Phase 1 | Pending | — | — |
 | 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Pending | — | — |
 | 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Pending | — | — |
