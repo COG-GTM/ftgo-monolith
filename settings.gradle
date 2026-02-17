@@ -34,6 +34,10 @@ include "ftgo-common-jpa"
 
 include "ftgo-domain"
 
+// --- Versioned Shared Libraries (under libs/) ---
+include ':libs:ftgo-common-jpa'
+include ':libs:ftgo-domain'
+
 // --- Database Migrations ---
 include "ftgo-flyway"
 
@@ -42,6 +46,12 @@ include "ftgo-order-service-api"
 include "ftgo-consumer-service-api"
 include "ftgo-restaurant-service-api"
 include "ftgo-courier-service-api"
+
+// --- Versioned API/DTO Modules (under apis/) ---
+include ':apis:ftgo-order-service-api'
+include ':apis:ftgo-consumer-service-api'
+include ':apis:ftgo-restaurant-service-api'
+include ':apis:ftgo-courier-service-api'
 
 // --- Services (Bounded Contexts) ---
 include "ftgo-order-service"

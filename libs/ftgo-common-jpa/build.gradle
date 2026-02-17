@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'net.chrisrichardson.ftgo'
+version = '1.0.0'
+
+sourceCompatibility = '8'
+targetCompatibility = '8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'javax.persistence:javax.persistence-api:2.2'
+
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.18'
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:2.7.18'
+    compileOnly 'org.hibernate:hibernate-core:5.6.15.Final'
+
+    api project(':ftgo-common')
+
+    testImplementation 'junit:junit:4.13.2'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId = 'ftgo-common-jpa'
+        }
+    }
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}
