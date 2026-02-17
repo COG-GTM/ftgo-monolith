@@ -1,0 +1,114 @@
+name: Testing Pipeline
+
+on:
+  pull_request:
+    branches: [master, feat/microservices-migration]
+  push:
+    branches: [feat/microservices-migration]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - { name: 'monolith', path: '.', java: '8' }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.module.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: '${{ matrix.module.java }}'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-unit-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle-unit-
+
+      - name: Run unit tests
+        working-directory: ${{ matrix.module.path }}
+        run: |
+          chmod +x gradlew
+          ./gradlew test -x :ftgo-end-to-end-tests-common:test -x :ftgo-end-to-end-tests:test -x :ftgo-application:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ matrix.module.name }}
+          path: '**/build/reports/tests/'
+          retention-days: 14
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-integration-${{ hashFiles('**/*.gradle') }}
+
+      - name: Run integration tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ftgo
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: rootpassword
+        run: |
+          chmod +x gradlew
+          ./gradlew test -x :ftgo-end-to-end-tests-common:test -x :ftgo-end-to-end-tests:test -x :ftgo-application:test --info
+
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-reports
+          path: '**/build/reports/tests/'
+          retention-days: 14
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.unit-tests.result }}" = "failure" ] || [ "${{ needs.integration-tests.result }}" = "failure" ]; then
+            echo "Tests failed!"
+            exit 1
+          fi
+          echo "All tests passed!"
