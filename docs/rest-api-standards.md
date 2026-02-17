@@ -15,6 +15,9 @@ All FTGO microservice APIs use **URL path versioning**:
 - Minor/patch changes are backward-compatible and do not bump the version
 - Deprecated versions are supported for a minimum of 6 months after successor release
 
+For the full versioning lifecycle, breaking change definitions, and multi-version
+implementation guidelines, see [API Versioning Strategy](api-versioning-strategy.md).
+
 ## URL Conventions
 
 | Rule | Example |

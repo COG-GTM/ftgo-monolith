@@ -4,6 +4,7 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
     implementation project(":libs:ftgo-common")
     implementation project(":libs:ftgo-domain")
+    implementation project(":libs:ftgo-openapi-lib")
     implementation project(":apis:ftgo-order-service-api")
     implementation project(":apis:ftgo-consumer-service-api")
     implementation project(":apis:ftgo-restaurant-service-api")

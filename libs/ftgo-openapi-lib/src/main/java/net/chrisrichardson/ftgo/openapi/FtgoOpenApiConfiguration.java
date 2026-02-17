@@ -1,52 +1,62 @@
 package net.chrisrichardson.ftgo.openapi;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import org.springframework.beans.factory.annotation.Value;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 import java.util.List;
 
-/**
- * Shared OpenAPI 3.0 configuration for all FTGO microservices.
- * <p>
- * Each service applies this auto-configuration and overrides
- * {@code ftgo.openapi.title} and {@code ftgo.openapi.description}
- * in its application.properties to customize the API docs.
- */
 @AutoConfiguration
+@EnableConfigurationProperties(FtgoOpenApiProperties.class)
 public class FtgoOpenApiConfiguration {
 
-    @Value("${ftgo.openapi.title:FTGO Microservice API}")
-    private String title;
+    @Bean
+    @ConditionalOnMissingBean
+    public OpenAPI ftgoOpenAPI(FtgoOpenApiProperties properties) {
+        OpenAPI openAPI = new OpenAPI()
+                .info(new Info()
+                        .title(properties.getTitle())
+                        .description(properties.getDescription())
+                        .version(properties.getVersion())
+                        .contact(new Contact()
+                                .name(properties.getContactName())
+                                .email(properties.getContactEmail()))
+                        .license(new License()
+                                .name(properties.getLicenseName())
+                                .url(properties.getLicenseUrl())))
+                .servers(List.of(
+                        new Server().url(properties.getServerUrl()).description("Current environment")));
 
-    @Value("${ftgo.openapi.description:FTGO Microservice REST API}")
-    private String description;
+        if (properties.isSecurityEnabled()) {
+            openAPI.components(new Components()
+                            .addSecuritySchemes("bearerAuth", new SecurityScheme()
+                                    .type(SecurityScheme.Type.HTTP)
+                                    .scheme("bearer")
+                                    .bearerFormat("JWT")
+                                    .description("JWT authentication token")))
+                    .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+        }
 
-    @Value("${ftgo.openapi.version:v1}")
-    private String version;
-
-    @Value("${ftgo.openapi.server-url:http://localhost:8080}")
-    private String serverUrl;
+        return openAPI;
+    }
 
     @Bean
-    public OpenAPI ftgoOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title(title)
-                        .description(description)
-                        .version(version)
-                        .contact(new Contact()
-                                .name("FTGO Engineering")
-                                .email("engineering@ftgo.com"))
-                        .license(new License()
-                                .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0")))
-                .servers(List.of(
-                        new Server().url(serverUrl).description("Current environment")));
+    @ConditionalOnMissingBean(GroupedOpenApi.class)
+    public GroupedOpenApi publicApi(FtgoOpenApiProperties properties) {
+        return GroupedOpenApi.builder()
+                .group("public")
+                .packagesToScan(properties.getBasePackage())
+                .pathsToMatch("/api/**")
+                .build();
     }
 }
