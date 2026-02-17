@@ -1,0 +1,43 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'net.chrisrichardson.ftgo'
+version = '1.0.0'
+
+sourceCompatibility = '8'
+targetCompatibility = '8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // JPA API
+    api 'javax.persistence:javax.persistence-api:2.2'
+
+    // Spring Data JPA (provided by consuming services)
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.18'
+
+    // Commons Lang for utility methods
+    api 'org.apache.commons:commons-lang3:3.12.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId = 'ftgo-domain-lib'
+        }
+    }
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}
