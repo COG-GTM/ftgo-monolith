@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  - job_name: 'ftgo-order-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ftgo-order-service:8080']
+        labels:
+          service: 'order-service'
+
+  - job_name: 'ftgo-consumer-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ftgo-consumer-service:8080']
+        labels:
+          service: 'consumer-service'
+
+  - job_name: 'ftgo-restaurant-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ftgo-restaurant-service:8080']
+        labels:
+          service: 'restaurant-service'
+
+  - job_name: 'ftgo-courier-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ftgo-courier-service:8080']
+        labels:
+          service: 'courier-service'
