@@ -1,0 +1,24 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'com.google.cloud.tools.jib'
+}
+
+jib {
+    from {
+        image = 'eclipse-temurin:17-jre-alpine'
+    }
+    to {
+        image = "ftgo/${project.name}"
+        tags = [project.version as String, 'latest']
+    }
+    container {
+        jvmFlags = ['-Xms256m', '-Xmx512m']
+        ports = ['8080']
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+        format = 'OCI'
+        labels = [
+            'maintainer': 'ftgo-team',
+            'org.opencontainers.image.source': 'https://github.com/COG-GTM/ftgo-monolith'
+        ]
+    }
+}
