@@ -2,12 +2,19 @@ plugins {
     id 'groovy-gradle-plugin'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 repositories {
     gradlePluginPortal()
     mavenCentral()
 }
 
 dependencies {
+    // Plugin JARs required by convention plugins — versions MUST match gradle/libs.versions.toml
     implementation 'org.springframework.boot:spring-boot-gradle-plugin:3.2.0'
     implementation 'io.spring.gradle:dependency-management-plugin:1.1.4'
     implementation 'com.google.cloud.tools:jib-gradle-plugin:3.4.0'

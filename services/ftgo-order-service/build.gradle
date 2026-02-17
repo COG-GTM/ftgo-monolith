@@ -1,20 +1,23 @@
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
+    id 'ftgo.docker-conventions'
+}
+
+version = '0.1.0-SNAPSHOT'
 
 dependencies {
-    implementation project(":libs:ftgo-common")
-    implementation project(":libs:ftgo-domain")
-    implementation project(":apis:ftgo-order-service-api")
-    implementation project(":apis:ftgo-consumer-service-api")
-    implementation project(":apis:ftgo-restaurant-service-api")
+    implementation project(':libs:ftgo-common-lib')
+    implementation project(':apis:ftgo-order-service-api')
+    implementation project(':apis:ftgo-consumer-service-api')
+    implementation project(':apis:ftgo-restaurant-service-api')
 
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-    implementation "org.springframework.boot:spring-boot-starter-actuator"
-    implementation "io.micrometer:micrometer-registry-prometheus"
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    runtimeOnly "mysql:mysql-connector-java"
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-    testImplementation "org.springframework.boot:spring-boot-starter-test"
-    testImplementation "com.h2database:h2"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

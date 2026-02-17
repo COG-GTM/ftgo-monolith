@@ -1,16 +1,10 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
+    id 'ftgo.docker-conventions'
 }
 
-group = 'net.chrisrichardson.ftgo'
 version = '0.1.0-SNAPSHOT'
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
 
 dependencies {
     implementation project(':libs:ftgo-common-lib')
@@ -22,8 +16,4 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-
-test {
-    useJUnitPlatform()
 }
