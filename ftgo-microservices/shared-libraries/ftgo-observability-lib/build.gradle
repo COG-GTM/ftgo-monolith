@@ -16,6 +16,7 @@ dependencies {
 
     api 'io.micrometer:micrometer-tracing-bridge-brave:1.2.1'
     api 'io.zipkin.reporter2:zipkin-reporter-brave:2.17.1'
+    api 'io.zipkin.reporter2:zipkin-sender-urlconnection:2.17.1'
 
     implementation 'org.springframework.boot:spring-boot-starter:3.2.1'
     implementation 'org.slf4j:slf4j-api:2.0.9'
