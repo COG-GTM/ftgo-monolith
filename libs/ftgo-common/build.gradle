@@ -1,0 +1,52 @@
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
+version = '1.0.0'
+
+dependencies {
+    api "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    api group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and exceptions for the FTGO microservices platform'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

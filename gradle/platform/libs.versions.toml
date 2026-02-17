@@ -32,6 +32,9 @@ lombok = "1.18.30"
 commons-lang3 = "3.14.0"
 mapstruct = "1.5.5.Final"
 
+# Extracted Libraries
+ftgo-common-lib = "1.0.0"
+
 # Build Plugins
 jib = "3.4.0"
 
@@ -75,6 +78,9 @@ commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "co
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+
+# Extracted Libraries
+ftgo-common-lib = { module = "net.chrisrichardson.ftgo:ftgo-common-lib", version.ref = "ftgo-common-lib" }
 
 [bundles]
 spring-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]

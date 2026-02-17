@@ -32,6 +32,10 @@ include "ftgo-test-util"
 include "ftgo-common"
 include "ftgo-common-jpa"
 
+// --- Extracted Shared Libraries (microservices migration) ---
+include "ftgo-common-lib"
+project(':ftgo-common-lib').projectDir = file('libs/ftgo-common')
+
 include "ftgo-domain"
 
 // --- Database Migrations ---
