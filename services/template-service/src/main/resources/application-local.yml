@@ -1,0 +1,8 @@
+spring:
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    net.chrisrichardson.ftgo: DEBUG
+    org.springframework: INFO
