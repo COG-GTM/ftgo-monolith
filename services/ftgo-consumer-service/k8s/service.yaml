@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-consumer-service
+  labels:
+    app: ftgo-consumer-service
+    part-of: ftgo
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8081
+      protocol: TCP
+      name: http
+  selector:
+    app: ftgo-consumer-service

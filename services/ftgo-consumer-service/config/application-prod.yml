@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    com.ftgo: INFO
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

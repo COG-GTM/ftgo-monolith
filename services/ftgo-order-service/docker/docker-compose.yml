@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  ftgo-order-service:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo_order
+      SPRING_DATASOURCE_USERNAME: ftgo_user
+      SPRING_DATASOURCE_PASSWORD: ftgo_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ftgo_order
+      MYSQL_USER: ftgo_user
+      MYSQL_PASSWORD: ftgo_password
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

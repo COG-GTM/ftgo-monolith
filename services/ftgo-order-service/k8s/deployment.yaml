@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-order-service
+  labels:
+    app: ftgo-order-service
+    part-of: ftgo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-order-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-order-service
+    spec:
+      containers:
+        - name: ftgo-order-service
+          image: ftgo/ftgo-order-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-order-db-secret
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

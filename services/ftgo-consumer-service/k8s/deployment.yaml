@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-consumer-service
+  labels:
+    app: ftgo-consumer-service
+    part-of: ftgo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-consumer-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-consumer-service
+    spec:
+      containers:
+        - name: ftgo-consumer-service
+          image: ftgo/ftgo-consumer-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-consumer-db-secret
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

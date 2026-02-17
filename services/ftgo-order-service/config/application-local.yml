@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ftgo_order
+    username: ftgo_user
+    password: ftgo_password
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.ftgo: DEBUG
+    org.springframework: INFO
