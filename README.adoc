@@ -1,8 +1,16 @@
 = FTGO Monolith
 
 image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/monolith-ci.yml/badge.svg[Monolith CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/monolith-ci.yml]
-image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/microservice-ci.yml/badge.svg[Microservice CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/microservice-ci.yml]
-image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/shared-libs-ci.yml/badge.svg[Shared Libraries CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/shared-libs-ci.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml/badge.svg[Order Service CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml/badge.svg[Consumer Service CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml/badge.svg[Restaurant Service CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml/badge.svg[Courier Service CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-common-lib.yml/badge.svg[Common Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-common-lib.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-common-jpa-lib.yml/badge.svg[Common JPA Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-common-jpa-lib.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-domain-lib.yml/badge.svg[Domain Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-domain-lib.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-observability-lib.yml/badge.svg[Observability Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-observability-lib.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-openapi-lib.yml/badge.svg[OpenAPI Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-openapi-lib.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-security-lib.yml/badge.svg[Security Lib CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-security-lib.yml]
 
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.

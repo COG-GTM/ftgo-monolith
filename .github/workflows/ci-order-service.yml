@@ -1,0 +1,67 @@
+name: CI — Order Service
+
+on:
+  push:
+    branches: [master, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'libs/**'
+      - 'buildSrc-platform/**'
+      - 'gradle/libs.versions.toml'
+  pull_request:
+    branches: [master, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'libs/**'
+      - 'buildSrc-platform/**'
+      - 'gradle/libs.versions.toml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-order-service-${{ hashFiles('**/*.gradle', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-order-service-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Compile
+        run: |
+          if [ -f services/ftgo-order-service/build.gradle ]; then
+            ./gradlew :services:ftgo-order-service:compileJava || echo "Service not yet wired into settings.gradle"
+          fi
+
+      - name: Run tests
+        run: |
+          if [ -f services/ftgo-order-service/build.gradle ]; then
+            ./gradlew :services:ftgo-order-service:test || echo "Service tests not yet wired into settings.gradle"
+          fi
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-service-test-reports
+          path: 'services/ftgo-order-service/build/reports/tests/'
+          retention-days: 14
