@@ -1,0 +1,76 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath "io.spring.gradle:dependency-management-plugin:${springDependencyManagementPluginVersion}"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+allprojects {
+    group = 'net.chrisrichardson.ftgo'
+    version = '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
+    }
+}
+
+def serviceProjects = [
+    ':services:consumer-service',
+    ':services:restaurant-service',
+    ':services:order-service',
+    ':services:courier-service',
+    ':infrastructure:api-gateway'
+]
+
+configure(serviceProjects.collect { project(it) }) {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        }
+    }
+
+    dependencies {
+        implementation project(':shared-libraries:ftgo-common-lib')
+        implementation project(':shared-libraries:ftgo-security-lib')
+        implementation project(':shared-libraries:ftgo-observability-lib')
+        implementation project(':shared-libraries:ftgo-messaging-lib')
+    }
+
+    bootJar {
+        archiveFileName = "${project.name}.jar"
+    }
+}

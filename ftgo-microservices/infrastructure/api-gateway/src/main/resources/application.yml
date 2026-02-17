@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: consumer-service
+          uri: ${CONSUMER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/consumers/**
+        - id: restaurant-service
+          uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/restaurants/**
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/orders/**
+        - id: courier-service
+          uri: ${COURIER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/couriers/**
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,gateway
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG

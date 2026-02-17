@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # --- Databases (one per service) ---
+  mysql-consumer:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ftgo_consumer
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-consumer-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-restaurant:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ftgo_restaurant
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-restaurant-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-order:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ftgo_order
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-order-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-courier:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ftgo_courier
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-courier-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Message Broker ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # --- Observability ---
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    ports:
+      - "9411:9411"
+
+  # --- Microservices ---
+  consumer-service:
+    build:
+      context: ../../services/consumer-service
+      dockerfile: Dockerfile
+    depends_on:
+      mysql-consumer:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-consumer
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      JAVA_OPTS: -Xmx256m
+    ports:
+      - "8081:8081"
+
+  restaurant-service:
+    build:
+      context: ../../services/restaurant-service
+      dockerfile: Dockerfile
+    depends_on:
+      mysql-restaurant:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-restaurant
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      JAVA_OPTS: -Xmx256m
+    ports:
+      - "8082:8082"
+
+  order-service:
+    build:
+      context: ../../services/order-service
+      dockerfile: Dockerfile
+    depends_on:
+      mysql-order:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-order
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      JAVA_OPTS: -Xmx256m
+    ports:
+      - "8083:8083"
+
+  courier-service:
+    build:
+      context: ../../services/courier-service
+      dockerfile: Dockerfile
+    depends_on:
+      mysql-courier:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-courier
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-ftgo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ftgo_password}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      JAVA_OPTS: -Xmx256m
+    ports:
+      - "8084:8084"
+
+  api-gateway:
+    build:
+      context: ../../infrastructure/api-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      - consumer-service
+      - restaurant-service
+      - order-service
+      - courier-service
+    environment:
+      CONSUMER_SERVICE_URL: http://consumer-service:8081
+      RESTAURANT_SERVICE_URL: http://restaurant-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      COURIER_SERVICE_URL: http://courier-service:8084
+      JAVA_OPTS: -Xmx128m
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-consumer-data:
+  mysql-restaurant-data:
+  mysql-order-data:
+  mysql-courier-data:
+  prometheus-data:
+  grafana-data:
