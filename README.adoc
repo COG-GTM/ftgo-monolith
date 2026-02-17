@@ -1,5 +1,9 @@
 = FTGO Monolith
 
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/monolith-ci.yml/badge.svg[Monolith CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/monolith-ci.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/microservice-ci.yml/badge.svg[Microservice CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/microservice-ci.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/shared-libs-ci.yml/badge.svg[Shared Libraries CI,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/shared-libs-ci.yml]
+
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
