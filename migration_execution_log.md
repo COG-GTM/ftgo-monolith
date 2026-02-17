@@ -12,11 +12,11 @@
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | Phase 1 | Complete | [PR #28](https://github.com/COG-GTM/ftgo-monolith/pull/28) | Success |
 | 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | Phase 1 | Complete | [PR #29](https://github.com/COG-GTM/ftgo-monolith/pull/29) | Success |
 | 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Complete | [PR #30](https://github.com/COG-GTM/ftgo-monolith/pull/30) | Success |
-| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | Phase 1 | Pending | — | — |
-| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Pending | — | — |
-| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Pending | — | — |
-| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | Phase 4 | Pending | — | — |
-| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | Phase 5 | Pending | — | — |
+| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | Phase 1 | Complete | Direct | Success |
+| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Complete | Direct | Success |
+| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Complete | Direct | Success |
+| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | Phase 4 | Complete | Direct | Success |
+| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | Phase 5 | Complete | Direct | Success |
 | 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Pending | — | — |
 | 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Pending | — | — |
 | 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Pending | — | — |
