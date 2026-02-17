@@ -20,6 +20,10 @@ rest-assured = "5.4.0"
 mockito = "5.8.0"
 testcontainers = "1.19.3"
 
+# Security
+jjwt = "0.12.3"
+spring-security = "6.2.1"
+
 # Observability
 micrometer = "1.12.2"
 micrometer-tracing = "1.2.2"
@@ -43,6 +47,12 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+
+# Security
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Database
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
@@ -80,6 +90,7 @@ mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.re
 spring-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
 spring-data = ["spring-boot-starter-data-jpa", "flyway-core", "flyway-mysql"]
 spring-test = ["spring-boot-starter-test", "junit-jupiter", "mockito-core", "mockito-junit"]
+spring-security = ["spring-boot-starter-security", "jjwt-api"]
 observability = ["micrometer-registry-prometheus", "micrometer-tracing-bridge-brave"]
 
 [plugins]

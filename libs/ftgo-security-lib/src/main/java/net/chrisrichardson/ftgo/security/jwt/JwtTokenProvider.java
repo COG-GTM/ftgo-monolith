@@ -3,7 +3,6 @@ package net.chrisrichardson.ftgo.security.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -49,25 +48,25 @@ public class JwtTokenProvider {
         Date expiry = new Date(now.getTime() + expirationMs);
 
         var builder = Jwts.builder()
-                .setSubject(subject)
-                .setIssuer(issuer)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
+                .subject(subject)
+                .issuer(issuer)
+                .issuedAt(now)
+                .expiration(expiry)
                 .claim("type", tokenType);
 
         if (roles != null) {
             builder.claim("roles", roles);
         }
 
-        return builder.signWith(signingKey, SignatureAlgorithm.HS256).compact();
+        return builder.signWith(signingKey).compact();
     }
 
     public Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(signingKey)
+        return Jwts.parser()
+                .verifyWith(signingKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public boolean validateToken(String token) {

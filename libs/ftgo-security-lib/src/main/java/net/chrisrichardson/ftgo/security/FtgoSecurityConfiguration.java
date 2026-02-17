@@ -19,6 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class FtgoSecurityConfiguration {
 
+    private final SecurityExceptionHandler securityExceptionHandler = new SecurityExceptionHandler();
+
     @Bean
     public SecurityFilterChain ftgoSecurityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -43,6 +45,11 @@ public class FtgoSecurityConfiguration {
                 .requestMatchers("/actuator/**").authenticated()
                 // All other endpoints require authentication
                 .anyRequest().authenticated())
+
+            // Exception handling with JSON responses
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(securityExceptionHandler)
+                .accessDeniedHandler(securityExceptionHandler))
 
             // CORS configuration
             .cors(cors -> cors.configurationSource(new FtgoCorsConfigurationSource()));
