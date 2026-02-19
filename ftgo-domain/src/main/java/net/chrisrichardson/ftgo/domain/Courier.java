@@ -60,6 +60,18 @@ public class Courier {
     return id;
   }
 
+  public PersonName getName() {
+    return name;
+  }
+
+  public Address getAddress() {
+    return address;
+  }
+
+  public Boolean getAvailable() {
+    return available;
+  }
+
   public void noteUnavailable() {
     this.available = false;
   }

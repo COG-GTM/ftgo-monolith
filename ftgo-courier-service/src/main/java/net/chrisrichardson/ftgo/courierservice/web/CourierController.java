@@ -58,9 +58,9 @@ public class CourierController {
     Courier courier = courierService.findCourierById(courierId);
     GetCourierResponse response = new GetCourierResponse(
         courier.getId(),
-        null,
-        null,
-        courier.isAvailable()
+        courier.getName(),
+        courier.getAddress(),
+        Boolean.TRUE.equals(courier.getAvailable())
     );
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
