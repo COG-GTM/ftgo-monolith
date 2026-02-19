@@ -1,11 +1,18 @@
 package net.chrisrichardson.ftgo.orderservice.api.web;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.List;
 
+@ApiModel(description = "Request to create a new order")
 public class CreateOrderRequest {
 
+  @ApiModelProperty(value = "Restaurant ID", required = true)
   private long restaurantId;
+  @ApiModelProperty(value = "Consumer ID", required = true)
   private long consumerId;
+  @ApiModelProperty(value = "Line items for the order", required = true)
   private List<LineItem> lineItems;
 
   public CreateOrderRequest(long consumerId, long restaurantId, List<LineItem> lineItems) {

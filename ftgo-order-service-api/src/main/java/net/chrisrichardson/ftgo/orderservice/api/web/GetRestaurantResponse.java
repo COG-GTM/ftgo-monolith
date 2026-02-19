@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.orderservice.web;
+package net.chrisrichardson.ftgo.orderservice.api.web;
 
 public class GetRestaurantResponse {
   private long restaurantId;
@@ -7,7 +7,6 @@ public class GetRestaurantResponse {
   }
 
   public GetRestaurantResponse(long restaurantId) {
-
     this.restaurantId = restaurantId;
   }
 
