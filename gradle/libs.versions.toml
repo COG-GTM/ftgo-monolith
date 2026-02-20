@@ -19,6 +19,7 @@ logback = "1.4.14"
 slf4j = "2.0.12"
 mockito = "5.11.0"
 assertj = "3.25.3"
+jjwt = "0.12.5"
 testcontainers = "1.19.7"
 jib = "3.4.2"
 docker-compose-plugin = "0.17.7"
@@ -69,6 +70,10 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
@@ -78,6 +83,7 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 spring-boot-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
 spring-boot-data = ["spring-boot-starter-data-jpa", "flyway-core"]
 spring-boot-security = ["spring-boot-starter-security", "spring-boot-starter-web"]
+jjwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
 jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 testing = ["spring-boot-starter-test", "junit-jupiter-api", "junit-jupiter-engine", "mockito-junit-jupiter", "assertj-core"]
 rest-assured-all = ["rest-assured", "rest-assured-json-path", "rest-assured-spring-mock-mvc"]
