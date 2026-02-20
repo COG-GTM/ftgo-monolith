@@ -1,0 +1,12 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    com.ftgo: DEBUG
+    org.testcontainers: INFO

@@ -1,0 +1,24 @@
+plugins {
+    id 'ftgo.java-conventions'
+    id 'ftgo.testing-conventions'
+}
+
+version = '0.0.1-SNAPSHOT'
+
+dependencies {
+    testImplementation libs.bundles.testing
+    testImplementation libs.bundles.rest.assured.all
+    testImplementation libs.bundles.testcontainers.all
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.spring.boot.starter.web
+    testImplementation libs.rest.assured
+    testImplementation libs.rest.assured.json.path
+    testImplementation libs.jackson.databind
+    testImplementation libs.jackson.datatype.jsr310
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        includeTags("e2e")
+    }
+}
