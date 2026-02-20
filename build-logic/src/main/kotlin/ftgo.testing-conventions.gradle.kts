@@ -1,5 +1,6 @@
 plugins {
     id("ftgo.java-conventions")
+    jacoco
 }
 
 dependencies {
@@ -14,6 +15,15 @@ dependencies {
     "testImplementation"("org.assertj:assertj-core")
     "testImplementation"("io.rest-assured:rest-assured")
     "testImplementation"("io.rest-assured:spring-mock-mvc")
+
+    "testImplementation"("org.testcontainers:junit-jupiter")
+    "testImplementation"("org.testcontainers:mysql")
+    "testImplementation"("org.testcontainers:kafka")
+    "testImplementation"("org.testcontainers:testcontainers")
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 tasks.withType<Test>().configureEach {
@@ -25,6 +35,16 @@ tasks.withType<Test>().configureEach {
         showStackTraces = true
     }
     jvmArgs("-XX:+EnableDynamicAgentLoading")
+    finalizedBy(tasks.withType<JacocoReport>())
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("test"))
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
 }
 
 val integrationTest by tasks.registering(Test::class) {
@@ -36,4 +56,22 @@ val integrationTest by tasks.registering(Test::class) {
     useJUnitPlatform {
         includeTags("integration")
     }
+}
+
+val jacocoIntegrationTestReport by tasks.registering(JacocoReport::class) {
+    description = "Generates JaCoCo report for integration tests."
+    group = "verification"
+    executionData(integrationTest.get())
+    sourceDirectories.from(sourceSets["main"].java.srcDirs)
+    classDirectories.from(sourceSets["main"].output.classesDirs)
+    dependsOn(integrationTest)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+tasks.named("check") {
+    dependsOn(integrationTest)
 }
