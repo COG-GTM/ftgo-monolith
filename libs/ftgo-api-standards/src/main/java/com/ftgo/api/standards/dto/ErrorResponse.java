@@ -12,6 +12,7 @@ public class ErrorResponse {
     private String code;
     private String message;
     private String path;
+    private String correlationId;
     private Instant timestamp;
     private List<FieldError> errors;
 
@@ -20,21 +21,26 @@ public class ErrorResponse {
         this.errors = new ArrayList<>();
     }
 
-    private ErrorResponse(int status, String code, String message, String path) {
+    private ErrorResponse(int status, String code, String message, String path, String correlationId) {
         this.status = status;
         this.code = code;
         this.message = message;
         this.path = path;
+        this.correlationId = correlationId;
         this.timestamp = Instant.now();
         this.errors = new ArrayList<>();
     }
 
     public static ErrorResponse of(int status, String code, String message) {
-        return new ErrorResponse(status, code, message, null);
+        return new ErrorResponse(status, code, message, null, null);
     }
 
     public static ErrorResponse of(int status, String code, String message, String path) {
-        return new ErrorResponse(status, code, message, path);
+        return new ErrorResponse(status, code, message, path, null);
+    }
+
+    public static ErrorResponse of(int status, String code, String message, String path, String correlationId) {
+        return new ErrorResponse(status, code, message, path, correlationId);
     }
 
     public ErrorResponse addFieldError(String field, String message) {
@@ -72,6 +78,14 @@ public class ErrorResponse {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
     }
 
     public Instant getTimestamp() {

@@ -1,1 +1,2 @@
 com.ftgo.api.standards.config.FtgoOpenApiAutoConfiguration
+com.ftgo.api.standards.config.FtgoErrorHandlingAutoConfiguration
