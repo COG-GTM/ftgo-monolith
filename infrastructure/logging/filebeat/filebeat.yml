@@ -1,0 +1,51 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+      templates:
+        - condition:
+            contains:
+              docker.container.name: "ftgo-"
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              processors:
+                - decode_json_fields:
+                    fields: ["message"]
+                    target: "log"
+                    overwrite_keys: true
+                    add_error_key: true
+              fields:
+                service: "${data.docker.container.name}"
+              fields_under_root: true
+
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/ftgo/*.json
+    json.keys_under_root: true
+    json.add_error_key: true
+    json.message_key: message
+    fields:
+      log_source: file
+    fields_under_root: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  bulk_max_size: 1024
+  timeout: 30s
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - add_host_metadata: ~
