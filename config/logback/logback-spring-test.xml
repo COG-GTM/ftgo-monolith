@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FTGO Logback Configuration - Test Execution
+
+  Features:
+  - Plain-text console output for test readability
+  - WARN level by default to reduce test noise
+  - INFO for FTGO packages to see business logic output
+  - No Logstash, no JSON encoding
+
+  Usage: Copy to src/test/resources/logback-test.xml in your service.
+-->
+<configuration>
+
+    <appender name="TEST_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <!-- FTGO application packages -->
+    <logger name="com.ftgo" level="INFO"/>
+
+    <!-- Spring Framework - suppress startup noise -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.test" level="WARN"/>
+    <logger name="org.springframework.boot.test" level="WARN"/>
+
+    <!-- Hibernate / JPA -->
+    <logger name="org.hibernate" level="WARN"/>
+
+    <!-- Testcontainers -->
+    <logger name="org.testcontainers" level="INFO"/>
+    <logger name="com.github.dockerjava" level="WARN"/>
+
+    <!-- Kafka -->
+    <logger name="org.apache.kafka" level="WARN"/>
+
+    <!-- Flyway -->
+    <logger name="org.flywaydb" level="WARN"/>
+
+    <root level="WARN">
+        <appender-ref ref="TEST_CONSOLE"/>
+    </root>
+
+</configuration>

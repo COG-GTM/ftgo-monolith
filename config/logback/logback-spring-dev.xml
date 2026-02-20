@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FTGO Logback Configuration - Development Environment
+
+  Features:
+  - Pretty-printed JSON console output for readability
+  - DEBUG level for com.ftgo packages
+  - Verbose SQL and framework logging enabled
+  - No Logstash shipping (local development)
+
+  Usage: Copy to src/main/resources/logback-spring.xml in your service.
+  Activate with: spring.profiles.active=dev
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <include resource="logback/logback-ftgo.xml"/>
+
+    <springProperty scope="context" name="SERVICE_NAME"
+                    source="spring.application.name" defaultValue="ftgo-service"/>
+
+    <!-- Plain-text console appender for development readability -->
+    <appender name="DEV_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg [traceId=%X{traceId:-} spanId=%X{spanId:-} requestId=%X{requestId:-}]%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev,local,default">
+        <!-- FTGO application packages -->
+        <logger name="com.ftgo" level="DEBUG"/>
+
+        <!-- Spring Framework -->
+        <logger name="org.springframework" level="INFO"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+
+        <!-- Hibernate / JPA -->
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.type.descriptor.sql" level="TRACE"/>
+
+        <!-- Kafka -->
+        <logger name="org.apache.kafka" level="INFO"/>
+
+        <!-- Resilience4j -->
+        <logger name="io.github.resilience4j" level="DEBUG"/>
+
+        <!-- Flyway -->
+        <logger name="org.flywaydb" level="INFO"/>
+
+        <!-- Micrometer / Observability -->
+        <logger name="io.micrometer" level="INFO"/>
+
+        <!-- Logstash encoder (suppress in dev) -->
+        <logger name="net.logstash" level="INFO"/>
+
+        <root level="DEBUG">
+            <appender-ref ref="DEV_CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FTGO Logback Configuration - Staging Environment
+
+  Features:
+  - Structured JSON console output
+  - INFO level for application packages
+  - Logstash TCP shipping enabled
+  - Reduced framework logging
+
+  Usage: Copy to src/main/resources/logback-spring.xml in your service.
+  Activate with: spring.profiles.active=staging
+-->
+<configuration>
+
+    <include resource="logback/logback-ftgo.xml"/>
+
+    <springProperty scope="context" name="SERVICE_NAME"
+                    source="spring.application.name" defaultValue="ftgo-service"/>
+
+    <springProfile name="staging">
+        <!-- FTGO application packages -->
+        <logger name="com.ftgo" level="INFO"/>
+
+        <!-- Spring Framework -->
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.springframework.web" level="INFO"/>
+        <logger name="org.springframework.security" level="INFO"/>
+
+        <!-- Hibernate / JPA -->
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.type.descriptor.sql" level="WARN"/>
+
+        <!-- Kafka -->
+        <logger name="org.apache.kafka" level="WARN"/>
+
+        <!-- Resilience4j -->
+        <logger name="io.github.resilience4j" level="INFO"/>
+
+        <!-- Flyway -->
+        <logger name="org.flywaydb" level="INFO"/>
+
+        <!-- Micrometer / Observability -->
+        <logger name="io.micrometer" level="WARN"/>
+
+        <!-- Logstash encoder -->
+        <logger name="net.logstash" level="WARN"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </root>
+    </springProfile>
+
+</configuration>
