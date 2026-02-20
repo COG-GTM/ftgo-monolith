@@ -1,0 +1,44 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.ftgo'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'io.micrometer:micrometer-tracing-bridge-otel:1.2.5'
+    api 'io.micrometer:micrometer-observation:1.12.5'
+    api 'io.opentelemetry:opentelemetry-api:1.36.0'
+    api 'io.opentelemetry:opentelemetry-sdk:1.36.0'
+    api 'io.opentelemetry:opentelemetry-exporter-zipkin:1.36.0'
+    api 'io.opentelemetry:opentelemetry-exporter-otlp:1.36.0'
+    api 'io.opentelemetry:opentelemetry-context:1.36.0'
+    api 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.36.0'
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.2.5'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:3.2.5'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.2.5'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    withSourcesJar()
+}

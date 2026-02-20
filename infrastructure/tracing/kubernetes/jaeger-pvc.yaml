@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jaeger-storage-pvc
+  namespace: ftgo-tracing
+  labels:
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

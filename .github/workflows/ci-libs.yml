@@ -63,3 +63,9 @@ jobs:
     with:
       module-path: 'libs/ftgo-test-util'
       module-name: 'ftgo-test-util'
+
+  ftgo-tracing:
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-tracing'
+      module-name: 'ftgo-tracing'

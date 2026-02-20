@@ -23,6 +23,8 @@ jjwt = "0.12.5"
 testcontainers = "1.19.7"
 jib = "3.4.2"
 docker-compose-plugin = "0.17.7"
+opentelemetry = "1.36.0"
+opentelemetry-instrumentation = "2.2.0"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -40,6 +42,12 @@ micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "mic
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-observation = { module = "io.micrometer:micrometer-observation", version.ref = "micrometer" }
 micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel", version.ref = "micrometer-tracing" }
+micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "opentelemetry" }
+opentelemetry-exporter-zipkin = { module = "io.opentelemetry:opentelemetry-exporter-zipkin", version.ref = "opentelemetry" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version.ref = "opentelemetry" }
+opentelemetry-context = { module = "io.opentelemetry:opentelemetry-context", version.ref = "opentelemetry" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
@@ -92,6 +100,8 @@ testcontainers-all = ["testcontainers-core", "testcontainers-junit-jupiter", "te
 rest-assured-all = ["rest-assured", "rest-assured-json-path", "rest-assured-spring-mock-mvc"]
 micrometer = ["micrometer-core", "micrometer-registry-prometheus"]
 observability = ["micrometer-core", "micrometer-registry-prometheus", "micrometer-observation", "spring-boot-starter-actuator"]
+tracing = ["micrometer-tracing-bridge-otel", "micrometer-observation", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-zipkin"]
+tracing-otlp = ["micrometer-tracing-bridge-otel", "micrometer-observation", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp"]
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
