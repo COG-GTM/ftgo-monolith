@@ -1,0 +1,51 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.ftgo'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter-actuator:3.2.5'
+    api 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    api 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+    api 'io.github.resilience4j:resilience4j-retry:2.2.0'
+    api 'io.github.resilience4j:resilience4j-bulkhead:2.2.0'
+    api 'io.github.resilience4j:resilience4j-timelimiter:2.2.0'
+    api 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:3.2.5'
+    implementation 'io.micrometer:micrometer-core:1.12.5'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+    compileOnly 'org.springframework.cloud:spring-cloud-starter-kubernetes-client-all:3.1.1'
+    compileOnly 'org.springframework.kafka:spring-kafka:3.1.4'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:3.2.5'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.2.5'
+    testImplementation 'com.h2database:h2:2.2.224'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    withSourcesJar()
+}
