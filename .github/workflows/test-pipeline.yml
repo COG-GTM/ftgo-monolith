@@ -1,0 +1,294 @@
+name: 'Test Pipeline: Unit → Integration → E2E'
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/microservices-migration-v2'
+    paths:
+      - 'services/**'
+      - 'libs/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/test-pipeline.yml'
+  pull_request:
+    branches:
+      - main
+      - 'feat/microservices-migration-v2'
+    paths:
+      - 'services/**'
+      - 'libs/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/test-pipeline.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1: Unit Tests
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: 'Unit Tests'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - { path: 'services/order-service', name: 'order-service' }
+          - { path: 'services/consumer-service', name: 'consumer-service' }
+          - { path: 'services/restaurant-service', name: 'restaurant-service' }
+          - { path: 'services/courier-service', name: 'courier-service' }
+          - { path: 'libs/ftgo-common', name: 'ftgo-common' }
+          - { path: 'libs/ftgo-common-jpa', name: 'ftgo-common-jpa' }
+          - { path: 'libs/ftgo-domain', name: 'ftgo-domain' }
+          - { path: 'libs/ftgo-test-util', name: 'ftgo-test-util' }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check if Gradle subproject is registered
+        id: check-project
+        run: |
+          GRADLE_PROJECT=$(echo "${{ matrix.module.path }}" | sed 's|/|:|g')
+          echo "gradle_project=${GRADLE_PROJECT}" >> "$GITHUB_OUTPUT"
+          if ./gradlew projects 2>/dev/null | grep -q ":${GRADLE_PROJECT}"; then
+            echo "registered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gradle subproject :${GRADLE_PROJECT} is not yet registered. Skipping."
+          fi
+
+      - name: Run unit tests
+        if: steps.check-project.outputs.registered == 'true'
+        run: |
+          ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:test" \
+            -x integrationTest \
+            --continue
+        env:
+          GRADLE_OPTS: ${{ env.GRADLE_OPTS }}
+
+      - name: Generate JaCoCo coverage report
+        if: steps.check-project.outputs.registered == 'true'
+        run: |
+          ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:jacocoTestReport" || true
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ matrix.module.name }}
+          path: ${{ matrix.module.path }}/build/reports/tests/test/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.module.name }}
+          path: ${{ matrix.module.path }}/build/reports/jacoco/
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: Integration Tests (requires unit tests to pass)
+  # ---------------------------------------------------------------------------
+  integration-tests:
+    name: 'Integration Tests'
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - { path: 'services/order-service', name: 'order-service' }
+          - { path: 'services/consumer-service', name: 'consumer-service' }
+          - { path: 'services/restaurant-service', name: 'restaurant-service' }
+          - { path: 'services/courier-service', name: 'courier-service' }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check if Gradle subproject is registered
+        id: check-project
+        run: |
+          GRADLE_PROJECT=$(echo "${{ matrix.module.path }}" | sed 's|/|:|g')
+          echo "gradle_project=${GRADLE_PROJECT}" >> "$GITHUB_OUTPUT"
+          if ./gradlew projects 2>/dev/null | grep -q ":${GRADLE_PROJECT}"; then
+            echo "registered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gradle subproject :${GRADLE_PROJECT} is not yet registered. Skipping."
+          fi
+
+      - name: Run integration tests
+        if: steps.check-project.outputs.registered == 'true'
+        run: |
+          ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:integrationTest" \
+            --continue
+        env:
+          GRADLE_OPTS: ${{ env.GRADLE_OPTS }}
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+
+      - name: Generate JaCoCo integration coverage report
+        if: steps.check-project.outputs.registered == 'true'
+        run: |
+          ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:jacocoIntegrationTestReport" || true
+
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-reports-${{ matrix.module.name }}
+          path: ${{ matrix.module.path }}/build/reports/tests/integrationTest/
+          retention-days: 14
+
+      - name: Upload integration coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage-report-${{ matrix.module.name }}
+          path: ${{ matrix.module.path }}/build/reports/jacoco/
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Stage 3: E2E Tests (requires integration tests to pass)
+  # ---------------------------------------------------------------------------
+  e2e-tests:
+    name: 'E2E Tests'
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check if E2E subproject is registered
+        id: check-e2e
+        run: |
+          if ./gradlew projects 2>/dev/null | grep -q ":services:e2e-tests"; then
+            echo "registered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::E2E test subproject :services:e2e-tests is not yet registered. Skipping."
+          fi
+
+      - name: Run E2E tests
+        if: steps.check-e2e.outputs.registered == 'true'
+        run: |
+          ./gradlew ":services:e2e-tests:test" --continue
+        env:
+          GRADLE_OPTS: ${{ env.GRADLE_OPTS }}
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+
+      - name: Upload E2E test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-reports
+          path: services/e2e-tests/build/reports/tests/
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Coverage Aggregation
+  # ---------------------------------------------------------------------------
+  coverage-summary:
+    name: 'Coverage Summary'
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-report-*
+          path: coverage-reports/
+
+      - name: Download integration coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: integration-coverage-report-*
+          path: integration-coverage-reports/
+
+      - name: List coverage reports
+        run: |
+          echo "=== Unit Test Coverage Reports ==="
+          find coverage-reports/ -name "*.html" -o -name "*.xml" -o -name "*.csv" 2>/dev/null || echo "No unit coverage reports found"
+          echo ""
+          echo "=== Integration Test Coverage Reports ==="
+          find integration-coverage-reports/ -name "*.html" -o -name "*.xml" -o -name "*.csv" 2>/dev/null || echo "No integration coverage reports found"
+
+      - name: Upload aggregated coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-coverage-reports
+          path: |
+            coverage-reports/
+            integration-coverage-reports/
+          retention-days: 30

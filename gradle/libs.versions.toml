@@ -73,6 +73,8 @@ testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 
 [bundles]
 spring-boot-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
@@ -80,6 +82,7 @@ spring-boot-data = ["spring-boot-starter-data-jpa", "flyway-core"]
 spring-boot-security = ["spring-boot-starter-security", "spring-boot-starter-web"]
 jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 testing = ["spring-boot-starter-test", "junit-jupiter-api", "junit-jupiter-engine", "mockito-junit-jupiter", "assertj-core"]
+testcontainers-all = ["testcontainers-core", "testcontainers-junit-jupiter", "testcontainers-mysql", "testcontainers-kafka"]
 rest-assured-all = ["rest-assured", "rest-assured-json-path", "rest-assured-spring-mock-mvc"]
 micrometer = ["micrometer-core", "micrometer-registry-prometheus"]
 observability = ["micrometer-core", "micrometer-registry-prometheus", "micrometer-observation", "spring-boot-starter-actuator"]
