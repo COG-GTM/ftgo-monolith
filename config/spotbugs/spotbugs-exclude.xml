@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    FTGO SpotBugs Exclusion Filter
+    Defines patterns to exclude from SpotBugs analysis.
+    See: docs/code-review/quality-standards.md
+-->
+<FindBugsFilter>
+
+    <!-- Exclude DTOs from mutable field exposure warnings -->
+    <Match>
+        <Or>
+            <Class name="~.*\.dto\..*"/>
+            <Class name="~.*Dto$"/>
+            <Class name="~.*DTO$"/>
+            <Class name="~.*Request$"/>
+            <Class name="~.*Response$"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude Lombok-generated code patterns -->
+    <Match>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+        <Method name="~(get|set).*"/>
+        <Class name="~.*\.domain\..*"/>
+    </Match>
+
+    <!-- Exclude JPA entities from serialization warnings -->
+    <Match>
+        <Class name="~.*\.domain\..*"/>
+        <Or>
+            <Bug pattern="SE_BAD_FIELD"/>
+            <Bug pattern="SE_NO_SERIALVERSIONID"/>
+            <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude Spring configuration classes -->
+    <Match>
+        <Or>
+            <Class name="~.*Config$"/>
+            <Class name="~.*Configuration$"/>
+            <Class name="~.*Properties$"/>
+        </Or>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+    </Match>
+
+    <!-- Exclude test classes entirely -->
+    <Match>
+        <Or>
+            <Class name="~.*Test$"/>
+            <Class name="~.*Tests$"/>
+            <Class name="~.*IT$"/>
+            <Class name="~.*TestHelper$"/>
+            <Class name="~.*TestFixture$"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude MapStruct generated implementations -->
+    <Match>
+        <Class name="~.*MapperImpl$"/>
+    </Match>
+
+    <!-- Exclude Spring Boot application entry points -->
+    <Match>
+        <Class name="~.*Application$"/>
+        <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD"/>
+    </Match>
+
+    <!-- Exclude existing monolith code from analysis -->
+    <Match>
+        <Or>
+            <Package name="~net\.chrisrichardson\.ftgo\..*"/>
+        </Or>
+    </Match>
+
+</FindBugsFilter>

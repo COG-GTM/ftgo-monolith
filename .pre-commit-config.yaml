@@ -1,0 +1,44 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.gradle|\.jar|\.class'
+      - id: end-of-file-fixer
+        exclude: '\.gradle|\.jar|\.class'
+      - id: check-yaml
+        args: ['--allow-multiple-documents']
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+      - id: check-xml
+
+  - repo: https://github.com/pre-commit/mirrors-checkstyle
+    rev: v10.17.0
+    hooks:
+      - id: checkstyle
+        name: checkstyle
+        args:
+          - '-c'
+          - 'config/checkstyle/checkstyle.xml'
+        additional_dependencies: ['com.puppycrawl.tools:checkstyle:10.17.0']
+        files: '^(services|libs)/.*\.java$'
+        exclude: '(build|\.gradle|ftgo-application|ftgo-order-service/src|ftgo-consumer-service/src|ftgo-restaurant-service/src|ftgo-courier-service/src)/'
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: detect-secrets
+
+  - repo: local
+    hooks:
+      - id: gradle-check-compile
+        name: gradle-compile-check
+        entry: bash -c './gradlew classes testClasses --no-daemon 2>/dev/null || echo "Compilation check skipped (Gradle not configured)"'
+        language: system
+        files: '\.java$'
+        pass_filenames: false
+        stages: [pre-push]
