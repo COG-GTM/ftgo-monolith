@@ -1,0 +1,65 @@
+name: 'CI: Shared Libraries'
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/microservices-migration-v2'
+    paths:
+      - 'libs/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-libs.yml'
+      - '.github/workflows/reusable-gradle-build.yml'
+  pull_request:
+    branches:
+      - main
+      - 'feat/microservices-migration-v2'
+    paths:
+      - 'libs/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-libs.yml'
+      - '.github/workflows/reusable-gradle-build.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ftgo-common:
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-common'
+      module-name: 'ftgo-common'
+
+  ftgo-common-jpa:
+    needs: ftgo-common
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-common-jpa'
+      module-name: 'ftgo-common-jpa'
+
+  ftgo-common-swagger:
+    needs: ftgo-common
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-common-swagger'
+      module-name: 'ftgo-common-swagger'
+
+  ftgo-domain:
+    needs: ftgo-common
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-domain'
+      module-name: 'ftgo-domain'
+
+  ftgo-test-util:
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      module-path: 'libs/ftgo-test-util'
+      module-name: 'ftgo-test-util'
