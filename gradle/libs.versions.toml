@@ -50,6 +50,7 @@ rest-assured-spring-mock-mvc = { module = "io.rest-assured:spring-mock-mvc", ver
 
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
@@ -77,6 +78,8 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 [bundles]
 spring-boot-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
 spring-boot-data = ["spring-boot-starter-data-jpa", "flyway-core"]
+flyway-mysql-all = ["flyway-core", "flyway-mysql"]
+flyway-postgresql-all = ["flyway-core", "flyway-postgresql"]
 spring-boot-security = ["spring-boot-starter-security", "spring-boot-starter-web"]
 jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 testing = ["spring-boot-starter-test", "junit-jupiter-api", "junit-jupiter-engine", "mockito-junit-jupiter", "assertj-core"]
