@@ -1,0 +1,21 @@
+spring:
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    out-of-order: false
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    clean-disabled: true
+
+ftgo:
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: "0"
+    validate-on-migrate: true
+    out-of-order: false
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    clean-disabled: true
