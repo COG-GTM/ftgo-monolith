@@ -1,0 +1,21 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: consumer-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ftgo_consumer_service
+    username: ${DB_USERNAME:ftgo}
+    password: ${DB_PASSWORD:ftgo}
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

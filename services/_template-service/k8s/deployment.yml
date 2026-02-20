@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __SERVICE_NAME__
+  labels:
+    app: __SERVICE_NAME__
+    part-of: ftgo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: __SERVICE_NAME__
+  template:
+    metadata:
+      labels:
+        app: __SERVICE_NAME__
+    spec:
+      containers:
+        - name: __SERVICE_NAME__
+          image: ftgo/__SERVICE_NAME__:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: __SERVICE_NAME__
+  labels:
+    app: __SERVICE_NAME__
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: __SERVICE_NAME__
