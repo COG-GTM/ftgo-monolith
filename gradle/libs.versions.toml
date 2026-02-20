@@ -3,6 +3,8 @@ java = "17"
 spring-boot = "3.2.5"
 spring-dependency-management = "1.1.4"
 micrometer = "1.12.5"
+micrometer-tracing = "1.2.5"
+prometheus-simpleclient = "0.16.0"
 junit-jupiter = "5.10.2"
 rest-assured = "5.4.0"
 flyway = "10.11.0"
@@ -33,6 +35,8 @@ spring-boot-configuration-processor = { module = "org.springframework.boot:sprin
 
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+micrometer-observation = { module = "io.micrometer:micrometer-observation", version.ref = "micrometer" }
+micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel", version.ref = "micrometer-tracing" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
@@ -74,6 +78,7 @@ jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 testing = ["spring-boot-starter-test", "junit-jupiter-api", "junit-jupiter-engine", "mockito-junit-jupiter", "assertj-core"]
 rest-assured-all = ["rest-assured", "rest-assured-json-path", "rest-assured-spring-mock-mvc"]
 micrometer = ["micrometer-core", "micrometer-registry-prometheus"]
+observability = ["micrometer-core", "micrometer-registry-prometheus", "micrometer-observation", "spring-boot-starter-actuator"]
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
