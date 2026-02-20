@@ -32,11 +32,11 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + properties.getExpiration());
 
         return Jwts.builder()
+                .claims(claims)
                 .subject(subject)
                 .issuer(properties.getIssuer())
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .claims(claims)
                 .signWith(signingKey)
                 .compact();
     }
