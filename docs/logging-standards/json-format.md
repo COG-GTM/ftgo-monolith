@@ -48,7 +48,7 @@ These fields are populated automatically by `libs/ftgo-logging` and `libs/ftgo-t
   "thread": "http-nio-8080-exec-1",
   "message": "Order created successfully",
   "service": "order-service",
-  "traceId": "a]b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5",
+  "traceId": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
   "spanId": "1a2b3c4d5e6f7a8b",
   "requestId": "550e8400-e29b-41d4-a716-446655440000",
   "userId": "consumer-123"

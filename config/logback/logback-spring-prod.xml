@@ -16,9 +16,6 @@
 
     <include resource="logback/logback-ftgo.xml"/>
 
-    <springProperty scope="context" name="SERVICE_NAME"
-                    source="spring.application.name" defaultValue="ftgo-service"/>
-
     <springProfile name="prod,production">
         <!-- FTGO application packages -->
         <logger name="com.ftgo" level="INFO"/>

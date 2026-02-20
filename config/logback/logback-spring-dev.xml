@@ -15,9 +15,6 @@
 
     <include resource="logback/logback-ftgo.xml"/>
 
-    <springProperty scope="context" name="SERVICE_NAME"
-                    source="spring.application.name" defaultValue="ftgo-service"/>
-
     <!-- Plain-text console appender for development readability -->
     <appender name="DEV_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

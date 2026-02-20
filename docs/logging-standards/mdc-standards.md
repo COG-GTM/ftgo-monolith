@@ -150,7 +150,12 @@ CompletableFuture.supplyAsync(() -> {
 
 #### Kafka Consumers
 
-For message-driven operations, extract correlation IDs from message headers and set MDC:
+For message-driven operations, extract correlation IDs from message headers and set MDC.
+
+> **Note:** Kafka consumers are an exception to the "don't manually set `traceId`" rule
+> because there is no HTTP request context for the tracing library to instrument.
+> In this case, manually restoring the `traceId` from the message header is required
+> to maintain cross-service correlation.
 
 ```java
 @KafkaListener(topics = "order-events")
