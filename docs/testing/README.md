@@ -2,6 +2,12 @@
 
 This document describes the automated testing pipeline for the FTGO microservices platform.
 
+> **See also:**
+> - [Testing Strategy](TESTING-STRATEGY.md) -- comprehensive testing strategy covering all test levels
+> - [Test Data Management](TEST-DATA-MANAGEMENT.md) -- test data creation, lifecycle, and cleanup
+> - [Test Templates](templates/) -- reusable test class templates for each layer
+> - [ftgo-test-util](../../libs/ftgo-test-util/) -- shared test utility classes
+
 ## Pipeline Overview
 
 The test pipeline runs in three sequential stages via GitHub Actions:
