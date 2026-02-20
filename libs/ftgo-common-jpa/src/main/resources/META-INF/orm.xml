@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
+        https://jakarta.ee/xml/ns/persistence/orm/orm_3_1.xsd" version="3.1">
+    <embeddable class="com.ftgo.common.Money" access="FIELD">
+        <attributes>
+            <basic name="amount">
+                <column name="amount"/>
+            </basic>
+        </attributes>
+    </embeddable>
+    <embeddable class="com.ftgo.common.Address" access="FIELD">
+        <attributes>
+            <basic name="street1">
+            </basic>
+            <basic name="street2">
+            </basic>
+            <basic name="city">
+            </basic>
+            <basic name="state">
+            </basic>
+            <basic name="zip">
+            </basic>
+        </attributes>
+    </embeddable>
+</entity-mappings>
