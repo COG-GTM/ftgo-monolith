@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.ftgo'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+dependencies {
+    api project(':libs:ftgo-common')
+    api 'io.springfox:springfox-swagger2:2.9.2'
+    api 'io.springfox:springfox-swagger-ui:2.9.2'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
