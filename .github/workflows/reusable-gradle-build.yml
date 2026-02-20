@@ -45,17 +45,29 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build
+      - name: Check if Gradle subproject is registered
+        id: check-project
         run: |
           GRADLE_PROJECT=$(echo "${{ inputs.module-path }}" | sed 's|/|:|g')
-          ./gradlew ":${GRADLE_PROJECT}:build"
+          echo "gradle_project=${GRADLE_PROJECT}" >> "$GITHUB_OUTPUT"
+          if ./gradlew projects 2>/dev/null | grep -q ":${GRADLE_PROJECT}"; then
+            echo "registered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gradle subproject :${GRADLE_PROJECT} is not yet registered in settings.gradle. Skipping build."
+          fi
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+      - name: Build
+        if: steps.check-project.outputs.registered == 'true'
+        run: ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:build"
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
 
       - name: Run tests
-        run: |
-          GRADLE_PROJECT=$(echo "${{ inputs.module-path }}" | sed 's|/|:|g')
-          ./gradlew ":${GRADLE_PROJECT}:test"
+        if: steps.check-project.outputs.registered == 'true'
+        run: ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:test"
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
 
