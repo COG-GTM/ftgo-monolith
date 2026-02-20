@@ -1,0 +1,88 @@
+{
+  "index_patterns": ["ftgo-logs-*"],
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "index.lifecycle.name": "ftgo-logs-policy",
+    "index.lifecycle.rollover_alias": "ftgo-logs",
+    "index.refresh_interval": "5s"
+  },
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "type": "date"
+      },
+      "message": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 8191
+          }
+        }
+      },
+      "service_name": {
+        "type": "keyword"
+      },
+      "log_level": {
+        "type": "keyword"
+      },
+      "trace_id": {
+        "type": "keyword"
+      },
+      "span_id": {
+        "type": "keyword"
+      },
+      "log": {
+        "properties": {
+          "timestamp": {
+            "type": "date"
+          },
+          "level": {
+            "type": "keyword"
+          },
+          "logger": {
+            "type": "keyword"
+          },
+          "thread": {
+            "type": "keyword"
+          },
+          "message": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 8191
+              }
+            }
+          },
+          "service": {
+            "type": "keyword"
+          },
+          "traceId": {
+            "type": "keyword"
+          },
+          "spanId": {
+            "type": "keyword"
+          },
+          "requestId": {
+            "type": "keyword"
+          },
+          "userId": {
+            "type": "keyword"
+          },
+          "exception": {
+            "type": "text"
+          },
+          "stackTrace": {
+            "type": "text"
+          },
+          "context": {
+            "type": "object",
+            "dynamic": true
+          }
+        }
+      }
+    }
+  }
+}

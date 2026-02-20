@@ -1,0 +1,44 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.ftgo'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'ch.qos.logback:logback-classic:1.4.14'
+    api 'ch.qos.logback:logback-core:1.4.14'
+    api 'org.slf4j:slf4j-api:2.0.12'
+    api 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.5'
+    implementation 'org.springframework.boot:spring-boot-starter:3.2.5'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+    compileOnly 'io.micrometer:micrometer-tracing:1.2.5'
+    compileOnly 'io.opentelemetry:opentelemetry-api:1.36.0'
+    compileOnly 'io.opentelemetry:opentelemetry-context:1.36.0'
+    compileOnly 'org.springframework.boot:spring-boot-starter-web:3.2.5'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:3.2.5'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.2.5'
+    testImplementation 'io.micrometer:micrometer-tracing:1.2.5'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    withSourcesJar()
+}
