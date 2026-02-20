@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  health:
+    defaults:
+      enabled: true
+
+ftgo:
+  jwt:
+    secret: ${JWT_SECRET:default-secret-key-for-development-only-change-in-production-min-32-chars}
+    expiration: 3600000
+    issuer: ftgo-platform
+    header: Authorization
+    prefix: "Bearer "
+  gateway:
+    cors:
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:8080
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      allowed-headers:
+        - "*"
+      exposed-headers:
+        - X-Correlation-Id
+        - X-RateLimit-Remaining
+        - X-RateLimit-Limit
+      allow-credentials: true
+      max-age: 3600
+    default-rate-limit:
+      requests-per-second: 100
+      burst-capacity: 150
+    routes:
+      - id: order-service
+        path: /api/orders/**
+        uri: ${ORDER_SERVICE_URL:http://localhost:8081}
+        strip-prefix: 1
+        auth-required: true
+        rate-limit: 100
+        burst-capacity: 150
+      - id: consumer-service
+        path: /api/consumers/**
+        uri: ${CONSUMER_SERVICE_URL:http://localhost:8082}
+        strip-prefix: 1
+        auth-required: true
+        rate-limit: 100
+        burst-capacity: 150
+      - id: restaurant-service
+        path: /api/restaurants/**
+        uri: ${RESTAURANT_SERVICE_URL:http://localhost:8083}
+        strip-prefix: 1
+        auth-required: true
+        rate-limit: 100
+        burst-capacity: 150
+      - id: courier-service
+        path: /api/couriers/**
+        uri: ${COURIER_SERVICE_URL:http://localhost:8084}
+        strip-prefix: 1
+        auth-required: true
+        rate-limit: 100
+        burst-capacity: 150
+
+logging:
+  level:
+    com.ftgo.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
