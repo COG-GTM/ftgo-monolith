@@ -27,7 +27,9 @@ spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure" }
 spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
 
@@ -70,6 +72,7 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 [bundles]
 spring-boot-web = ["spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
 spring-boot-data = ["spring-boot-starter-data-jpa", "flyway-core"]
+spring-boot-security = ["spring-boot-starter-security", "spring-boot-starter-web"]
 jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 testing = ["spring-boot-starter-test", "junit-jupiter-api", "junit-jupiter-engine", "mockito-junit-jupiter", "assertj-core"]
 rest-assured-all = ["rest-assured", "rest-assured-json-path", "rest-assured-spring-mock-mvc"]
