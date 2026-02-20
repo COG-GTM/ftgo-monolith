@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FTGO Logback Configuration - Production Environment
+
+  Features:
+  - Structured JSON console output
+  - INFO level for application, WARN for frameworks
+  - Logstash TCP shipping enabled
+  - Conservative log levels to minimize volume
+  - No SQL logging, no framework debug output
+
+  Usage: Copy to src/main/resources/logback-spring.xml in your service.
+  Activate with: spring.profiles.active=prod
+-->
+<configuration>
+
+    <include resource="logback/logback-ftgo.xml"/>
+
+    <springProperty scope="context" name="SERVICE_NAME"
+                    source="spring.application.name" defaultValue="ftgo-service"/>
+
+    <springProfile name="prod,production">
+        <!-- FTGO application packages -->
+        <logger name="com.ftgo" level="INFO"/>
+        <logger name="com.ftgo.*.repository" level="WARN"/>
+
+        <!-- Spring Framework -->
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+
+        <!-- Hibernate / JPA - no SQL logging in production -->
+        <logger name="org.hibernate.SQL" level="ERROR"/>
+        <logger name="org.hibernate.type.descriptor.sql" level="ERROR"/>
+
+        <!-- Kafka -->
+        <logger name="org.apache.kafka" level="WARN"/>
+
+        <!-- Resilience4j -->
+        <logger name="io.github.resilience4j" level="WARN"/>
+
+        <!-- Flyway -->
+        <logger name="org.flywaydb" level="WARN"/>
+
+        <!-- Micrometer / Observability -->
+        <logger name="io.micrometer" level="WARN"/>
+
+        <!-- Logstash encoder -->
+        <logger name="net.logstash" level="ERROR"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </root>
+    </springProfile>
+
+</configuration>
