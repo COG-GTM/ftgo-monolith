@@ -1,0 +1,80 @@
+name: Reusable Gradle Build
+
+on:
+  workflow_call:
+    inputs:
+      module-path:
+        description: 'Filesystem path to the module (e.g., services/order-service)'
+        required: true
+        type: string
+      module-name:
+        description: 'Display name for the module'
+        required: true
+        type: string
+      java-version:
+        description: 'Java version to use'
+        required: false
+        type: string
+        default: '17'
+
+jobs:
+  build:
+    name: Build ${{ inputs.module-name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check if Gradle subproject is registered
+        id: check-project
+        run: |
+          GRADLE_PROJECT=$(echo "${{ inputs.module-path }}" | sed 's|/|:|g')
+          echo "gradle_project=${GRADLE_PROJECT}" >> "$GITHUB_OUTPUT"
+          if ./gradlew projects 2>/dev/null | grep -q ":${GRADLE_PROJECT}"; then
+            echo "registered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gradle subproject :${GRADLE_PROJECT} is not yet registered in settings.gradle. Skipping build."
+          fi
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+      - name: Build
+        if: steps.check-project.outputs.registered == 'true'
+        run: ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:build"
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+      - name: Run tests
+        if: steps.check-project.outputs.registered == 'true'
+        run: ./gradlew ":${{ steps.check-project.outputs.gradle_project }}:test"
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ inputs.module-name }}
+          path: ${{ inputs.module-path }}/build/reports/tests/
+          retention-days: 14
