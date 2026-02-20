@@ -1,0 +1,241 @@
+name: 'Deploy: Kubernetes'
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      service:
+        description: 'Service to deploy (or "all" for all services)'
+        required: true
+        type: choice
+        options:
+          - all
+          - consumer-service
+          - courier-service
+          - order-service
+          - restaurant-service
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        default: 'latest'
+      dry_run:
+        description: 'Dry run (validate only, do not apply)'
+        required: false
+        type: boolean
+        default: false
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/k8s/**'
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  KUSTOMIZE_VERSION: '5.3.0'
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Validate base manifests
+        run: |
+          echo "Validating base Kustomize manifests..."
+          kustomize build infrastructure/k8s/base > /dev/null
+          echo "Base manifests are valid."
+
+      - name: Validate overlay - dev
+        run: |
+          echo "Validating dev overlay..."
+          kustomize build infrastructure/k8s/overlays/dev > /dev/null
+          echo "Dev overlay is valid."
+
+      - name: Validate overlay - staging
+        run: |
+          echo "Validating staging overlay..."
+          kustomize build infrastructure/k8s/overlays/staging > /dev/null
+          echo "Staging overlay is valid."
+
+      - name: Validate overlay - production
+        run: |
+          echo "Validating production overlay..."
+          kustomize build infrastructure/k8s/overlays/production > /dev/null
+          echo "Production overlay is valid."
+
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment }}
+    needs: validate
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Set kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Set image tag
+        working-directory: infrastructure/k8s/overlays/${{ github.event.inputs.environment }}
+        run: |
+          SERVICES="${{ github.event.inputs.service }}"
+          TAG="${{ github.event.inputs.image_tag }}"
+
+          if [ "$SERVICES" = "all" ]; then
+            SERVICES="consumer-service courier-service order-service restaurant-service"
+          fi
+
+          for SERVICE in $SERVICES; do
+            echo "Setting image for $SERVICE to tag: $TAG"
+            kustomize edit set image "ftgo/$SERVICE=ftgo/$SERVICE:$TAG"
+          done
+
+      - name: Build manifests
+        id: build
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          echo "Building manifests for $ENV environment..."
+          kustomize build "infrastructure/k8s/overlays/$ENV" > /tmp/manifests.yaml
+          echo "Generated manifests:"
+          cat /tmp/manifests.yaml
+
+      - name: Dry run
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "Performing dry run..."
+          kubectl apply --dry-run=server -f /tmp/manifests.yaml
+          echo "Dry run completed successfully."
+
+      - name: Apply manifests
+        if: github.event.inputs.dry_run == 'false'
+        run: |
+          echo "Applying manifests to ${{ github.event.inputs.environment }}..."
+          kubectl apply -f /tmp/manifests.yaml
+          echo "Manifests applied successfully."
+
+      - name: Wait for rollout
+        if: github.event.inputs.dry_run == 'false'
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          SERVICES="${{ github.event.inputs.service }}"
+          NS="ftgo-$ENV"
+
+          if [ "$ENV" = "production" ]; then
+            NS="ftgo-production"
+          fi
+
+          if [ "$SERVICES" = "all" ]; then
+            SERVICES="consumer-service courier-service order-service restaurant-service"
+          fi
+
+          PREFIX=""
+          case "$ENV" in
+            dev) PREFIX="dev-" ;;
+            staging) PREFIX="staging-" ;;
+            production) PREFIX="prod-" ;;
+          esac
+
+          for SERVICE in $SERVICES; do
+            DEPLOY_NAME="${PREFIX}${SERVICE}"
+            echo "Waiting for rollout of $DEPLOY_NAME in namespace $NS..."
+            kubectl rollout status "deployment/$DEPLOY_NAME" \
+              --namespace "$NS" \
+              --timeout=300s
+          done
+
+      - name: Verify deployment health
+        if: github.event.inputs.dry_run == 'false'
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          NS="ftgo-$ENV"
+          if [ "$ENV" = "production" ]; then
+            NS="ftgo-production"
+          fi
+
+          echo "Checking pod status in namespace $NS..."
+          kubectl get pods --namespace "$NS" -o wide
+          echo ""
+          echo "Checking services in namespace $NS..."
+          kubectl get services --namespace "$NS"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | ${{ github.event.inputs.service }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image Tag | ${{ github.event.inputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry Run | ${{ github.event.inputs.dry_run }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+
+  promote:
+    name: Promote ${{ github.event.inputs.service }} to next environment
+    needs: deploy
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.dry_run == 'false' &&
+      github.event.inputs.environment != 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine next environment
+        id: next-env
+        run: |
+          CURRENT="${{ github.event.inputs.environment }}"
+          case "$CURRENT" in
+            dev)
+              echo "next=staging" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "next=production" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Create promotion summary
+        run: |
+          NEXT="${{ steps.next-env.outputs.next }}"
+          echo "## Promotion Available" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment to **${{ github.event.inputs.environment }}** succeeded." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To promote to **$NEXT**, trigger this workflow again with:" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: \`$NEXT\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Service: \`${{ github.event.inputs.service }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Image Tag: \`${{ github.event.inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Recommended**: Run with \`dry_run: true\` first to validate." >> $GITHUB_STEP_SUMMARY

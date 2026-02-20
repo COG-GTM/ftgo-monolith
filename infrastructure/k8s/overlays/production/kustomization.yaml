@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-production
+
+namePrefix: prod-
+
+labels:
+  - pairs:
+      app.kubernetes.io/environment: production
+    includeSelectors: false
+
+commonAnnotations:
+  environment: production
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - pdb.yaml
+
+patches:
+  - path: patches/replicas.yaml
+  - path: patches/resource-limits.yaml
+
+configMapGenerator:
+  - name: consumer-service-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,production
+      - LOGGING_LEVEL_ROOT=WARN
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
+  - name: courier-service-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,production
+      - LOGGING_LEVEL_ROOT=WARN
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
+  - name: order-service-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,production
+      - LOGGING_LEVEL_ROOT=WARN
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
+  - name: restaurant-service-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,production
+      - LOGGING_LEVEL_ROOT=WARN
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
