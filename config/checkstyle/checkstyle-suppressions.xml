@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    FTGO Checkstyle Suppressions
+    Add entries here for legitimate exceptions to Checkstyle rules.
+-->
+<suppressions>
+    <!-- Test classes may use magic numbers for assertions -->
+    <suppress files=".*Test\.java" checks="MagicNumber"/>
+    <suppress files=".*Tests\.java" checks="MagicNumber"/>
+    <suppress files=".*IT\.java" checks="MagicNumber"/>
+
+    <!-- Test methods can be longer for setup/teardown -->
+    <suppress files=".*Test\.java" checks="MethodLength"/>
+    <suppress files=".*Tests\.java" checks="MethodLength"/>
+    <suppress files=".*IT\.java" checks="MethodLength"/>
+
+    <!-- Test files can be longer -->
+    <suppress files=".*Test\.java" checks="FileLength"/>
+    <suppress files=".*Tests\.java" checks="FileLength"/>
+    <suppress files=".*IT\.java" checks="FileLength"/>
+
+    <!-- Generated sources (MapStruct, etc.) -->
+    <suppress files=".*Impl\.java" checks=".*" message="Generated"/>
+
+    <!-- Configuration classes may have many parameters -->
+    <suppress files=".*Config\.java" checks="ParameterNumber"/>
+    <suppress files=".*Configuration\.java" checks="ParameterNumber"/>
+
+    <!-- DTOs and entities may expose mutable fields -->
+    <suppress files=".*Dto\.java" checks="MemberName"/>
+    <suppress files=".*DTO\.java" checks="MemberName"/>
+
+    <!-- Allow star imports in test classes for static assertions -->
+    <suppress files=".*Test\.java" checks="AvoidStarImport"/>
+    <suppress files=".*Tests\.java" checks="AvoidStarImport"/>
+
+    <!-- Existing monolith code is excluded from checks -->
+    <suppress files="ftgo-application[/\\]" checks=".*"/>
+    <suppress files="ftgo-order-service[/\\]src[/\\]" checks=".*"/>
+    <suppress files="ftgo-consumer-service[/\\]src[/\\]" checks=".*"/>
+    <suppress files="ftgo-restaurant-service[/\\]src[/\\]" checks=".*"/>
+    <suppress files="ftgo-courier-service[/\\]src[/\\]" checks=".*"/>
+    <suppress files="ftgo-order-service-api[/\\]" checks=".*"/>
+    <suppress files="ftgo-consumer-service-api[/\\]" checks=".*"/>
+    <suppress files="ftgo-restaurant-service-api[/\\]" checks=".*"/>
+    <suppress files="ftgo-courier-service-api[/\\]" checks=".*"/>
+    <suppress files="ftgo-end-to-end-tests[/\\]" checks=".*"/>
+    <suppress files="ftgo-end-to-end-tests-common[/\\]" checks=".*"/>
+    <suppress files="ftgo-flyway[/\\]" checks=".*"/>
+    <suppress files="ftgo-test-util[/\\]src[/\\]" checks=".*"/>
+    <suppress files="common-swagger[/\\]" checks=".*"/>
+    <suppress files="buildSrc[/\\]" checks=".*"/>
+</suppressions>
