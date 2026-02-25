@@ -1,10 +1,79 @@
-// ftgo-common-jpa - Shared JPA utilities and base entities
+// ============================================================
+// ftgo-common-jpa - Shared JPA utilities and ORM mappings
+// ============================================================
+// Standalone versioned library extracted from the monolith.
 // Package: com.ftgo.common.jpa
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-common-jpa:publishToMavenLocal
+//   ./gradlew :shared:ftgo-common-jpa:publish
+// ============================================================
+
+apply plugin: 'maven-publish'
+
+// Library version - follows semantic versioning
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
 
 dependencies {
+    // Depend on ftgo-common for shared value objects (Money, Address, PersonName)
     compile project(":shared:ftgo-common")
 
+    // JPA / Hibernate for ORM mapping support
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
 
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // MySQL connector (runtime only - for integration tests)
+    runtime 'mysql:mysql-connector-java:5.1.39'
+
+    // JAXB runtime dependencies (Java 9+ compatibility)
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library as com.ftgo:ftgo-common-jpa:1.0.0-SNAPSHOT
+// Microservices declare: implementation 'com.ftgo:ftgo-common-jpa:1.0.0-SNAPSHOT'
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-common-jpa'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Common JPA Library'
+                description = 'Shared JPA utilities, ORM mappings for common value objects (Money, Address, PersonName) used across FTGO microservices'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        // Local file-based repository (CI can override with Nexus/Artifactory URL)
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
 }
