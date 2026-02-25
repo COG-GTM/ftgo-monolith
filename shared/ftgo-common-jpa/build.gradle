@@ -1,0 +1,10 @@
+// ftgo-common-jpa - Shared JPA utilities and base entities
+// Package: com.ftgo.common.jpa
+
+dependencies {
+    compile project(":shared:ftgo-common")
+
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}

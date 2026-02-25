@@ -1,0 +1,6 @@
+// common-swagger - Shared Swagger/OpenAPI configuration
+// Package: com.ftgo.common.swagger
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+}

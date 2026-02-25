@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo
+
+resources:
+  - namespace.yaml
+  - ../../services/ftgo-order-service/k8s/deployment.yaml
+  - ../../services/ftgo-consumer-service/k8s/deployment.yaml
+  - ../../services/ftgo-restaurant-service/k8s/deployment.yaml
+  - ../../services/ftgo-courier-service/k8s/deployment.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: ftgo-platform
