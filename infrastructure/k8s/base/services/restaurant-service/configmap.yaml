@@ -1,0 +1,23 @@
+# ============================================================
+# FTGO Restaurant Service - ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-restaurant-service-config
+  labels:
+    app.kubernetes.io/name: ftgo-restaurant-service
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: ftgo-platform
+data:
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+  SERVER_PORT: "8083"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "10"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_FLYWAY_ENABLED: "true"
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_FTGO: "INFO"

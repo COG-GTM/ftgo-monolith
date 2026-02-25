@@ -1,0 +1,40 @@
+# Dev: Debug-level logging and relaxed pool sizes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-order-service-config
+data:
+  LOGGING_LEVEL_ROOT: "DEBUG"
+  LOGGING_LEVEL_COM_FTGO: "DEBUG"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-consumer-service-config
+data:
+  LOGGING_LEVEL_ROOT: "DEBUG"
+  LOGGING_LEVEL_COM_FTGO: "DEBUG"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-restaurant-service-config
+data:
+  LOGGING_LEVEL_ROOT: "DEBUG"
+  LOGGING_LEVEL_COM_FTGO: "DEBUG"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-courier-service-config
+data:
+  LOGGING_LEVEL_ROOT: "DEBUG"
+  LOGGING_LEVEL_COM_FTGO: "DEBUG"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"

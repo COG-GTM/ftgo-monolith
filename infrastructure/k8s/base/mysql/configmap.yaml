@@ -1,0 +1,17 @@
+# ============================================================
+# FTGO MySQL ConfigMap - Non-sensitive configuration
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-mysql-config
+  labels:
+    app.kubernetes.io/name: ftgo-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ftgo-platform
+data:
+  database-name: "ftgo"
+  mysql-port: "3306"
+  max-connections: "151"
+  character-set-server: "utf8mb4"
+  collation-server: "utf8mb4_unicode_ci"

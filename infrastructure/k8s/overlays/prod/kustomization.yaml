@@ -5,11 +5,38 @@ namespace: ftgo-prod
 
 resources:
   - ../../base
-
-namePrefix: prod-
+  # Production PodDisruptionBudgets (new resources, not patches)
+  - patches/pod-disruption-budget.yaml
 
 commonLabels:
   environment: production
 
-patchesStrategicMerge: []
-# Add environment-specific patches here (replica counts, resource limits, etc.)
+# Production image tags - pinned to specific versions (updated by CD pipeline)
+images:
+  - name: ftgo/ftgo-order-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-order-service
+    newTag: latest
+  - name: ftgo/ftgo-consumer-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-consumer-service
+    newTag: latest
+  - name: ftgo/ftgo-restaurant-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-restaurant-service
+    newTag: latest
+  - name: ftgo/ftgo-courier-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-courier-service
+    newTag: latest
+  - name: mysql
+    newTag: "8.0"
+
+# Production-specific patches
+patches:
+  # Production replicas (higher)
+  - path: patches/replicas.yaml
+  # Production resource limits (higher)
+  - path: patches/resources.yaml
+  # Production ConfigMap values
+  - path: patches/configmap-overrides.yaml
+  # Production MySQL storage
+  - path: patches/mysql-storage.yaml
+  # Production ingress with TLS
+  - path: patches/ingress-host.yaml

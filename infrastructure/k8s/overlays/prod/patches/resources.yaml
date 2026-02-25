@@ -1,0 +1,86 @@
+# Production: Higher resource limits
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-order-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-order-service
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-consumer-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-consumer-service
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-restaurant-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-restaurant-service
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-courier-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-courier-service
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+# Production: Higher MySQL resources
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ftgo-mysql
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"

@@ -1,0 +1,40 @@
+# Production: WARN-level logging, higher pool sizes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-order-service-config
+data:
+  LOGGING_LEVEL_ROOT: "WARN"
+  LOGGING_LEVEL_COM_FTGO: "INFO"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "10"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-consumer-service-config
+data:
+  LOGGING_LEVEL_ROOT: "WARN"
+  LOGGING_LEVEL_COM_FTGO: "INFO"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "10"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-restaurant-service-config
+data:
+  LOGGING_LEVEL_ROOT: "WARN"
+  LOGGING_LEVEL_COM_FTGO: "INFO"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "10"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-courier-service-config
+data:
+  LOGGING_LEVEL_ROOT: "WARN"
+  LOGGING_LEVEL_COM_FTGO: "INFO"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "10"
