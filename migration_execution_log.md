@@ -10,8 +10,8 @@
 | Batch | Jira Key | Summary | Phase | Session Status | PR Link | Squash Status | Conflicts Resolved |
 |-------|----------|---------|-------|----------------|---------|---------------|-------------------|
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | 1 | Completed | [PR #63](https://github.com/COG-GTM/ftgo-monolith/pull/63) | Success | None |
-| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | 1 | Pending | - | - | - |
-| 2 | EM-32 | Extract and Version ftgo-common Shared Library | 1 | Pending | - | - | - |
+| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | 1 | Completed | [PR #65](https://github.com/COG-GTM/ftgo-monolith/pull/65) | Success | None |
+| 2 | EM-32 | Extract and Version ftgo-common Shared Library | 1 | Completed | [PR #64](https://github.com/COG-GTM/ftgo-monolith/pull/64) | Success | None |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Pending | - | - | - |
 | 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | 2 | Pending | - | - | - |
 | 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Pending | - | - | - |
@@ -41,8 +41,10 @@
 - **Notes:** Clean squash, no conflicts. Pre-existing build failure in ftgo-end-to-end-tests-common (eventuate-util-test dependency) unrelated to changes.
 
 ### Batch 2
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-28, EM-32
+- **SHA after squash:** `cc214da`
+- **Notes:** Both squashes clean, no conflicts. Build passes. Gradle upgraded 4.10.2→8.5, version catalog + convention plugins added, ftgo-common extracted as versioned shared library.
 
 ### Batch 3
 - **Status:** Not started
