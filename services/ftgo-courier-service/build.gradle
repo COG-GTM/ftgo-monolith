@@ -1,0 +1,20 @@
+// ftgo-courier-service - Courier bounded context microservice
+// Package: com.ftgo.courier
+
+dependencies {
+    compile project(":shared:ftgo-courier-service-api")
+    compile project(":shared:common-swagger")
+    compile project(":shared:ftgo-domain")
+
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile 'javax.el:javax.el-api:2.2.5'
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile 'io.rest-assured:rest-assured:3.0.6'
+    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
+    testCompile "io.rest-assured:json-path:3.0.6"
+    testCompile project(":shared:ftgo-test-util")
+}

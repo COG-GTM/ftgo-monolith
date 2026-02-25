@@ -1,0 +1,76 @@
+# ============================================================
+# FTGO Microservices - Docker Compose (Services)
+# ============================================================
+# This file defines the microservices for local development.
+# Use in conjunction with the root docker-compose.yml for infrastructure.
+
+version: '3.8'
+
+services:
+  ftgo-order-service:
+    build:
+      context: ../../services/ftgo-order-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ftgo_order_service
+      - SPRING_DATASOURCE_USERNAME=ftgo_user
+      - SPRING_DATASOURCE_PASSWORD=ftgo_password
+    depends_on:
+      - mysql
+    networks:
+      - ftgo-network
+
+  ftgo-consumer-service:
+    build:
+      context: ../../services/ftgo-consumer-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ftgo_consumer_service
+      - SPRING_DATASOURCE_USERNAME=ftgo_user
+      - SPRING_DATASOURCE_PASSWORD=ftgo_password
+    depends_on:
+      - mysql
+    networks:
+      - ftgo-network
+
+  ftgo-restaurant-service:
+    build:
+      context: ../../services/ftgo-restaurant-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ftgo_restaurant_service
+      - SPRING_DATASOURCE_USERNAME=ftgo_user
+      - SPRING_DATASOURCE_PASSWORD=ftgo_password
+    depends_on:
+      - mysql
+    networks:
+      - ftgo-network
+
+  ftgo-courier-service:
+    build:
+      context: ../../services/ftgo-courier-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ftgo_courier_service
+      - SPRING_DATASOURCE_USERNAME=ftgo_user
+      - SPRING_DATASOURCE_PASSWORD=ftgo_password
+    depends_on:
+      - mysql
+    networks:
+      - ftgo-network
+
+networks:
+  ftgo-network:
+    driver: bridge
