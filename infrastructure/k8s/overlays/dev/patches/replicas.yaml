@@ -1,0 +1,61 @@
+# Dev: Single replica per service to save resources
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-order-service
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-consumer-service
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-restaurant-service
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-courier-service
+spec:
+  replicas: 1
+---
+# Disable HPA in dev (single replica)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ftgo-order-service-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 2
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ftgo-consumer-service-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 2
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ftgo-restaurant-service-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 2
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ftgo-courier-service-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 2

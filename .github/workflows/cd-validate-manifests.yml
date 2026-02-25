@@ -1,0 +1,141 @@
+---
+# ============================================================
+# CD Pipeline: Validate Kubernetes Manifests
+# ============================================================
+# Validates Kustomize overlays and K8s manifests on pull requests.
+# Ensures manifests are syntactically correct and can be rendered
+# before merging changes.
+# ============================================================
+
+name: "CD: Validate K8s Manifests"
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/k8s/**"
+      - "services/*/k8s/**"
+      - ".github/workflows/cd-*.yml"
+
+permissions:
+  contents: read
+
+env:
+  KUSTOMIZE_VERSION: "5.3.0"
+
+jobs:
+  validate:
+    name: "Validate Manifests"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, staging, prod]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Kustomize
+        run: |
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | \
+            tar xz -C /usr/local/bin/
+
+      - name: Validate ${{ matrix.environment }} overlay
+        run: |
+          OVERLAY="infrastructure/k8s/overlays/${{ matrix.environment }}"
+          echo "Validating: ${OVERLAY}"
+
+          # Verify the overlay directory exists
+          if [ ! -d "${OVERLAY}" ]; then
+            echo "::error::Overlay directory not found: ${OVERLAY}"
+            exit 1
+          fi
+
+          # Build and validate
+          kustomize build "${OVERLAY}" > /tmp/rendered.yaml
+
+          # Check for empty output
+          if [ ! -s /tmp/rendered.yaml ]; then
+            echo "::error::Kustomize build produced empty output for ${{ matrix.environment }}"
+            exit 1
+          fi
+
+          # Count resources
+          RESOURCE_COUNT=$(grep -c '^kind:' /tmp/rendered.yaml || true)
+          echo "Rendered ${RESOURCE_COUNT} resources for ${{ matrix.environment }}"
+
+          # Validate YAML syntax
+          python3 -c "
+          import yaml, sys
+          with open('/tmp/rendered.yaml') as f:
+              try:
+                  list(yaml.safe_load_all(f))
+                  print('YAML syntax is valid')
+              except yaml.YAMLError as e:
+                  print(f'YAML syntax error: {e}', file=sys.stderr)
+                  sys.exit(1)
+          "
+
+      - name: Show rendered manifest summary
+        run: |
+          echo "## ${{ matrix.environment }} Manifests" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Resources" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kustomize build "infrastructure/k8s/overlays/${{ matrix.environment }}" | \
+            grep -E '^(kind:|  name:)' | paste - - >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ----------------------------------------------------------
+  # Verify no hardcoded secrets
+  # ----------------------------------------------------------
+  security-check:
+    name: "Security: Check for Hardcoded Secrets"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for hardcoded credentials
+        run: |
+          echo "Scanning K8s manifests for hardcoded credentials..."
+          FAILED=0
+
+          # Check for common hardcoded password patterns in K8s files
+          # Exclude known placeholder/template files
+          while IFS= read -r file; do
+            # Skip external-secrets templates and the legacy deployment directory
+            if echo "${file}" | grep -qE '(external-secrets|deployment/kubernetes)'; then
+              continue
+            fi
+
+            # Check for hardcoded password values (not Secret references)
+            if grep -qiE '(password|passwd|secret):\s*(root|admin|mysql|password|default)' "${file}" 2>/dev/null; then
+              echo "::warning file=${file}::Potential hardcoded credential found"
+              FAILED=$((FAILED + 1))
+            fi
+          done < <(find infrastructure/k8s services/*/k8s -name '*.yaml' -o -name '*.yml' 2>/dev/null)
+
+          if [ $FAILED -gt 0 ]; then
+            echo "::warning::Found ${FAILED} file(s) with potential hardcoded credentials"
+          else
+            echo "No hardcoded credentials found"
+          fi
+
+      - name: Verify secrets use SecretKeyRef
+        run: |
+          echo "Verifying service deployments use secretKeyRef..."
+
+          for SERVICE_DIR in services/*/k8s; do
+            if [ -f "${SERVICE_DIR}/deployment.yaml" ]; then
+              SERVICE=$(basename "$(dirname "${SERVICE_DIR}")")
+
+              # Check that sensitive env vars use secretKeyRef
+              if grep -q 'SPRING_DATASOURCE_PASSWORD' "${SERVICE_DIR}/deployment.yaml"; then
+                if ! grep -A2 'SPRING_DATASOURCE_PASSWORD' "${SERVICE_DIR}/deployment.yaml" | grep -q 'secretKeyRef'; then
+                  echo "::error::${SERVICE}: SPRING_DATASOURCE_PASSWORD should use secretKeyRef"
+                fi
+              fi
+
+              echo "${SERVICE}: Secret references verified"
+            fi
+          done

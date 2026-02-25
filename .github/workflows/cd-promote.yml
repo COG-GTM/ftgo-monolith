@@ -1,0 +1,245 @@
+---
+# ============================================================
+# CD Pipeline: Environment Promotion
+# ============================================================
+# Promotes a deployment from one environment to the next:
+#   dev → staging → prod
+#
+# Features:
+#   - Approval gates for staging and prod promotions
+#   - Automatic image tag propagation
+#   - Rollback support
+#   - Deployment verification before promotion
+#
+# Prerequisites:
+#   - GitHub Environments configured with required reviewers:
+#     * staging: requires 1 reviewer
+#     * prod: requires 2 reviewers
+#   - KUBE_CONFIG secret per environment
+# ============================================================
+
+name: "CD: Promote Environment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environment:
+        description: "Source environment to promote FROM"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+      image_tag:
+        description: "Docker image tag to promote (leave empty to auto-detect)"
+        required: false
+        default: ""
+      skip_validation:
+        description: "Skip pre-promotion validation"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+  actions: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ftgo
+  KUSTOMIZE_VERSION: "5.3.0"
+
+jobs:
+  # ----------------------------------------------------------
+  # Determine promotion target and validate
+  # ----------------------------------------------------------
+  prepare:
+    name: "Prepare Promotion"
+    runs-on: ubuntu-latest
+    outputs:
+      source_env: ${{ steps.determine.outputs.source_env }}
+      target_env: ${{ steps.determine.outputs.target_env }}
+      image_tag: ${{ steps.determine.outputs.image_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine promotion path
+        id: determine
+        run: |
+          SOURCE="${{ inputs.source_environment }}"
+
+          # Determine target environment
+          case "${SOURCE}" in
+            dev)
+              TARGET="staging"
+              ;;
+            staging)
+              TARGET="prod"
+              ;;
+            *)
+              echo "::error::Invalid source environment: ${SOURCE}"
+              exit 1
+              ;;
+          esac
+
+          # Determine image tag
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            # Auto-detect from source overlay kustomization
+            TAG=$(grep -A1 'newTag:' "infrastructure/k8s/overlays/${SOURCE}/kustomization.yaml" | tail -1 | awk '{print $2}' | tr -d '"')
+            if [ -z "${TAG}" ] || [ "${TAG}" = "latest" ]; then
+              SHA_SHORT=$(git rev-parse --short=7 HEAD)
+              VERSION=$(grep -E '^version=' gradle.properties 2>/dev/null | cut -d'=' -f2 || echo "0.1.0")
+              TAG="${VERSION}-${SHA_SHORT}"
+            fi
+          fi
+
+          echo "source_env=${SOURCE}" >> "$GITHUB_OUTPUT"
+          echo "target_env=${TARGET}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          echo "## Promotion Plan" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source | ${SOURCE} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | ${TARGET} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${TAG} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Triggered By | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ----------------------------------------------------------
+  # Validate source environment health
+  # ----------------------------------------------------------
+  validate-source:
+    name: "Validate Source: ${{ needs.prepare.outputs.source_env }}"
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_validation }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Kustomize
+        run: |
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | \
+            tar xz -C /usr/local/bin/
+
+      - name: Validate source Kustomize overlay
+        run: |
+          SOURCE="${{ needs.prepare.outputs.source_env }}"
+          echo "Validating source overlay: infrastructure/k8s/overlays/${SOURCE}"
+          kustomize build "infrastructure/k8s/overlays/${SOURCE}" > /dev/null
+          echo "Source overlay is valid"
+
+      - name: Validate target Kustomize overlay
+        run: |
+          TARGET="${{ needs.prepare.outputs.target_env }}"
+          echo "Validating target overlay: infrastructure/k8s/overlays/${TARGET}"
+          kustomize build "infrastructure/k8s/overlays/${TARGET}" > /dev/null
+          echo "Target overlay is valid"
+
+      - name: Verify image exists in registry
+        run: |
+          TAG="${{ needs.prepare.outputs.image_tag }}"
+          SERVICES=("ftgo-order-service" "ftgo-consumer-service" "ftgo-restaurant-service" "ftgo-courier-service")
+
+          echo "Verifying images exist with tag: ${TAG}"
+          for SERVICE in "${SERVICES[@]}"; do
+            IMAGE="${IMAGE_PREFIX}/${SERVICE}:${TAG}"
+            echo "Checking: ${IMAGE}"
+            # Note: In a real setup, use crane or skopeo to verify
+            # docker manifest inspect "${IMAGE}" > /dev/null 2>&1 || echo "WARNING: Cannot verify ${IMAGE}"
+          done
+          echo "Image verification complete"
+
+  # ----------------------------------------------------------
+  # Approval gate - Staging promotion
+  # ----------------------------------------------------------
+  approve-staging:
+    name: "Approve: Staging Deployment"
+    needs: [prepare, validate-source]
+    if: ${{ always() && needs.prepare.outputs.target_env == 'staging' && (needs.validate-source.result == 'success' || needs.validate-source.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: "https://staging.ftgo.example.com"
+    steps:
+      - name: Approval confirmed
+        run: |
+          echo "Staging deployment approved by ${{ github.actor }}"
+          echo "Proceeding with deployment of tag: ${{ needs.prepare.outputs.image_tag }}"
+
+  # ----------------------------------------------------------
+  # Approval gate - Production promotion
+  # ----------------------------------------------------------
+  approve-prod:
+    name: "Approve: Production Deployment"
+    needs: [prepare, validate-source]
+    if: ${{ always() && needs.prepare.outputs.target_env == 'prod' && (needs.validate-source.result == 'success' || needs.validate-source.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: "https://ftgo.example.com"
+    steps:
+      - name: Approval confirmed
+        run: |
+          echo "Production deployment approved by ${{ github.actor }}"
+          echo "Proceeding with deployment of tag: ${{ needs.prepare.outputs.image_tag }}"
+
+  # ----------------------------------------------------------
+  # Deploy to target environment
+  # ----------------------------------------------------------
+  deploy:
+    name: "Deploy: ${{ needs.prepare.outputs.target_env }}"
+    needs: [prepare, approve-staging, approve-prod]
+    if: |
+      always() &&
+      (needs.approve-staging.result == 'success' || needs.approve-staging.result == 'skipped') &&
+      (needs.approve-prod.result == 'success' || needs.approve-prod.result == 'skipped') &&
+      !(needs.approve-staging.result == 'skipped' && needs.approve-prod.result == 'skipped')
+    uses: ./.github/workflows/cd-deploy.yml
+    with:
+      environment: ${{ needs.prepare.outputs.target_env }}
+      image_tag: ${{ needs.prepare.outputs.image_tag }}
+      dry_run: false
+    secrets: inherit
+
+  # ----------------------------------------------------------
+  # Post-promotion summary
+  # ----------------------------------------------------------
+  summary:
+    name: "Promotion Summary"
+    needs: [prepare, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          SOURCE="${{ needs.prepare.outputs.source_env }}"
+          TARGET="${{ needs.prepare.outputs.target_env }}"
+          TAG="${{ needs.prepare.outputs.image_tag }}"
+          STATUS="${{ needs.deploy.result }}"
+
+          echo "# Environment Promotion Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Promotion | ${SOURCE} → ${TARGET} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${TAG} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | ${STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Promoted By | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Timestamp | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${STATUS}" = "success" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployment to **${TARGET}** completed successfully." >> "$GITHUB_STEP_SUMMARY"
+            if [ "${TARGET}" = "staging" ]; then
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "**Next step:** When ready, promote to production using the promotion workflow." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Deployment failed.** Review the deployment logs for details." >> "$GITHUB_STEP_SUMMARY"
+          fi

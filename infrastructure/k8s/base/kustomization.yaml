@@ -4,11 +4,30 @@ kind: Kustomization
 namespace: ftgo
 
 resources:
+  # Namespace
   - namespace.yaml
-  - ../../services/ftgo-order-service/k8s/deployment.yaml
-  - ../../services/ftgo-consumer-service/k8s/deployment.yaml
-  - ../../services/ftgo-restaurant-service/k8s/deployment.yaml
-  - ../../services/ftgo-courier-service/k8s/deployment.yaml
+
+  # MySQL StatefulSet (migrated from apps/v1beta1 to apps/v1)
+  - mysql/
+
+  # Microservice Deployments, Services, ConfigMaps, Secrets, and HPAs
+  - services/order-service/
+  - services/consumer-service/
+  - services/restaurant-service/
+  - services/courier-service/
+
+  # Ingress
+  - ingress/
+
+# Note: External Secrets are not included by default.
+# When external-secrets operator is installed, add:
+#   - external-secrets/
+# and remove the placeholder secrets from mysql/ and services/*/
 
 commonLabels:
   app.kubernetes.io/part-of: ftgo-platform
+
+# Rolling update strategy and ConfigMap injection for all services
+patches:
+  - path: patches/rolling-update-strategy.yaml
+  - path: patches/env-from-configmap.yaml

@@ -1,0 +1,48 @@
+# Production: Add hostname and TLS to ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ftgo-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  rules:
+    - host: ftgo.example.com
+      http:
+        paths:
+          - path: /api/orders(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-order-service
+                port:
+                  number: 8081
+          - path: /api/consumers(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-consumer-service
+                port:
+                  number: 8082
+          - path: /api/restaurants(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-restaurant-service
+                port:
+                  number: 8083
+          - path: /api/couriers(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-courier-service
+                port:
+                  number: 8084
+  tls:
+    - hosts:
+        - ftgo.example.com
+      secretName: ftgo-prod-tls

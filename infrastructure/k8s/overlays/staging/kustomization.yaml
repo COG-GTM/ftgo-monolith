@@ -6,10 +6,35 @@ namespace: ftgo-staging
 resources:
   - ../../base
 
-namePrefix: staging-
-
 commonLabels:
   environment: staging
 
-patchesStrategicMerge: []
-# Add environment-specific patches here
+# Environment-specific image tags (pinned to specific versions in staging)
+images:
+  - name: ftgo/ftgo-order-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-order-service
+    newTag: latest
+  - name: ftgo/ftgo-consumer-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-consumer-service
+    newTag: latest
+  - name: ftgo/ftgo-restaurant-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-restaurant-service
+    newTag: latest
+  - name: ftgo/ftgo-courier-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-courier-service
+    newTag: latest
+  - name: mysql
+    newTag: "8.0"
+
+# Staging-specific patches
+patches:
+  # Staging replicas (same as base: 2)
+  - path: patches/replicas.yaml
+  # Staging resource limits (moderate)
+  - path: patches/resources.yaml
+  # Staging ConfigMap values
+  - path: patches/configmap-overrides.yaml
+  # Staging MySQL storage
+  - path: patches/mysql-storage.yaml
+  # Staging ingress with TLS
+  - path: patches/ingress-host.yaml

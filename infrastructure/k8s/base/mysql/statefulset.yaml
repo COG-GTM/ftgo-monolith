@@ -1,0 +1,117 @@
+# ============================================================
+# FTGO MySQL StatefulSet - Migrated from apps/v1beta1 to apps/v1
+# ============================================================
+# Replaces: deployment/kubernetes/stateful-services/ftgo-mysql-deployment.yml
+# Changes:
+#   - API version: apps/v1beta1 -> apps/v1
+#   - Added selector.matchLabels (required by apps/v1)
+#   - Replaced hardcoded credentials with Secret references
+#   - Added resource limits and health probes
+#   - Added rolling update strategy
+# ============================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ftgo-mysql
+  labels:
+    app.kubernetes.io/name: ftgo-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  serviceName: ftgo-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftgo-mysql
+      app.kubernetes.io/component: database
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ftgo-mysql
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: ftgo-platform
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--ignore-db-dir=lost+found"
+            - "--default-authentication-plugin=mysql_native_password"
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: root-password
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: ftgo-mysql-config
+                  key: database-name
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - "mysqladmin ping -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - "mysqladmin ping -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: ftgo-mysql-persistent-storage
+              mountPath: /var/lib/mysql
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: ftgo-mysql-initdb
+            optional: true
+  volumeClaimTemplates:
+    - metadata:
+        name: ftgo-mysql-persistent-storage
+        labels:
+          app.kubernetes.io/name: ftgo-mysql
+          app.kubernetes.io/component: database
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
