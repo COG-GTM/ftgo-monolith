@@ -1,0 +1,35 @@
+// =============================================================================
+// ftgo.observability-conventions
+// =============================================================================
+// Observability configuration for FTGO microservices.
+// Adds Micrometer 1.12+ with Prometheus registry and Spring Boot Actuator.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'org.springframework.boot'
+//       id 'ftgo.spring-boot-conventions'
+//       id 'ftgo.observability-conventions'
+//   }
+//
+// Provides:
+//   - Spring Boot Actuator with health, info, metrics, and prometheus endpoints
+//   - Micrometer core 1.12.3 with Prometheus registry
+//   - Secure actuator endpoint configuration defaults
+//   - Common metric tag configuration (application name)
+//
+// Actuator endpoints exposed: health, info, metrics, prometheus
+// Prometheus endpoint available at: /actuator/prometheus
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // Spring Boot Actuator for /actuator endpoints
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Micrometer core + Prometheus registry (version managed by Spring Boot BOM)
+    implementation 'io.micrometer:micrometer-core'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+}

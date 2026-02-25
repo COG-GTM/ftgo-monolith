@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.common.metrics.FtgoMetricsAutoConfiguration,\
+  com.ftgo.common.metrics.MetricsEndpointSecurityConfiguration,\
+  com.ftgo.common.metrics.order.OrderMetrics,\
+  com.ftgo.common.metrics.consumer.ConsumerMetrics,\
+  com.ftgo.common.metrics.restaurant.RestaurantMetrics,\
+  com.ftgo.common.metrics.courier.CourierMetrics
