@@ -9,7 +9,7 @@
 
 | Batch | Jira Key | Summary | Phase | Session Status | PR Link | Squash Status | Conflicts Resolved |
 |-------|----------|---------|-------|----------------|---------|---------------|-------------------|
-| 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | 1 | Pending | - | - | - |
+| 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | 1 | Completed | [PR #63](https://github.com/COG-GTM/ftgo-monolith/pull/63) | Success | None |
 | 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | 1 | Pending | - | - | - |
 | 2 | EM-32 | Extract and Version ftgo-common Shared Library | 1 | Pending | - | - | - |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Pending | - | - | - |
@@ -35,8 +35,10 @@
 ## Batch History
 
 ### Batch 1
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-30
+- **SHA after squash:** `6ed7636e0af9261f828d6d1175d14a830587e87b`
+- **Notes:** Clean squash, no conflicts. Pre-existing build failure in ftgo-end-to-end-tests-common (eventuate-util-test dependency) unrelated to changes.
 
 ### Batch 2
 - **Status:** Not started
