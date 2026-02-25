@@ -11,6 +11,9 @@ commonLabels:
 
 # Environment-specific image tags (pinned to specific versions in staging)
 images:
+  - name: ftgo/ftgo-api-gateway
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-api-gateway
+    newTag: latest
   - name: ftgo/ftgo-order-service
     newName: ghcr.io/cog-gtm/ftgo/ftgo-order-service
     newTag: latest

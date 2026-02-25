@@ -1,0 +1,45 @@
+# ============================================================
+# FTGO API Gateway - Test Configuration
+# ============================================================
+server:
+  port: 0
+
+spring:
+  application:
+    name: ftgo-api-gateway-test
+  # Disable Redis in tests
+  data:
+    redis:
+      repositories:
+        enabled: false
+  # Disable auto-configuration for Redis in tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+
+ftgo:
+  gateway:
+    jwt:
+      enabled: true
+      secret: "TestSecretKeyForJwtTokenValidationMustBeAtLeast256BitsLong!!"
+      issuer: ftgo-platform
+      excluded-paths:
+        - /actuator/**
+        - /fallback/**
+    rate-limit:
+      enabled: false
+      redis-enabled: false
+    cors:
+      allowed-origins:
+        - "*"
+    versioning:
+      enabled: true
+      header-name: X-API-Version
+      default-version: v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

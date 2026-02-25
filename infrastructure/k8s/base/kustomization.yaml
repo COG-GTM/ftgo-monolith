@@ -10,6 +10,9 @@ resources:
   # MySQL StatefulSet (migrated from apps/v1beta1 to apps/v1)
   - mysql/
 
+  # API Gateway
+  - services/api-gateway/
+
   # Microservice Deployments, Services, ConfigMaps, Secrets, and HPAs
   - services/order-service/
   - services/consumer-service/

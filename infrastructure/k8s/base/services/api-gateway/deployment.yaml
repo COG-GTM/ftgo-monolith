@@ -1,0 +1,92 @@
+# ============================================================
+# FTGO API Gateway - Deployment + Service
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-api-gateway
+  labels:
+    app: ftgo-api-gateway
+    app.kubernetes.io/name: ftgo-api-gateway
+    app.kubernetes.io/component: gateway
+    version: "1.0.0"
+    team: ftgo-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-api-gateway
+  template:
+    metadata:
+      labels:
+        app: ftgo-api-gateway
+        app.kubernetes.io/name: ftgo-api-gateway
+        version: "1.0.0"
+    spec:
+      containers:
+        - name: ftgo-api-gateway
+          image: ftgo/ftgo-api-gateway:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-gateway-secret
+                  key: jwt-secret
+            - name: JWT_ENABLED
+              value: "true"
+            - name: RATE_LIMIT_REDIS_ENABLED
+              value: "false"
+            - name: ORDER_SERVICE_URL
+              value: "http://ftgo-order-service:8081"
+            - name: CONSUMER_SERVICE_URL
+              value: "http://ftgo-consumer-service:8082"
+            - name: RESTAURANT_SERVICE_URL
+              value: "http://ftgo-restaurant-service:8083"
+            - name: COURIER_SERVICE_URL
+              value: "http://ftgo-courier-service:8084"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 40
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-api-gateway
+  labels:
+    app: ftgo-api-gateway
+    app.kubernetes.io/name: ftgo-api-gateway
+    app.kubernetes.io/component: gateway
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 8080
+      protocol: TCP
+      name: https
+  selector:
+    app: ftgo-api-gateway
