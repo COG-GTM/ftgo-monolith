@@ -29,8 +29,8 @@
 | 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Completed | [PR #81](https://github.com/COG-GTM/ftgo-monolith/pull/81) | Success | None |
 | 6 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Completed | [PR #80](https://github.com/COG-GTM/ftgo-monolith/pull/80) | Success | None |
 | 7 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | 4 | Completed | [PR #82](https://github.com/COG-GTM/ftgo-monolith/pull/82) | Success | None |
-| 8 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | 4 | Pending | - | - | - |
-| 8 | EM-49 | Define Logging Standards and Structured Logging Configuration | 5 | Pending | - | - | - |
+| 8 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | 4 | Completed | [PR #84](https://github.com/COG-GTM/ftgo-monolith/pull/84) | Success | None |
+| 8 | EM-49 | Define Logging Standards and Structured Logging Configuration | 5 | Completed | [PR #83](https://github.com/COG-GTM/ftgo-monolith/pull/83) | Success (conflicts resolved) | services/ftgo-service-template/config/application.properties |
 
 ## Batch History
 
@@ -82,5 +82,14 @@
 - **Notes:** PR squashed cleanly. Build passes. New: ftgo-logging-lib (structured JSON logging, MDC context, correlation ID filter), EFK stack Docker Compose + K8s manifests (ES, Fluentd DaemonSet, Kibana), per-environment log retention overlays.
 
 ### Batch 8
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-44, EM-49
+- **SHA after squash:** `e117ae6`
+- **Conflicts:** EM-49 had conflict in `services/ftgo-service-template/config/application.properties` (both EM-44 resilience config and EM-49 logging aspect config added entries; resolved by keeping both)
+- **Notes:** Both PRs squashed. Build passes. New: ftgo-resilience-lib (Resilience4j circuit breaker, retry, bulkhead, rate limiter, K8s health probes, graceful shutdown), logging standards docs + PII masking + LogContext utility + logback-spring.xml profiles.
+
+## Migration Complete
+- **All 22 tasks squashed onto migration branch**
+- **All 8 batches processed**
+- **Final SHA:** `e117ae6`
+- **Total conflicts resolved:** 3 (EM-41, EM-36 credentials, EM-49)
