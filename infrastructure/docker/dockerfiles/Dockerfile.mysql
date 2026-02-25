@@ -1,0 +1,21 @@
+# ============================================================
+# FTGO MySQL - Custom Database Image
+# ============================================================
+# Custom MySQL image with pre-loaded schema for FTGO platform.
+#
+# Usage:
+#   docker build -f infrastructure/docker/dockerfiles/Dockerfile.mysql .
+# ============================================================
+
+FROM mysql:8.0
+
+LABEL maintainer="FTGO Platform Team"
+LABEL org.opencontainers.image.source="https://github.com/COG-GTM/ftgo-monolith"
+LABEL org.opencontainers.image.title="ftgo-mysql"
+LABEL org.opencontainers.image.description="FTGO MySQL database with pre-loaded schema"
+
+# Copy initialization SQL scripts
+COPY mysql/schema.sql /docker-entrypoint-initdb.d/schema.sql
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
+    CMD mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} || exit 1

@@ -1,0 +1,116 @@
+# ============================================================
+# FTGO Microservice - Multi-Stage Dockerfile
+# ============================================================
+# Optimized multi-stage build for FTGO microservices.
+# Builder stage: Gradle build with dependency caching
+# Runtime stage: Minimal JRE 17 slim base image
+#
+# Build args:
+#   SERVICE_NAME  - Name of the service (e.g., ftgo-order-service)
+#   SERVICE_PORT  - Port the service listens on (default: 8080)
+#   SERVICE_PATH  - Gradle project path (e.g., services/ftgo-order-service)
+#
+# Usage:
+#   docker build \
+#     --build-arg SERVICE_NAME=ftgo-order-service \
+#     --build-arg SERVICE_PORT=8081 \
+#     --build-arg SERVICE_PATH=services/ftgo-order-service \
+#     -f infrastructure/docker/dockerfiles/Dockerfile.service .
+# ============================================================
+
+# ----------------------------------------------------------
+# Stage 1: Builder - Gradle build with dependency caching
+# ----------------------------------------------------------
+FROM eclipse-temurin:17-jdk-jammy AS builder
+
+ARG SERVICE_NAME
+ARG SERVICE_PATH
+
+WORKDIR /build
+
+# Copy Gradle wrapper and build configuration first (for caching)
+COPY gradlew gradlew.bat ./
+COPY gradle/ gradle/
+COPY build.gradle settings.gradle gradle.properties ./
+
+# Copy buildSrc for convention plugins
+COPY buildSrc/ buildSrc/
+
+# Copy shared libraries (required for compilation)
+COPY shared/ shared/
+
+# Copy legacy modules needed for compilation
+COPY ftgo-common/ ftgo-common/
+COPY ftgo-common-jpa/ ftgo-common-jpa/
+COPY ftgo-domain/ ftgo-domain/
+COPY ftgo-order-service-api/ ftgo-order-service-api/
+COPY ftgo-consumer-service-api/ ftgo-consumer-service-api/
+COPY ftgo-restaurant-service-api/ ftgo-restaurant-service-api/
+COPY ftgo-courier-service-api/ ftgo-courier-service-api/
+COPY common-swagger/ common-swagger/
+COPY ftgo-test-util/ ftgo-test-util/
+
+# Download dependencies first (cached layer)
+RUN chmod +x gradlew && \
+    ./gradlew :${SERVICE_PATH/\//:}:dependencies --no-daemon 2>/dev/null || true
+
+# Copy the service source code
+COPY ${SERVICE_PATH}/ ${SERVICE_PATH}/
+
+# Build the service JAR (skip tests for Docker build)
+RUN ./gradlew :${SERVICE_PATH/\//:}:bootJar --no-daemon -x test \
+    -x :ftgo-end-to-end-tests-common:compileJava \
+    -x :ftgo-end-to-end-tests:compileJava \
+    -x :ftgo-end-to-end-tests-common:build \
+    -x :ftgo-end-to-end-tests:build
+
+# ----------------------------------------------------------
+# Stage 2: Runtime - Minimal JRE image
+# ----------------------------------------------------------
+FROM eclipse-temurin:17-jre-jammy AS runtime
+
+ARG SERVICE_NAME
+ARG SERVICE_PATH
+ARG SERVICE_PORT=8080
+
+LABEL maintainer="FTGO Platform Team"
+LABEL org.opencontainers.image.source="https://github.com/COG-GTM/ftgo-monolith"
+LABEL org.opencontainers.image.title="${SERVICE_NAME}"
+LABEL org.opencontainers.image.description="FTGO ${SERVICE_NAME} microservice"
+
+# Install curl for health checks, then clean up
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r ftgo && useradd -r -g ftgo -d /app -s /sbin/nologin ftgo
+
+WORKDIR /app
+
+# Copy JAR from builder stage
+COPY --from=builder /build/${SERVICE_PATH}/build/libs/*.jar app.jar
+
+# Set ownership
+RUN chown -R ftgo:ftgo /app
+
+# Expose the service port
+EXPOSE ${SERVICE_PORT}
+
+# Health check using Spring Boot Actuator
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${SERVICE_PORT}/actuator/health || exit 1
+
+# Switch to non-root user
+USER ftgo
+
+# JVM options optimized for containers
+ENV JAVA_OPTS="-XX:+UseG1GC \
+    -XX:MaxRAMPercentage=75.0 \
+    -XX:InitialRAMPercentage=50.0 \
+    -XX:+UseContainerSupport \
+    -Djava.security.egd=file:/dev/./urandom \
+    -Dspring.profiles.active=docker"
+
+# Use exec form for proper signal handling (SIGTERM)
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

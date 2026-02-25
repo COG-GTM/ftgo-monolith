@@ -1,0 +1,22 @@
+# ============================================================
+# Docker Build Context Exclusions
+# ============================================================
+.git
+.github
+.gradle
+.circleci
+*.md
+LICENSE*
+docs/
+deployment/
+infrastructure/k8s/
+**/build/
+**/out/
+**/.gradle/
+**/node_modules/
+**/*.log
+**/.idea/
+**/.vscode/
+**/.DS_Store
+ftgo-end-to-end-tests/
+ftgo-end-to-end-tests-common/

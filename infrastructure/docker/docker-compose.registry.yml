@@ -1,0 +1,177 @@
+# ============================================================
+# FTGO Platform - Docker Compose (Registry Images)
+# ============================================================
+# Local development using pre-built images from GitHub Container
+# Registry (ghcr.io). No local builds required.
+#
+# Prerequisites:
+#   # Authenticate with GHCR (use GitHub PAT with read:packages)
+#   echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+#
+# Usage:
+#   # Start all services
+#   docker compose -f infrastructure/docker/docker-compose.registry.yml up -d
+#
+#   # Start specific services
+#   docker compose -f infrastructure/docker/docker-compose.registry.yml up -d \
+#     ftgo-order-service ftgo-mysql
+#
+#   # With monitoring stack
+#   docker compose \
+#     -f infrastructure/docker/docker-compose.registry.yml \
+#     -f infrastructure/docker/docker-compose.monitoring.yml up -d
+#
+# Environment variables (optional):
+#   IMAGE_TAG    - Image tag to use (default: latest)
+#   DB_USERNAME  - Database username (default: ftgo_user)
+#   DB_PASSWORD  - Database password (required)
+# ============================================================
+
+version: '3.8'
+
+x-common-env: &common-env
+  SPRING_PROFILES_ACTIVE: docker
+  SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-ftgo_user}
+  SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 5s
+  start_period: 60s
+  retries: 3
+
+services:
+  # ----------------------------------------------------------
+  # Infrastructure: MySQL Database
+  # ----------------------------------------------------------
+  ftgo-mysql:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-mysql:${IMAGE_TAG:-latest}
+    container_name: ftgo-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_USER: ${DB_USERNAME:-ftgo_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Microservice: Order Service
+  # ----------------------------------------------------------
+  ftgo-order-service:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-order-service:${IMAGE_TAG:-latest}
+    container_name: ftgo-order-service
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://ftgo-mysql:3306/ftgo_order_service
+      SERVER_PORT: "8081"
+    depends_on:
+      ftgo-mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Microservice: Consumer Service
+  # ----------------------------------------------------------
+  ftgo-consumer-service:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-consumer-service:${IMAGE_TAG:-latest}
+    container_name: ftgo-consumer-service
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://ftgo-mysql:3306/ftgo_consumer_service
+      SERVER_PORT: "8082"
+    depends_on:
+      ftgo-mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Microservice: Restaurant Service
+  # ----------------------------------------------------------
+  ftgo-restaurant-service:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-restaurant-service:${IMAGE_TAG:-latest}
+    container_name: ftgo-restaurant-service
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://ftgo-mysql:3306/ftgo_restaurant_service
+      SERVER_PORT: "8083"
+    depends_on:
+      ftgo-mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Microservice: Courier Service
+  # ----------------------------------------------------------
+  ftgo-courier-service:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-courier-service:${IMAGE_TAG:-latest}
+    container_name: ftgo-courier-service
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://ftgo-mysql:3306/ftgo_courier_service
+      SERVER_PORT: "8084"
+    depends_on:
+      ftgo-mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Legacy: Monolith Application
+  # ----------------------------------------------------------
+  ftgo-application:
+    image: ghcr.io/cog-gtm/ftgo/ftgo-application:${IMAGE_TAG:-latest}
+    container_name: ftgo-application
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://ftgo-mysql:3306/ftgo
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-ftgo_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      JAVA_OPTS: "-Xmx256m"
+    depends_on:
+      ftgo-mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  ftgo-network:
+    driver: bridge
