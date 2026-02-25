@@ -70,6 +70,7 @@ spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
 
 # --- Observability ---
+micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
 
@@ -143,6 +144,7 @@ testing-rest = [
 # Observability dependencies
 observability = [
     "spring-boot-starter-actuator",
+    "micrometer-core",
     "micrometer-registry-prometheus",
 ]
 
