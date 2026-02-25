@@ -1,10 +1,85 @@
+// ============================================================
 // ftgo-domain - Shared domain model (entities, value objects, enums)
+// ============================================================
+// Standalone versioned library extracted from the monolith.
 // Package: com.ftgo.domain
+//
+// Contains all JPA entities, repositories, and domain value objects
+// shared across FTGO microservices during the migration period.
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-domain:publishToMavenLocal
+//   ./gradlew :shared:ftgo-domain:publish
+// ============================================================
+
+apply plugin: 'maven-publish'
+
+// Library version - follows semantic versioning
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
 
 dependencies {
+    // Depend on ftgo-common for shared value objects (Money, Address, PersonName)
     compile project(":shared:ftgo-common")
 
+    // Depend on ftgo-common-jpa for ORM mappings of common value objects
+    compile project(":shared:ftgo-common-jpa")
+
+    // JPA / Hibernate for entity and repository support
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
 
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // MySQL connector (runtime only)
+    runtime 'mysql:mysql-connector-java:5.1.39'
+
+    // JAXB runtime dependencies (Java 9+ compatibility)
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library as com.ftgo:ftgo-domain:1.0.0-SNAPSHOT
+// Microservices declare: implementation 'com.ftgo:ftgo-domain:1.0.0-SNAPSHOT'
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-domain'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Domain Library'
+                description = 'Shared domain entities, repositories, and value objects for the FTGO platform microservices'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        // Local file-based repository (CI can override with Nexus/Artifactory URL)
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
 }
