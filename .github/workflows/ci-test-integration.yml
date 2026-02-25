@@ -73,18 +73,16 @@ jobs:
           - ftgo-restaurant-service
           - ftgo-courier-service
 
-    # MySQL CI credentials are configured via GitHub Actions secrets.
-    # Required secrets: MYSQL_CI_ROOT_PASS, MYSQL_CI_USER, MYSQL_CI_PASS
-    # If not configured, the service container step will use empty values
-    # and the "Generate CI database credentials" step provides defaults.
+    # MySQL service container for integration tests.
+    # Uses mysql_native_password for compatibility with Flyway/JDBC drivers.
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_CI_ROOT_PASS || 'ftgo_ci_root' }}
+          MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_DATABASE: ftgo
-          MYSQL_USER: ${{ secrets.MYSQL_CI_USER || 'ftgo_ci_user' }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_CI_PASS || 'ftgo_ci' }}
+          MYSQL_USER: mysqluser
+          MYSQL_PASSWORD: mysqlpw
         ports:
           - 3306:3306
         options: >-
@@ -97,17 +95,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate CI database credentials
-        id: db-creds
+      - name: Configure database environment
         run: |
-          # Use secrets if available, otherwise generate CI-only credentials
-          DB_USER="${{ secrets.MYSQL_CI_USER }}"
-          DB_PASS="${{ secrets.MYSQL_CI_PASS }}"
-          if [ -z "$DB_USER" ]; then DB_USER="ftgo_ci_user"; fi
-          if [ -z "$DB_PASS" ]; then DB_PASS="ftgo_ci"; fi
-          echo "SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/ftgo" >> $GITHUB_ENV
-          echo "SPRING_DATASOURCE_USERNAME=${DB_USER}" >> $GITHUB_ENV
-          echo "SPRING_DATASOURCE_PASSWORD=${DB_PASS}" >> $GITHUB_ENV
+          # Match credentials from ftgo-flyway/build.gradle and MySQL service container
+          echo "SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/ftgo?useSSL=false&allowPublicKeyRetrieval=true" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_USERNAME=mysqluser" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_PASSWORD=mysqlpw" >> $GITHUB_ENV
           echo "SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver" >> $GITHUB_ENV
           echo "DOCKER_HOST_IP=localhost" >> $GITHUB_ENV
 
@@ -144,8 +137,11 @@ jobs:
           done
 
       - name: Run database migrations
-        run: ./gradlew :ftgo-flyway:flywayMigrate --no-daemon --stacktrace
-        continue-on-error: true
+        run: |
+          ./gradlew :ftgo-flyway:flywayMigrate --no-daemon --stacktrace \
+            -Dflyway.url="jdbc:mysql://localhost/ftgo?useSSL=false&allowPublicKeyRetrieval=true" \
+            -Dflyway.user=root \
+            -Dflyway.password=rootpassword
 
       - name: "Run integration tests: ${{ matrix.service }} (new microservice)"
         id: integ_new
