@@ -48,6 +48,9 @@ springdoc = "2.3.0"
 # --- Security / JWT ---
 jjwt = "0.12.5"
 
+# --- Logging ---
+logstash-logback-encoder = "7.4"
+
 # --- Utilities ---
 commons-lang3 = "3.14.0"
 lombok = "1.18.30"
@@ -119,6 +122,9 @@ jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-dat
 
 # --- API Documentation ---
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+# --- Logging ---
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
 
 # --- Utilities ---
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }

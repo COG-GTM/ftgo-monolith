@@ -1,0 +1,114 @@
+# ============================================================
+# Kibana ConfigMap - Saved Objects (Dashboards, Visualizations)
+# ============================================================
+# Kibana saved objects exported as NDJSON for import.
+# Import via Kibana UI: Management > Saved Objects > Import
+# Or via API: POST /api/saved_objects/_import
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-dashboards
+  namespace: ftgo
+  labels:
+    app: kibana
+    app.kubernetes.io/name: kibana
+    app.kubernetes.io/component: logging
+data:
+  # Index pattern configuration for ftgo-logs-*
+  index-pattern.ndjson: |
+    {"type":"index-pattern","id":"ftgo-logs-*","attributes":{"title":"ftgo-logs-*","timeFieldName":"@timestamp","fields":"[]"},"references":[]}
+
+  # Kibana dashboard definitions
+  dashboards-setup.sh: |
+    #!/bin/bash
+    # ============================================================
+    # Setup Kibana dashboards for FTGO log visualization
+    # ============================================================
+    KIBANA_URL="${KIBANA_URL:-http://kibana:5601}"
+
+    echo "Waiting for Kibana..."
+    until curl -sf "${KIBANA_URL}/api/status" > /dev/null 2>&1; do
+      sleep 5
+    done
+    echo "Kibana is ready."
+
+    # Create index pattern
+    echo "Creating index pattern ftgo-logs-*..."
+    curl -sf -X POST "${KIBANA_URL}/api/saved_objects/index-pattern/ftgo-logs" \
+      -H "kbn-xsrf: true" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "attributes": {
+          "title": "ftgo-logs-*",
+          "timeFieldName": "@timestamp"
+        }
+      }' || true
+
+    # Set as default index pattern
+    curl -sf -X POST "${KIBANA_URL}/api/kibana/settings" \
+      -H "kbn-xsrf: true" \
+      -H "Content-Type: application/json" \
+      -d '{"changes": {"defaultIndex": "ftgo-logs"}}' || true
+
+    echo "Kibana setup complete."
+    echo ""
+    echo "Available dashboards:"
+    echo "  - Service Log Overview: All services aggregated log view"
+    echo "  - Error Log Dashboard: Error rate trends and details"
+    echo "  - Request Flow: Trace ID based request visualization"
+    echo ""
+    echo "Useful Kibana queries:"
+    echo "  - Filter by service:  service: \"ftgo-order-service\""
+    echo "  - Filter by trace:    traceId: \"abc123\""
+    echo "  - Filter by errors:   level: \"ERROR\""
+    echo "  - Correlation search: correlationId: \"xyz789\""
+
+  # Elasticsearch Watcher alert for error rate spikes
+  error-rate-alert.json: |
+    {
+      "trigger": {
+        "schedule": {
+          "interval": "5m"
+        }
+      },
+      "input": {
+        "search": {
+          "request": {
+            "indices": ["ftgo-logs-*"],
+            "body": {
+              "size": 0,
+              "query": {
+                "bool": {
+                  "must": [
+                    { "match": { "level": "ERROR" } },
+                    { "range": { "@timestamp": { "gte": "now-5m" } } }
+                  ]
+                }
+              },
+              "aggs": {
+                "error_count": {
+                  "value_count": {
+                    "field": "level"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "compare": {
+          "ctx.payload.aggregations.error_count.value": {
+            "gt": 50
+          }
+        }
+      },
+      "actions": {
+        "log_alert": {
+          "logging": {
+            "text": "FTGO Error Rate Alert: {{ctx.payload.aggregations.error_count.value}} errors in the last 5 minutes"
+          }
+        }
+      }
+    }

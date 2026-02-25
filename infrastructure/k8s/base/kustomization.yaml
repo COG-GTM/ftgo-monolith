@@ -19,6 +19,9 @@ resources:
   - services/restaurant-service/
   - services/courier-service/
 
+  # Logging (EFK Stack)
+  - logging/
+
   # Ingress
   - ingress/
 

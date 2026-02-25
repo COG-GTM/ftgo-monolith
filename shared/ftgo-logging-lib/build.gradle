@@ -1,0 +1,89 @@
+// ============================================================
+// ftgo-logging-lib - Shared Centralized Logging Library
+// ============================================================
+// Provides structured JSON logging via Logback + logstash-logback-encoder,
+// MDC context propagation, correlation ID filtering, and ELK/EFK
+// integration for all FTGO microservices.
+//
+// Package: com.ftgo.common.logging
+//
+// Usage in a microservice build.gradle:
+//   dependencies {
+//       implementation project(":shared:ftgo-logging-lib")
+//   }
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-logging-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-logging-lib:publish
+// ============================================================
+
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+dependencies {
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
+
+    // Spring Web for servlet filters (correlation ID propagation)
+    compileOnly "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Logback (provided by Spring Boot, but declare for clarity)
+    compile "ch.qos.logback:logback-classic:1.2.12"
+    compile "ch.qos.logback:logback-core:1.2.12"
+
+    // Logstash Logback Encoder for structured JSON logging
+    compile "net.logstash.logback:logstash-logback-encoder:7.4"
+
+    // Jackson for JSON serialization (used by logstash-logback-encoder)
+    compile "com.fasterxml.jackson.core:jackson-databind:2.16.1"
+
+    // SLF4J API
+    compile "org.slf4j:slf4j-api:1.7.36"
+
+    // Spring context for @Configuration, @Bean, @ConditionalOnClass
+    compile "org.springframework:spring-context:5.3.31"
+
+    // Servlet API for filters (provided at runtime)
+    compileOnly "javax.servlet:javax.servlet-api:4.0.1"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-logging-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Logging Library'
+                description = 'Shared centralized logging configuration with structured JSON output, MDC propagation, and ELK/EFK integration for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}
