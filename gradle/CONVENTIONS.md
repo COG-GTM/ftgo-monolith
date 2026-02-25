@@ -18,7 +18,8 @@ A new microservice `build.gradle` requires only service-specific configuration:
 // services/ftgo-my-service/build.gradle
 
 plugins {
-    id 'ftgo.spring-boot-conventions'   // Spring Boot 3.x + Java 17
+    id 'org.springframework.boot'       // Boot JAR packaging (from pluginManagement)
+    id 'ftgo.spring-boot-conventions'   // BOM + dependency management + Java 17
     id 'ftgo.testing-conventions'       // JUnit 5 + integration tests
     id 'ftgo.docker-conventions'        // Jib container builds
 }
@@ -68,18 +69,23 @@ plugins {
 
 ### `ftgo.spring-boot-conventions`
 
-Full Spring Boot 3.x application configuration. Includes `ftgo.java-conventions`.
+Spring Boot 3.x dependency management configuration. Includes `ftgo.java-conventions`.
 
 **Provides:**
-- Spring Boot 3.2.x plugin
-- Spring dependency management (BOM)
-- Boot JAR packaging
-- Build info generation
+- Spring dependency management with Spring Boot 3.2.3 BOM
+- Java conventions (via ftgo.java-conventions)
+- Consistent dependency versions for all Spring-managed libraries
+
+**Note:** The Spring Boot Gradle plugin (`org.springframework.boot`) must be applied
+separately by each microservice. This is because the plugin requires Java 17+ and
+cannot be included in buildSrc's compile classpath. The plugin version is centrally
+managed via `pluginManagement` in `settings.gradle`.
 
 **Usage:**
 ```groovy
 plugins {
-    id 'ftgo.spring-boot-conventions'
+    id 'org.springframework.boot'       // Boot JAR packaging
+    id 'ftgo.spring-boot-conventions'   // BOM + dependency management
 }
 
 dependencies {
@@ -224,7 +230,8 @@ Convention plugins can be combined as needed:
 ```groovy
 // Standalone Spring Boot microservice
 plugins {
-    id 'ftgo.spring-boot-conventions'
+    id 'org.springframework.boot'       // Boot JAR (from pluginManagement)
+    id 'ftgo.spring-boot-conventions'   // BOM + dependency management
     id 'ftgo.testing-conventions'
     id 'ftgo.docker-conventions'
 }
@@ -246,6 +253,25 @@ During the migration period, legacy monolith modules continue to use:
 
 These legacy configurations will be removed once migration is complete.
 
+## Plugin Management
+
+The Spring Boot plugin version is managed centrally in `settings.gradle`:
+
+```groovy
+pluginManagement {
+    plugins {
+        id 'org.springframework.boot' version '3.2.3'
+    }
+}
+```
+
+Microservices don't need to specify the version when applying the plugin:
+```groovy
+plugins {
+    id 'org.springframework.boot'   // version from pluginManagement
+}
+```
+
 ## Migration Checklist
 
 When migrating a module from legacy to new convention plugins:
@@ -255,5 +281,6 @@ When migrating a module from legacy to new convention plugins:
 3. Replace `runtime` with `runtimeOnly`
 4. Replace explicit version strings with catalog references
 5. Add appropriate convention plugins
-6. Remove any redundant configuration inherited from root `subprojects`
-7. Verify build: `./gradlew :your-module:build`
+6. Add `id 'org.springframework.boot'` to the `plugins {}` block
+7. Remove any redundant configuration inherited from root `subprojects`
+8. Verify build: `./gradlew :your-module:build`
