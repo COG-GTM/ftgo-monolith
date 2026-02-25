@@ -1,0 +1,3 @@
+com.ftgo.common.tracing.config.FtgoTracingAutoConfiguration
+com.ftgo.common.tracing.config.TracingLoggingConfiguration
+com.ftgo.common.tracing.config.TracePropagationConfiguration

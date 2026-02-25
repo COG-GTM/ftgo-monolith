@@ -23,6 +23,7 @@ spring-dependency-management = "1.1.4"
 # --- Observability ---
 micrometer = "1.12.3"
 micrometer-tracing = "1.2.3"
+zipkin-reporter = "2.17.2"
 
 # --- Testing ---
 junit-jupiter = "5.10.2"
@@ -77,6 +78,9 @@ spring-boot-configuration-processor = { module = "org.springframework.boot:sprin
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
+zipkin-reporter-brave = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
+zipkin-sender-urlconnection = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
 
 # --- Testing ---
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
@@ -173,6 +177,13 @@ observability = [
     "spring-boot-starter-actuator",
     "micrometer-core",
     "micrometer-registry-prometheus",
+]
+
+# Distributed tracing dependencies
+tracing = [
+    "micrometer-tracing-bridge-brave",
+    "zipkin-reporter-brave",
+    "zipkin-sender-urlconnection",
 ]
 
 # Jackson serialization bundle
