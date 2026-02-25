@@ -1,0 +1,38 @@
+// =============================================================================
+// ftgo.spring-boot-conventions
+// =============================================================================
+// Spring Boot dependency management configuration for FTGO microservices.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'org.springframework.boot'        // Applied from pluginManagement
+//       id 'ftgo.spring-boot-conventions'    // BOM + dependency management
+//       id 'ftgo.testing-conventions'        // Optional: JUnit 5 + integration tests
+//   }
+//
+// Provides:
+//   - Java conventions (via ftgo.java-conventions)
+//   - Spring dependency management with Spring Boot 3.x BOM
+//   - Consistent dependency versions for all Spring-managed libraries
+//
+// Note: The Spring Boot Gradle plugin (org.springframework.boot) must be applied
+// separately by each microservice because it requires Java 17+ and cannot be
+// included in buildSrc's compile classpath. The plugin version is centrally
+// managed via pluginManagement in settings.gradle.
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'io.spring.dependency-management'
+}
+
+// Import Spring Boot 3.2.3 BOM for consistent dependency versions.
+// This provides managed versions for all Spring Boot dependencies without
+// requiring the Spring Boot Gradle plugin on the buildSrc classpath.
+def springBootVersion = '3.2.3'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+    }
+}

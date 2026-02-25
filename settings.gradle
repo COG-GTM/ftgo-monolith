@@ -4,6 +4,37 @@
 // This file includes both the legacy monolith modules (flat structure)
 // and the new microservices modules (hierarchical structure).
 // Legacy modules will be removed once migration is complete.
+//
+// Convention plugins are provided via buildSrc/ and can be applied
+// by any module using:
+//   plugins {
+//       id 'org.springframework.boot'
+//       id 'ftgo.spring-boot-conventions'
+//       id 'ftgo.testing-conventions'
+//   }
+//
+// The Gradle version catalog (gradle/libs.versions.toml) provides
+// centralized dependency management for new microservices.
+// ============================================================
+
+// ============================================================
+// Plugin Management
+// ============================================================
+// Centralized plugin version management. New microservices apply
+// the Spring Boot plugin directly (not via convention plugin) because
+// the Spring Boot Gradle plugin requires Java 17+ and cannot be
+// included in buildSrc's compile classpath.
+// ============================================================
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    plugins {
+        // Spring Boot 3.x for new microservices
+        id 'org.springframework.boot' version '3.2.3'
+    }
+}
 
 // ============================================================
 // NEW: Microservices Structure (services/ and shared/)

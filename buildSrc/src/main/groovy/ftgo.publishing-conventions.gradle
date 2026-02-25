@@ -1,0 +1,76 @@
+// =============================================================================
+// ftgo.publishing-conventions
+// =============================================================================
+// Maven publishing configuration for FTGO shared libraries.
+//
+// Usage in a shared library build.gradle:
+//   plugins {
+//       id 'ftgo.publishing-conventions'
+//   }
+//
+// Provides:
+//   - Maven publication configuration
+//   - POM metadata generation
+//   - Local and remote repository publishing
+//   - Artifact signing preparation (when configured)
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'maven-publish'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = project.name
+                description = "FTGO Platform - ${project.name}"
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'ftgo-team'
+                        name = 'FTGO Development Team'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/COG-GTM/ftgo-monolith.git'
+                    developerConnection = 'scm:git:ssh://github.com/COG-GTM/ftgo-monolith.git'
+                    url = 'https://github.com/COG-GTM/ftgo-monolith'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+        // Remote repository can be configured via gradle.properties:
+        //   publishUrl=https://your-maven-repo.example.com/releases
+        //   publishUsername=...
+        //   publishPassword=...
+        if (project.hasProperty('publishUrl')) {
+            maven {
+                name = 'remote'
+                url = uri(project.property('publishUrl'))
+                credentials {
+                    username = project.findProperty('publishUsername') ?: ''
+                    password = project.findProperty('publishPassword') ?: ''
+                }
+            }
+        }
+    }
+}
