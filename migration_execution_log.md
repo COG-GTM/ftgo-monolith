@@ -26,8 +26,8 @@
 | 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Completed | [PR #78](https://github.com/COG-GTM/ftgo-monolith/pull/78) | Success | None |
 | 5 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Completed | [PR #76](https://github.com/COG-GTM/ftgo-monolith/pull/76) | Success | None |
 | 5 | EM-48 | Document Testing Strategy and Create Test Templates | 5 | Completed | [PR #77](https://github.com/COG-GTM/ftgo-monolith/pull/77) | Success | None |
-| 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Pending | - | - | - |
-| 6 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Pending | - | - | - |
+| 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Completed | [PR #81](https://github.com/COG-GTM/ftgo-monolith/pull/81) | Success | None |
+| 6 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Completed | [PR #80](https://github.com/COG-GTM/ftgo-monolith/pull/80) | Success | None |
 | 7 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | 4 | Pending | - | - | - |
 | 8 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | 4 | Pending | - | - | - |
 | 8 | EM-49 | Define Logging Standards and Structured Logging Configuration | 5 | Pending | - | - | - |
@@ -68,8 +68,11 @@
 - **Notes:** All 4 PRs squashed cleanly. Build passes. New: ftgo-tracing-lib, RBAC framework in ftgo-security-lib (175 tests), K8s manifests with Kustomize overlays, testing docs + templates.
 
 ### Batch 6
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-38, EM-46
+- **SHA after squash:** `f283122`
+- **Conflicts:** None
+- **Notes:** Both PRs squashed cleanly. Build passes. New: ftgo-api-gateway service (Spring Cloud Gateway with JWT auth, rate limiting, circuit breakers, K8s manifests), ftgo-error-handling-lib (GlobalExceptionHandler, custom exception hierarchy, error codes, validators).
 
 ### Batch 7
 - **Status:** Not started
