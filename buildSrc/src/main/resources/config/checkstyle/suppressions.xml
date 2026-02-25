@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  FTGO Platform - Checkstyle Suppressions
+  Suppress checks for legacy monolith code and generated files.
+-->
+<suppressions>
+    <!-- Suppress all checks on generated source files -->
+    <suppress checks=".*" files="[\\/]generated[\\/]"/>
+    <suppress checks=".*" files="[\\/]build[\\/]"/>
+
+    <!-- Suppress checks on legacy monolith modules during migration -->
+    <suppress checks="FileLength" files="FtgoServicePlugin\.groovy"/>
+
+    <!-- Suppress star import check on test files (common pattern) -->
+    <suppress checks="AvoidStarImport" files=".*Test\.java"/>
+    <suppress checks="AvoidStarImport" files=".*Tests\.java"/>
+
+    <!-- Suppress method length on test classes -->
+    <suppress checks="MethodLength" files=".*Test\.java"/>
+    <suppress checks="MethodLength" files=".*Tests\.java"/>
+</suppressions>

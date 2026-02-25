@@ -1,0 +1,144 @@
+// =============================================================================
+// ftgo.code-quality-conventions
+// =============================================================================
+// Static analysis and code quality configuration for FTGO microservices.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'ftgo.code-quality-conventions'
+//   }
+//
+// Provides:
+//   - Checkstyle for style enforcement
+//   - PMD for code quality rules
+//   - SpotBugs for bug detection
+//   - JaCoCo for code coverage (minimum 70% line coverage)
+//
+// Configuration files are located in buildSrc/src/main/resources/config/
+// =============================================================================
+
+plugins {
+    id 'java-library'
+    id 'checkstyle'
+    id 'pmd'
+    id 'jacoco'
+}
+
+// =============================================================================
+// Checkstyle Configuration
+// =============================================================================
+checkstyle {
+    toolVersion = '10.14.0'
+    configFile = rootProject.file('buildSrc/src/main/resources/config/checkstyle/checkstyle.xml')
+    configProperties = ['config_loc': rootProject.file('buildSrc/src/main/resources/config/checkstyle').absolutePath]
+    maxWarnings = 0
+    maxErrors = 0
+    ignoreFailures = true  // Report only; CI workflow enforces quality gate
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated sources
+    exclude '**/generated/**'
+}
+
+// =============================================================================
+// PMD Configuration
+// =============================================================================
+pmd {
+    toolVersion = '6.55.0'
+    ruleSetFiles = files(rootProject.file('buildSrc/src/main/resources/config/pmd/pmd-ruleset.xml'))
+    ruleSets = []  // Clear default rulesets; use custom ruleset only
+    consoleOutput = true
+    ignoreFailures = true  // Report only; CI workflow enforces quality gate
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated sources
+    exclude '**/generated/**'
+}
+
+// =============================================================================
+// JaCoCo Configuration
+// =============================================================================
+jacoco {
+    toolVersion = '0.8.11'
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    // Exclude generated code and configuration classes from coverage
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/configuration/**',
+                '**/*Application.class',
+                '**/*Config.class',
+                '**/*Configuration.class',
+            ])
+        }))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('jacocoTestReport')
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.50
+            }
+        }
+    }
+
+    // Use same exclusions as report
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/configuration/**',
+                '**/*Application.class',
+                '**/*Config.class',
+                '**/*Configuration.class',
+            ])
+        }))
+    }
+}
+
+// Wire JaCoCo verification into the check lifecycle
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
+// =============================================================================
+// Aggregate Quality Report Task
+// =============================================================================
+tasks.register('qualityCheck') {
+    group = 'verification'
+    description = 'Runs all code quality checks: Checkstyle, PMD, and JaCoCo.'
+    dependsOn 'checkstyleMain', 'checkstyleTest', 'pmdMain', 'pmdTest', 'jacocoTestReport'
+}

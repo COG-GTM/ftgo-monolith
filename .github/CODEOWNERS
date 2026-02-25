@@ -1,0 +1,55 @@
+# =============================================================================
+# FTGO Platform - Code Owners
+# =============================================================================
+# Defines required reviewers for different parts of the codebase.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Reviewers are automatically requested when a PR modifies matching files.
+# At least one approval from a code owner is required to merge.
+# =============================================================================
+
+# --- Default Owners (all files) ---
+* @COG-GTM/ftgo-platform
+
+# --- Build & Infrastructure ---
+buildSrc/                           @COG-GTM/ftgo-platform
+gradle/                             @COG-GTM/ftgo-platform
+build.gradle                        @COG-GTM/ftgo-platform
+settings.gradle                     @COG-GTM/ftgo-platform
+gradle.properties                   @COG-GTM/ftgo-platform
+infrastructure/                     @COG-GTM/ftgo-platform
+
+# --- CI/CD Pipelines ---
+.github/                            @COG-GTM/ftgo-platform
+.circleci/                          @COG-GTM/ftgo-platform
+
+# --- Shared Libraries ---
+shared/ftgo-common/                 @COG-GTM/ftgo-platform
+shared/ftgo-common-jpa/             @COG-GTM/ftgo-platform
+shared/ftgo-common-metrics/         @COG-GTM/ftgo-platform
+shared/ftgo-domain/                 @COG-GTM/ftgo-platform
+shared/ftgo-security-lib/           @COG-GTM/ftgo-platform
+shared/ftgo-openapi-lib/            @COG-GTM/ftgo-platform
+shared/ftgo-test-util/              @COG-GTM/ftgo-platform
+
+# --- Service API Contracts ---
+shared/ftgo-order-service-api/      @COG-GTM/ftgo-platform
+shared/ftgo-consumer-service-api/   @COG-GTM/ftgo-platform
+shared/ftgo-restaurant-service-api/ @COG-GTM/ftgo-platform
+shared/ftgo-courier-service-api/    @COG-GTM/ftgo-platform
+
+# --- Microservices ---
+services/ftgo-order-service/        @COG-GTM/ftgo-platform
+services/ftgo-consumer-service/     @COG-GTM/ftgo-platform
+services/ftgo-restaurant-service/   @COG-GTM/ftgo-platform
+services/ftgo-courier-service/      @COG-GTM/ftgo-platform
+
+# --- Documentation ---
+docs/                               @COG-GTM/ftgo-platform
+CONTRIBUTING.md                     @COG-GTM/ftgo-platform
+
+# --- Database Migrations ---
+ftgo-flyway/                        @COG-GTM/ftgo-platform
+
+# --- Legacy Monolith (requires extra review during migration) ---
+ftgo-application/                   @COG-GTM/ftgo-platform
