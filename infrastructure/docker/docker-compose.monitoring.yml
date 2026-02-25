@@ -1,0 +1,78 @@
+# ============================================================
+# FTGO Platform - Docker Compose (Monitoring Stack)
+# ============================================================
+# Prometheus + Grafana monitoring stack for local development.
+#
+# Usage:
+#   # Start monitoring stack only
+#   docker-compose -f infrastructure/docker/docker-compose.monitoring.yml up -d
+#
+#   # Start with services
+#   docker-compose -f infrastructure/docker/docker-compose.services.yml \
+#                  -f infrastructure/docker/docker-compose.monitoring.yml up -d
+#
+# Endpoints:
+#   Prometheus: http://localhost:9090
+#   Grafana:    http://localhost:3000 (admin/admin)
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------
+  # Prometheus - Metrics collection and alerting
+  # ----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: ftgo-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+
+  # ----------------------------------------------------------
+  # Grafana - Metrics visualization and dashboards
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: ftgo-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=localhost
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/service-health-overview.json
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  ftgo-network:
+    driver: bridge

@@ -1,0 +1,297 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "FTGO Platform - Business Metrics per Service (Orders, Consumers, Restaurants, Deliveries)",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "--- Order Service ---",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "title": "Orders Created (rate/min)",
+      "description": "Rate of new orders created per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "expr": "rate(orders_created_total{service=\"order-service\"}[5m]) * 60",
+          "legendFormat": "Orders Created"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      }
+    },
+    {
+      "title": "Orders Cancelled (rate/min)",
+      "description": "Rate of order cancellations per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "targets": [
+        {
+          "expr": "rate(orders_cancelled_total{service=\"order-service\"}[5m]) * 60",
+          "legendFormat": "Orders Cancelled"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "red" }
+        }
+      }
+    },
+    {
+      "title": "Order Value Distribution",
+      "description": "Distribution of order monetary values (percentiles)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "targets": [
+        {
+          "expr": "orders_total_value{quantile=\"0.5\", service=\"order-service\"}",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "orders_total_value{quantile=\"0.95\", service=\"order-service\"}",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "orders_total_value{quantile=\"0.99\", service=\"order-service\"}",
+          "legendFormat": "P99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }
+        }
+      }
+    },
+    {
+      "title": "Orders by State",
+      "description": "Current number of orders in each state",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "targets": [
+        {
+          "expr": "orders_by_state{service=\"order-service\"}",
+          "legendFormat": "{{ state }}"
+        }
+      ]
+    },
+    {
+      "title": "Order Cancellation Rate (%)",
+      "description": "Percentage of orders that are cancelled. Alert threshold: 30%",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "targets": [
+        {
+          "expr": "100 * rate(orders_cancelled_total[15m]) / rate(orders_created_total[15m])",
+          "legendFormat": "Cancellation Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 15 },
+              { "color": "red", "value": 30 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "--- Consumer Service ---",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "collapsed": false
+    },
+    {
+      "title": "Consumers Registered (rate/min)",
+      "description": "Rate of new consumer registrations per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "targets": [
+        {
+          "expr": "rate(consumers_registered_total{service=\"consumer-service\"}[5m]) * 60",
+          "legendFormat": "Consumers Registered"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      }
+    },
+    {
+      "title": "Consumers Validated (rate/min)",
+      "description": "Rate of consumer validations per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "targets": [
+        {
+          "expr": "rate(consumers_validated_total{service=\"consumer-service\"}[5m]) * 60",
+          "legendFormat": "Consumers Validated"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      }
+    },
+    {
+      "title": "--- Restaurant Service ---",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "collapsed": false
+    },
+    {
+      "title": "Restaurants Created (rate/min)",
+      "description": "Rate of new restaurant registrations per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 27 },
+      "targets": [
+        {
+          "expr": "rate(restaurants_created_total{service=\"restaurant-service\"}[5m]) * 60",
+          "legendFormat": "Restaurants Created"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "orange" }
+        }
+      }
+    },
+    {
+      "title": "Menus Updated (rate/min)",
+      "description": "Rate of menu updates per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 27 },
+      "targets": [
+        {
+          "expr": "rate(menus_updated_total{service=\"restaurant-service\"}[5m]) * 60",
+          "legendFormat": "Menus Updated"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "yellow" }
+        }
+      }
+    },
+    {
+      "title": "--- Courier Service ---",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 35 },
+      "collapsed": false
+    },
+    {
+      "title": "Deliveries Assigned (rate/min)",
+      "description": "Rate of deliveries assigned to couriers per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 36 },
+      "targets": [
+        {
+          "expr": "rate(deliveries_assigned_total{service=\"courier-service\"}[5m]) * 60",
+          "legendFormat": "Deliveries Assigned"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "light-blue" }
+        }
+      }
+    },
+    {
+      "title": "Deliveries Completed (rate/min)",
+      "description": "Rate of completed deliveries per minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 36 },
+      "targets": [
+        {
+          "expr": "rate(deliveries_completed_total{service=\"courier-service\"}[5m]) * 60",
+          "legendFormat": "Deliveries Completed"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "fixed", "fixedColor": "semi-dark-green" }
+        }
+      }
+    },
+    {
+      "title": "Delivery Duration (percentiles)",
+      "description": "Time to complete deliveries (P50, P95, P99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 36 },
+      "targets": [
+        {
+          "expr": "deliveries_average_time_seconds{quantile=\"0.5\", service=\"courier-service\"}",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "deliveries_average_time_seconds{quantile=\"0.95\", service=\"courier-service\"}",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "deliveries_average_time_seconds{quantile=\"0.99\", service=\"courier-service\"}",
+          "legendFormat": "P99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }
+        }
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["ftgo", "business-metrics", "orders", "consumers", "restaurants", "deliveries"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "FTGO - Business Metrics",
+  "uid": "ftgo-business-metrics",
+  "version": 1
+}

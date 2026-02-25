@@ -43,6 +43,7 @@ pluginManagement {
 // Shared Libraries
 include "shared:ftgo-common"
 include "shared:ftgo-common-jpa"
+include "shared:ftgo-common-metrics"
 include "shared:ftgo-domain"
 include "shared:common-swagger"
 include "shared:ftgo-test-util"

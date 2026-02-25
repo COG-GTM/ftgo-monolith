@@ -1,0 +1,149 @@
+# ============================================================
+# FTGO Platform - Prometheus Alerting Rules
+# ============================================================
+# Critical threshold alerts for all FTGO microservices.
+# These rules trigger when services exceed acceptable
+# error rates or latency thresholds.
+# ============================================================
+
+groups:
+  # ----------------------------------------------------------
+  # Service Health Alerts
+  # ----------------------------------------------------------
+  - name: ftgo_service_health
+    rules:
+      # Alert: High Error Rate (> 5%)
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (application, service)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (application, service)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          platform: ftgo
+        annotations:
+          summary: "High error rate on {{ $labels.application }}"
+          description: >
+            Service {{ $labels.application }} ({{ $labels.service }}) has an error rate
+            of {{ printf "%.2f" $value }}% (threshold: 5%) over the last 5 minutes.
+          runbook_url: "https://docs.ftgo.dev/runbooks/high-error-rate"
+
+      # Alert: High P99 Latency (> 2 seconds)
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application, service)
+          ) > 2.0
+        for: 2m
+        labels:
+          severity: critical
+          platform: ftgo
+        annotations:
+          summary: "High p99 latency on {{ $labels.application }}"
+          description: >
+            Service {{ $labels.application }} ({{ $labels.service }}) has p99 latency
+            of {{ printf "%.2f" $value }}s (threshold: 2s) over the last 5 minutes.
+          runbook_url: "https://docs.ftgo.dev/runbooks/high-latency"
+
+      # Alert: Service Down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          platform: ftgo
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: >
+            Prometheus cannot reach {{ $labels.job }} at {{ $labels.instance }}
+            for more than 1 minute.
+          runbook_url: "https://docs.ftgo.dev/runbooks/service-down"
+
+  # ----------------------------------------------------------
+  # JVM Alerts
+  # ----------------------------------------------------------
+  - name: ftgo_jvm_health
+    rules:
+      # Alert: High JVM Heap Usage (> 85%)
+      - alert: HighHeapUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"}
+            /
+            jvm_memory_max_bytes{area="heap"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          platform: ftgo
+        annotations:
+          summary: "High JVM heap usage on {{ $labels.application }}"
+          description: >
+            Service {{ $labels.application }} heap usage is at
+            {{ printf "%.1f" $value }}% (threshold: 85%).
+
+      # Alert: High GC Pause Time
+      - alert: HighGcPauseTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m])
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          platform: ftgo
+        annotations:
+          summary: "High GC pause time on {{ $labels.application }}"
+          description: >
+            Service {{ $labels.application }} average GC pause time is
+            {{ printf "%.2f" $value }}s (threshold: 0.5s).
+
+  # ----------------------------------------------------------
+  # Database Connection Pool Alerts
+  # ----------------------------------------------------------
+  - name: ftgo_database_health
+    rules:
+      # Alert: Connection Pool Exhaustion (> 90%)
+      - alert: ConnectionPoolExhaustion
+        expr: |
+          (
+            hikaricp_connections_active
+            /
+            hikaricp_connections_max
+          ) > 0.9
+        for: 3m
+        labels:
+          severity: warning
+          platform: ftgo
+        annotations:
+          summary: "Database connection pool near exhaustion on {{ $labels.application }}"
+          description: >
+            Service {{ $labels.application }} connection pool is at
+            {{ printf "%.1f" $value }}% capacity (threshold: 90%).
+
+  # ----------------------------------------------------------
+  # Business Metrics Alerts
+  # ----------------------------------------------------------
+  - name: ftgo_business_alerts
+    rules:
+      # Alert: High Order Cancellation Rate
+      - alert: HighOrderCancellationRate
+        expr: |
+          (
+            rate(orders_cancelled_total[15m])
+            /
+            rate(orders_created_total[15m])
+          ) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          platform: ftgo
+        annotations:
+          summary: "High order cancellation rate"
+          description: >
+            Order cancellation rate is {{ printf "%.1f" $value }}%
+            over the last 15 minutes (threshold: 30%).
