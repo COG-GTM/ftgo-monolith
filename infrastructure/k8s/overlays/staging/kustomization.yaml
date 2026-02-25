@@ -41,3 +41,5 @@ patches:
   - path: patches/mysql-storage.yaml
   # Staging ingress with TLS
   - path: patches/ingress-host.yaml
+  # Staging log retention (30 days)
+  - path: patches/logging-retention.yaml

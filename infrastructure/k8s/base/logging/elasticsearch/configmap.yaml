@@ -1,0 +1,109 @@
+# ============================================================
+# Elasticsearch ConfigMap - ILM Policies and Index Templates
+# ============================================================
+# Index Lifecycle Management (ILM) policy for automatic log
+# retention. Applied via Elasticsearch API after startup.
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-ilm-config
+  namespace: ftgo
+  labels:
+    app: elasticsearch
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/component: logging
+data:
+  # ILM Policy - applied via init job or sidecar
+  ilm-policy.json: |
+    {
+      "policy": {
+        "phases": {
+          "hot": {
+            "min_age": "0ms",
+            "actions": {
+              "rollover": {
+                "max_size": "5gb",
+                "max_age": "1d"
+              },
+              "set_priority": {
+                "priority": 100
+              }
+            }
+          },
+          "warm": {
+            "min_age": "2d",
+            "actions": {
+              "forcemerge": {
+                "max_num_segments": 1
+              },
+              "set_priority": {
+                "priority": 50
+              }
+            }
+          },
+          "delete": {
+            "min_age": "7d",
+            "actions": {
+              "delete": {}
+            }
+          }
+        }
+      }
+    }
+  # Index template for FTGO logs
+  index-template.json: |
+    {
+      "index_patterns": ["ftgo-logs-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.lifecycle.name": "ftgo-logs-policy",
+          "index.lifecycle.rollover_alias": "ftgo-logs"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "level": { "type": "keyword" },
+            "service": { "type": "keyword" },
+            "traceId": { "type": "keyword" },
+            "spanId": { "type": "keyword" },
+            "correlationId": { "type": "keyword" },
+            "message": { "type": "text" },
+            "logger_name": { "type": "keyword" },
+            "thread_name": { "type": "keyword" },
+            "stack_trace": { "type": "text" },
+            "requestMethod": { "type": "keyword" },
+            "requestUri": { "type": "keyword" },
+            "remoteAddr": { "type": "ip" },
+            "environment": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  # Setup script to apply ILM policy and index template
+  setup.sh: |
+    #!/bin/bash
+    set -e
+    ES_HOST="${ELASTICSEARCH_HOST:-elasticsearch}"
+    ES_PORT="${ELASTICSEARCH_PORT:-9200}"
+    ES_URL="http://${ES_HOST}:${ES_PORT}"
+
+    echo "Waiting for Elasticsearch..."
+    until curl -sf "${ES_URL}/_cluster/health" > /dev/null 2>&1; do
+      sleep 5
+    done
+    echo "Elasticsearch is ready."
+
+    echo "Creating ILM policy..."
+    curl -sf -X PUT "${ES_URL}/_ilm/policy/ftgo-logs-policy" \
+      -H "Content-Type: application/json" \
+      -d @/config/ilm-policy.json
+
+    echo "Creating index template..."
+    curl -sf -X PUT "${ES_URL}/_index_template/ftgo-logs-template" \
+      -H "Content-Type: application/json" \
+      -d @/config/index-template.json
+
+    echo "Setup complete."

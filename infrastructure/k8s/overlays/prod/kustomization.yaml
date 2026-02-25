@@ -43,3 +43,5 @@ patches:
   - path: patches/mysql-storage.yaml
   # Production ingress with TLS
   - path: patches/ingress-host.yaml
+  # Production log retention (90 days)
+  - path: patches/logging-retention.yaml

@@ -1,0 +1,62 @@
+<!--
+  ============================================================
+  FTGO Platform - Sample Logback Configuration (JSON + EFK)
+  ============================================================
+  Copy this file to your service's src/main/resources/logback-spring.xml
+  and customize as needed. The ftgo-logging-lib configures JSON output
+  programmatically, so this file is provided as a reference only.
+
+  If you prefer XML-based configuration over programmatic setup,
+  set ftgo.logging.json.enabled=false and use this XML instead.
+  ============================================================
+-->
+<configuration>
+    <!-- Import Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Service name from Spring Boot config -->
+    <springProperty scope="context" name="serviceName" source="spring.application.name" defaultValue="unknown"/>
+
+    <!-- ======================================================== -->
+    <!-- JSON Console Appender (logstash-logback-encoder)         -->
+    <!-- ======================================================== -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Include the service name as a custom field -->
+            <customFields>{"service":"${serviceName}"}</customFields>
+            <!-- ISO 8601 timestamp format -->
+            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+            <!-- Include MDC fields (traceId, spanId, correlationId) -->
+            <includeMdc>true</includeMdc>
+            <!-- Include caller data (class, method, line) - disable in prod -->
+            <includeCallerData>false</includeCallerData>
+        </encoder>
+    </appender>
+
+    <!-- ======================================================== -->
+    <!-- Async Wrapper (non-blocking log output)                  -->
+    <!-- ======================================================== -->
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <maxFlushTime>5000</maxFlushTime>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="JSON_CONSOLE"/>
+    </appender>
+
+    <!-- ======================================================== -->
+    <!-- Root Logger                                               -->
+    <!-- ======================================================== -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_JSON"/>
+    </root>
+
+    <!-- Service-specific log levels -->
+    <logger name="com.ftgo" level="INFO"/>
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+
+    <!-- Reduce noise from Fluentd/ES connection logging -->
+    <logger name="org.apache.http" level="WARN"/>
+    <logger name="org.elasticsearch" level="WARN"/>
+</configuration>

@@ -39,3 +39,5 @@ patches:
   - path: patches/configmap-overrides.yaml
   # Dev MySQL storage
   - path: patches/mysql-storage.yaml
+  # Dev log retention (7 days)
+  - path: patches/logging-retention.yaml

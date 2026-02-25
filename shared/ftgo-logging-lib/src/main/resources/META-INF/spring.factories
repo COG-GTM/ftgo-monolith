@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.common.logging.config.FtgoLoggingAutoConfiguration,\
+  com.ftgo.common.logging.config.LogbackJsonConfiguration

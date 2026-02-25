@@ -1,0 +1,98 @@
+# ============================================================
+# Fluentd DaemonSet for FTGO Log Collection
+# ============================================================
+# Runs on every K8s node to collect logs from all pods.
+# Parses structured JSON logs and forwards to Elasticsearch.
+# ============================================================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: ftgo
+  labels:
+    app: fluentd
+    app.kubernetes.io/name: fluentd
+    app.kubernetes.io/component: logging
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+        app.kubernetes.io/name: fluentd
+        app.kubernetes.io/component: logging
+    spec:
+      serviceAccountName: fluentd
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+        - name: fluentd
+          image: fluent/fluentd-kubernetes-daemonset:v1.16-debian-elasticsearch8-1
+          env:
+            - name: FLUENT_ELASTICSEARCH_HOST
+              value: elasticsearch
+            - name: FLUENT_ELASTICSEARCH_PORT
+              value: "9200"
+            - name: FLUENT_ELASTICSEARCH_SCHEME
+              value: http
+            - name: FLUENT_ELASTICSEARCH_LOGSTASH_FORMAT
+              value: "true"
+            - name: FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+              value: ftgo-logs
+            - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
+              value: cri
+            - name: FLUENT_CONTAINER_TAIL_PARSER_TIME_FORMAT
+              value: "%Y-%m-%dT%H:%M:%S.%N%:z"
+            - name: FTGO_ENVIRONMENT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: dockercontainerlog
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: fluentd-config
+              mountPath: /fluentd/etc/fluent.conf
+              subPath: fluent.conf
+            - name: fluentd-buffer
+              mountPath: /fluentd/buffer
+          readinessProbe:
+            httpGet:
+              path: /api/plugins.json
+              port: 9880
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/plugins.json
+              port: 9880
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: dockercontainerlog
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config
+        - name: fluentd-buffer
+          emptyDir: {}
