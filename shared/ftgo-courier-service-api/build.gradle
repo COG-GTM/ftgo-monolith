@@ -1,0 +1,6 @@
+// ftgo-courier-service-api - Courier service API contracts (DTOs, events, interfaces)
+// Package: com.ftgo.courier.api
+
+dependencies {
+    compile project(":shared:ftgo-common")
+}

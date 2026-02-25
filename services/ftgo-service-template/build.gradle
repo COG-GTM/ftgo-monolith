@@ -1,0 +1,30 @@
+// ftgo-<service-name> - <Bounded Context> microservice
+// Package: com.ftgo.<service>
+//
+// TEMPLATE: Copy this directory to create a new microservice.
+// Replace all occurrences of "template" with your service name.
+// Update dependencies as needed for your bounded context.
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: IntegrationTestsPlugin
+
+dependencies {
+    // Shared libraries
+    compile project(":shared:common-swagger")
+    compile project(":shared:ftgo-domain")
+    // compile project(":shared:ftgo-<service>-service-api")  // Uncomment and replace <service>
+
+    // Spring Boot starters
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile 'javax.el:javax.el-api:2.2.5'
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile 'io.rest-assured:rest-assured:3.0.6'
+    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
+    testCompile "io.rest-assured:json-path:3.0.6"
+    testCompile project(":shared:ftgo-test-util")
+}

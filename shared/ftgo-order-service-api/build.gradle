@@ -1,0 +1,6 @@
+// ftgo-order-service-api - Order service API contracts (DTOs, events, interfaces)
+// Package: com.ftgo.order.api
+
+dependencies {
+    compile project(":shared:ftgo-common")
+}

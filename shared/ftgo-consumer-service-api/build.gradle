@@ -1,0 +1,6 @@
+// ftgo-consumer-service-api - Consumer service API contracts (DTOs, events, interfaces)
+// Package: com.ftgo.consumer.api
+
+dependencies {
+    compile project(":shared:ftgo-common")
+}

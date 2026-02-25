@@ -1,4 +1,36 @@
+// ============================================================
+// FTGO Platform - Gradle Settings
+// ============================================================
+// This file includes both the legacy monolith modules (flat structure)
+// and the new microservices modules (hierarchical structure).
+// Legacy modules will be removed once migration is complete.
 
+// ============================================================
+// NEW: Microservices Structure (services/ and shared/)
+// ============================================================
+
+// Shared Libraries
+include "shared:ftgo-common"
+include "shared:ftgo-common-jpa"
+include "shared:ftgo-domain"
+include "shared:common-swagger"
+include "shared:ftgo-test-util"
+
+// Service API Contracts (shared between services)
+include "shared:ftgo-order-service-api"
+include "shared:ftgo-consumer-service-api"
+include "shared:ftgo-restaurant-service-api"
+include "shared:ftgo-courier-service-api"
+
+// Microservices
+include "services:ftgo-order-service"
+include "services:ftgo-consumer-service"
+include "services:ftgo-restaurant-service"
+include "services:ftgo-courier-service"
+
+// ============================================================
+// LEGACY: Monolith Modules (flat structure - to be removed after migration)
+// ============================================================
 
 include "common-swagger"
 
@@ -9,7 +41,6 @@ include "ftgo-common"
 include "ftgo-common-jpa"
 
 include "ftgo-domain"
-
 
 include "ftgo-order-service"
 include "ftgo-order-service-api"

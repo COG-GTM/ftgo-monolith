@@ -1,0 +1,6 @@
+// ftgo-restaurant-service-api - Restaurant service API contracts (DTOs, events, interfaces)
+// Package: com.ftgo.restaurant.api
+
+dependencies {
+    compile project(":shared:ftgo-common")
+}
