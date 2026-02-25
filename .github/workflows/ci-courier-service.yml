@@ -1,0 +1,99 @@
+---
+# ============================================================
+# CI Pipeline: ftgo-courier-service
+# ============================================================
+# Triggers on changes to the courier service or its dependencies.
+# Builds and tests the service using Gradle with JDK 17.
+# ============================================================
+
+name: "CI: Courier Service"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/ftgo-courier-service/**"
+      - "ftgo-courier-service/**"
+      - "shared/ftgo-courier-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "shared/ftgo-common/**"
+      - "shared/ftgo-common-jpa/**"
+      - "shared/ftgo-domain/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+  pull_request:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/ftgo-courier-service/**"
+      - "ftgo-courier-service/**"
+      - "shared/ftgo-courier-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "shared/ftgo-common/**"
+      - "shared/ftgo-common-jpa/**"
+      - "shared/ftgo-domain/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-courier-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-courier-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build courier service (new microservice)
+        run: ./gradlew :services:ftgo-courier-service:build --no-daemon --stacktrace
+
+      - name: Build courier service (legacy module)
+        run: ./gradlew :ftgo-courier-service:build --no-daemon --stacktrace
+
+      - name: Run unit tests
+        run: |
+          ./gradlew :services:ftgo-courier-service:test --no-daemon --stacktrace
+          ./gradlew :ftgo-courier-service:test --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: courier-service-test-reports
+          path: |
+            services/ftgo-courier-service/build/reports/tests/
+            ftgo-courier-service/build/reports/tests/
+          retention-days: 14

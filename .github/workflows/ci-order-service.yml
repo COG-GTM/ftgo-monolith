@@ -1,0 +1,99 @@
+---
+# ============================================================
+# CI Pipeline: ftgo-order-service
+# ============================================================
+# Triggers on changes to the order service or its dependencies.
+# Builds and tests the service using Gradle with JDK 17.
+# ============================================================
+
+name: "CI: Order Service"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/ftgo-order-service/**"
+      - "ftgo-order-service/**"
+      - "shared/ftgo-order-service-api/**"
+      - "ftgo-order-service-api/**"
+      - "shared/ftgo-common/**"
+      - "shared/ftgo-common-jpa/**"
+      - "shared/ftgo-domain/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+  pull_request:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/ftgo-order-service/**"
+      - "ftgo-order-service/**"
+      - "shared/ftgo-order-service-api/**"
+      - "ftgo-order-service-api/**"
+      - "shared/ftgo-common/**"
+      - "shared/ftgo-common-jpa/**"
+      - "shared/ftgo-domain/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-order-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-order-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build order service (new microservice)
+        run: ./gradlew :services:ftgo-order-service:build --no-daemon --stacktrace
+
+      - name: Build order service (legacy module)
+        run: ./gradlew :ftgo-order-service:build --no-daemon --stacktrace
+
+      - name: Run unit tests
+        run: |
+          ./gradlew :services:ftgo-order-service:test --no-daemon --stacktrace
+          ./gradlew :ftgo-order-service:test --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-service-test-reports
+          path: |
+            services/ftgo-order-service/build/reports/tests/
+            ftgo-order-service/build/reports/tests/
+          retention-days: 14
