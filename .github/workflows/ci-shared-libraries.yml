@@ -1,0 +1,140 @@
+---
+# ============================================================
+# CI Pipeline: Shared Libraries
+# ============================================================
+# Triggers on changes to any shared library module.
+# Builds and tests all shared libraries to ensure compatibility.
+# ============================================================
+
+name: "CI: Shared Libraries"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "common-swagger/**"
+      - "ftgo-test-util/**"
+      - "ftgo-order-service-api/**"
+      - "ftgo-consumer-service-api/**"
+      - "ftgo-restaurant-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+  pull_request:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "common-swagger/**"
+      - "ftgo-test-util/**"
+      - "ftgo-order-service-api/**"
+      - "ftgo-consumer-service-api/**"
+      - "ftgo-restaurant-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-shared:
+    name: Build & Test Shared Libraries
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-shared-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-shared-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build shared libraries (new structure)
+        run: |
+          ./gradlew :shared:ftgo-common:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-common-jpa:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-domain:build --no-daemon --stacktrace
+          ./gradlew :shared:common-swagger:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-test-util:build --no-daemon --stacktrace
+
+      - name: Build API contracts (new structure)
+        run: |
+          ./gradlew :shared:ftgo-order-service-api:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-consumer-service-api:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-restaurant-service-api:build --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-courier-service-api:build --no-daemon --stacktrace
+
+      - name: Build shared libraries (legacy modules)
+        run: |
+          ./gradlew :ftgo-common:build --no-daemon --stacktrace
+          ./gradlew :ftgo-common-jpa:build --no-daemon --stacktrace
+          ./gradlew :ftgo-domain:build --no-daemon --stacktrace
+          ./gradlew :common-swagger:build --no-daemon --stacktrace
+          ./gradlew :ftgo-test-util:build --no-daemon --stacktrace
+
+      - name: Build API contracts (legacy modules)
+        run: |
+          ./gradlew :ftgo-order-service-api:build --no-daemon --stacktrace
+          ./gradlew :ftgo-consumer-service-api:build --no-daemon --stacktrace
+          ./gradlew :ftgo-restaurant-service-api:build --no-daemon --stacktrace
+          ./gradlew :ftgo-courier-service-api:build --no-daemon --stacktrace
+
+      - name: Run tests (new structure)
+        run: |
+          ./gradlew :shared:ftgo-common:test --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-common-jpa:test --no-daemon --stacktrace
+          ./gradlew :shared:ftgo-domain:test --no-daemon --stacktrace
+
+      - name: Run tests (legacy modules)
+        run: |
+          ./gradlew :ftgo-common:test --no-daemon --stacktrace
+          ./gradlew :ftgo-common-jpa:test --no-daemon --stacktrace
+          ./gradlew :ftgo-domain:test --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-libraries-test-reports
+          path: |
+            shared/**/build/reports/tests/
+            ftgo-common/build/reports/tests/
+            ftgo-common-jpa/build/reports/tests/
+            ftgo-domain/build/reports/tests/
+            common-swagger/build/reports/tests/
+            ftgo-test-util/build/reports/tests/
+          retention-days: 14
