@@ -1,20 +1,81 @@
+// ============================================================
 // ftgo-common - Shared common utilities and value objects
+// ============================================================
+// Standalone versioned library extracted from the monolith.
 // Package: com.ftgo.common
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-common:publishToMavenLocal
+//   ./gradlew :shared:ftgo-common:publish
+// ============================================================
+
+apply plugin: 'maven-publish'
+
+// Library version - follows semantic versioning
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
 
 dependencies {
+    // JPA annotations for @Embeddable value objects
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
 
+    // Jackson serialization
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
-    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
 
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    // MySQL connector (runtime only)
     compile 'mysql:mysql-connector-java:5.1.39'
 
+    // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
+    // JAXB runtime dependencies (Java 9+ compatibility)
     runtime "javax.xml.bind:jaxb-api:2.2.11"
     runtime "com.sun.xml.bind:jaxb-core:2.2.11"
     runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
     runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library as com.ftgo:ftgo-common:1.0.0-SNAPSHOT
+// Microservices declare: implementation 'com.ftgo:ftgo-common:1.0.0-SNAPSHOT'
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-common'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and Jackson modules for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        // Local file-based repository (CI can override with Nexus/Artifactory URL)
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
 }
