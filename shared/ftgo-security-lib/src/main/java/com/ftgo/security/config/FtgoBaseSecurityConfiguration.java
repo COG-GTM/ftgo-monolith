@@ -2,7 +2,9 @@ package com.ftgo.security.config;
 
 import com.ftgo.security.exception.FtgoAccessDeniedHandler;
 import com.ftgo.security.exception.FtgoAuthenticationEntryPoint;
+import com.ftgo.security.jwt.JwtAuthenticationFilter;
 import com.ftgo.security.properties.FtgoSecurityProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.List;
@@ -44,6 +47,14 @@ public class FtgoBaseSecurityConfiguration {
     private final FtgoSecurityProperties securityProperties;
     private final FtgoAuthenticationEntryPoint authenticationEntryPoint;
     private final FtgoAccessDeniedHandler accessDeniedHandler;
+
+    /**
+     * Optional JWT authentication filter. Injected only when
+     * {@code ftgo.security.jwt.enabled=true} (see {@link com.ftgo.security.jwt.JwtAutoConfiguration}).
+     * When absent, the configuration falls back to HTTP Basic authentication.
+     */
+    @Autowired(required = false)
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public FtgoBaseSecurityConfiguration(
             FtgoSecurityProperties securityProperties,
@@ -114,10 +125,19 @@ public class FtgoBaseSecurityConfiguration {
                 }
                 authorize.anyRequest().authenticated();
             })
-            .httpBasic(Customizer.withDefaults())
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler));
+
+        // When JWT is enabled, register the JWT filter before the
+        // UsernamePasswordAuthenticationFilter. Otherwise fall back
+        // to HTTP Basic authentication (EM-39 default).
+        if (jwtAuthenticationFilter != null) {
+            http.addFilterBefore(jwtAuthenticationFilter,
+                    UsernamePasswordAuthenticationFilter.class);
+        } else {
+            http.httpBasic(Customizer.withDefaults());
+        }
 
         return http.build();
     }

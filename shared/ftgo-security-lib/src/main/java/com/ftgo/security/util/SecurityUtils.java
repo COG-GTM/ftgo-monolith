@@ -1,5 +1,6 @@
 package com.ftgo.security.util;
 
+import com.ftgo.security.jwt.JwtUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -7,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -76,5 +78,58 @@ public final class SecurityUtils {
      */
     public static boolean isAuthenticated() {
         return getCurrentAuthentication().isPresent();
+    }
+
+    // ---------------------------------------------------------------
+    // JWT-specific helpers (available when JWT auth is enabled)
+    // ---------------------------------------------------------------
+
+    /**
+     * Returns the {@link JwtUserDetails} from the current security context,
+     * or {@link Optional#empty()} if the principal is not JWT-based.
+     */
+    public static Optional<JwtUserDetails> getCurrentJwtUserDetails() {
+        return getCurrentAuthentication()
+                .map(Authentication::getPrincipal)
+                .filter(JwtUserDetails.class::isInstance)
+                .map(JwtUserDetails.class::cast);
+    }
+
+    /**
+     * Returns the numeric user ID from the JWT claims,
+     * or {@link Optional#empty()} if not authenticated via JWT.
+     */
+    public static Optional<Long> getCurrentUserId() {
+        return getCurrentJwtUserDetails().map(JwtUserDetails::getUserId);
+    }
+
+    /**
+     * Returns the roles from the JWT claims,
+     * or an empty list if not authenticated via JWT.
+     */
+    public static List<String> getCurrentRoles() {
+        return getCurrentJwtUserDetails()
+                .map(JwtUserDetails::getRoles)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
+     * Returns the service-specific permissions from the JWT claims,
+     * or an empty list if not authenticated via JWT.
+     */
+    public static List<String> getCurrentPermissions() {
+        return getCurrentJwtUserDetails()
+                .map(JwtUserDetails::getPermissions)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
+     * Checks if the current JWT user has the specified permission.
+     *
+     * @param permission the permission to check (e.g., "order:create")
+     * @return true if the current user has the permission
+     */
+    public static boolean hasPermission(String permission) {
+        return getCurrentPermissions().contains(permission);
     }
 }
