@@ -1,0 +1,80 @@
+// ============================================================
+// ftgo-openapi-lib - Shared OpenAPI 3.0 Configuration Library
+// ============================================================
+// Replaces the legacy common-swagger module (Springfox 2.x) with
+// SpringDoc OpenAPI 3.0 for new microservices.
+//
+// Package: com.ftgo.common.openapi
+//
+// Usage in a microservice build.gradle:
+//   dependencies {
+//       implementation project(":shared:ftgo-openapi-lib")
+//   }
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-openapi-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-openapi-lib:publish
+// ============================================================
+
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+dependencies {
+    // SpringDoc OpenAPI 3.0 with Swagger UI
+    api "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0"
+
+    // Spring Boot Web (for controller advice, response entity, etc.)
+    api "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Spring Boot validation (for standard validation annotations)
+    api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
+
+    // Jackson for JSON serialization
+    api "com.fasterxml.jackson.core:jackson-databind:2.16.1"
+    api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library as com.ftgo:ftgo-openapi-lib:1.0.0-SNAPSHOT
+// Microservices declare: implementation 'com.ftgo:ftgo-openapi-lib:1.0.0-SNAPSHOT'
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-openapi-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO OpenAPI Library'
+                description = 'Shared OpenAPI 3.0 configuration, standard API models, and annotations for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        // Local file-based repository (CI can override with Nexus/Artifactory URL)
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}

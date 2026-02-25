@@ -46,6 +46,7 @@ include "shared:ftgo-common-jpa"
 include "shared:ftgo-common-metrics"
 include "shared:ftgo-domain"
 include "shared:common-swagger"
+include "shared:ftgo-openapi-lib"
 include "shared:ftgo-test-util"
 include "shared:ftgo-security-lib"
 
