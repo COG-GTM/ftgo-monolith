@@ -1,2 +1,3 @@
 com.ftgo.security.config.FtgoSecurityAutoConfiguration
 com.ftgo.security.jwt.JwtAutoConfiguration
+com.ftgo.security.authorization.FtgoAuthorizationAutoConfiguration
