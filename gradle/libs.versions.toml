@@ -65,6 +65,7 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
 spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
 spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
@@ -117,6 +118,11 @@ spring-boot-web = [
     "spring-boot-starter-validation",
 ]
 
+# Spring Security dependencies
+spring-security = [
+    "spring-boot-starter-security",
+]
+
 # Common Spring Boot data dependencies
 spring-boot-data = [
     "spring-boot-starter-data-jpa",
@@ -138,6 +144,12 @@ testing-rest = [
     "rest-assured",
     "rest-assured-spring-mock-mvc",
     "rest-assured-json-path",
+]
+
+# Security testing dependencies
+testing-security = [
+    "spring-boot-starter-test",
+    "spring-security-test",
 ]
 
 # Observability dependencies
