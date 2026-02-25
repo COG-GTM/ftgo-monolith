@@ -10,7 +10,7 @@ apply plugin: IntegrationTestsPlugin
 
 dependencies {
     // Shared libraries
-    compile project(":shared:common-swagger")
+    compile project(":shared:ftgo-openapi-lib")
     compile project(":shared:ftgo-domain")
     // compile project(":shared:ftgo-<service>-service-api")  // Uncomment and replace <service>
 
