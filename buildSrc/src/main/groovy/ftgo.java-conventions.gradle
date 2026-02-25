@@ -1,0 +1,48 @@
+// =============================================================================
+// ftgo.java-conventions
+// =============================================================================
+// Shared Java compilation settings for all FTGO microservices.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'ftgo.java-conventions'
+//   }
+//
+// Provides:
+//   - Java 17 source and target compatibility
+//   - UTF-8 encoding for all compilation tasks
+//   - Common compiler options (warnings, deprecation notices)
+//   - Standard repository configuration
+//   - Consistent project group and artifact naming
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+group = 'com.ftgo'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += [
+        '-parameters',        // Preserve method parameter names
+        '-Xlint:deprecation', // Warn about deprecated API usage
+        '-Xlint:unchecked',   // Warn about unchecked operations
+    ]
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+repositories {
+    mavenCentral()
+}

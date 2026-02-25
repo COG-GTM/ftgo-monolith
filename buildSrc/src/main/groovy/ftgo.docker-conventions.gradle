@@ -1,0 +1,55 @@
+// =============================================================================
+// ftgo.docker-conventions
+// =============================================================================
+// Docker image build configuration for FTGO microservices using Jib.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'ftgo.docker-conventions'
+//   }
+//
+//   // Optional: customize image settings
+//   jib {
+//       to {
+//           image = "my-registry/my-service:${version}"
+//       }
+//   }
+//
+// Provides:
+//   - Google Jib plugin for containerization without Docker daemon
+//   - Default base image (Eclipse Temurin JDK 17)
+//   - Standard container configuration (port 8080, JVM flags)
+//   - Image labeling with build metadata
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'com.google.cloud.tools.jib'
+}
+
+jib {
+    from {
+        image = 'eclipse-temurin:17-jre-alpine'
+    }
+    to {
+        image = "ftgo/${project.name}"
+        tags = [project.version.toString(), 'latest']
+    }
+    container {
+        ports = ['8080']
+        jvmFlags = [
+            '-XX:+UseContainerSupport',
+            '-XX:MaxRAMPercentage=75.0',
+            '-Djava.security.egd=file:/dev/./urandom'
+        ]
+        environment = [
+            'SPRING_PROFILES_ACTIVE': 'docker'
+        ]
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+        format = 'OCI'
+        labels = [
+            'maintainer': 'ftgo-team',
+            'org.opencontainers.image.source': 'https://github.com/COG-GTM/ftgo-monolith'
+        ]
+    }
+}
