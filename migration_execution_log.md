@@ -22,10 +22,10 @@
 | 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Completed | [PR #74](https://github.com/COG-GTM/ftgo-monolith/pull/74) | Success | None |
 | 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Completed | [PR #75](https://github.com/COG-GTM/ftgo-monolith/pull/75) | Success | None |
 | 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Completed | [PR #72](https://github.com/COG-GTM/ftgo-monolith/pull/72) | Success | None |
-| 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Pending | - | - | - |
-| 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Pending | - | - | - |
-| 5 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Pending | - | - | - |
-| 5 | EM-48 | Document Testing Strategy and Create Test Templates | 5 | Pending | - | - | - |
+| 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Completed | [PR #79](https://github.com/COG-GTM/ftgo-monolith/pull/79) | Success | None |
+| 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Completed | [PR #78](https://github.com/COG-GTM/ftgo-monolith/pull/78) | Success | None |
+| 5 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Completed | [PR #76](https://github.com/COG-GTM/ftgo-monolith/pull/76) | Success | None |
+| 5 | EM-48 | Document Testing Strategy and Create Test Templates | 5 | Completed | [PR #77](https://github.com/COG-GTM/ftgo-monolith/pull/77) | Success | None |
 | 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Pending | - | - | - |
 | 6 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Pending | - | - | - |
 | 7 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | 4 | Pending | - | - | - |
@@ -61,8 +61,11 @@
 - **Notes:** All 5 PRs squashed cleanly. EM-36 had hardcoded CI credentials replaced with secrets references. Build passes. Flyway migrations, Dockerfiles, testing pipeline, JWT auth, and code quality gates added.
 
 ### Batch 5
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-35, EM-37, EM-42, EM-48
+- **SHA after squash:** `aeaa670`
+- **Conflicts:** None
+- **Notes:** All 4 PRs squashed cleanly. Build passes. New: ftgo-tracing-lib, RBAC framework in ftgo-security-lib (175 tests), K8s manifests with Kustomize overlays, testing docs + templates.
 
 ### Batch 6
 - **Status:** Not started
