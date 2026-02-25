@@ -1,0 +1,103 @@
+# ============================================================
+# FTGO Monolith - Multi-Stage Dockerfile
+# ============================================================
+# Optimized multi-stage build for the legacy FTGO monolith.
+# Builder stage: Gradle build with dependency caching
+# Runtime stage: Minimal JRE 17 slim base image
+#
+# Usage:
+#   docker build -f infrastructure/docker/dockerfiles/Dockerfile.monolith .
+# ============================================================
+
+# ----------------------------------------------------------
+# Stage 1: Builder - Gradle build with dependency caching
+# ----------------------------------------------------------
+FROM eclipse-temurin:17-jdk-jammy AS builder
+
+WORKDIR /build
+
+# Copy Gradle wrapper and build configuration first (for caching)
+COPY gradlew gradlew.bat ./
+COPY gradle/ gradle/
+COPY build.gradle settings.gradle gradle.properties ./
+
+# Copy buildSrc for convention plugins
+COPY buildSrc/ buildSrc/
+
+# Copy all source modules
+COPY shared/ shared/
+COPY ftgo-common/ ftgo-common/
+COPY ftgo-common-jpa/ ftgo-common-jpa/
+COPY ftgo-domain/ ftgo-domain/
+COPY ftgo-order-service/ ftgo-order-service/
+COPY ftgo-order-service-api/ ftgo-order-service-api/
+COPY ftgo-consumer-service/ ftgo-consumer-service/
+COPY ftgo-consumer-service-api/ ftgo-consumer-service-api/
+COPY ftgo-restaurant-service/ ftgo-restaurant-service/
+COPY ftgo-restaurant-service-api/ ftgo-restaurant-service-api/
+COPY ftgo-courier-service/ ftgo-courier-service/
+COPY ftgo-courier-service-api/ ftgo-courier-service-api/
+COPY ftgo-flyway/ ftgo-flyway/
+COPY ftgo-application/ ftgo-application/
+COPY ftgo-test-util/ ftgo-test-util/
+COPY common-swagger/ common-swagger/
+COPY services/ services/
+
+# Download dependencies first (cached layer)
+RUN chmod +x gradlew && \
+    ./gradlew :ftgo-application:dependencies --no-daemon 2>/dev/null || true
+
+# Build the monolith JAR (skip tests and broken modules)
+RUN ./gradlew :ftgo-application:build --no-daemon -x test \
+    -x :ftgo-end-to-end-tests-common:compileJava \
+    -x :ftgo-end-to-end-tests:compileJava \
+    -x :ftgo-end-to-end-tests-common:build \
+    -x :ftgo-end-to-end-tests:build \
+    -x :ftgo-application:compileTestJava \
+    -x :ftgo-application:test
+
+# ----------------------------------------------------------
+# Stage 2: Runtime - Minimal JRE image
+# ----------------------------------------------------------
+FROM eclipse-temurin:17-jre-jammy AS runtime
+
+LABEL maintainer="FTGO Platform Team"
+LABEL org.opencontainers.image.source="https://github.com/COG-GTM/ftgo-monolith"
+LABEL org.opencontainers.image.title="ftgo-application"
+LABEL org.opencontainers.image.description="FTGO monolith application"
+
+# Install curl for health checks, then clean up
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r ftgo && useradd -r -g ftgo -d /app -s /sbin/nologin ftgo
+
+WORKDIR /app
+
+# Copy JAR from builder stage
+COPY --from=builder /build/ftgo-application/build/libs/*.jar app.jar
+
+# Set ownership
+RUN chown -R ftgo:ftgo /app
+
+# Expose application port
+EXPOSE 8080
+
+# Health check using Spring Boot Actuator
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# Switch to non-root user
+USER ftgo
+
+# JVM options optimized for containers
+ENV JAVA_OPTS="-XX:+UseG1GC \
+    -XX:MaxRAMPercentage=75.0 \
+    -XX:InitialRAMPercentage=50.0 \
+    -XX:+UseContainerSupport \
+    -Djava.security.egd=file:/dev/./urandom"
+
+# Use exec form for proper signal handling (SIGTERM)
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

@@ -1,0 +1,230 @@
+---
+# ============================================================
+# CI Pipeline: Docker Image Build & Push
+# ============================================================
+# Builds and pushes Docker images to GitHub Container Registry
+# (ghcr.io) on merge to main or feat/microservices-migration-v3.
+#
+# Image tagging strategy:
+#   - <service>:<version>-<git-sha>  (immutable release tag)
+#   - <service>:latest               (latest from default branch)
+#   - <service>:<branch-name>        (latest from feature branch)
+#
+# Each service is built in parallel using a matrix strategy.
+# ============================================================
+
+name: "Docker: Build & Push Images"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "ftgo-application/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "ftgo-order-service/**"
+      - "ftgo-consumer-service/**"
+      - "ftgo-restaurant-service/**"
+      - "ftgo-courier-service/**"
+      - "ftgo-order-service-api/**"
+      - "ftgo-consumer-service-api/**"
+      - "ftgo-restaurant-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "common-swagger/**"
+      - "ftgo-flyway/**"
+      - "ftgo-test-util/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "infrastructure/docker/dockerfiles/**"
+      - "mysql/**"
+  workflow_dispatch:
+    inputs:
+      services:
+        description: "Comma-separated list of services to build (or 'all')"
+        required: false
+        default: "all"
+      push_images:
+        description: "Push images to registry"
+        required: false
+        default: "true"
+        type: boolean
+
+concurrency:
+  group: docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ftgo
+
+jobs:
+  # ----------------------------------------------------------
+  # Determine which services need to be built
+  # ----------------------------------------------------------
+  prepare:
+    name: Prepare Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      version: ${{ steps.version.outputs.version }}
+      sha_short: ${{ steps.version.outputs.sha_short }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          # Extract version from gradle.properties or use default
+          VERSION=$(grep -E '^version=' gradle.properties 2>/dev/null | cut -d'=' -f2 || echo "0.1.0")
+          if [ -z "$VERSION" ]; then
+            VERSION="0.1.0"
+          fi
+          SHA_SHORT=$(git rev-parse --short=7 HEAD)
+          BRANCH_NAME=${GITHUB_REF_NAME//\//-}
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "sha_short=${SHA_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "branch_name=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Build version: ${VERSION}-${SHA_SHORT} (branch: ${BRANCH_NAME})"
+
+      - name: Set build matrix
+        id: set-matrix
+        run: |
+          MATRIX='{"include":[
+            {
+              "service": "ftgo-order-service",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
+              "context": ".",
+              "build_args": "SERVICE_NAME=ftgo-order-service\nSERVICE_PORT=8081\nSERVICE_PATH=services/ftgo-order-service\nGRADLE_PROJECT=:services:ftgo-order-service",
+              "port": "8081"
+            },
+            {
+              "service": "ftgo-consumer-service",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
+              "context": ".",
+              "build_args": "SERVICE_NAME=ftgo-consumer-service\nSERVICE_PORT=8082\nSERVICE_PATH=services/ftgo-consumer-service\nGRADLE_PROJECT=:services:ftgo-consumer-service",
+              "port": "8082"
+            },
+            {
+              "service": "ftgo-restaurant-service",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
+              "context": ".",
+              "build_args": "SERVICE_NAME=ftgo-restaurant-service\nSERVICE_PORT=8083\nSERVICE_PATH=services/ftgo-restaurant-service\nGRADLE_PROJECT=:services:ftgo-restaurant-service",
+              "port": "8083"
+            },
+            {
+              "service": "ftgo-courier-service",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
+              "context": ".",
+              "build_args": "SERVICE_NAME=ftgo-courier-service\nSERVICE_PORT=8084\nSERVICE_PATH=services/ftgo-courier-service\nGRADLE_PROJECT=:services:ftgo-courier-service",
+              "port": "8084"
+            },
+            {
+              "service": "ftgo-application",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.monolith",
+              "context": ".",
+              "build_args": "",
+              "port": "8080"
+            },
+            {
+              "service": "ftgo-mysql",
+              "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.mysql",
+              "context": ".",
+              "build_args": "",
+              "port": "3306"
+            }
+          ]}'
+          # Remove newlines for valid JSON
+          MATRIX=$(echo "$MATRIX" | tr -d '\n' | jq -c '.')
+          echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
+
+  # ----------------------------------------------------------
+  # Build and push Docker images
+  # ----------------------------------------------------------
+  build-and-push:
+    name: "Build: ${{ matrix.service }}"
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            # Semantic version + git SHA (immutable)
+            type=raw,value=${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha_short }}
+            # Branch name
+            type=ref,event=branch
+            # Latest tag for default branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+            # Git SHA only
+            type=sha,prefix=,format=short
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' && (github.event.inputs.push_images != 'false') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.build_args }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          platforms: linux/amd64
+
+      - name: Export image digest
+        if: success()
+        run: |
+          echo "## ${{ matrix.service }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tags:**" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ----------------------------------------------------------
+  # Build summary
+  # ----------------------------------------------------------
+  build-summary:
+    name: Build Summary
+    needs: [prepare, build-and-push]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Docker Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Version:** ${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha_short }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Registry:** ${{ env.REGISTRY }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Branch:** ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"

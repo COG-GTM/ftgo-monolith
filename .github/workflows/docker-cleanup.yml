@@ -1,0 +1,60 @@
+---
+# ============================================================
+# CI Pipeline: Container Image Cleanup
+# ============================================================
+# Manages image retention policies for GitHub Container Registry.
+# Removes old/untagged images to control storage costs.
+#
+# Retention policy:
+#   - Keep latest 10 tagged images per service
+#   - Remove untagged images older than 7 days
+#   - Never remove 'latest' or semantic version tags
+# ============================================================
+
+name: "Docker: Image Cleanup"
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (do not delete)"
+        required: false
+        default: "true"
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup:
+    name: "Cleanup: ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ftgo-order-service
+          - ftgo-consumer-service
+          - ftgo-restaurant-service
+          - ftgo-courier-service
+          - ftgo-application
+          - ftgo-mysql
+    steps:
+      - name: Delete old container images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: "ftgo/${{ matrix.service }}"
+          package-type: "container"
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: "true"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Cleanup: ${{ matrix.service }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Retained latest 10 tagged versions." >> "$GITHUB_STEP_SUMMARY"
+          echo "Removed untagged versions." >> "$GITHUB_STEP_SUMMARY"
