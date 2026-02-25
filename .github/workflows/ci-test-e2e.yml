@@ -1,0 +1,203 @@
+---
+# ============================================================
+# CI Pipeline: End-to-End Tests
+# ============================================================
+# Runs E2E tests against the full application stack.
+# Uses Docker Compose to start MySQL and the FTGO application.
+# Executes the ftgo-end-to-end-tests module.
+#
+# NOTE: This workflow is currently disabled (workflow_dispatch only)
+# because the ftgo-end-to-end-tests-common module has a pre-existing
+# build failure (missing eventuate-util-test dependency).
+# Enable the push/pull_request triggers once the dependency is resolved.
+# ============================================================
+
+name: "CI: End-to-End Tests"
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: "Skip build step (use existing images)"
+        required: false
+        default: "false"
+        type: boolean
+  # Uncomment below once ftgo-end-to-end-tests-common dependency is resolved:
+  # push:
+  #   branches: [main, master, "feat/microservices-migration-v3"]
+  #   paths:
+  #     - "ftgo-application/**"
+  #     - "ftgo-end-to-end-tests/**"
+  #     - "ftgo-end-to-end-tests-common/**"
+  #     - "ftgo-flyway/**"
+  #     - "docker-compose.yml"
+  #     - "mysql/**"
+  #     - "buildSrc/**"
+  #     - "gradle/**"
+  #     - "build.gradle"
+  #     - "settings.gradle"
+  # pull_request:
+  #   branches: [main, master, "feat/microservices-migration-v3"]
+  #   paths:
+  #     - "ftgo-application/**"
+  #     - "ftgo-end-to-end-tests/**"
+  #     - "ftgo-end-to-end-tests-common/**"
+  #     - "ftgo-flyway/**"
+  #     - "docker-compose.yml"
+  #     - "mysql/**"
+  #     - "buildSrc/**"
+  #     - "gradle/**"
+  #     - "build.gradle"
+  #     - "settings.gradle"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # ===========================================================================
+  # End-to-End Tests
+  # ===========================================================================
+  e2e-tests:
+    name: "End-to-End Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-e2e-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-e2e-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build application
+        if: ${{ github.event.inputs.skip_build != 'true' }}
+        run: >
+          ./gradlew clean build
+          -x :ftgo-end-to-end-tests-common:compileJava
+          -x :ftgo-end-to-end-tests:compileJava
+          -x :ftgo-end-to-end-tests-common:build
+          -x :ftgo-end-to-end-tests:build
+          -x :ftgo-application:compileTestJava
+          -x :ftgo-application:test
+          -x test
+          --no-daemon --stacktrace
+
+      - name: Start Docker Compose stack
+        run: |
+          docker compose down --remove-orphans -v 2>/dev/null || true
+          docker compose up -d --build
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to accept connections..."
+          for i in $(seq 1 60); do
+            if docker compose exec -T mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting... ($i/60)"
+            sleep 3
+          done
+
+      - name: Run database migrations
+        run: ./gradlew :ftgo-flyway:flywayMigrate --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting for FTGO application to be ready..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8081/actuator/health > /dev/null 2>&1; then
+              echo "Application is ready!"
+              break
+            fi
+            echo "Waiting for application... ($i/60)"
+            sleep 5
+          done
+
+      - name: Run end-to-end tests
+        id: e2e
+        run: >
+          ./gradlew :ftgo-end-to-end-tests:cleanTest
+          :ftgo-end-to-end-tests:test
+          --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Collect Docker Compose logs
+        if: always()
+        run: |
+          mkdir -p build/e2e-logs
+          docker compose logs > build/e2e-logs/docker-compose.log 2>&1
+          docker compose ps > build/e2e-logs/docker-compose-ps.log 2>&1
+
+      - name: Stop Docker Compose stack
+        if: always()
+        run: docker compose down --remove-orphans -v
+
+      - name: Check E2E test results
+        if: steps.e2e.outcome == 'failure'
+        run: exit 1
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            ftgo-end-to-end-tests/build/test-results/test/**/*.xml
+          check_name: "E2E Test Results"
+          comment_mode: "off"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-reports
+          path: |
+            ftgo-end-to-end-tests/build/reports/tests/
+          retention-days: 14
+
+      - name: Upload Docker Compose logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-docker-logs
+          path: build/e2e-logs/
+          retention-days: 7
+
+      - name: E2E Test Summary
+        if: always()
+        run: |
+          echo "## End-to-End Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ steps.e2e.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Note:** E2E tests require the ftgo-end-to-end-tests-common" >> $GITHUB_STEP_SUMMARY
+          echo "> dependency (eventuate-util-test) to be resolved before" >> $GITHUB_STEP_SUMMARY
+          echo "> automatic triggers can be enabled." >> $GITHUB_STEP_SUMMARY
