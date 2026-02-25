@@ -1,0 +1,164 @@
+# ============================================================
+# FTGO Platform - Docker Compose (EFK Logging Stack)
+# ============================================================
+# Elasticsearch, Fluentd, and Kibana for centralized log
+# aggregation in local development.
+#
+# Usage:
+#   # Start logging stack only
+#   docker-compose -f infrastructure/docker/docker-compose.logging.yml up -d
+#
+#   # Start with services, monitoring, and tracing
+#   docker-compose -f infrastructure/docker/docker-compose.services.yml \
+#                  -f infrastructure/docker/docker-compose.monitoring.yml \
+#                  -f infrastructure/docker/docker-compose.tracing.yml \
+#                  -f infrastructure/docker/docker-compose.logging.yml up -d
+#
+# Endpoints:
+#   Kibana UI:       http://localhost:5601
+#   Elasticsearch:   http://localhost:9200
+#   Fluentd (TCP):   localhost:24224
+#   Fluentd (HTTP):  http://localhost:9880
+#
+# Log Flow:
+#   Service (JSON stdout) -> Docker log driver -> Fluentd -> Elasticsearch -> Kibana
+#
+# Note: Services should use the fluentd Docker logging driver:
+#   logging:
+#     driver: fluentd
+#     options:
+#       fluentd-address: localhost:24224
+#       tag: ftgo.{{.Name}}
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------
+  # Elasticsearch - Log Storage and Search Engine
+  # ----------------------------------------------------------
+  # Stores all aggregated log entries. Provides full-text search
+  # and analytics capabilities via Kibana.
+  #
+  # Configuration:
+  #   - Single-node mode for development
+  #   - Disabled security for local dev (enable in production)
+  #   - 512MB heap (adjust for production workloads)
+  # ----------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: ftgo-elasticsearch
+    environment:
+      # Single-node discovery for development
+      discovery.type: single-node
+      # Disable security for local development
+      xpack.security.enabled: "false"
+      # JVM heap size (512MB for dev, increase for production)
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Cluster name
+      cluster.name: ftgo-logs
+      # Node name
+      node.name: ftgo-es-node-1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ----------------------------------------------------------
+  # Fluentd - Log Collector and Forwarder
+  # ----------------------------------------------------------
+  # Collects logs from Docker containers via the fluentd logging
+  # driver or from files, parses JSON structured logs, and
+  # forwards them to Elasticsearch.
+  #
+  # Configuration:
+  #   - Custom Dockerfile extends official image with ES plugin
+  #   - Listens on TCP/24224 and HTTP/9880
+  #   - Parses JSON logs from FTGO services
+  #   - Buffers logs before sending to Elasticsearch
+  # ----------------------------------------------------------
+  fluentd:
+    build:
+      context: ./fluentd
+      dockerfile: Dockerfile
+    container_name: ftgo-fluentd
+    ports:
+      - "24224:24224"       # TCP log input
+      - "24224:24224/udp"   # UDP log input
+      - "9880:9880"         # HTTP input (for health checks and direct log submission)
+    volumes:
+      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+      - fluentd-buffer:/fluentd/buffer
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9880/api/plugins.json || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ----------------------------------------------------------
+  # Kibana - Log Visualization and Dashboard
+  # ----------------------------------------------------------
+  # Web UI for searching, viewing, and visualizing logs stored
+  # in Elasticsearch. Access at http://localhost:5601
+  #
+  # Features:
+  #   - Log search by traceId, correlationId, service name
+  #   - Error log aggregation and trending
+  #   - Request flow visualization
+  #   - Custom dashboards for FTGO services
+  # ----------------------------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    container_name: ftgo-kibana
+    environment:
+      # Elasticsearch connection
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+      # Server name
+      SERVER_NAME: ftgo-kibana
+      # Disable telemetry
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  fluentd-buffer:
+    driver: local
+
+networks:
+  ftgo-network:
+    driver: bridge

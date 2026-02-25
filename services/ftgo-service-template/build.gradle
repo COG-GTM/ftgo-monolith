@@ -15,6 +15,7 @@ dependencies {
     compile project(":shared:ftgo-security-lib")
     compile project(":shared:ftgo-common-metrics")
     compile project(":shared:ftgo-error-handling-lib")
+    compile project(":shared:ftgo-logging-lib")
     // compile project(":shared:ftgo-<service>-service-api")  // Uncomment and replace <service>
 
     // Spring Boot starters

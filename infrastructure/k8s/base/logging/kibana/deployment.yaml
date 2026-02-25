@@ -1,0 +1,59 @@
+# ============================================================
+# Kibana Deployment for FTGO Log Visualization
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: ftgo
+  labels:
+    app: kibana
+    app.kubernetes.io/name: kibana
+    app.kubernetes.io/component: logging
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+        app.kubernetes.io/name: kibana
+        app.kubernetes.io/component: logging
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.12.2
+          ports:
+            - containerPort: 5601
+              name: http
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: '["http://elasticsearch:9200"]'
+            - name: SERVER_NAME
+              value: ftgo-kibana
+            - name: TELEMETRY_ENABLED
+              value: "false"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 10

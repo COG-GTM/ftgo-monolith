@@ -1,0 +1,92 @@
+# ============================================================
+# Fluentd ConfigMap - K8s Log Collection Configuration
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: ftgo
+  labels:
+    app: fluentd
+    app.kubernetes.io/name: fluentd
+    app.kubernetes.io/component: logging
+data:
+  fluent.conf: |
+    # ============================================================
+    # Fluentd Configuration for Kubernetes Log Collection
+    # ============================================================
+
+    # Input: Tail container log files
+    <source>
+      @type tail
+      path /var/log/containers/ftgo-*.log
+      pos_file /fluentd/buffer/ftgo-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type regexp
+        expression /^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/
+        time_format %Y-%m-%dT%H:%M:%S.%N%:z
+      </parse>
+    </source>
+
+    # Filter: Parse JSON log content from FTGO services
+    <filter kubernetes.**>
+      @type parser
+      key_name log
+      reserve_data true
+      remove_key_name_field true
+      <parse>
+        @type json
+        time_key @timestamp
+        time_format %Y-%m-%dT%H:%M:%S.%L%Z
+        keep_time_key true
+      </parse>
+    </filter>
+
+    # Filter: Add Kubernetes metadata
+    <filter kubernetes.**>
+      @type record_transformer
+      <record>
+        kubernetes_namespace ${record.dig("kubernetes", "namespace_name") || ENV["FTGO_ENVIRONMENT"] || "unknown"}
+        kubernetes_pod ${record.dig("kubernetes", "pod_name") || "unknown"}
+        kubernetes_container ${record.dig("kubernetes", "container_name") || "unknown"}
+      </record>
+    </filter>
+
+    # Output: Elasticsearch
+    <match kubernetes.**>
+      @type elasticsearch
+      host "#{ENV['FLUENT_ELASTICSEARCH_HOST'] || 'elasticsearch'}"
+      port "#{ENV['FLUENT_ELASTICSEARCH_PORT'] || '9200'}"
+      scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
+      logstash_format true
+      logstash_prefix ftgo-logs
+      logstash_dateformat %Y.%m.%d
+      include_tag_key true
+      tag_key fluentd_tag
+      type_name _doc
+      reconnect_on_error true
+      reload_on_failure true
+      reload_connections false
+      request_timeout 15s
+      <buffer>
+        @type file
+        path /fluentd/buffer/elasticsearch
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        retry_type exponential_backoff
+        retry_wait 1s
+        retry_max_interval 60s
+        retry_forever true
+        chunk_limit_size 8m
+        queue_limit_length 256
+        overflow_action block
+      </buffer>
+    </match>
+
+    # Catch-all: discard non-FTGO logs
+    <match **>
+      @type null
+    </match>
