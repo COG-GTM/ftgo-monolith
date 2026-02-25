@@ -1,0 +1,153 @@
+<!--
+  ============================================================
+  FTGO Platform - Shared Logback Configuration
+  ============================================================
+  This is the standard Logback configuration for all FTGO microservices.
+  It provides profile-based logging:
+
+    - local:           Human-readable console output + file rotation
+    - dev/staging/prod: Structured JSON output via logstash-logback-encoder
+
+  Copy this file to your service's src/main/resources/logback-spring.xml
+  or include it via the ftgo-logging-lib dependency.
+
+  MDC Fields included in all log entries:
+    userId, requestId, traceId, spanId, serviceName, correlationId
+
+  See: docs/logging-standards.md for full logging guidelines.
+  ============================================================
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Import Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Service name from Spring Boot config -->
+    <springProperty scope="context" name="serviceName"
+                    source="spring.application.name" defaultValue="unknown"/>
+
+    <!-- PII Masking Converter for human-readable format -->
+    <conversionRule conversionWord="maskedMsg"
+                    converterClass="com.ftgo.common.logging.masking.PiiMaskingConverter"/>
+
+    <!-- ======================================================== -->
+    <!-- LOCAL DEVELOPMENT PROFILE                                 -->
+    <!-- Human-readable console + rolling file appender            -->
+    <!-- ======================================================== -->
+    <springProfile name="local,default">
+
+        <!-- Console Appender: human-readable with color and trace context -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%5level) [%boldCyan(${serviceName}),%X{traceId:-},%X{spanId:-},%X{correlationId:-}] [%boldYellow(%thread)] %cyan(%logger{36}) - %maskedMsg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <!-- Rolling File Appender: for local development log review -->
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>logs/${serviceName}.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>logs/${serviceName}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <maxFileSize>10MB</maxFileSize>
+                <maxHistory>7</maxHistory>
+                <totalSizeCap>100MB</totalSizeCap>
+            </rollingPolicy>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5level [${serviceName},%X{traceId:-},%X{spanId:-},%X{correlationId:-}] [%thread] %logger{36} - %maskedMsg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <!-- Log Levels: local development -->
+        <logger name="com.ftgo" level="DEBUG"/>
+        <logger name="org.springframework" level="INFO"/>
+        <logger name="org.springframework.web" level="INFO"/>
+        <logger name="org.hibernate" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.apache.http" level="INFO"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- ======================================================== -->
+    <!-- DEV / STAGING PROFILE                                     -->
+    <!-- Structured JSON output with async appender                -->
+    <!-- ======================================================== -->
+    <springProfile name="dev,staging">
+
+        <!-- JSON Console Appender -->
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${serviceName}"}</customFields>
+                <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+                <includeMdc>true</includeMdc>
+                <includeCallerData>false</includeCallerData>
+            </encoder>
+        </appender>
+
+        <!-- Async Wrapper -->
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>1024</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <maxFlushTime>5000</maxFlushTime>
+            <includeCallerData>false</includeCallerData>
+            <appender-ref ref="JSON_CONSOLE"/>
+        </appender>
+
+        <!-- Log Levels: dev/staging -->
+        <logger name="com.ftgo" level="INFO"/>
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.hibernate" level="WARN"/>
+        <logger name="org.apache.http" level="WARN"/>
+        <logger name="org.elasticsearch" level="WARN"/>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON"/>
+        </root>
+    </springProfile>
+
+    <!-- ======================================================== -->
+    <!-- PRODUCTION PROFILE                                        -->
+    <!-- Structured JSON output with async appender (optimized)    -->
+    <!-- ======================================================== -->
+    <springProfile name="prod,production">
+
+        <!-- JSON Console Appender -->
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${serviceName}"}</customFields>
+                <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+                <includeMdc>true</includeMdc>
+                <includeCallerData>false</includeCallerData>
+            </encoder>
+        </appender>
+
+        <!-- Async Wrapper (production-tuned) -->
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>2048</queueSize>
+            <discardingThreshold>20</discardingThreshold>
+            <maxFlushTime>10000</maxFlushTime>
+            <includeCallerData>false</includeCallerData>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="JSON_CONSOLE"/>
+        </appender>
+
+        <!-- Log Levels: production -->
+        <logger name="com.ftgo" level="INFO"/>
+        <logger name="org.springframework" level="ERROR"/>
+        <logger name="org.springframework.web" level="ERROR"/>
+        <logger name="org.hibernate" level="ERROR"/>
+        <logger name="org.apache.http" level="ERROR"/>
+        <logger name="org.elasticsearch" level="ERROR"/>
+
+        <root level="WARN">
+            <appender-ref ref="ASYNC_JSON"/>
+        </root>
+    </springProfile>
+
+</configuration>
