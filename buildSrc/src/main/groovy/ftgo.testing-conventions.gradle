@@ -14,10 +14,21 @@
 //   - Rest-Assured for API testing
 //   - Test logging configuration
 //   - Common test dependencies
+//   - JaCoCo code coverage with configurable thresholds
+//   - Parallel test execution
+//   - Test execution time tracking
 // =============================================================================
 
 plugins {
     id 'ftgo.java-conventions'
+    id 'jacoco'
+}
+
+// ---------------------------------------------------------------------------
+// JaCoCo Code Coverage Configuration
+// ---------------------------------------------------------------------------
+jacoco {
+    toolVersion = '0.8.11'
 }
 
 // Configure all test tasks to use JUnit 5
@@ -36,6 +47,39 @@ tasks.withType(Test).configureEach {
     reports {
         html.required = true
         junitXml.required = true
+    }
+
+    // Parallel test execution - use available processors
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    // Fork every 100 test classes to prevent memory leaks
+    forkEvery = 100
+
+    // JaCoCo coverage data collection
+    finalizedBy jacocoTestReport
+}
+
+// ---------------------------------------------------------------------------
+// JaCoCo Report and Verification
+// ---------------------------------------------------------------------------
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    violationRules {
+        rule {
+            limit {
+                // Target: 70% instruction coverage
+                minimum = 0.70
+            }
+        }
     }
 }
 
@@ -65,6 +109,25 @@ tasks.register('integrationTest', Test) {
     shouldRunAfter tasks.named('test')
 
     useJUnitPlatform()
+
+    // JaCoCo for integration tests
+    finalizedBy 'jacocoIntegrationTestReport'
+}
+
+// JaCoCo report for integration tests
+tasks.register('jacocoIntegrationTestReport', JacocoReport) {
+    description = 'Generates code coverage report for integration tests.'
+    group = 'verification'
+    dependsOn tasks.named('integrationTest')
+
+    sourceSets sourceSets.main
+    executionData tasks.named('integrationTest')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
 
 // Make check depend on integration tests
