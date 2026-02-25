@@ -1,0 +1,220 @@
+---
+# ============================================================
+# CI Pipeline: Integration Tests
+# ============================================================
+# Runs integration tests that require a MySQL database.
+# Uses GitHub Actions service containers for MySQL.
+# Executes integration test source sets across all services.
+# ============================================================
+
+name: "CI: Integration Tests"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "ftgo-order-service/**"
+      - "ftgo-consumer-service/**"
+      - "ftgo-restaurant-service/**"
+      - "ftgo-courier-service/**"
+      - "ftgo-flyway/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+  pull_request:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "ftgo-order-service/**"
+      - "ftgo-consumer-service/**"
+      - "ftgo-restaurant-service/**"
+      - "ftgo-courier-service/**"
+      - "ftgo-flyway/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # ===========================================================================
+  # Integration Tests: Per-Service with MySQL
+  # ===========================================================================
+  integration-tests:
+    name: "Integration Tests: ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ftgo-order-service
+          - ftgo-consumer-service
+          - ftgo-restaurant-service
+          - ftgo-courier-service
+
+    # MySQL CI credentials are configured via GitHub Actions secrets.
+    # Required secrets: MYSQL_CI_ROOT_PASS, MYSQL_CI_USER, MYSQL_CI_PASS
+    # If not configured, the service container step will use empty values
+    # and the "Generate CI database credentials" step provides defaults.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_CI_ROOT_PASS || 'ftgo_ci_root' }}
+          MYSQL_DATABASE: ftgo
+          MYSQL_USER: ${{ secrets.MYSQL_CI_USER || 'ftgo_ci_user' }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_CI_PASS || 'ftgo_ci' }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate CI database credentials
+        id: db-creds
+        run: |
+          # Use secrets if available, otherwise generate CI-only credentials
+          DB_USER="${{ secrets.MYSQL_CI_USER }}"
+          DB_PASS="${{ secrets.MYSQL_CI_PASS }}"
+          if [ -z "$DB_USER" ]; then DB_USER="ftgo_ci_user"; fi
+          if [ -z "$DB_PASS" ]; then DB_PASS="ftgo_ci"; fi
+          echo "SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/ftgo" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_USERNAME=${DB_USER}" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_PASSWORD=${DB_PASS}" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver" >> $GITHUB_ENV
+          echo "DOCKER_HOST_IP=localhost" >> $GITHUB_ENV
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-integ-${{ matrix.service }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-integ-${{ matrix.service }}-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 --silent 2>/dev/null; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run database migrations
+        run: ./gradlew :ftgo-flyway:flywayMigrate --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: "Run integration tests: ${{ matrix.service }} (new microservice)"
+        id: integ_new
+        run: >
+          ./gradlew :services:${{ matrix.service }}:integrationTest
+          --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: "Run integration tests: ${{ matrix.service }} (legacy module)"
+        id: integ_legacy
+        run: >
+          ./gradlew :${{ matrix.service }}:integrationTest
+          --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Check integration test results
+        if: steps.integ_new.outcome == 'failure' || steps.integ_legacy.outcome == 'failure'
+        run: exit 1
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            services/${{ matrix.service }}/build/test-results/integrationTest/**/*.xml
+            ${{ matrix.service }}/build/test-results/integrationTest/**/*.xml
+          check_name: "Integration Test Results: ${{ matrix.service }}"
+          comment_mode: "off"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-reports-${{ matrix.service }}
+          path: |
+            services/${{ matrix.service }}/build/reports/tests/integrationTest/
+            ${{ matrix.service }}/build/reports/tests/integrationTest/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage-${{ matrix.service }}
+          path: |
+            services/${{ matrix.service }}/build/reports/jacoco/
+            ${{ matrix.service }}/build/reports/jacoco/
+          retention-days: 14
+
+  # ===========================================================================
+  # Integration Tests Summary
+  # ===========================================================================
+  integration-tests-summary:
+    name: "Integration Tests Summary"
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: always()
+
+    steps:
+      - name: Check integration test results
+        run: |
+          echo "## Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service Matrix | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any integration tests failed
+        if: needs.integration-tests.result == 'failure'
+        run: |
+          echo "::error::One or more integration test jobs failed"
+          exit 1

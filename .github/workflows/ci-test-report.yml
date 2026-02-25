@@ -1,0 +1,143 @@
+---
+# ============================================================
+# CI Pipeline: Test Reporting & Coverage Aggregation
+# ============================================================
+# Aggregates test results and coverage reports from all test
+# workflows. Publishes combined coverage metrics and generates
+# trend data for tracking test health over time.
+#
+# Triggers after the unit test and integration test workflows
+# complete. Provides a single dashboard view of test health.
+# ============================================================
+
+name: "CI: Test Report & Coverage"
+
+on:
+  workflow_run:
+    workflows:
+      - "CI: Unit Tests"
+      - "CI: Integration Tests"
+    types:
+      - completed
+    branches: [main, master, "feat/microservices-migration-v3"]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  # ===========================================================================
+  # Aggregate Test Reports
+  # ===========================================================================
+  aggregate-reports:
+    name: "Aggregate Test & Coverage Reports"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: >
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event.workflow_run.conclusion == 'failure'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download unit test artifacts (shared)
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-reports-shared
+          path: reports/unit/shared
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download unit test artifacts (services)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unit-test-reports-*
+          path: reports/unit/services
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-reports-*
+          path: reports/coverage
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download integration test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: integration-test-reports-*
+          path: reports/integration
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download integration coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: integration-coverage-*
+          path: reports/integration-coverage
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Test & Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Source branch:** ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Conclusion:** ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Test Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count test result XML files
+          UNIT_COUNT=$(find reports/unit -name "*.xml" 2>/dev/null | wc -l)
+          INTEG_COUNT=$(find reports/integration -name "*.xml" 2>/dev/null | wc -l)
+          echo "| Tier | Report Files Found |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${UNIT_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${INTEG_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Coverage Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List coverage XML files
+          COVERAGE_FILES=$(find reports/coverage -name "*.xml" 2>/dev/null)
+          if [ -n "$COVERAGE_FILES" ]; then
+            echo "JaCoCo coverage reports found:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$COVERAGE_FILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> No JaCoCo coverage reports found in this run." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage Target" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** 70% instruction coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- **Enforcement:** JaCoCo coverage verification in \`ftgo.testing-conventions\` plugin" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload aggregated reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aggregated-test-reports-${{ github.event.workflow_run.id }}
+          path: reports/
+          retention-days: 30

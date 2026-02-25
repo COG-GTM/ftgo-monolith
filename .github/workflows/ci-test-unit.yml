@@ -1,0 +1,284 @@
+---
+# ============================================================
+# CI Pipeline: Unit Tests
+# ============================================================
+# Fast-feedback unit test execution across all modules.
+# No external dependencies (no database, no Docker).
+# Runs in parallel per module group for speed.
+# Generates JUnit XML reports and JaCoCo coverage.
+# ============================================================
+
+name: "CI: Unit Tests"
+
+on:
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "ftgo-order-service/**"
+      - "ftgo-consumer-service/**"
+      - "ftgo-restaurant-service/**"
+      - "ftgo-courier-service/**"
+      - "ftgo-order-service-api/**"
+      - "ftgo-consumer-service-api/**"
+      - "ftgo-restaurant-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "common-swagger/**"
+      - "ftgo-test-util/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+  pull_request:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "ftgo-common/**"
+      - "ftgo-common-jpa/**"
+      - "ftgo-domain/**"
+      - "ftgo-order-service/**"
+      - "ftgo-consumer-service/**"
+      - "ftgo-restaurant-service/**"
+      - "ftgo-courier-service/**"
+      - "ftgo-order-service-api/**"
+      - "ftgo-consumer-service-api/**"
+      - "ftgo-restaurant-service-api/**"
+      - "ftgo-courier-service-api/**"
+      - "common-swagger/**"
+      - "ftgo-test-util/**"
+      - "buildSrc/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # ===========================================================================
+  # Unit Tests: Shared Libraries
+  # ===========================================================================
+  unit-tests-shared:
+    name: "Unit Tests: Shared Libraries"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-unit-shared-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-unit-shared-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run shared library unit tests (new structure)
+        run: >
+          ./gradlew
+          :shared:ftgo-common:test
+          :shared:ftgo-common-jpa:test
+          :shared:ftgo-domain:test
+          :shared:common-swagger:test
+          :shared:ftgo-test-util:test
+          :shared:ftgo-order-service-api:test
+          :shared:ftgo-consumer-service-api:test
+          :shared:ftgo-restaurant-service-api:test
+          :shared:ftgo-courier-service-api:test
+          --no-daemon --stacktrace --parallel
+
+      - name: Run shared library unit tests (legacy modules)
+        run: >
+          ./gradlew
+          :ftgo-common:test
+          :ftgo-common-jpa:test
+          :ftgo-domain:test
+          :common-swagger:test
+          :ftgo-test-util:test
+          :ftgo-order-service-api:test
+          :ftgo-consumer-service-api:test
+          :ftgo-restaurant-service-api:test
+          :ftgo-courier-service-api:test
+          --no-daemon --stacktrace --parallel
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            shared/**/build/test-results/test/**/*.xml
+            ftgo-common/build/test-results/test/**/*.xml
+            ftgo-common-jpa/build/test-results/test/**/*.xml
+            ftgo-domain/build/test-results/test/**/*.xml
+            common-swagger/build/test-results/test/**/*.xml
+            ftgo-test-util/build/test-results/test/**/*.xml
+            ftgo-order-service-api/build/test-results/test/**/*.xml
+            ftgo-consumer-service-api/build/test-results/test/**/*.xml
+            ftgo-restaurant-service-api/build/test-results/test/**/*.xml
+            ftgo-courier-service-api/build/test-results/test/**/*.xml
+          check_name: "Unit Test Results: Shared Libraries"
+          comment_mode: "off"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-shared
+          path: |
+            shared/**/build/reports/tests/
+            ftgo-common/build/reports/tests/
+            ftgo-common-jpa/build/reports/tests/
+            ftgo-domain/build/reports/tests/
+            common-swagger/build/reports/tests/
+            ftgo-test-util/build/reports/tests/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-shared
+          path: |
+            shared/**/build/reports/jacoco/
+            ftgo-common/build/reports/jacoco/
+            ftgo-common-jpa/build/reports/jacoco/
+            ftgo-domain/build/reports/jacoco/
+          retention-days: 14
+
+  # ===========================================================================
+  # Unit Tests: Microservices
+  # ===========================================================================
+  unit-tests-services:
+    name: "Unit Tests: Microservices"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ftgo-order-service
+          - ftgo-consumer-service
+          - ftgo-restaurant-service
+          - ftgo-courier-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-unit-${{ matrix.service }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-unit-${{ matrix.service }}-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: "Run unit tests: ${{ matrix.service }} (new microservice)"
+        id: test_new
+        run: ./gradlew :services:${{ matrix.service }}:test --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: "Run unit tests: ${{ matrix.service }} (legacy module)"
+        id: test_legacy
+        run: ./gradlew :${{ matrix.service }}:test --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Check test results
+        if: steps.test_new.outcome == 'failure' || steps.test_legacy.outcome == 'failure'
+        run: exit 1
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            services/${{ matrix.service }}/build/test-results/test/**/*.xml
+            ${{ matrix.service }}/build/test-results/test/**/*.xml
+          check_name: "Unit Test Results: ${{ matrix.service }}"
+          comment_mode: "off"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ matrix.service }}
+          path: |
+            services/${{ matrix.service }}/build/reports/tests/
+            ${{ matrix.service }}/build/reports/tests/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-${{ matrix.service }}
+          path: |
+            services/${{ matrix.service }}/build/reports/jacoco/
+            ${{ matrix.service }}/build/reports/jacoco/
+          retention-days: 14
+
+  # ===========================================================================
+  # Test Summary
+  # ===========================================================================
+  unit-tests-summary:
+    name: "Unit Tests Summary"
+    runs-on: ubuntu-latest
+    needs: [unit-tests-shared, unit-tests-services]
+    if: always()
+
+    steps:
+      - name: Check unit test results
+        run: |
+          echo "## Unit Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Shared Libraries | ${{ needs.unit-tests-shared.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Microservices (matrix) | ${{ needs.unit-tests-services.result }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any unit tests failed
+        if: >
+          needs.unit-tests-shared.result == 'failure' ||
+          needs.unit-tests-services.result == 'failure'
+        run: |
+          echo "::error::One or more unit test jobs failed"
+          exit 1
