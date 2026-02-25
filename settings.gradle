@@ -52,6 +52,7 @@ include "shared:ftgo-security-lib"
 include "shared:ftgo-tracing-lib"
 include "shared:ftgo-logging-lib"
 include "shared:ftgo-error-handling-lib"
+include "shared:ftgo-resilience-lib"
 
 // Service API Contracts (shared between services)
 include "shared:ftgo-order-service-api"

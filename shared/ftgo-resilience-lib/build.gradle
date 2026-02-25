@@ -1,0 +1,112 @@
+// ============================================================
+// ftgo-resilience-lib - Shared Resilience & Health Check Library
+// ============================================================
+// Provides comprehensive health checks, service discovery abstractions,
+// and resilience patterns (circuit breakers, retries, bulkheads,
+// rate limiters) for all FTGO microservices.
+//
+// Package: com.ftgo.common.resilience
+//
+// Usage in a microservice build.gradle:
+//   dependencies {
+//       implementation project(":shared:ftgo-resilience-lib")
+//   }
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-resilience-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-resilience-lib:publish
+// ============================================================
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+// Use Spring Boot 3.2.3 BOM for dependency management.
+// This overrides the root project's legacy springBootVersion (2.7.18)
+// and ensures compatibility with Resilience4j 2.x and Spring Boot 3.x.
+def springBoot3Version = '3.2.3'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBoot3Version}"
+    }
+}
+
+dependencies {
+    // Spring Boot Actuator for health endpoints and metrics
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Spring Boot auto-configuration support
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // Spring Boot AOP for Resilience4j annotation support
+    api 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Resilience4j Spring Boot 3 integration
+    api "io.github.resilience4j:resilience4j-spring-boot3:2.2.0"
+
+    // Resilience4j core modules
+    api "io.github.resilience4j:resilience4j-circuitbreaker:2.2.0"
+    api "io.github.resilience4j:resilience4j-retry:2.2.0"
+    api "io.github.resilience4j:resilience4j-bulkhead:2.2.0"
+    api "io.github.resilience4j:resilience4j-ratelimiter:2.2.0"
+
+    // Resilience4j Micrometer integration for metrics
+    api "io.github.resilience4j:resilience4j-micrometer:2.2.0"
+
+    // Micrometer core for metrics
+    api "io.micrometer:micrometer-core:1.12.3"
+
+    // Spring Web for RestTemplate and WebClient (optional at compile time)
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+
+    // Spring Data JPA (optional - for DataSource health check)
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation "io.github.resilience4j:resilience4j-spring-boot3:2.2.0"
+}
+
+// Use JUnit 5 for tests
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-resilience-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Resilience Library'
+                description = 'Shared health checks, service discovery, and resilience patterns (circuit breaker, retry, bulkhead, rate limiter) for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}
