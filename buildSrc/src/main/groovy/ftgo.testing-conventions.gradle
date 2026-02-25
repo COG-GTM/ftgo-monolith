@@ -1,0 +1,73 @@
+// =============================================================================
+// ftgo.testing-conventions
+// =============================================================================
+// Testing configuration for FTGO microservices using JUnit 5.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'ftgo.testing-conventions'
+//   }
+//
+// Provides:
+//   - JUnit 5 (Jupiter) as the default test framework
+//   - Integration test source set and task
+//   - Rest-Assured for API testing
+//   - Test logging configuration
+//   - Common test dependencies
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+}
+
+// Configure all test tasks to use JUnit 5
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat 'full'
+    }
+
+    // Report generation
+    reports {
+        html.required = true
+        junitXml.required = true
+    }
+}
+
+// Integration test source set
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+// Integration test task
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+
+    useJUnitPlatform()
+}
+
+// Make check depend on integration tests
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
+}

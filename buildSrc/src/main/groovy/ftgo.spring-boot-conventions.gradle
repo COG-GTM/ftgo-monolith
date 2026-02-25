@@ -1,0 +1,42 @@
+// =============================================================================
+// ftgo.spring-boot-conventions
+// =============================================================================
+// Spring Boot 3.x configuration for FTGO microservices.
+//
+// Usage in a microservice build.gradle:
+//   plugins {
+//       id 'ftgo.spring-boot-conventions'
+//   }
+//
+// Provides:
+//   - Spring Boot 3.x plugin and dependency management
+//   - Java conventions (via ftgo.java-conventions)
+//   - Spring Boot BOM for consistent dependency versions
+//   - Boot JAR packaging configuration
+//   - Actuator and health check defaults
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
+springBoot {
+    buildInfo()
+}
+
+bootJar {
+    archiveClassifier.set('')
+}
+
+// Ensure plain JAR is not produced alongside boot JAR
+tasks.named('jar') {
+    archiveClassifier.set('plain')
+}

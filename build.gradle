@@ -1,43 +1,97 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
-    }
-
-    apply plugin: WaitForMySqlPlugin
-}
+// =============================================================================
+// FTGO Platform - Root Build Configuration
+// =============================================================================
+// This root build file manages both:
+//   1. Legacy monolith modules (backward-compatible, using old conventions)
+//   2. New microservices (using convention plugins from buildSrc)
+//
+// New microservices should use convention plugins:
+//   plugins {
+//       id 'ftgo.spring-boot-conventions'
+//       id 'ftgo.testing-conventions'
+//   }
+//
+// See gradle/CONVENTIONS.md for full documentation.
+// =============================================================================
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
 }
 
+// Apply WaitForMySql task to root project
+apply plugin: WaitForMySqlPlugin
+
+// =============================================================================
+// Legacy Monolith Module Configuration
+// =============================================================================
+// This subprojects block provides backward compatibility for legacy modules
+// that still use old Gradle conventions (compile, testCompile, etc.).
+// New microservices should NOT rely on this block; use convention plugins instead.
+// =============================================================================
 
 subprojects {
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    apply plugin: "java-library"
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
 
     group = "net.chrisrichardson.ftgo"
 
     repositories {
         mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
 
         maven {
             url "${project.rootDir}/build/repo"
         }
-
     }
 
+    // =========================================================================
+    // Backward Compatibility: Legacy Configuration Aliases
+    // =========================================================================
+    // Gradle 7+ removed the 'compile', 'testCompile', and 'runtime'
+    // configurations. These aliases allow legacy build.gradle files to
+    // continue working during the migration period.
+    // New code should use: implementation/api, testImplementation, runtimeOnly
+    //
+    // Note: 'compile' maps to 'api' (not 'implementation') to preserve the
+    // transitive dependency behavior that legacy modules rely on.
+    // =========================================================================
+    configurations {
+        // Create legacy 'compile' configuration (transitive, like old behavior)
+        compile {
+            canBeConsumed = false
+        }
+        api.extendsFrom(compile)
+
+        // Create legacy 'testCompile' configuration
+        testCompile {
+            canBeConsumed = false
+        }
+        testImplementation.extendsFrom(testCompile)
+
+        // Create legacy 'runtime' configuration
+        runtime {
+            canBeConsumed = false
+        }
+        runtimeOnly.extendsFrom(runtime)
+    }
+
+    // =========================================================================
+    // Legacy Test Dependencies
+    // =========================================================================
+    // Spring Boot 2.4+ removed JUnit 4 (junit-vintage-engine) from
+    // spring-boot-starter-test. Legacy test code still uses JUnit 4, so
+    // we add it back here for backward compatibility.
+    // =========================================================================
+    dependencies {
+        testImplementation 'junit:junit:4.13.2'
+        testImplementation 'org.junit.vintage:junit-vintage-engine:5.10.2'
+    }
+
+    // =========================================================================
+    // Handle duplicate entries in JAR/bootJar tasks
+    // =========================================================================
+    tasks.withType(Jar).configureEach {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }

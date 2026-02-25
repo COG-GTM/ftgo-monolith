@@ -4,6 +4,17 @@
 // This file includes both the legacy monolith modules (flat structure)
 // and the new microservices modules (hierarchical structure).
 // Legacy modules will be removed once migration is complete.
+//
+// Convention plugins are provided via buildSrc/ and can be applied
+// by any module using:
+//   plugins {
+//       id 'ftgo.spring-boot-conventions'
+//       id 'ftgo.testing-conventions'
+//   }
+//
+// The Gradle version catalog (gradle/libs.versions.toml) provides
+// centralized dependency management for new microservices.
+// ============================================================
 
 // ============================================================
 // NEW: Microservices Structure (services/ and shared/)
