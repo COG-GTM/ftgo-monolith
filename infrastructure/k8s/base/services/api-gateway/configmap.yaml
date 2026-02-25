@@ -1,0 +1,24 @@
+# ============================================================
+# FTGO API Gateway - ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-api-gateway-config
+  labels:
+    app.kubernetes.io/name: ftgo-api-gateway
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/part-of: ftgo-platform
+data:
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+  SERVER_PORT: "8080"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus,gateway"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_FTGO: "INFO"
+  FTGO_GATEWAY_JWT_ISSUER: "ftgo-platform"
+  FTGO_GATEWAY_RATELIMIT_ENABLED: "true"
+  FTGO_GATEWAY_RATELIMIT_DEFAULT_REPLENISH_RATE: "10"
+  FTGO_GATEWAY_RATELIMIT_DEFAULT_BURST_CAPACITY: "20"
+  FTGO_GATEWAY_VERSIONING_ENABLED: "true"
+  FTGO_GATEWAY_VERSIONING_DEFAULT_VERSION: "v1"

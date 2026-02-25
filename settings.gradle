@@ -63,6 +63,9 @@ include "services:ftgo-consumer-service"
 include "services:ftgo-restaurant-service"
 include "services:ftgo-courier-service"
 
+// API Gateway
+include "services:ftgo-api-gateway"
+
 // ============================================================
 // LEGACY: Monolith Modules (flat structure - to be removed after migration)
 // ============================================================

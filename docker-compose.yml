@@ -8,6 +8,25 @@ services:
       - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=mysqlpw
+  ftgo-api-gateway:
+    build:
+      context: ./services/ftgo-api-gateway
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ftgo-application
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: "DockerComposeDevSecretKeyMustBeAtLeast256BitsLong!!"
+      JWT_ISSUER: "ftgo-platform"
+      RATE_LIMIT_REDIS_ENABLED: "false"
+      ORDER_SERVICE_URL: "http://ftgo-application:8080"
+      CONSUMER_SERVICE_URL: "http://ftgo-application:8080"
+      RESTAURANT_SERVICE_URL: "http://ftgo-application:8080"
+      COURIER_SERVICE_URL: "http://ftgo-application:8080"
+      JAVA_OPTS: -Xmx192m
+
   ftgo-application:
     build: ./ftgo-application
     ports:
