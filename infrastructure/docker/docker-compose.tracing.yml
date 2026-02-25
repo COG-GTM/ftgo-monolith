@@ -1,0 +1,110 @@
+# ============================================================
+# FTGO Platform - Docker Compose (Distributed Tracing Stack)
+# ============================================================
+# Zipkin and Jaeger tracing collectors for local development.
+#
+# Usage:
+#   # Start tracing stack only
+#   docker-compose -f infrastructure/docker/docker-compose.tracing.yml up -d
+#
+#   # Start with services and monitoring
+#   docker-compose -f infrastructure/docker/docker-compose.services.yml \
+#                  -f infrastructure/docker/docker-compose.monitoring.yml \
+#                  -f infrastructure/docker/docker-compose.tracing.yml up -d
+#
+# Endpoints:
+#   Zipkin UI:  http://localhost:9411
+#   Jaeger UI:  http://localhost:16686
+#
+# Note: Use either Zipkin OR Jaeger, not both simultaneously.
+# By default, both are included for evaluation. In production,
+# choose one and remove the other.
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------
+  # Zipkin - Distributed Tracing Collector and UI
+  # ----------------------------------------------------------
+  # Lightweight tracing system. Receives spans via HTTP (B3 format).
+  # Services send traces to http://zipkin:9411/api/v2/spans
+  #
+  # Configuration:
+  #   - In-memory storage (default, suitable for development)
+  #   - For production, configure external storage (MySQL, Elasticsearch)
+  # ----------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.1
+    container_name: ftgo-zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      # In-memory storage (default). For production, use:
+      # STORAGE_TYPE: mysql
+      # MYSQL_HOST: mysql
+      # MYSQL_TCP_PORT: 3306
+      # MYSQL_USER: zipkin
+      # MYSQL_PASS: zipkin
+      STORAGE_TYPE: mem
+      # Enable self-tracing for debugging
+      SELF_TRACING_ENABLED: "true"
+      # Increase sample rate for development
+      SELF_TRACING_SAMPLE_RATE: 1.0
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9411/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # Jaeger - Distributed Tracing Platform (All-in-One)
+  # ----------------------------------------------------------
+  # Full-featured tracing platform with advanced querying.
+  # Receives spans via Zipkin-compatible endpoint or OTLP.
+  #
+  # Ports:
+  #   - 16686: Jaeger UI
+  #   - 4317:  OTLP gRPC receiver
+  #   - 4318:  OTLP HTTP receiver
+  #   - 9412:  Zipkin-compatible endpoint (mapped to avoid conflict)
+  #
+  # To use Jaeger instead of Zipkin, configure services with:
+  #   management.zipkin.tracing.endpoint=http://jaeger:9411/api/v2/spans
+  # Or use OTLP (requires micrometer-tracing-bridge-otel):
+  #   management.otlp.tracing.endpoint=http://jaeger:4318/v1/traces
+  # ----------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    container_name: ftgo-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+      - "9412:9411"     # Zipkin-compatible (remapped to avoid port conflict)
+    environment:
+      # Enable Zipkin-compatible collector
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+      # In-memory storage (default). For production, use:
+      # SPAN_STORAGE_TYPE: elasticsearch
+      # ES_SERVER_URLS: http://elasticsearch:9200
+      SPAN_STORAGE_TYPE: memory
+      # Log level
+      LOG_LEVEL: info
+    restart: unless-stopped
+    networks:
+      - ftgo-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:16686/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  ftgo-network:
+    driver: bridge
