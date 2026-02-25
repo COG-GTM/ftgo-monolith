@@ -42,6 +42,9 @@ jackson = "2.16.1"
 # --- API Documentation ---
 springdoc = "2.3.0"
 
+# --- Security / JWT ---
+jjwt = "0.12.5"
+
 # --- Utilities ---
 commons-lang3 = "3.14.0"
 lombok = "1.18.30"
@@ -111,6 +114,11 @@ mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
+# --- Security / JWT ---
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
 [bundles]
 # Common Spring Boot web service dependencies
 spring-boot-web = [
@@ -151,6 +159,13 @@ testing-rest = [
 testing-security = [
     "spring-boot-starter-test",
     "spring-security-test",
+]
+
+# JWT dependencies
+jwt = [
+    "jjwt-api",
+    "jjwt-impl",
+    "jjwt-jackson",
 ]
 
 # Observability dependencies

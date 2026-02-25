@@ -1,1 +1,2 @@
 com.ftgo.security.config.FtgoSecurityAutoConfiguration
+com.ftgo.security.jwt.JwtAutoConfiguration
