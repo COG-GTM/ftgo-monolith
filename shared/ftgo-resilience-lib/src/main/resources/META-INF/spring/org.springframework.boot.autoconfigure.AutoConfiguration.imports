@@ -1,0 +1,10 @@
+com.ftgo.common.resilience.config.FtgoResilienceAutoConfiguration
+com.ftgo.common.resilience.circuitbreaker.CircuitBreakerConfiguration
+com.ftgo.common.resilience.retry.RetryConfiguration
+com.ftgo.common.resilience.bulkhead.BulkheadConfiguration
+com.ftgo.common.resilience.ratelimiter.RateLimiterConfiguration
+com.ftgo.common.resilience.health.HealthCheckConfiguration
+com.ftgo.common.resilience.health.ReadinessLivenessConfiguration
+com.ftgo.common.resilience.discovery.ServiceDiscoveryConfiguration
+com.ftgo.common.resilience.shutdown.GracefulShutdownConfiguration
+com.ftgo.common.resilience.metrics.ResilienceMetricsConfiguration
