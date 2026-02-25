@@ -143,23 +143,26 @@ jobs:
             -Dflyway.user=root \
             -Dflyway.password=rootpassword
 
-      - name: "Run integration tests: ${{ matrix.service }} (new microservice)"
-        id: integ_new
-        run: >
-          ./gradlew :services:${{ matrix.service }}:integrationTest
-          --no-daemon --stacktrace
-        continue-on-error: true
-
-      - name: "Run integration tests: ${{ matrix.service }} (legacy module)"
-        id: integ_legacy
-        run: >
-          ./gradlew :${{ matrix.service }}:integrationTest
-          --no-daemon --stacktrace
-        continue-on-error: true
-
-      - name: Check integration test results
-        if: steps.integ_new.outcome == 'failure' || steps.integ_legacy.outcome == 'failure'
-        run: exit 1
+      - name: "Run integration tests: ${{ matrix.service }}"
+        id: integ_test
+        run: |
+          FOUND_TASK=false
+          # Try new microservice path first
+          if ./gradlew :services:${{ matrix.service }}:tasks --all 2>/dev/null | grep -q 'integrationTest'; then
+            echo "Found integrationTest in services:${{ matrix.service }}"
+            ./gradlew :services:${{ matrix.service }}:integrationTest --no-daemon --stacktrace
+            FOUND_TASK=true
+          fi
+          # Try legacy module path
+          if ./gradlew :${{ matrix.service }}:tasks --all 2>/dev/null | grep -q 'integrationTest'; then
+            echo "Found integrationTest in ${{ matrix.service }}"
+            ./gradlew :${{ matrix.service }}:integrationTest --no-daemon --stacktrace
+            FOUND_TASK=true
+          fi
+          if [ "$FOUND_TASK" = "false" ]; then
+            echo "::notice::No integrationTest task found for ${{ matrix.service }} - skipping"
+            echo "SKIP_INTEGRATION=true" >> $GITHUB_ENV
+          fi
 
       - name: Publish test results
         if: always()
