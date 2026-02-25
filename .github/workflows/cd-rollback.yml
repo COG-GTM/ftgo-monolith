@@ -1,0 +1,135 @@
+---
+# ============================================================
+# CD Pipeline: Rollback Deployment
+# ============================================================
+# Rolls back a deployment to the previous revision.
+#
+# Features:
+#   - Rollback specific service or all services
+#   - Rollback to specific revision number
+#   - Post-rollback health verification
+# ============================================================
+
+name: "CD: Rollback Deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      service:
+        description: "Service to rollback (or 'all')"
+        required: true
+        type: choice
+        options:
+          - all
+          - ftgo-order-service
+          - ftgo-consumer-service
+          - ftgo-restaurant-service
+          - ftgo-courier-service
+        default: all
+      revision:
+        description: "Revision number to rollback to (leave empty for previous)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    name: "Rollback: ${{ inputs.environment }}"
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Perform rollback
+        run: |
+          ENV="${{ inputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+          SERVICE="${{ inputs.service }}"
+          REVISION="${{ inputs.revision }}"
+
+          if [ "${SERVICE}" = "all" ]; then
+            SERVICES=("ftgo-order-service" "ftgo-consumer-service" "ftgo-restaurant-service" "ftgo-courier-service")
+          else
+            SERVICES=("${SERVICE}")
+          fi
+
+          for SVC in "${SERVICES[@]}"; do
+            echo "Rolling back ${SVC} in ${NAMESPACE}..."
+
+            # Show current rollout history
+            echo "Current rollout history:"
+            kubectl rollout history deployment/${SVC} -n "${NAMESPACE}" 2>/dev/null || true
+
+            # Perform rollback
+            if [ -n "${REVISION}" ]; then
+              kubectl rollout undo deployment/${SVC} -n "${NAMESPACE}" --to-revision="${REVISION}"
+            else
+              kubectl rollout undo deployment/${SVC} -n "${NAMESPACE}"
+            fi
+
+            echo "${SVC} rollback initiated"
+          done
+
+      - name: Wait for rollback completion
+        run: |
+          ENV="${{ inputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+          SERVICE="${{ inputs.service }}"
+
+          if [ "${SERVICE}" = "all" ]; then
+            SERVICES=("ftgo-order-service" "ftgo-consumer-service" "ftgo-restaurant-service" "ftgo-courier-service")
+          else
+            SERVICES=("${SERVICE}")
+          fi
+
+          FAILED=0
+          for SVC in "${SERVICES[@]}"; do
+            echo "Waiting for ${SVC} rollback..."
+            if ! kubectl rollout status deployment/${SVC} -n "${NAMESPACE}" --timeout=300s 2>/dev/null; then
+              echo "WARNING: ${SVC} rollback did not complete within timeout"
+              FAILED=$((FAILED + 1))
+            else
+              echo "${SVC} rollback completed successfully"
+            fi
+          done
+
+          if [ $FAILED -gt 0 ]; then
+            echo "::error::${FAILED} service(s) failed to rollback"
+            exit 1
+          fi
+
+      - name: Post-rollback status
+        run: |
+          ENV="${{ inputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+
+          echo "## Rollback Status: ${ENV}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kubectl get deployments -n "${NAMESPACE}" -o wide >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Pods" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kubectl get pods -n "${NAMESPACE}" -o wide >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

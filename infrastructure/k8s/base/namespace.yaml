@@ -4,4 +4,4 @@ metadata:
   name: ftgo
   labels:
     app.kubernetes.io/part-of: ftgo-platform
-    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/managed-by: kustomize

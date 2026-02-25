@@ -1,0 +1,14 @@
+# Dev: Smaller storage for MySQL
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ftgo-mysql
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: ftgo-mysql-persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

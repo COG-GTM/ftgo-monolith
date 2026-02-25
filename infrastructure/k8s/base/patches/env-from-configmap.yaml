@@ -1,0 +1,57 @@
+# ============================================================
+# EnvFrom ConfigMap Patch
+# ============================================================
+# Injects ConfigMap environment variables into each service
+# deployment via envFrom, complementing the existing env entries.
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-order-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-order-service
+          envFrom:
+            - configMapRef:
+                name: ftgo-order-service-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-consumer-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-consumer-service
+          envFrom:
+            - configMapRef:
+                name: ftgo-consumer-service-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-restaurant-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-restaurant-service
+          envFrom:
+            - configMapRef:
+                name: ftgo-restaurant-service-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-courier-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-courier-service
+          envFrom:
+            - configMapRef:
+                name: ftgo-courier-service-config

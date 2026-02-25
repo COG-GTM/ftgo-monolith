@@ -1,0 +1,22 @@
+# ============================================================
+# FTGO MySQL Service - Headless service for StatefulSet
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-mysql
+  labels:
+    app.kubernetes.io/name: ftgo-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    app.kubernetes.io/name: ftgo-mysql
+    app.kubernetes.io/component: database

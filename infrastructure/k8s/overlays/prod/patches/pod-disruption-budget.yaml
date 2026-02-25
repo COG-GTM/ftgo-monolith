@@ -1,0 +1,54 @@
+# Production: PodDisruptionBudgets for high availability
+# Ensures at least 1 pod is always available during voluntary disruptions
+# (node drain, cluster upgrade, etc.)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-order-service-pdb
+  labels:
+    app.kubernetes.io/name: ftgo-order-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ftgo-order-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-consumer-service-pdb
+  labels:
+    app.kubernetes.io/name: ftgo-consumer-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ftgo-consumer-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-restaurant-service-pdb
+  labels:
+    app.kubernetes.io/name: ftgo-restaurant-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ftgo-restaurant-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-courier-service-pdb
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ftgo-courier-service

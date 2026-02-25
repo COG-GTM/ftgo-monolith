@@ -6,10 +6,33 @@ namespace: ftgo-dev
 resources:
   - ../../base
 
-namePrefix: dev-
-
 commonLabels:
   environment: development
 
-patchesStrategicMerge: []
-# Add environment-specific patches here
+# Environment-specific image tags
+images:
+  - name: ftgo/ftgo-order-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-order-service
+    newTag: latest
+  - name: ftgo/ftgo-consumer-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-consumer-service
+    newTag: latest
+  - name: ftgo/ftgo-restaurant-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-restaurant-service
+    newTag: latest
+  - name: ftgo/ftgo-courier-service
+    newName: ghcr.io/cog-gtm/ftgo/ftgo-courier-service
+    newTag: latest
+  - name: mysql
+    newTag: "8.0"
+
+# Dev-specific patches
+patches:
+  # Reduce replicas for dev
+  - path: patches/replicas.yaml
+  # Dev resource limits (lower)
+  - path: patches/resources.yaml
+  # Dev-specific ConfigMap values
+  - path: patches/configmap-overrides.yaml
+  # Dev MySQL storage
+  - path: patches/mysql-storage.yaml

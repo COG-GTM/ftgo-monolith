@@ -1,0 +1,295 @@
+---
+# ============================================================
+# CD Pipeline: Deploy to Kubernetes
+# ============================================================
+# Deploys FTGO microservices to Kubernetes using Kustomize overlays.
+#
+# Trigger conditions:
+#   - Auto-deploy to dev on merge to main/feat/microservices-migration-v3
+#   - Manual dispatch for any environment
+#   - Called by the promotion workflow for staging/prod
+#
+# Prerequisites:
+#   - KUBE_CONFIG secret configured per environment
+#   - Container images already built and pushed to GHCR
+#   - Kustomize overlays configured in infrastructure/k8s/overlays/
+# ============================================================
+
+name: "CD: Deploy to Kubernetes"
+
+on:
+  # Auto-deploy to dev on merge to main branches
+  push:
+    branches: [main, master, "feat/microservices-migration-v3"]
+    paths:
+      - "infrastructure/k8s/**"
+      - "services/*/k8s/**"
+      - ".github/workflows/cd-deploy.yml"
+
+  # Manual deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      image_tag:
+        description: "Docker image tag to deploy (e.g., 0.1.0-abc1234)"
+        required: false
+        default: "latest"
+      dry_run:
+        description: "Dry run (diff only, no apply)"
+        required: false
+        type: boolean
+        default: false
+
+  # Called by promotion workflow
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: string
+      image_tag:
+        description: "Docker image tag to deploy"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run mode"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: cd-deploy-${{ inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ftgo
+  KUSTOMIZE_VERSION: "5.3.0"
+
+jobs:
+  # ----------------------------------------------------------
+  # Validate manifests before deployment
+  # ----------------------------------------------------------
+  validate:
+    name: "Validate: ${{ inputs.environment || 'dev' }}"
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      image_tag: ${{ steps.set-env.outputs.image_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment and image tag
+        id: set-env
+        run: |
+          # Determine environment
+          if [ "${{ github.event_name }}" = "push" ]; then
+            ENV="dev"
+          else
+            ENV="${{ inputs.environment || 'dev' }}"
+          fi
+
+          # Determine image tag
+          if [ -n "${{ inputs.image_tag }}" ] && [ "${{ inputs.image_tag }}" != "latest" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            SHA_SHORT=$(git rev-parse --short=7 HEAD)
+            VERSION=$(grep -E '^version=' gradle.properties 2>/dev/null | cut -d'=' -f2 || echo "0.1.0")
+            TAG="${VERSION}-${SHA_SHORT}"
+          fi
+
+          echo "environment=${ENV}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Deploying to: ${ENV} with image tag: ${TAG}"
+
+      - name: Install Kustomize
+        run: |
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | \
+            tar xz -C /usr/local/bin/
+
+      - name: Validate Kustomize overlay
+        run: |
+          ENV="${{ steps.set-env.outputs.environment }}"
+          echo "Validating overlay: infrastructure/k8s/overlays/${ENV}"
+          kustomize build "infrastructure/k8s/overlays/${ENV}" > /dev/null
+          echo "Kustomize build succeeded for ${ENV}"
+
+      - name: Show rendered manifests
+        run: |
+          ENV="${{ steps.set-env.outputs.environment }}"
+          echo "## Rendered Manifests for ${ENV}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```yaml' >> "$GITHUB_STEP_SUMMARY"
+          kustomize build "infrastructure/k8s/overlays/${ENV}" | head -200 >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ----------------------------------------------------------
+  # Deploy to Kubernetes
+  # ----------------------------------------------------------
+  deploy:
+    name: "Deploy: ${{ needs.validate.outputs.environment }}"
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.validate.outputs.environment }}
+      url: "https://${{ needs.validate.outputs.environment == 'prod' && 'ftgo.example.com' || format('{0}.ftgo.example.com', needs.validate.outputs.environment) }}"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Kustomize
+        run: |
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | \
+            tar xz -C /usr/local/bin/
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Update image tags in Kustomize overlay
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          TAG="${{ needs.validate.outputs.image_tag }}"
+          OVERLAY_DIR="infrastructure/k8s/overlays/${ENV}"
+
+          cd "${OVERLAY_DIR}"
+
+          # Update image tags using kustomize edit
+          kustomize edit set image \
+            "ftgo/ftgo-order-service=${IMAGE_PREFIX}/ftgo-order-service:${TAG}" \
+            "ftgo/ftgo-consumer-service=${IMAGE_PREFIX}/ftgo-consumer-service:${TAG}" \
+            "ftgo/ftgo-restaurant-service=${IMAGE_PREFIX}/ftgo-restaurant-service:${TAG}" \
+            "ftgo/ftgo-courier-service=${IMAGE_PREFIX}/ftgo-courier-service:${TAG}"
+
+          echo "Updated images to tag: ${TAG}"
+
+      - name: Preview changes (diff)
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+
+          echo "Previewing changes for ${ENV} (namespace: ${NAMESPACE})..."
+          kustomize build "infrastructure/k8s/overlays/${ENV}" | \
+            kubectl diff -f - --namespace "${NAMESPACE}" || true
+
+      - name: Apply manifests
+        if: ${{ !inputs.dry_run }}
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+
+          echo "Deploying to ${ENV} (namespace: ${NAMESPACE})..."
+
+          # Create namespace if it doesn't exist
+          kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+
+          # Apply Kustomize overlay
+          kustomize build "infrastructure/k8s/overlays/${ENV}" | \
+            kubectl apply -f - --namespace "${NAMESPACE}"
+
+          echo "Manifests applied successfully"
+
+      - name: Wait for rollout
+        if: ${{ !inputs.dry_run }}
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+          TIMEOUT="300s"
+
+          echo "Waiting for deployments to roll out..."
+
+          SERVICES=("ftgo-order-service" "ftgo-consumer-service" "ftgo-restaurant-service" "ftgo-courier-service")
+          FAILED=0
+
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Waiting for ${SERVICE}..."
+            if ! kubectl rollout status deployment/${SERVICE} \
+              --namespace "${NAMESPACE}" \
+              --timeout="${TIMEOUT}" 2>/dev/null; then
+              echo "WARNING: ${SERVICE} rollout did not complete within timeout"
+              FAILED=$((FAILED + 1))
+            else
+              echo "${SERVICE} rolled out successfully"
+            fi
+          done
+
+          if [ $FAILED -gt 0 ]; then
+            echo "::error::${FAILED} service(s) failed to roll out"
+            exit 1
+          fi
+
+      - name: Verify deployment health
+        if: ${{ !inputs.dry_run }}
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          NAMESPACE="ftgo-${ENV}"
+
+          echo "## Deployment Status: ${ENV}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "### Deployments" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kubectl get deployments -n "${NAMESPACE}" -o wide >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "### Pods" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kubectl get pods -n "${NAMESPACE}" -o wide >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "### Services" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          kubectl get services -n "${NAMESPACE}" -o wide >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "## Dry Run Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "No changes were applied. Review the diff above." >> "$GITHUB_STEP_SUMMARY"
+
+  # ----------------------------------------------------------
+  # Post-deployment notification
+  # ----------------------------------------------------------
+  notify:
+    name: "Notify: ${{ needs.validate.outputs.environment }}"
+    needs: [validate, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Deployment summary
+        run: |
+          ENV="${{ needs.validate.outputs.environment }}"
+          TAG="${{ needs.validate.outputs.image_tag }}"
+          STATUS="${{ needs.deploy.result }}"
+
+          echo "# Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environment | ${ENV} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${TAG} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | ${STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Triggered By | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Workflow Run | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |" >> "$GITHUB_STEP_SUMMARY"

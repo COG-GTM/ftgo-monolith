@@ -1,0 +1,54 @@
+# ============================================================
+# FTGO Platform - Ingress Configuration
+# ============================================================
+# Routes external traffic to microservices via path-based routing.
+# Requires an Ingress Controller (e.g., nginx-ingress) to be
+# installed in the cluster.
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ftgo-ingress
+  labels:
+    app.kubernetes.io/name: ftgo-ingress
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: ftgo-platform
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/orders(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-order-service
+                port:
+                  number: 8081
+          - path: /api/consumers(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-consumer-service
+                port:
+                  number: 8082
+          - path: /api/restaurants(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-restaurant-service
+                port:
+                  number: 8083
+          - path: /api/couriers(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ftgo-courier-service
+                port:
+                  number: 8084
