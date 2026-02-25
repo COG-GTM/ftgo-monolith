@@ -15,6 +15,9 @@ import org.springframework.context.annotation.Import;
  *   <li>All other endpoints require authentication</li>
  *   <li>JSON error responses for 401/403</li>
  *   <li>JWT-based authentication when {@code ftgo.security.jwt.enabled=true}</li>
+ *   <li>Role-based authorization with role hierarchy (EM-37)</li>
+ *   <li>Method-level security ({@code @PreAuthorize}, {@code @Secured}, JSR-250)</li>
+ *   <li>Custom permission evaluator for resource ownership validation</li>
  * </ul>
  * </p>
  *
@@ -44,6 +47,36 @@ import org.springframework.context.annotation.Import;
  * </pre>
  * </p>
  *
+ * <h3>Role-Based Authorization (EM-37)</h3>
+ * <p>
+ * The RBAC framework provides four roles:
+ * {@link com.ftgo.security.authorization.FtgoRole#CUSTOMER CUSTOMER},
+ * {@link com.ftgo.security.authorization.FtgoRole#RESTAURANT_OWNER RESTAURANT_OWNER},
+ * {@link com.ftgo.security.authorization.FtgoRole#COURIER COURIER}, and
+ * {@link com.ftgo.security.authorization.FtgoRole#ADMIN ADMIN}.
+ * </p>
+ * <p>
+ * Use {@code @PreAuthorize} annotations on service methods:
+ * <pre>
+ * // Admin only
+ * &#64;PreAuthorize("hasRole('ADMIN')")
+ * public void adminOperation() { }
+ *
+ * // Customer owns the resource
+ * &#64;PreAuthorize("hasRole('CUSTOMER') and #consumerId == authentication.principal.userId")
+ * public Order createOrder(Long consumerId, ...) { }
+ *
+ * // Permission + ownership check
+ * &#64;PreAuthorize("hasPermission(#orderId, 'Order', 'VIEW')")
+ * public Order getOrder(Long orderId) { }
+ * </pre>
+ * </p>
+ * <p>
+ * To implement resource ownership validation, create a
+ * {@link com.ftgo.security.authorization.ResourceOwnershipStrategy} bean
+ * for each resource type. These are auto-discovered and registered.
+ * </p>
+ *
  * <p>
  * To customize security for a specific service, add additional
  * {@link org.springframework.security.web.SecurityFilterChain} beans here
@@ -58,4 +91,21 @@ public class ServiceSecurityConfiguration {
     // The base configuration from ftgo-security-lib handles defaults.
     // JWT authentication is automatically activated when
     // ftgo.security.jwt.enabled=true via JwtAutoConfiguration.
+    //
+    // RBAC (EM-37) is automatically enabled via FtgoSecurityAutoConfiguration:
+    //   - Role hierarchy: ADMIN > RESTAURANT_OWNER > CUSTOMER, ADMIN > COURIER
+    //   - Method security: @PreAuthorize, @Secured, @RolesAllowed
+    //   - Permission evaluator: hasPermission() with ownership strategies
+    //
+    // To add resource ownership validation, define a bean:
+    //   @Bean
+    //   public ResourceOwnershipStrategy orderOwnershipStrategy(OrderRepository repo) {
+    //       return new ResourceOwnershipStrategy() {
+    //           public boolean isOwner(Long userId, Serializable resourceId) {
+    //               return repo.findById((Long) resourceId)
+    //                   .map(o -> o.getConsumerId().equals(userId)).orElse(false);
+    //           }
+    //           public String getResourceType() { return "Order"; }
+    //       };
+    //   }
 }
