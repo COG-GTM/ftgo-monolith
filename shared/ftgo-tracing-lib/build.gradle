@@ -1,0 +1,102 @@
+// ============================================================
+// ftgo-tracing-lib - Shared Distributed Tracing Library
+// ============================================================
+// Provides Micrometer Tracing auto-configuration with Brave bridge
+// and Zipkin reporter for all FTGO microservices.
+//
+// Replaces the non-functional Sleuth/Zipkin env vars from the
+// monolith with working Micrometer Tracing (Spring Boot 3.x).
+//
+// Package: com.ftgo.common.tracing
+//
+// Usage in a microservice build.gradle:
+//   dependencies {
+//       implementation project(":shared:ftgo-tracing-lib")
+//   }
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-tracing-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-tracing-lib:publish
+// ============================================================
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+// Use Spring Boot 3.2.3 BOM for dependency management.
+// This overrides the root project's legacy springBootVersion (2.7.18)
+// and ensures compatibility with Micrometer Tracing 1.2.x.
+def springBoot3Version = '3.2.3'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBoot3Version}"
+    }
+}
+
+dependencies {
+    // Spring Boot Actuator for trace endpoint management
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Micrometer Tracing with Brave bridge
+    api "io.micrometer:micrometer-tracing-bridge-brave:1.2.3"
+
+    // Zipkin reporter for sending traces to Zipkin/Jaeger
+    api "io.zipkin.reporter2:zipkin-reporter-brave:2.17.2"
+    api "io.zipkin.reporter2:zipkin-sender-urlconnection:2.17.2"
+
+    // Spring Boot AOP for @NewSpan / @ContinueSpan support
+    api 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Spring Boot auto-configuration support
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // Spring Web for RestTemplate/WebClient trace propagation
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+}
+
+// Use JUnit 5 for tests
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-tracing-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Tracing Library'
+                description = 'Shared distributed tracing configuration using Micrometer Tracing with Brave and Zipkin for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}
