@@ -1,0 +1,102 @@
+// ============================================================
+// ftgo-error-handling-lib - Shared Error Handling Library
+// ============================================================
+// Provides centralized error handling for all FTGO microservices:
+//   - @ControllerAdvice base class (GlobalExceptionHandler)
+//   - Standard ErrorResponse DTO (RFC 7807 Problem Details)
+//   - Error code enums/constants per domain
+//   - Custom exception hierarchy
+//   - Bean Validation (jakarta.validation) support
+//   - Inter-service communication error handling
+//
+// Package: com.ftgo.common.error
+//
+// Usage in a microservice build.gradle:
+//   dependencies {
+//       implementation project(":shared:ftgo-error-handling-lib")
+//   }
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-error-handling-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-error-handling-lib:publish
+// ============================================================
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+// Use Spring Boot 3.2.3 BOM for dependency management.
+// This overrides the root project's legacy springBootVersion (2.7.18)
+// and ensures jakarta.validation and Spring Boot 3.x are used.
+def springBoot3Version = '3.2.3'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBoot3Version}"
+    }
+}
+
+dependencies {
+    // Spring Boot Web (for @ControllerAdvice, ResponseEntity, etc.)
+    api 'org.springframework.boot:spring-boot-starter-web'
+
+    // Bean Validation (jakarta.validation)
+    api 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Spring Boot auto-configuration support
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // Jackson for JSON serialization of error responses
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Micrometer Tracing (optional - for traceId in error responses)
+    compileOnly "io.micrometer:micrometer-tracing:1.2.3"
+
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation "io.micrometer:micrometer-tracing:1.2.3"
+}
+
+// Use JUnit 5 for tests
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-error-handling-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Error Handling Library'
+                description = 'Shared centralized error handling with @ControllerAdvice, RFC 7807 Problem Details, and Bean Validation for the FTGO platform'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}
