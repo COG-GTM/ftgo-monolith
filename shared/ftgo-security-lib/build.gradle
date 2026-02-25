@@ -1,0 +1,85 @@
+// ============================================================
+// ftgo-security-lib - Shared Spring Security configuration
+// ============================================================
+// Provides base security configuration for all FTGO microservices.
+// Package: com.ftgo.security
+//
+// This library targets Spring Boot 3.2.3 / Spring Security 6.x
+// and uses jakarta.servlet (not javax.servlet).
+//
+// Publishing:
+//   ./gradlew :shared:ftgo-security-lib:publishToMavenLocal
+//   ./gradlew :shared:ftgo-security-lib:publish
+// ============================================================
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+
+version = '1.0.0-SNAPSHOT'
+group   = 'com.ftgo'
+
+// Use Spring Boot 3.2.3 BOM for dependency management.
+// This overrides the root project's legacy springBootVersion (2.7.18)
+// and ensures jakarta.servlet and Spring Security 6.x are used.
+def springBoot3Version = '3.2.3'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBoot3Version}"
+    }
+}
+
+dependencies {
+    // Spring Boot starters (versions managed by BOM above)
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-security'
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Jackson for JSON error responses (versions managed by BOM)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+// Use JUnit 5 for tests
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId    = 'com.ftgo'
+            artifactId = 'ftgo-security-lib'
+            version    = project.version
+
+            pom {
+                name        = 'FTGO Security Library'
+                description = 'Shared Spring Security configuration for the FTGO platform microservices'
+                url         = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url  = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'localRepo'
+            url  = "${project.rootDir}/build/repo"
+        }
+    }
+}
