@@ -23,7 +23,6 @@ spring-dependency-management = "1.1.4"
 # --- Observability ---
 micrometer = "1.12.3"
 micrometer-tracing = "1.2.3"
-micrometer-core = "1.12.3"
 
 # --- Testing ---
 junit-jupiter = "5.10.2"

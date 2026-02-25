@@ -1,7 +1,6 @@
 package com.ftgo.common.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 
 /**
@@ -25,8 +24,6 @@ public class FtgoCommonTagsCustomizer implements MeterRegistryCustomizer<MeterRe
     public void customize(MeterRegistry registry) {
         registry.config()
                 .commonTags("application", applicationName)
-                .commonTags("platform", "ftgo")
-                .meterFilter(MeterFilter.deny(id ->
-                        id.getName().startsWith("jvm.") && id.getTag("application") == null));
+                .commonTags("platform", "ftgo");
     }
 }
