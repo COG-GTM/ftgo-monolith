@@ -12,11 +12,11 @@
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | 1 | Completed | [PR #63](https://github.com/COG-GTM/ftgo-monolith/pull/63) | Success | None |
 | 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | 1 | Completed | [PR #65](https://github.com/COG-GTM/ftgo-monolith/pull/65) | Success | None |
 | 2 | EM-32 | Extract and Version ftgo-common Shared Library | 1 | Completed | [PR #64](https://github.com/COG-GTM/ftgo-monolith/pull/64) | Success | None |
-| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Pending | - | - | - |
-| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | 2 | Pending | - | - | - |
-| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Pending | - | - | - |
-| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Pending | - | - | - |
-| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Pending | - | - | - |
+| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Completed | [PR #70](https://github.com/COG-GTM/ftgo-monolith/pull/70) | Success | None |
+| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | 2 | Completed | [PR #66](https://github.com/COG-GTM/ftgo-monolith/pull/66) | Success | None |
+| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Completed | [PR #69](https://github.com/COG-GTM/ftgo-monolith/pull/69) | Success | None |
+| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Completed | [PR #67](https://github.com/COG-GTM/ftgo-monolith/pull/67) | Success (conflicts resolved) | services/ftgo-service-template/build.gradle |
+| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Completed | [PR #68](https://github.com/COG-GTM/ftgo-monolith/pull/68) | Success | None |
 | 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Pending | - | - | - |
 | 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Pending | - | - | - |
 | 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Pending | - | - | - |
@@ -47,8 +47,11 @@
 - **Notes:** Both squashes clean, no conflicts. Build passes. Gradle upgraded 4.10.2→8.5, version catalog + convention plugins added, ftgo-common extracted as versioned shared library.
 
 ### Batch 3
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-31, EM-33, EM-39, EM-41, EM-45
+- **SHA after squash:** `3c46865`
+- **Conflicts:** EM-41 had conflict in `services/ftgo-service-template/build.gradle` (both EM-39 and EM-41 added dependencies; resolved by keeping both)
+- **Notes:** All 5 PRs squashed. Build passes. New shared libs: ftgo-security-lib, ftgo-common-metrics, ftgo-openapi-lib. GitHub Actions CI workflows added. ftgo-common-jpa and ftgo-domain extracted.
 
 ### Batch 4
 - **Status:** Not started
