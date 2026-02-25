@@ -17,11 +17,11 @@
 | 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Completed | [PR #69](https://github.com/COG-GTM/ftgo-monolith/pull/69) | Success | None |
 | 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Completed | [PR #67](https://github.com/COG-GTM/ftgo-monolith/pull/67) | Success (conflicts resolved) | services/ftgo-service-template/build.gradle |
 | 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Completed | [PR #68](https://github.com/COG-GTM/ftgo-monolith/pull/68) | Success | None |
-| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Pending | - | - | - |
-| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Pending | - | - | - |
-| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Pending | - | - | - |
-| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Pending | - | - | - |
-| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Pending | - | - | - |
+| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Completed | [PR #73](https://github.com/COG-GTM/ftgo-monolith/pull/73) | Success | None |
+| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Completed | [PR #71](https://github.com/COG-GTM/ftgo-monolith/pull/71) | Success | None |
+| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Completed | [PR #74](https://github.com/COG-GTM/ftgo-monolith/pull/74) | Success | None |
+| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Completed | [PR #75](https://github.com/COG-GTM/ftgo-monolith/pull/75) | Success | None |
+| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Completed | [PR #72](https://github.com/COG-GTM/ftgo-monolith/pull/72) | Success | None |
 | 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Pending | - | - | - |
 | 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Pending | - | - | - |
 | 5 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Pending | - | - | - |
@@ -54,8 +54,11 @@
 - **Notes:** All 5 PRs squashed. Build passes. New shared libs: ftgo-security-lib, ftgo-common-metrics, ftgo-openapi-lib. GitHub Actions CI workflows added. ftgo-common-jpa and ftgo-domain extracted.
 
 ### Batch 4
-- **Status:** Not started
+- **Status:** Complete
 - **Tasks:** EM-29, EM-34, EM-36, EM-40, EM-47
+- **SHA after squash:** `f6bd40f`
+- **Conflicts:** None
+- **Notes:** All 5 PRs squashed cleanly. EM-36 had hardcoded CI credentials replaced with secrets references. Build passes. Flyway migrations, Dockerfiles, testing pipeline, JWT auth, and code quality gates added.
 
 ### Batch 5
 - **Status:** Not started
