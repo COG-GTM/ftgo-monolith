@@ -102,11 +102,12 @@ The `Dockerfile.service` uses a two-stage build:
 
 The `Dockerfile.service` accepts these build arguments:
 
-| Argument       | Description                                   | Example                              |
-|----------------|-----------------------------------------------|--------------------------------------|
-| `SERVICE_NAME` | Name of the service                           | `ftgo-order-service`                 |
-| `SERVICE_PORT` | Port the service listens on                   | `8081`                               |
-| `SERVICE_PATH` | Gradle project path relative to root          | `services/ftgo-order-service`        |
+| Argument         | Description                                   | Example                              |
+|------------------|-----------------------------------------------|--------------------------------------|
+| `SERVICE_NAME`   | Name of the service                           | `ftgo-order-service`                 |
+| `SERVICE_PORT`   | Port the service listens on                   | `8081`                               |
+| `SERVICE_PATH`   | Filesystem path relative to root              | `services/ftgo-order-service`        |
+| `GRADLE_PROJECT` | Gradle project path (colon-separated)         | `:services:ftgo-order-service`       |
 
 ### Building Locally
 
@@ -116,6 +117,7 @@ docker build \
   --build-arg SERVICE_NAME=ftgo-order-service \
   --build-arg SERVICE_PORT=8081 \
   --build-arg SERVICE_PATH=services/ftgo-order-service \
+  --build-arg GRADLE_PROJECT=:services:ftgo-order-service \
   -f infrastructure/docker/dockerfiles/Dockerfile.service \
   -t ftgo-order-service:local .
 
@@ -250,6 +252,7 @@ docker build --progress=plain \
   --build-arg SERVICE_NAME=ftgo-order-service \
   --build-arg SERVICE_PORT=8081 \
   --build-arg SERVICE_PATH=services/ftgo-order-service \
+  --build-arg GRADLE_PROJECT=:services:ftgo-order-service \
   -f infrastructure/docker/dockerfiles/Dockerfile.service .
 
 # Check image size

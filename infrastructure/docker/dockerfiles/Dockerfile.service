@@ -6,15 +6,17 @@
 # Runtime stage: Minimal JRE 17 slim base image
 #
 # Build args:
-#   SERVICE_NAME  - Name of the service (e.g., ftgo-order-service)
-#   SERVICE_PORT  - Port the service listens on (default: 8080)
-#   SERVICE_PATH  - Gradle project path (e.g., services/ftgo-order-service)
+#   SERVICE_NAME   - Name of the service (e.g., ftgo-order-service)
+#   SERVICE_PORT   - Port the service listens on (default: 8080)
+#   SERVICE_PATH   - Filesystem path (e.g., services/ftgo-order-service)
+#   GRADLE_PROJECT - Gradle project path (e.g., :services:ftgo-order-service)
 #
 # Usage:
 #   docker build \
 #     --build-arg SERVICE_NAME=ftgo-order-service \
 #     --build-arg SERVICE_PORT=8081 \
 #     --build-arg SERVICE_PATH=services/ftgo-order-service \
+#     --build-arg GRADLE_PROJECT=:services:ftgo-order-service \
 #     -f infrastructure/docker/dockerfiles/Dockerfile.service .
 # ============================================================
 
@@ -25,6 +27,7 @@ FROM eclipse-temurin:17-jdk-jammy AS builder
 
 ARG SERVICE_NAME
 ARG SERVICE_PATH
+ARG GRADLE_PROJECT
 
 WORKDIR /build
 
@@ -52,13 +55,13 @@ COPY ftgo-test-util/ ftgo-test-util/
 
 # Download dependencies first (cached layer)
 RUN chmod +x gradlew && \
-    ./gradlew :${SERVICE_PATH/\//:}:dependencies --no-daemon 2>/dev/null || true
+    ./gradlew ${GRADLE_PROJECT}:dependencies --no-daemon 2>/dev/null || true
 
 # Copy the service source code
 COPY ${SERVICE_PATH}/ ${SERVICE_PATH}/
 
 # Build the service JAR (skip tests for Docker build)
-RUN ./gradlew :${SERVICE_PATH/\//:}:bootJar --no-daemon -x test \
+RUN ./gradlew ${GRADLE_PROJECT}:bootJar --no-daemon -x test \
     -x :ftgo-end-to-end-tests-common:compileJava \
     -x :ftgo-end-to-end-tests:compileJava \
     -x :ftgo-end-to-end-tests-common:build \

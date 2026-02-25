@@ -105,28 +105,28 @@ jobs:
               "service": "ftgo-order-service",
               "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
               "context": ".",
-              "build_args": "SERVICE_NAME=ftgo-order-service\nSERVICE_PORT=8081\nSERVICE_PATH=services/ftgo-order-service",
+              "build_args": "SERVICE_NAME=ftgo-order-service\nSERVICE_PORT=8081\nSERVICE_PATH=services/ftgo-order-service\nGRADLE_PROJECT=:services:ftgo-order-service",
               "port": "8081"
             },
             {
               "service": "ftgo-consumer-service",
               "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
               "context": ".",
-              "build_args": "SERVICE_NAME=ftgo-consumer-service\nSERVICE_PORT=8082\nSERVICE_PATH=services/ftgo-consumer-service",
+              "build_args": "SERVICE_NAME=ftgo-consumer-service\nSERVICE_PORT=8082\nSERVICE_PATH=services/ftgo-consumer-service\nGRADLE_PROJECT=:services:ftgo-consumer-service",
               "port": "8082"
             },
             {
               "service": "ftgo-restaurant-service",
               "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
               "context": ".",
-              "build_args": "SERVICE_NAME=ftgo-restaurant-service\nSERVICE_PORT=8083\nSERVICE_PATH=services/ftgo-restaurant-service",
+              "build_args": "SERVICE_NAME=ftgo-restaurant-service\nSERVICE_PORT=8083\nSERVICE_PATH=services/ftgo-restaurant-service\nGRADLE_PROJECT=:services:ftgo-restaurant-service",
               "port": "8083"
             },
             {
               "service": "ftgo-courier-service",
               "dockerfile": "infrastructure/docker/dockerfiles/Dockerfile.service",
               "context": ".",
-              "build_args": "SERVICE_NAME=ftgo-courier-service\nSERVICE_PORT=8084\nSERVICE_PATH=services/ftgo-courier-service",
+              "build_args": "SERVICE_NAME=ftgo-courier-service\nSERVICE_PORT=8084\nSERVICE_PATH=services/ftgo-courier-service\nGRADLE_PROJECT=:services:ftgo-courier-service",
               "port": "8084"
             },
             {
