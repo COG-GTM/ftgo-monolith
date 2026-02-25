@@ -15,7 +15,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.14.0'
 
     // Plugin dependencies for convention plugins
-    implementation 'org.springframework.boot:spring-boot-gradle-plugin:3.2.3'
+    // Note: Spring Boot Gradle plugin is NOT included here because it requires
+    // Java 17+ and buildSrc defaults to Java 8 attribute matching. Instead,
+    // Spring Boot plugin resolution is handled via pluginManagement in settings.gradle,
+    // and new microservices apply it directly in their plugins {} block.
     implementation 'io.spring.gradle:dependency-management-plugin:1.1.4'
     implementation 'com.google.cloud.tools:jib-gradle-plugin:3.4.1'
 }

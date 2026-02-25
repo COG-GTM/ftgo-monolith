@@ -1,42 +1,38 @@
 // =============================================================================
 // ftgo.spring-boot-conventions
 // =============================================================================
-// Spring Boot 3.x configuration for FTGO microservices.
+// Spring Boot dependency management configuration for FTGO microservices.
 //
 // Usage in a microservice build.gradle:
 //   plugins {
-//       id 'ftgo.spring-boot-conventions'
+//       id 'org.springframework.boot'        // Applied from pluginManagement
+//       id 'ftgo.spring-boot-conventions'    // BOM + dependency management
+//       id 'ftgo.testing-conventions'        // Optional: JUnit 5 + integration tests
 //   }
 //
 // Provides:
-//   - Spring Boot 3.x plugin and dependency management
 //   - Java conventions (via ftgo.java-conventions)
-//   - Spring Boot BOM for consistent dependency versions
-//   - Boot JAR packaging configuration
-//   - Actuator and health check defaults
+//   - Spring dependency management with Spring Boot 3.x BOM
+//   - Consistent dependency versions for all Spring-managed libraries
+//
+// Note: The Spring Boot Gradle plugin (org.springframework.boot) must be applied
+// separately by each microservice because it requires Java 17+ and cannot be
+// included in buildSrc's compile classpath. The plugin version is centrally
+// managed via pluginManagement in settings.gradle.
 // =============================================================================
 
 plugins {
     id 'ftgo.java-conventions'
-    id 'org.springframework.boot'
     id 'io.spring.dependency-management'
 }
 
+// Import Spring Boot 3.2.3 BOM for consistent dependency versions.
+// This provides managed versions for all Spring Boot dependencies without
+// requiring the Spring Boot Gradle plugin on the buildSrc classpath.
+def springBootVersion = '3.2.3'
+
 dependencyManagement {
     imports {
-        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
     }
-}
-
-springBoot {
-    buildInfo()
-}
-
-bootJar {
-    archiveClassifier.set('')
-}
-
-// Ensure plain JAR is not produced alongside boot JAR
-tasks.named('jar') {
-    archiveClassifier.set('plain')
 }
