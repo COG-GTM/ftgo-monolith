@@ -46,6 +46,7 @@ include "shared:ftgo-common-jpa"
 include "shared:ftgo-domain"
 include "shared:common-swagger"
 include "shared:ftgo-test-util"
+include "shared:ftgo-security-lib"
 
 // Service API Contracts (shared between services)
 include "shared:ftgo-order-service-api"
