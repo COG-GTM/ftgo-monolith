@@ -1,0 +1,170 @@
+# ============================================================
+# FTGO API Gateway - Application Configuration
+# ============================================================
+server:
+  port: 8080
+  # SSL/TLS configuration (disabled by default, enable in production)
+  ssl:
+    enabled: false
+    # Uncomment and configure for production:
+    # key-store: classpath:keystore.p12
+    # key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    # key-store-type: PKCS12
+    # key-alias: ftgo-gateway
+
+spring:
+  application:
+    name: ftgo-api-gateway
+
+  # Redis configuration for distributed rate limiting
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      # Disable auto-configuration when Redis is not needed
+      repositories:
+        enabled: false
+
+  cloud:
+    gateway:
+      # Global default filters applied to all routes
+      default-filters:
+        - name: RequestSize
+          args:
+            maxSize: 10MB
+
+      # Global timeouts
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+
+      # Metrics
+      metrics:
+        enabled: true
+
+# ============================================================
+# FTGO Gateway Properties
+# ============================================================
+ftgo:
+  gateway:
+    # JWT configuration
+    jwt:
+      enabled: ${JWT_ENABLED:true}
+      secret: ${JWT_SECRET:ThisIsADefaultSecretKeyForDevelopmentOnlyMustBeAtLeast256Bits!}
+      issuer: ${JWT_ISSUER:ftgo-platform}
+      excluded-paths:
+        - /actuator/**
+        - /fallback/**
+
+    # Rate limiting configuration
+    rate-limit:
+      enabled: true
+      redis-enabled: ${RATE_LIMIT_REDIS_ENABLED:false}
+      default-replenish-rate: 10
+      default-burst-capacity: 20
+      default-requested-tokens: 1
+      endpoints:
+        order-service:
+          replenish-rate: 20
+          burst-capacity: 40
+        consumer-service:
+          replenish-rate: 15
+          burst-capacity: 30
+        restaurant-service:
+          replenish-rate: 15
+          burst-capacity: 30
+        courier-service:
+          replenish-rate: 15
+          burst-capacity: 30
+
+    # CORS configuration
+    cors:
+      allowed-origins:
+        - "*"
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      allowed-headers:
+        - "*"
+      allow-credentials: false
+      max-age: 3600s
+
+    # API versioning
+    versioning:
+      enabled: true
+      header-name: X-API-Version
+      default-version: v1
+
+    # Downstream service URLs (override in production/K8s)
+    services:
+      order-service:
+        url: ${ORDER_SERVICE_URL:http://ftgo-order-service:8081}
+      consumer-service:
+        url: ${CONSUMER_SERVICE_URL:http://ftgo-consumer-service:8082}
+      restaurant-service:
+        url: ${RESTAURANT_SERVICE_URL:http://ftgo-restaurant-service:8083}
+      courier-service:
+        url: ${COURIER_SERVICE_URL:http://ftgo-courier-service:8084}
+
+# ============================================================
+# Actuator Configuration
+# ============================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+
+# ============================================================
+# Resilience4j Circuit Breaker Configuration
+# ============================================================
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+        sliding-window-type: COUNT_BASED
+    instances:
+      orderServiceCB:
+        base-config: default
+      consumerServiceCB:
+        base-config: default
+      restaurantServiceCB:
+        base-config: default
+      courierServiceCB:
+        base-config: default
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 4s
+
+# ============================================================
+# Logging Configuration
+# ============================================================
+logging:
+  level:
+    root: INFO
+    com.ftgo.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
