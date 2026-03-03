@@ -71,6 +71,15 @@ configMapGenerator:
       - SPRING_PROFILES_ACTIVE=kubernetes,dev
       - JWT_ENABLED=false
       - CORS_ALLOWED_ORIGINS=*
+  # Dev resilience overrides: relaxed thresholds for debugging
+  - name: ftgo-resilience-dev-config
+    literals:
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_FAILURE_RATE_THRESHOLD=80
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_WAIT_DURATION_IN_OPEN_STATE=10s
+      - RESILIENCE4J_RETRY_CONFIGS_DEFAULT_MAX_ATTEMPTS=5
+      - RESILIENCE4J_BULKHEAD_CONFIGS_DEFAULT_MAX_CONCURRENT_CALLS=50
+      - RESILIENCE4J_RATELIMITER_CONFIGS_DEFAULT_LIMIT_FOR_PERIOD=100
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
 
 # Dev secrets - base64 encoded dev credentials
 secretGenerator:

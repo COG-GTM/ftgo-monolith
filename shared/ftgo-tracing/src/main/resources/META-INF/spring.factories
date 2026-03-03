@@ -1,0 +1,4 @@
+# FTGO Tracing Auto-Configuration
+# Automatically configures distributed tracing when this library is on the classpath.
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.tracing.config.FtgoTracingAutoConfiguration

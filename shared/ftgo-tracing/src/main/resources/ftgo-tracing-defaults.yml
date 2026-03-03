@@ -1,0 +1,50 @@
+# =============================================================================
+# FTGO Tracing - Default Configuration
+# =============================================================================
+# These defaults are applied when the ftgo-tracing library is on the classpath.
+# Services can override any of these values in their own application.yml.
+#
+# To use this in your service application.yml:
+#   spring:
+#     config:
+#       import: classpath:ftgo-tracing-defaults.yml
+# =============================================================================
+
+# --- Micrometer Tracing Configuration ---
+# Brave bridge is auto-configured via micrometer-tracing-bridge-brave dependency.
+# These properties control the tracing behavior.
+
+management:
+  tracing:
+    # Sampling probability: 1.0 = 100% (dev), 0.1 = 10% (prod)
+    sampling:
+      probability: ${ftgo.tracing.sampling-probability:1.0}
+    # Propagation format: B3 for Brave/Zipkin compatibility
+    propagation:
+      type: B3
+
+  # Zipkin endpoint configuration
+  zipkin:
+    tracing:
+      endpoint: ${ftgo.tracing.zipkin-endpoint:http://localhost:9411/api/v2/spans}
+
+# --- Spring Boot Actuator Tracing Endpoints ---
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+
+# --- FTGO Tracing Defaults ---
+ftgo:
+  tracing:
+    enabled: true
+    sampling-probability: 1.0
+    zipkin-endpoint: http://localhost:9411/api/v2/spans
+    propagation-type: B3
+
+# --- Logging Pattern with Trace Context ---
+# When using plain text logging, include traceId and spanId in the log pattern.
+# This pattern is compatible with the ftgo-logging library's CONSOLE_PLAIN appender.
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

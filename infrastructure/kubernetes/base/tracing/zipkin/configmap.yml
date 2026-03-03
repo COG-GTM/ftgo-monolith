@@ -1,0 +1,21 @@
+# =============================================================================
+# Zipkin ConfigMap
+# =============================================================================
+# Configuration for the Zipkin distributed tracing server.
+# Environment-specific overrides are applied via Kustomize overlays.
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zipkin-config
+  namespace: ftgo-tracing
+  labels:
+    app.kubernetes.io/name: zipkin
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
+data:
+  # Storage backend: mem (development), elasticsearch (production)
+  storage-type: "mem"
+  # JVM options for Zipkin server
+  java-opts: "-Xms256m -Xmx512m"

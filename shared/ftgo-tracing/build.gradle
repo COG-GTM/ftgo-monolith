@@ -1,0 +1,83 @@
+// =============================================================================
+// FTGO Tracing - Shared Distributed Tracing Library Build Configuration
+// =============================================================================
+// Provides distributed tracing with Micrometer Tracing and Brave/Zipkin for all
+// FTGO microservices. Uses Spring Boot auto-configuration for seamless integration.
+//
+// Package: com.ftgo.tracing
+// Version: 1.0.0
+//
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+// =============================================================================
+
+version = ftgoTracingVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot base (for auto-configuration support)
+    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+
+    // Spring Web (optional - for RestTemplate/WebClient instrumentation)
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Spring Boot Actuator (for actuator tracing endpoints)
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    // Micrometer Tracing with Brave bridge
+    compile "io.micrometer:micrometer-tracing-bridge-brave:1.2.5"
+
+    // Zipkin Reporter for sending traces to Zipkin/Jaeger
+    compile "io.zipkin.reporter2:zipkin-reporter-brave:2.16.4"
+    compile "io.zipkin.reporter2:zipkin-sender-urlconnection:2.16.4"
+
+    // SLF4J API for logging
+    compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-tracing:publishToMavenLocal
+//   ./gradlew :shared:ftgo-tracing:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-tracing'
+            version = ftgoTracingVersion
+
+            pom {
+                name = 'FTGO Tracing Library'
+                description = 'Distributed tracing with Micrometer Tracing and Brave/Zipkin for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

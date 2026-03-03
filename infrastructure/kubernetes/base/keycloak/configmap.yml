@@ -1,0 +1,236 @@
+# =============================================================================
+# Keycloak Realm Configuration
+# =============================================================================
+# Pre-configured FTGO realm for import on first startup.
+#
+# Realm: ftgo
+# Clients:
+#   - ftgo-api-gateway: Confidential client for the API Gateway
+#   - ftgo-services: Bearer-only client for backend microservices
+#   - ftgo-frontend: Public client for the frontend SPA
+#
+# Roles:
+#   - ADMIN: Full system administration
+#   - USER: Standard customer access
+#   - RESTAURANT_OWNER: Restaurant management
+#   - COURIER: Delivery courier access
+#
+# Token Settings:
+#   - Access token lifespan: 3600 seconds (1 hour)
+#   - Refresh token lifespan: 86400 seconds (24 hours)
+#   - Token signing: RS256
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-config
+  namespace: ftgo
+  labels:
+    app: keycloak
+    component: identity
+    part-of: ftgo-platform
+data:
+  ftgo-realm.json: |
+    {
+      "realm": "ftgo",
+      "enabled": true,
+      "displayName": "FTGO - Food To Go",
+      "sslRequired": "external",
+      "registrationAllowed": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "accessTokenLifespan": 3600,
+      "ssoSessionIdleTimeout": 1800,
+      "ssoSessionMaxLifespan": 36000,
+      "offlineSessionIdleTimeout": 2592000,
+      "accessTokenLifespanForImplicitFlow": 900,
+      "roles": {
+        "realm": [
+          {
+            "name": "ADMIN",
+            "description": "Full system administration access",
+            "composite": false
+          },
+          {
+            "name": "USER",
+            "description": "Standard customer access - can place and manage orders",
+            "composite": false
+          },
+          {
+            "name": "RESTAURANT_OWNER",
+            "description": "Restaurant management - can manage restaurant and menus",
+            "composite": false
+          },
+          {
+            "name": "COURIER",
+            "description": "Delivery courier - can accept and manage deliveries",
+            "composite": false
+          }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": "ftgo-api-gateway",
+          "name": "FTGO API Gateway",
+          "description": "Confidential client for the API Gateway - handles token exchange",
+          "enabled": true,
+          "clientAuthenticatorType": "client-secret",
+          "redirectUris": ["*"],
+          "webOrigins": ["*"],
+          "publicClient": false,
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": true,
+          "serviceAccountsEnabled": true,
+          "authorizationServicesEnabled": false,
+          "fullScopeAllowed": true,
+          "defaultClientScopes": [
+            "web-origins",
+            "roles",
+            "profile",
+            "email"
+          ]
+        },
+        {
+          "clientId": "ftgo-services",
+          "name": "FTGO Backend Services",
+          "description": "Bearer-only client for backend microservices - validates tokens only",
+          "enabled": true,
+          "bearerOnly": true,
+          "publicClient": false,
+          "protocol": "openid-connect",
+          "fullScopeAllowed": true,
+          "defaultClientScopes": [
+            "web-origins",
+            "roles",
+            "profile",
+            "email"
+          ]
+        },
+        {
+          "clientId": "ftgo-frontend",
+          "name": "FTGO Frontend Application",
+          "description": "Public client for the frontend SPA - uses PKCE for authentication",
+          "enabled": true,
+          "publicClient": true,
+          "redirectUris": [
+            "http://localhost:3000/*",
+            "http://localhost:4200/*"
+          ],
+          "webOrigins": [
+            "http://localhost:3000",
+            "http://localhost:4200"
+          ],
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "fullScopeAllowed": true,
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          },
+          "defaultClientScopes": [
+            "web-origins",
+            "roles",
+            "profile",
+            "email"
+          ]
+        }
+      ],
+      "clientScopes": [
+        {
+          "name": "roles",
+          "description": "OpenID Connect scope for adding user roles to the token",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": [
+            {
+              "name": "realm-roles",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-realm-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "multivalued": "true",
+                "userinfo.token.claim": "true",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "roles",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        }
+      ],
+      "users": [
+        {
+          "username": "admin",
+          "enabled": true,
+          "emailVerified": true,
+          "email": "admin@ftgo.com",
+          "firstName": "FTGO",
+          "lastName": "Admin",
+          "realmRoles": ["ADMIN", "USER"],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "admin",
+              "temporary": true
+            }
+          ]
+        },
+        {
+          "username": "testuser",
+          "enabled": true,
+          "emailVerified": true,
+          "email": "user@ftgo.com",
+          "firstName": "Test",
+          "lastName": "User",
+          "realmRoles": ["USER"],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser",
+              "temporary": true
+            }
+          ]
+        },
+        {
+          "username": "restaurant-owner",
+          "enabled": true,
+          "emailVerified": true,
+          "email": "owner@ftgo.com",
+          "firstName": "Restaurant",
+          "lastName": "Owner",
+          "realmRoles": ["RESTAURANT_OWNER", "USER"],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "restaurant",
+              "temporary": true
+            }
+          ]
+        },
+        {
+          "username": "courier",
+          "enabled": true,
+          "emailVerified": true,
+          "email": "courier@ftgo.com",
+          "firstName": "Test",
+          "lastName": "Courier",
+          "realmRoles": ["COURIER", "USER"],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "courier",
+              "temporary": true
+            }
+          ]
+        }
+      ]
+    }

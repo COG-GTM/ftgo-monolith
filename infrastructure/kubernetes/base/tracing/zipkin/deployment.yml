@@ -1,0 +1,70 @@
+# =============================================================================
+# Zipkin Deployment
+# =============================================================================
+# Deploys the Zipkin distributed tracing server for collecting and visualizing
+# traces from FTGO microservices instrumented with Micrometer Tracing / Brave.
+#
+# Base configuration uses in-memory storage. For production, overlay with
+# Elasticsearch or Cassandra storage backend.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: ftgo-tracing
+  labels:
+    app.kubernetes.io/name: zipkin
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: zipkin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: zipkin
+        app.kubernetes.io/part-of: ftgo
+        app.kubernetes.io/component: tracing
+    spec:
+      containers:
+        - name: zipkin
+          image: openzipkin/zipkin:3.3
+          ports:
+            - name: http
+              containerPort: 9411
+              protocol: TCP
+          env:
+            - name: STORAGE_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: zipkin-config
+                  key: storage-type
+            - name: JAVA_OPTS
+              valueFrom:
+                configMapKeyRef:
+                  name: zipkin-config
+                  key: java-opts
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5

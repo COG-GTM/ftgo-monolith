@@ -1,0 +1,129 @@
+# =============================================================================
+# FTGO Order Service - CI Build and Test
+# =============================================================================
+# Builds and tests the Order Service on PRs and pushes to main branches.
+# Triggers only when order-service or shared library code changes.
+# =============================================================================
+
+name: "CI: Order Service"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-order-service/**'
+      - 'ftgo-order-service-api/**'
+      - 'services/ftgo-order-service/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-order-service.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-order-service/**'
+      - 'ftgo-order-service-api/**'
+      - 'services/ftgo-order-service/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-order-service.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Order Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Compile Order Service
+        run: |
+          ./gradlew :ftgo-order-service:compileJava \
+            :ftgo-order-service-api:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Run Order Service Tests
+        run: |
+          # Configure JDK 17 compatibility for legacy test libraries
+          # Legacy Mockito 2.x / ByteBuddy 1.7.x cannot create mocks on JDK 17
+          # (sun.misc.Unsafe.defineClass was removed). Force JDK 17-compatible versions.
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/jdk17-compat.gradle << 'INIT'
+          allprojects {
+            afterEvaluate {
+              configurations.all {
+                resolutionStrategy {
+                  force 'org.mockito:mockito-core:4.11.0'
+                  force 'net.bytebuddy:byte-buddy:1.14.11'
+                  force 'net.bytebuddy:byte-buddy-agent:1.14.11'
+                }
+              }
+            }
+            tasks.withType(Test) {
+              jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+              systemProperty 'jdk.attach.allowAttachSelf', 'true'
+            }
+          }
+          INIT
+          ./gradlew :ftgo-order-service:test \
+            -x :ftgo-end-to-end-tests-common:test \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-application:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-service-test-reports
+          path: |
+            ftgo-order-service/build/reports/tests/
+            ftgo-order-service/build/test-results/
+          retention-days: 14
+
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "## CI: Order Service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "ftgo-order-service/build/reports/tests/test" ]; then
+            echo "Test reports uploaded as artifacts." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test reports generated." >> $GITHUB_STEP_SUMMARY
+          fi

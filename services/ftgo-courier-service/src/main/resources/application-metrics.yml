@@ -1,0 +1,38 @@
+# =============================================================================
+# FTGO Courier Service - Metrics Configuration
+# =============================================================================
+# Activates with Spring profile 'metrics' or when running in Docker/K8s.
+# Enables Prometheus endpoint and configures metric tags.
+# =============================================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ftgo-courier-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s, 5s
+    enable:
+      jvm: true
+      process: true
+      system: true
+      http: true
+      jdbc: true
+      hikaricp: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true

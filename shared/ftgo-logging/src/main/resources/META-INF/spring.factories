@@ -1,0 +1,4 @@
+# FTGO Logging Auto-Configuration
+# Automatically configures structured JSON logging when this library is on the classpath.
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.logging.config.FtgoLoggingAutoConfiguration
