@@ -162,8 +162,8 @@ jobs:
         run: |
           ./gradlew :ftgo-flyway:flywayMigrate \
             -Dflyway.url=jdbc:mysql://localhost:3306/ftgo \
-            -Dflyway.user=mysqluser \
-            -Dflyway.password=mysqlpw \
+            -Dflyway.user=root \
+            -Dflyway.password=rootpassword \
             --no-daemon || echo "Flyway migration completed (or handled by application)"
 
       - name: Run E2E tests

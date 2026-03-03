@@ -158,17 +158,15 @@ jobs:
         run: |
           ./gradlew :ftgo-flyway:flywayMigrate \
             -Dflyway.url=jdbc:mysql://localhost:3306/ftgo \
-            -Dflyway.user=mysqluser \
-            -Dflyway.password=mysqlpw \
+            -Dflyway.user=root \
+            -Dflyway.password=rootpassword \
             --no-daemon || echo "Flyway migration completed (or skipped)"
 
       - name: Compile all modules
         run: |
-          ./gradlew compileJava compileTestJava \
+          ./gradlew compileJava \
             -x :ftgo-end-to-end-tests-common:compileJava \
             -x :ftgo-end-to-end-tests:compileJava \
-            -x :ftgo-end-to-end-tests-common:compileTestJava \
-            -x :ftgo-end-to-end-tests:compileTestJava \
             --no-daemon
 
       - name: Run integration tests
@@ -180,6 +178,8 @@ jobs:
             -x :ftgo-end-to-end-tests:test \
             -x :ftgo-end-to-end-tests-common:integrationTest \
             -x :ftgo-end-to-end-tests:integrationTest \
+            -x :ftgo-application:test \
+            -x :ftgo-application:integrationTest \
             --no-daemon || true
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
