@@ -33,7 +33,7 @@ public class OrderController {
     this.orderRepository = orderRepository;
   }
 
-  @RequestMapping(method = RequestMethod.POST)
+  @PostMapping
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
@@ -43,13 +43,13 @@ public class OrderController {
   }
 
 
-  @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
+  @GetMapping("/{orderId}")
   public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
     Optional<Order> order = orderRepository.findById(orderId);
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
-  @RequestMapping(method = RequestMethod.GET)
+  @GetMapping
   public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
     List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
             .stream()
@@ -69,7 +69,7 @@ public class OrderController {
     );
   }
 
-  @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
+  @PostMapping("/{orderId}/cancel")
   public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
     try {
       Order order = orderService.cancel(orderId);
@@ -79,7 +79,7 @@ public class OrderController {
     }
   }
 
-  @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
+  @PostMapping("/{orderId}/revise")
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
@@ -89,31 +89,31 @@ public class OrderController {
     }
   }
 
-  @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
+  @PostMapping("/{orderId}/accept")
   public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
     orderService.accept(orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
+  @PostMapping("/{orderId}/preparing")
   public ResponseEntity<String> preparing(@PathVariable long orderId) {
     orderService.notePreparing(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
+  @PostMapping("/{orderId}/ready")
   public ResponseEntity<String> ready(@PathVariable long orderId) {
     orderService.noteReadyForPickup(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
+  @PostMapping("/{orderId}/pickedup")
   public ResponseEntity<String> pickedup(@PathVariable long orderId) {
     orderService.notePickedUp(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
+  @PostMapping("/{orderId}/delivered")
   public ResponseEntity<String> delivered(@PathVariable long orderId) {
     orderService.noteDelivered(orderId);
     return new ResponseEntity<>(HttpStatus.OK);

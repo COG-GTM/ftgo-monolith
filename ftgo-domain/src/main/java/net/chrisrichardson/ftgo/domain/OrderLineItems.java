@@ -45,7 +45,7 @@ public class OrderLineItems {
   }
 
   void updateLineItems(OrderRevision orderRevision) {
-    getLineItems().stream().forEach(li -> {
+    getLineItems().forEach(li -> {
       Integer revised = orderRevision.getRevisedLineItemQuantities().get(li.getMenuItemId());
       li.setQuantity(revised);
     });

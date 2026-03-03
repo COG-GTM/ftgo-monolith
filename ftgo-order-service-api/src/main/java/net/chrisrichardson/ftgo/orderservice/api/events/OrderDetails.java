@@ -1,9 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.api.events;
 
 import net.chrisrichardson.ftgo.common.Money;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import java.util.Objects;
 
 import java.util.List;
 
@@ -35,7 +33,7 @@ public class OrderDetails {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this);
+    return "OrderDetails{consumerId=" + consumerId + ", restaurantId=" + restaurantId + ", lineItems=" + lineItems + ", orderTotal=" + orderTotal + "}";
   }
 
   public List<OrderLineItemDTO> getLineItems() {
@@ -66,12 +64,18 @@ public class OrderDetails {
 
   @Override
   public boolean equals(Object o) {
-    return EqualsBuilder.reflectionEquals(this, o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    OrderDetails that = (OrderDetails) o;
+    return restaurantId == that.restaurantId &&
+            consumerId == that.consumerId &&
+            Objects.equals(lineItems, that.lineItems) &&
+            Objects.equals(orderTotal, that.orderTotal);
   }
 
   @Override
   public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
+    return Objects.hash(lineItems, orderTotal, restaurantId, consumerId);
   }
 
 

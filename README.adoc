@@ -3,7 +3,69 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Prerequisites
+
+* **Java 8** (JDK 1.8) or later
+* **Gradle** (wrapper included via `./gradlew`)
+* **Docker & Docker Compose** (for MySQL and infrastructure services)
+
+== Setup and Running
+
+1. **Build the project:**
++
+[source,bash]
+----
+./gradlew build
+----
+
+2. **Start infrastructure services (MySQL):**
++
+[source,bash]
+----
+./start-infrastructure-services.sh
+----
+
+3. **Build and run the application:**
++
+[source,bash]
+----
+./build-and-run.sh
+----
+
+4. **Run tests:**
++
+[source,bash]
+----
+./gradlew test
+----
+
+== Java 8 Features
+
+This project targets **Java 8** (`sourceCompatibility = '1.8'`) and leverages the following Java 8 features:
+
+* **Lambda expressions** — Used throughout the codebase for concise anonymous function definitions (e.g., in stream operations and Optional handling)
+* **Method references** — Used for cleaner stream mapping (e.g., `this::makeGetOrderResponse`, `OrderLineItem::getTotal`, `Money::add`)
+* **Streams API** — Used for data processing pipelines in domain logic and controllers (e.g., filtering menu items, calculating order totals, transforming DTOs)
+* **Optional** — Used for safe null handling with `orElseThrow()`, `ifPresent()`, `map()`, and `orElseGet()` (e.g., in repository lookups and controller responses)
+* **`java.time` API** — `LocalDateTime` is used for date/time handling instead of the legacy `java.util.Date`
+* **`String.join()`** — Used for building URL paths instead of manual `StringBuilder` concatenation
+* **`Objects.equals()` / `Objects.hash()`** — Used for modern `equals()` and `hashCode()` implementations replacing Apache Commons Lang reflection-based builders
+* **`@GetMapping` / `@PostMapping`** — Spring 4.3+ composed annotations used instead of verbose `@RequestMapping(method=...)` declarations
+
+== Project Structure
+
+The project is organized as a multi-module Gradle build:
+
+* `ftgo-common` — Shared value objects (Money, Address, PersonName)
+* `ftgo-domain` — Domain entities (Order, Restaurant, Consumer, Courier)
+* `ftgo-order-service` — Order management service
+* `ftgo-consumer-service` — Consumer management service
+* `ftgo-restaurant-service` — Restaurant management service
+* `ftgo-courier-service` — Courier management service
+* `ftgo-application` — Main Spring Boot application aggregating all services
+* `ftgo-end-to-end-tests` — End-to-end integration tests
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
