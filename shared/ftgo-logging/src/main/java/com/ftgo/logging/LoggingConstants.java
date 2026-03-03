@@ -18,6 +18,9 @@ public final class LoggingConstants {
     /** MDC key for the correlation ID that links related requests across services. */
     public static final String MDC_CORRELATION_ID = "correlationId";
 
+    /** MDC key for the authenticated user identifier. */
+    public static final String MDC_USER_ID = "userId";
+
     /** MDC key for the distributed trace ID (e.g., from Brave/Zipkin). */
     public static final String MDC_TRACE_ID = "traceId";
 
@@ -76,6 +79,9 @@ public final class LoggingConstants {
 
     /** JSON field name for the span ID. */
     public static final String FIELD_SPAN_ID = "spanId";
+
+    /** JSON field name for the user ID. */
+    public static final String FIELD_USER_ID = "userId";
 
     // -------------------------------------------------------------------------
     // Environment Names - Used for log retention policy configuration
