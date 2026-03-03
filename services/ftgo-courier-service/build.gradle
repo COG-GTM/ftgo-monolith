@@ -1,0 +1,20 @@
+// FTGO Courier Service - Microservice Build Configuration
+// This build file will be used when the Courier Service is extracted as an independent microservice.
+// Currently, the monolith's ftgo-courier-service module (at the repo root) remains the active build.
+//
+// Package: com.ftgo.courier
+// Bounded Context: Courier
+
+dependencies {
+    // Shared libraries
+    // implementation project(':shared-ftgo-common')
+    // implementation project(':shared-ftgo-domain')
+    // implementation project(':shared-ftgo-common-jpa')
+
+    // Spring Boot
+    // implementation 'org.springframework.boot:spring-boot-starter-web'
+    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Testing
+    // testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

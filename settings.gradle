@@ -1,30 +1,60 @@
 
+// =============================================================================
+// FTGO Monolith - Gradle Multi-Project Configuration
+// =============================================================================
+// This settings file defines both the legacy monolith modules (at the repo root)
+// and the new microservices directory structure (under services/, shared/).
+//
+// During the migration, both structures coexist. Legacy modules remain the active
+// build targets. New modules under services/ and shared/ are scaffolding for the
+// future microservices extraction.
+//
+// See docs/adr/0001-mono-repo-structure-and-naming-conventions.md for details.
+// =============================================================================
 
+// ---------------------------------------------------------------------------
+// Legacy Monolith Modules (active - do not remove until migration is complete)
+// ---------------------------------------------------------------------------
+
+// Shared libraries
 include "common-swagger"
-
-include "ftgo-flyway"
-
 include "ftgo-test-util"
 include "ftgo-common"
 include "ftgo-common-jpa"
-
 include "ftgo-domain"
 
+// Database migrations
+include "ftgo-flyway"
 
+// Service modules
 include "ftgo-order-service"
 include "ftgo-order-service-api"
-
 include "ftgo-consumer-service-api"
 include "ftgo-consumer-service"
-
 include "ftgo-restaurant-service-api"
 include "ftgo-restaurant-service"
-
 include "ftgo-courier-service-api"
 include "ftgo-courier-service"
 
+// Application assembly
 include "ftgo-application"
 
+// End-to-end tests
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
+
+// ---------------------------------------------------------------------------
+// New Microservices Structure (scaffolding - will become active during extraction)
+// ---------------------------------------------------------------------------
+
+// Service modules (under services/)
+include "services:ftgo-order-service"
+include "services:ftgo-consumer-service"
+include "services:ftgo-restaurant-service"
+include "services:ftgo-courier-service"
+
+// Shared libraries (under shared/)
+include "shared:ftgo-common"
+include "shared:ftgo-domain"
+include "shared:ftgo-common-jpa"
 

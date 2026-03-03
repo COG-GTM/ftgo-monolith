@@ -1,0 +1,14 @@
+// FTGO Common - Shared Library Build Configuration
+// This build file will be used when ftgo-common is migrated to shared/ftgo-common.
+// Currently, the monolith's ftgo-common module (at the repo root) remains the active build.
+//
+// Package: com.ftgo.common
+// Contains: Money, PersonName, Address, and other shared value objects and utilities
+
+dependencies {
+    // JSON serialization
+    // implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Testing
+    // testImplementation 'junit:junit'
+}
