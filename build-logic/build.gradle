@@ -18,9 +18,14 @@ repositories {
 def springBootVersion = '3.2.5'
 def springDepMgmtVersion = '1.1.5'
 
+// Versions must match gradle/libs.versions.toml
+def spotbugsGradleVersion = '6.0.9'
+
 dependencies {
     // Spring Boot Gradle plugin - used by spring-boot-conventions
     implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     // Spring dependency management plugin
     implementation "io.spring.gradle:dependency-management-plugin:${springDepMgmtVersion}"
+    // SpotBugs Gradle plugin - used by quality-conventions
+    implementation "com.github.spotbugs.snom:spotbugs-gradle-plugin:${spotbugsGradleVersion}"
 }
