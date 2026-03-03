@@ -1,0 +1,37 @@
+// =============================================================================
+// ftgo.resilience-conventions - Resilience Convention Plugin
+// =============================================================================
+// Configures Resilience4j circuit breakers, retries, bulkheads, rate limiters,
+// health indicators, and graceful shutdown for all FTGO microservices.
+// Provides a consistent resilience baseline with Micrometer metrics integration.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.resilience-conventions'
+//   }
+//
+// This plugin can be applied alongside ftgo.spring-boot-conventions for a
+// complete microservice setup with observability and resilience.
+// =============================================================================
+
+plugins {
+    id 'java'
+}
+
+dependencies {
+    // Resilience4j Spring Boot 3 starter (auto-configures circuit breaker, retry, bulkhead, rate limiter)
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // Individual Resilience4j modules for programmatic usage
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-bulkhead:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.2.0'
+
+    // Micrometer integration for resilience metrics
+    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+
+    // Spring Boot Actuator for health endpoints
+    // (already included via spring-boot-conventions, but declared here for clarity)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
