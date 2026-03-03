@@ -1,17 +1,81 @@
+// =============================================================================
 // FTGO Domain - Shared Library Build Configuration
-// This build file will be used when ftgo-domain is migrated to shared/ftgo-domain.
-// Currently, the monolith's ftgo-domain module (at the repo root) remains the active build.
+// =============================================================================
+// Standalone, versioned shared library extracted from the legacy ftgo-domain module.
+// Contains core domain entities (Order, Consumer, Restaurant, Courier), repositories,
+// value objects, and Spring/JPA configuration shared across all FTGO microservices.
 //
-// Package: com.ftgo.domain
-// Contains: Core domain entities (Order, Consumer, Restaurant, Courier) and domain events
+// Package: net.chrisrichardson.ftgo.domain
+// Version: 1.0.0
+//
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+// =============================================================================
+
+version = ftgoCommonVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
 
 dependencies {
     // Shared libraries
-    // implementation project(':shared:ftgo-common')
+    compile project(":shared:ftgo-common")
+    compile project(":shared:ftgo-common-jpa")
 
-    // JPA
-    // implementation 'javax.persistence:javax.persistence-api'
+    // Spring Data JPA (provides @Entity, @Repository, CrudRepository, etc.)
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
 
     // Testing
-    // testImplementation 'junit:junit'
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // JAXB runtime dependencies (Java 8 compatibility)
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-domain:publishToMavenLocal
+//   ./gradlew :shared:ftgo-domain:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-domain'
+            version = ftgoCommonVersion
+
+            pom {
+                name = 'FTGO Domain Library'
+                description = 'Core domain entities, repositories, and JPA configuration for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }

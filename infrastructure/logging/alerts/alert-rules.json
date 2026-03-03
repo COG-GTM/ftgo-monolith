@@ -1,0 +1,212 @@
+{
+  "_comment": "Log-based alert rules for FTGO microservices. These are applied as Elasticsearch Watcher configs or can be adapted for external alerting tools (PagerDuty, OpsGenie, Slack).",
+  "alerts": [
+    {
+      "name": "ftgo-high-error-rate",
+      "description": "Triggers when any service exceeds 10 errors per minute",
+      "severity": "critical",
+      "trigger": {
+        "schedule": {
+          "interval": "1m"
+        }
+      },
+      "input": {
+        "search": {
+          "request": {
+            "indices": ["ftgo-logs-*"],
+            "body": {
+              "query": {
+                "bool": {
+                  "must": [
+                    { "match": { "level": "ERROR" } },
+                    { "range": { "@timestamp": { "gte": "now-1m" } } }
+                  ]
+                }
+              },
+              "aggs": {
+                "by_service": {
+                  "terms": { "field": "service", "size": 20 },
+                  "aggs": {
+                    "error_count": { "value_count": { "field": "level" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "compare": {
+          "ctx.payload.hits.total.value": { "gt": 10 }
+        }
+      },
+      "actions": {
+        "notify_slack": {
+          "webhook": {
+            "scheme": "https",
+            "host": "hooks.slack.com",
+            "port": 443,
+            "method": "POST",
+            "path": "/services/WEBHOOK_PATH",
+            "headers": { "Content-Type": "application/json" },
+            "body": "{\"text\": \"FTGO Alert: High error rate detected - {{ctx.payload.hits.total.value}} errors in the last minute across services\"}"
+          }
+        }
+      }
+    },
+    {
+      "name": "ftgo-service-down",
+      "description": "Triggers when a service has not produced any logs for 5 minutes",
+      "severity": "warning",
+      "trigger": {
+        "schedule": {
+          "interval": "5m"
+        }
+      },
+      "input": {
+        "search": {
+          "request": {
+            "indices": ["ftgo-logs-*"],
+            "body": {
+              "size": 0,
+              "query": {
+                "range": {
+                  "@timestamp": { "gte": "now-5m" }
+                }
+              },
+              "aggs": {
+                "services": {
+                  "terms": {
+                    "field": "service",
+                    "size": 20
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "_comment": "Check if expected services are missing from recent logs",
+        "script": {
+          "source": "def expected = ['ftgo-order-service','ftgo-consumer-service','ftgo-restaurant-service','ftgo-courier-service']; def found = ctx.payload.aggregations.services.buckets.collect { it.key }; return expected.any { !found.contains(it) }"
+        }
+      },
+      "actions": {
+        "notify_slack": {
+          "webhook": {
+            "scheme": "https",
+            "host": "hooks.slack.com",
+            "port": 443,
+            "method": "POST",
+            "path": "/services/WEBHOOK_PATH",
+            "headers": { "Content-Type": "application/json" },
+            "body": "{\"text\": \"FTGO Alert: One or more services have not produced logs in the last 5 minutes. Check service health.\"}"
+          }
+        }
+      }
+    },
+    {
+      "name": "ftgo-exception-spike",
+      "description": "Triggers when exception count spikes above 3x the 15-minute average",
+      "severity": "warning",
+      "trigger": {
+        "schedule": {
+          "interval": "5m"
+        }
+      },
+      "input": {
+        "search": {
+          "request": {
+            "indices": ["ftgo-logs-*"],
+            "body": {
+              "size": 0,
+              "query": {
+                "bool": {
+                  "must": [
+                    { "exists": { "field": "stack_trace" } },
+                    { "range": { "@timestamp": { "gte": "now-15m" } } }
+                  ]
+                }
+              },
+              "aggs": {
+                "per_5min": {
+                  "date_histogram": {
+                    "field": "@timestamp",
+                    "fixed_interval": "5m"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "_comment": "Compare latest 5min bucket to average of previous buckets",
+        "script": {
+          "source": "def buckets = ctx.payload.aggregations.per_5min.buckets; if (buckets.size() < 2) return false; def latest = buckets[buckets.size()-1].doc_count; def avg = buckets.subList(0, buckets.size()-1).collect{it.doc_count}.sum() / (buckets.size()-1); return latest > avg * 3"
+        }
+      },
+      "actions": {
+        "notify_slack": {
+          "webhook": {
+            "scheme": "https",
+            "host": "hooks.slack.com",
+            "port": 443,
+            "method": "POST",
+            "path": "/services/WEBHOOK_PATH",
+            "headers": { "Content-Type": "application/json" },
+            "body": "{\"text\": \"FTGO Alert: Exception spike detected - exception rate is 3x above normal in the last 5 minutes\"}"
+          }
+        }
+      }
+    },
+    {
+      "name": "ftgo-slow-request-logging",
+      "description": "Informational: logs requests that have many log entries (potential performance issue)",
+      "severity": "info",
+      "trigger": {
+        "schedule": {
+          "interval": "10m"
+        }
+      },
+      "input": {
+        "search": {
+          "request": {
+            "indices": ["ftgo-logs-*"],
+            "body": {
+              "size": 0,
+              "query": {
+                "range": {
+                  "@timestamp": { "gte": "now-10m" }
+                }
+              },
+              "aggs": {
+                "by_correlation": {
+                  "terms": {
+                    "field": "correlationId",
+                    "size": 10,
+                    "order": { "_count": "desc" },
+                    "min_doc_count": 50
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "compare": {
+          "ctx.payload.aggregations.by_correlation.buckets.size": { "gt": 0 }
+        }
+      },
+      "actions": {
+        "log": {
+          "logging": {
+            "text": "FTGO Info: Requests with unusually high log volume detected. Top correlationIds: {{ctx.payload.aggregations.by_correlation.buckets}}"
+          }
+        }
+      }
+    }
+  ]
+}

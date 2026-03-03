@@ -1,0 +1,65 @@
+# =============================================================================
+# FTGO Microservices - Local Development Override
+# =============================================================================
+# Override file for local development. Uses local builds instead of
+# pulling from the registry. Useful when developing service code.
+#
+# Usage:
+#   docker compose -f docker-compose.microservices.yml \
+#                  -f docker-compose.microservices.override.yml up --build
+# =============================================================================
+
+version: '3.8'
+
+services:
+  ftgo-order-service:
+    image: ftgo-order-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-order-service/Dockerfile
+      cache_from:
+        - ghcr.io/cog-gtm/ftgo-ftgo-order-service:latest
+    environment:
+      JAVA_OPTS: -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "8081:8080"
+      - "5005:5005"
+
+  ftgo-consumer-service:
+    image: ftgo-consumer-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-consumer-service/Dockerfile
+      cache_from:
+        - ghcr.io/cog-gtm/ftgo-ftgo-consumer-service:latest
+    environment:
+      JAVA_OPTS: -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
+    ports:
+      - "8082:8080"
+      - "5006:5005"
+
+  ftgo-restaurant-service:
+    image: ftgo-restaurant-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-restaurant-service/Dockerfile
+      cache_from:
+        - ghcr.io/cog-gtm/ftgo-ftgo-restaurant-service:latest
+    environment:
+      JAVA_OPTS: -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007
+    ports:
+      - "8083:8080"
+      - "5007:5005"
+
+  ftgo-courier-service:
+    image: ftgo-courier-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-courier-service/Dockerfile
+      cache_from:
+        - ghcr.io/cog-gtm/ftgo-ftgo-courier-service:latest
+    environment:
+      JAVA_OPTS: -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5008
+    ports:
+      - "8084:8080"
+      - "5008:5005"

@@ -1,0 +1,35 @@
+// =============================================================================
+// ftgo.java-conventions - Base Java Convention Plugin
+// =============================================================================
+// Applies standard Java settings for all new FTGO microservices and shared
+// libraries. Sets Java 17 toolchain, encoding, group, and common repositories.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.java-conventions'
+//   }
+// =============================================================================
+
+plugins {
+    id 'java'
+}
+
+group = 'com.ftgo'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}

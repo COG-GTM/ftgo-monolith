@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  =============================================================================
+  FTGO Structured Logging - Default Logback Configuration
+  =============================================================================
+  This file provides shared Logback configuration that can be included by
+  any FTGO microservice. It defines structured JSON output with standard
+  fields for cross-service log correlation.
+
+  Usage in service logback-spring.xml:
+    <configuration>
+      <include resource="ftgo-logback-defaults.xml" />
+      <root level="INFO">
+        <appender-ref ref="CONSOLE_JSON" />
+      </root>
+    </configuration>
+
+  Or for development with plain text:
+    <configuration>
+      <include resource="ftgo-logback-defaults.xml" />
+      <root level="DEBUG">
+        <appender-ref ref="CONSOLE_PLAIN" />
+      </root>
+    </configuration>
+  =============================================================================
+-->
+
+<included>
+    <!-- ===================================================================== -->
+    <!-- Properties                                                            -->
+    <!-- ===================================================================== -->
+    <property name="SERVICE_NAME" value="${spring.application.name:-unknown-service}" />
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] [%X{traceId:-}] [%X{spanId:-}] %logger{36} - %msg%n" />
+
+    <!-- ===================================================================== -->
+    <!-- JSON Console Appender (Production / Staging)                          -->
+    <!-- ===================================================================== -->
+    <!-- Outputs structured JSON logs to stdout for collection by Fluentd.     -->
+    <!-- Each log entry includes: @timestamp, level, logger, message,          -->
+    <!-- service, correlationId, traceId, spanId, and all MDC fields.          -->
+    <!-- ===================================================================== -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Include standard fields -->
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>serviceName</includeMdcKeyName>
+            <includeMdcKeyName>requestMethod</includeMdcKeyName>
+            <includeMdcKeyName>requestUri</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>clientIp</includeMdcKeyName>
+
+            <!-- Custom field names for consistency -->
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <version>[ignore]</version>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+
+            <!-- Add static service name field -->
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+
+            <!-- Include stack traces for exceptions -->
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>2048</maxLength>
+                <shortenedClassNameLength>20</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================================== -->
+    <!-- Plain Text Console Appender (Local Development)                       -->
+    <!-- ===================================================================== -->
+    <!-- Human-readable console output for local development. Includes         -->
+    <!-- correlation ID and trace context for debugging.                        -->
+    <!-- ===================================================================== -->
+    <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================================== -->
+    <!-- Rolling File Appender (Optional - for environments without Fluentd)   -->
+    <!-- ===================================================================== -->
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/var/log/ftgo/${SERVICE_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>/var/log/ftgo/${SERVICE_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>serviceName</includeMdcKeyName>
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <version>[ignore]</version>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================================== -->
+    <!-- Default Logger Configuration                                          -->
+    <!-- ===================================================================== -->
+    <!-- Suppress noisy framework loggers -->
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="org.apache" level="WARN" />
+    <logger name="com.zaxxer.hikari" level="WARN" />
+
+    <!-- FTGO application loggers -->
+    <logger name="com.ftgo" level="INFO" />
+    <logger name="net.chrisrichardson.ftgo" level="INFO" />
+</included>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  =============================================================================
+  FTGO Example Logback Configuration
+  =============================================================================
+  Copy this file to your service's src/main/resources/logback-spring.xml
+  and customize as needed.
+
+  This uses Spring profiles to switch between JSON (production) and plain
+  text (development) log output.
+  =============================================================================
+-->
+<configuration>
+    <!-- Include FTGO shared logging defaults -->
+    <include resource="ftgo-logback-defaults.xml" />
+
+    <!-- ===================================================================== -->
+    <!-- Profile: default / dev - Human-readable console output                -->
+    <!-- ===================================================================== -->
+    <springProfile name="default,dev,local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PLAIN" />
+        </root>
+        <!-- Enable debug logging for FTGO packages in development -->
+        <logger name="com.ftgo" level="DEBUG" />
+        <logger name="net.chrisrichardson.ftgo" level="DEBUG" />
+    </springProfile>
+
+    <!-- ===================================================================== -->
+    <!-- Profile: docker - JSON output for Docker Compose local dev with EFK   -->
+    <!-- ===================================================================== -->
+    <springProfile name="docker">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON" />
+        </root>
+    </springProfile>
+
+    <!-- ===================================================================== -->
+    <!-- Profile: staging - JSON output with INFO level                        -->
+    <!-- ===================================================================== -->
+    <springProfile name="staging">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON" />
+        </root>
+    </springProfile>
+
+    <!-- ===================================================================== -->
+    <!-- Profile: production - JSON output with WARN level for framework       -->
+    <!-- ===================================================================== -->
+    <springProfile name="production,prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON" />
+        </root>
+        <!-- Tighter logging in production -->
+        <logger name="org.springframework" level="ERROR" />
+        <logger name="org.hibernate" level="ERROR" />
+    </springProfile>
+</configuration>
