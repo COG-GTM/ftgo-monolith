@@ -1,0 +1,216 @@
+# =============================================================================
+# FTGO API Gateway Configuration
+# =============================================================================
+# Spring Cloud Gateway configuration for routing, security, and resilience.
+# Override values per environment using Spring profiles or environment variables.
+# =============================================================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ftgo-api-gateway
+
+  # Redis configuration for rate limiting
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  cloud:
+    gateway:
+      # Global default filters applied to all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+      # Global CORS (can also be configured per-route)
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "${CORS_ALLOWED_ORIGINS:*}"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            exposedHeaders:
+              - X-Correlation-Id
+              - X-RateLimit-Remaining
+            allowCredentials: false
+            maxAge: 3600
+
+      # Redis rate limiter defaults
+      redis:
+        enabled: true
+
+# =============================================================================
+# FTGO Service URLs
+# =============================================================================
+ftgo:
+  services:
+    order-service:
+      url: ${ORDER_SERVICE_URL:http://ftgo-order-service:8080}
+    consumer-service:
+      url: ${CONSUMER_SERVICE_URL:http://ftgo-consumer-service:8080}
+    restaurant-service:
+      url: ${RESTAURANT_SERVICE_URL:http://ftgo-restaurant-service:8080}
+    courier-service:
+      url: ${COURIER_SERVICE_URL:http://ftgo-courier-service:8080}
+
+  gateway:
+    # JWT Configuration
+    jwt:
+      secret: ${JWT_SECRET:ftgo-api-gateway-default-secret-key-change-in-production-min-32-chars}
+      enabled: ${JWT_ENABLED:true}
+      excluded-paths: /actuator/**,/fallback/**
+
+    # Rate Limiting Configuration
+    rate-limit:
+      default-replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:10}
+      default-burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+      default-requested-tokens: ${RATE_LIMIT_REQUESTED_TOKENS:1}
+
+    # Circuit Breaker Configuration
+    circuit-breaker:
+      failure-rate-threshold: ${CB_FAILURE_RATE_THRESHOLD:50}
+      wait-duration-in-open-state: ${CB_WAIT_DURATION:30}
+      sliding-window-size: ${CB_SLIDING_WINDOW_SIZE:10}
+      permitted-calls-in-half-open: ${CB_PERMITTED_HALF_OPEN:3}
+      timeout-duration: ${CB_TIMEOUT_DURATION:5}
+
+    # CORS Configuration
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+      allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+      allowed-headers: "*"
+      exposed-headers: X-Correlation-Id,X-RateLimit-Remaining
+      allow-credentials: false
+      max-age: 3600
+
+# =============================================================================
+# Resilience4j Circuit Breaker Configuration
+# =============================================================================
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+    instances:
+      orderServiceCircuitBreaker:
+        baseConfig: default
+      consumerServiceCircuitBreaker:
+        baseConfig: default
+      restaurantServiceCircuitBreaker:
+        baseConfig: default
+      courierServiceCircuitBreaker:
+        baseConfig: default
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+    instances:
+      orderServiceCircuitBreaker:
+        baseConfig: default
+      consumerServiceCircuitBreaker:
+        baseConfig: default
+      restaurantServiceCircuitBreaker:
+        baseConfig: default
+      courierServiceCircuitBreaker:
+        baseConfig: default
+
+# =============================================================================
+# Actuator / Management Endpoints
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# =============================================================================
+# Logging
+# =============================================================================
+logging:
+  level:
+    root: INFO
+    net.chrisrichardson.ftgo.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+
+---
+# =============================================================================
+# Docker Profile
+# =============================================================================
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    redis:
+      host: redis
+
+ftgo:
+  services:
+    order-service:
+      url: http://ftgo-order-service:8080
+    consumer-service:
+      url: http://ftgo-consumer-service:8080
+    restaurant-service:
+      url: http://ftgo-restaurant-service:8080
+    courier-service:
+      url: http://ftgo-courier-service:8080
+
+---
+# =============================================================================
+# Kubernetes Profile
+# =============================================================================
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+
+  data:
+    redis:
+      host: ${REDIS_HOST:ftgo-redis}
+
+ftgo:
+  services:
+    order-service:
+      url: http://ftgo-order-service.ftgo-dev.svc.cluster.local:8080
+    consumer-service:
+      url: http://ftgo-consumer-service.ftgo-dev.svc.cluster.local:8080
+    restaurant-service:
+      url: http://ftgo-restaurant-service.ftgo-dev.svc.cluster.local:8080
+    courier-service:
+      url: http://ftgo-courier-service.ftgo-dev.svc.cluster.local:8080
