@@ -1,0 +1,91 @@
+# =============================================================================
+# FTGO Monolith - Code Owners
+# =============================================================================
+# Defines code ownership for automatic reviewer assignment on pull requests.
+# Each line is a file pattern followed by one or more GitHub usernames or
+# team names. The last matching pattern takes precedence.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Default owners - all PRs require at least one review
+# ---------------------------------------------------------------------------
+*                                       @COG-GTM/ftgo-maintainers
+
+# ---------------------------------------------------------------------------
+# Service owners - domain-specific reviewers
+# ---------------------------------------------------------------------------
+
+# Order Service
+ftgo-order-service/                     @COG-GTM/order-team
+services/ftgo-order-service/            @COG-GTM/order-team
+
+# Consumer Service
+ftgo-consumer-service/                  @COG-GTM/consumer-team
+services/ftgo-consumer-service/         @COG-GTM/consumer-team
+
+# Restaurant Service
+ftgo-restaurant-service/                @COG-GTM/restaurant-team
+services/ftgo-restaurant-service/       @COG-GTM/restaurant-team
+
+# Courier Service
+ftgo-courier-service/                   @COG-GTM/courier-team
+services/ftgo-courier-service/          @COG-GTM/courier-team
+
+# ---------------------------------------------------------------------------
+# Service API contracts - require broader review
+# ---------------------------------------------------------------------------
+ftgo-order-service-api/                 @COG-GTM/ftgo-maintainers @COG-GTM/order-team
+ftgo-consumer-service-api/              @COG-GTM/ftgo-maintainers @COG-GTM/consumer-team
+ftgo-restaurant-service-api/            @COG-GTM/ftgo-maintainers @COG-GTM/restaurant-team
+ftgo-courier-service-api/               @COG-GTM/ftgo-maintainers @COG-GTM/courier-team
+
+# ---------------------------------------------------------------------------
+# Shared libraries - require platform team review
+# ---------------------------------------------------------------------------
+ftgo-domain/                            @COG-GTM/ftgo-maintainers
+ftgo-common/                            @COG-GTM/ftgo-maintainers
+ftgo-common-jpa/                        @COG-GTM/ftgo-maintainers
+shared/                                 @COG-GTM/ftgo-maintainers
+
+# ---------------------------------------------------------------------------
+# Build & CI infrastructure - require platform team review
+# ---------------------------------------------------------------------------
+build-logic/                            @COG-GTM/platform-team
+buildSrc/                               @COG-GTM/platform-team
+gradle/                                 @COG-GTM/platform-team
+settings.gradle                         @COG-GTM/platform-team
+build.gradle                            @COG-GTM/platform-team
+gradle.properties                       @COG-GTM/platform-team
+
+# ---------------------------------------------------------------------------
+# CI/CD workflows - require platform team review
+# ---------------------------------------------------------------------------
+.github/                                @COG-GTM/platform-team
+.github/workflows/                      @COG-GTM/platform-team
+
+# ---------------------------------------------------------------------------
+# Database migrations - require DBA and service owner review
+# ---------------------------------------------------------------------------
+ftgo-flyway/                            @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
+
+# ---------------------------------------------------------------------------
+# Deployment configurations - require platform team review
+# ---------------------------------------------------------------------------
+deployment/                             @COG-GTM/platform-team
+docker-compose*.yml                     @COG-GTM/platform-team
+Dockerfile                              @COG-GTM/platform-team
+
+# ---------------------------------------------------------------------------
+# Documentation - maintainers
+# ---------------------------------------------------------------------------
+docs/                                   @COG-GTM/ftgo-maintainers
+*.md                                    @COG-GTM/ftgo-maintainers
+CONTRIBUTING.md                         @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
+
+# ---------------------------------------------------------------------------
+# Quality & code standards configuration
+# ---------------------------------------------------------------------------
+.editorconfig                           @COG-GTM/platform-team
+CODEOWNERS                              @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
