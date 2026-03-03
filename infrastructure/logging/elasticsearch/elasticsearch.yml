@@ -1,0 +1,43 @@
+# =============================================================================
+# Elasticsearch Configuration for FTGO Log Aggregation
+# =============================================================================
+# This configuration is used by both Docker Compose (local dev) and Kubernetes
+# deployments. Environment-specific overrides are applied via env vars or
+# Kubernetes ConfigMaps.
+#
+# See: https://www.elastic.co/guide/en/elasticsearch/reference/8.x/settings.html
+# =============================================================================
+
+# --- Cluster Settings ---
+cluster.name: ftgo-logs
+node.name: ${HOSTNAME:ftgo-es-node-1}
+
+# --- Network Settings ---
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# --- Discovery Settings ---
+# Single-node mode for development; override for production clusters
+discovery.type: single-node
+
+# --- Path Settings ---
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+
+# --- Memory Settings ---
+# Disable swapping for performance
+bootstrap.memory_lock: true
+
+# --- Security Settings ---
+# Disable X-Pack security for local development
+# Enable and configure for staging/production
+xpack.security.enabled: false
+
+# --- Index Lifecycle Management ---
+xpack.ilm.enabled: true
+
+# --- Cross-Origin Resource Sharing (for Kibana) ---
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+http.cors.allow-headers: "X-Requested-With,Content-Type,Content-Length,Authorization"
