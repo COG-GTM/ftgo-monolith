@@ -1,0 +1,13 @@
+# =============================================================================
+# FTGO OpenAPI Auto-Configuration
+# =============================================================================
+# Registers the OpenAPI auto-configuration class so that any Spring Boot
+# application that includes this library on its classpath will automatically
+# get OpenAPI 3.0 / Swagger UI configured.
+#
+# For Spring Boot 2.x: Uses spring.factories (this file)
+# For Spring Boot 3.x: Uses META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+# =============================================================================
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.openapi.config.FtgoOpenApiAutoConfiguration

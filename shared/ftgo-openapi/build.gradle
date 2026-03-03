@@ -1,0 +1,91 @@
+// =============================================================================
+// FTGO OpenAPI - Shared Library Build Configuration
+// =============================================================================
+// SpringDoc OpenAPI 3.0 auto-configuration library that replaces the legacy
+// common-swagger module (Springfox 2.8.0). Provides standardized OpenAPI
+// metadata, Swagger UI configuration, and common API response models.
+//
+// Package: com.ftgo.openapi
+// Version: 1.0.0
+//
+// Convention plugins applied (requires root Gradle 8.7+ and includeBuild):
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+//
+// To activate convention plugins: uncomment the plugins block below after
+// the root Gradle wrapper is upgraded and includeBuild('build-logic') is enabled.
+// =============================================================================
+
+// plugins {
+//     id 'ftgo.java-conventions'
+//     id 'ftgo.testing-conventions'
+//     id 'ftgo.publishing-conventions'
+// }
+
+version = ftgoCommonVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // ---------------------------------------------------------------------------
+    // SpringDoc OpenAPI 3.0 with Swagger UI
+    // ---------------------------------------------------------------------------
+    // springdoc-openapi-ui 1.8.0 is compatible with Spring Boot 2.x / Java 8
+    // (the legacy monolith build environment).
+    //
+    // For Spring Boot 3.x microservices (under services/), use:
+    //   springdoc-openapi-starter-webmvc-ui:2.4.0
+    // which is already declared in gradle/libs.versions.toml and applied by
+    // the ftgo.spring-boot-conventions plugin.
+    // ---------------------------------------------------------------------------
+    compile "org.springdoc:springdoc-openapi-ui:1.8.0"
+
+    // Spring Boot Web (provided by consuming services)
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
+
+    // Jackson for JSON serialization of API models
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-openapi'
+            version = ftgoCommonVersion
+
+            pom {
+                name = 'FTGO OpenAPI Library'
+                description = 'SpringDoc OpenAPI 3.0 auto-configuration for FTGO microservices - replaces legacy Springfox common-swagger module'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}
