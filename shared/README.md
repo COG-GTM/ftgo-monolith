@@ -9,6 +9,7 @@ This directory contains shared/common modules used across multiple FTGO microser
 | `ftgo-common` | Common value objects (Money, Address, PersonName), utilities, and JSON configuration | All services |
 | `ftgo-domain` | Core domain entities (Order, Consumer, Restaurant, Courier) and domain events | All services |
 | `ftgo-common-jpa` | Shared JPA configuration, base entities, and persistence utilities | Services with database access |
+| `ftgo-openapi` | SpringDoc OpenAPI 3.0 auto-configuration, Swagger UI, and standard API response models (replaces legacy common-swagger) | All services exposing REST APIs |
 
 ## Versioning Strategy
 
