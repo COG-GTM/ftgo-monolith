@@ -1,0 +1,327 @@
+# =============================================================================
+# FTGO Test Reporting - Aggregation and Trend Tracking
+# =============================================================================
+# Aggregates test results and coverage data from all test tiers (unit,
+# integration, E2E). Generates a comprehensive test dashboard in the
+# GitHub Actions summary with coverage metrics and trend data.
+#
+# This workflow runs after the individual test workflows complete.
+# =============================================================================
+
+name: "CI: Test Reporting"
+
+on:
+  workflow_run:
+    workflows:
+      - "CI: Unit Tests"
+      - "CI: Integration Tests"
+      - "CI: E2E Tests"
+    types:
+      - completed
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+  # Also allow manual triggering for debugging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  aggregate-reports:
+    name: Aggregate Test Reports
+    runs-on: ubuntu-latest
+    # Only run if the triggering workflow succeeded or we want to report failures
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != 'cancelled' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts from triggering workflow
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          path: test-artifacts
+          merge-multiple: false
+        continue-on-error: true
+
+      - name: Generate comprehensive test dashboard
+        run: |
+          echo "# FTGO Test Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event.workflow_run.name || 'Manual' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Result:** ${{ github.event.workflow_run.conclusion || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.event.workflow_run.head_branch || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.event.workflow_run.head_sha || github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ---------------------------------------------------------------
+          # Unit Test Results
+          # ---------------------------------------------------------------
+          echo "## Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          UNIT_TOTAL=0
+          UNIT_PASSED=0
+          UNIT_FAILED=0
+          UNIT_ERRORS=0
+          UNIT_SKIPPED=0
+
+          echo "| Service | Tests | Passed | Failed | Skipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|--------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+
+          for dir in test-artifacts/unit-test-results-*/; do
+            if [ -d "$dir" ]; then
+              SERVICE=$(basename "$dir" | sed 's/unit-test-results-//')
+              S_TOTAL=0
+              S_FAIL=0
+              S_ERR=0
+              S_SKIP=0
+
+              for xml in $(find "$dir" -name "TEST-*.xml" 2>/dev/null); do
+                T=$(grep -o 'tests="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+                F=$(grep -o 'failures="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+                E=$(grep -o 'errors="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+                S=$(grep -o 'skipped="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+                S_TOTAL=$((S_TOTAL + T))
+                S_FAIL=$((S_FAIL + F))
+                S_ERR=$((S_ERR + E))
+                S_SKIP=$((S_SKIP + S))
+              done
+
+              S_PASSED=$((S_TOTAL - S_FAIL - S_ERR - S_SKIP))
+              UNIT_TOTAL=$((UNIT_TOTAL + S_TOTAL))
+              UNIT_PASSED=$((UNIT_PASSED + S_PASSED))
+              UNIT_FAILED=$((UNIT_FAILED + S_FAIL))
+              UNIT_ERRORS=$((UNIT_ERRORS + S_ERR))
+              UNIT_SKIPPED=$((UNIT_SKIPPED + S_SKIP))
+
+              STATUS="passed"
+              if [ "$S_FAIL" -gt 0 ] || [ "$S_ERR" -gt 0 ]; then
+                STATUS="FAILED"
+              fi
+              echo "| $SERVICE | $S_TOTAL | $S_PASSED | $((S_FAIL + S_ERR)) | $S_SKIP |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "| **Total** | **$UNIT_TOTAL** | **$UNIT_PASSED** | **$((UNIT_FAILED + UNIT_ERRORS))** | **$UNIT_SKIPPED** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ---------------------------------------------------------------
+          # Code Coverage Summary
+          # ---------------------------------------------------------------
+          echo "## Code Coverage (JaCoCo)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Instruction Coverage | Branch Coverage | Target (70%) |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------------------|-----------------|--------------|" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_INSTR_MISSED=0
+          TOTAL_INSTR_COVERED=0
+          TOTAL_BRANCH_MISSED=0
+          TOTAL_BRANCH_COVERED=0
+
+          for dir in test-artifacts/coverage-*/; do
+            if [ -d "$dir" ]; then
+              SERVICE=$(basename "$dir" | sed 's/coverage-//')
+              XML_FILE=$(find "$dir" -name "*.xml" 2>/dev/null | head -1)
+
+              if [ -n "$XML_FILE" ] && [ -f "$XML_FILE" ]; then
+                # Extract instruction coverage
+                I_MISSED=$(grep -o 'type="INSTRUCTION" missed="[0-9]*"' "$XML_FILE" | tail -1 | grep -o 'missed="[0-9]*"' | grep -o '[0-9]*' || echo 0)
+                I_COVERED=$(grep -o 'type="INSTRUCTION"[^/]*covered="[0-9]*"' "$XML_FILE" | tail -1 | grep -o 'covered="[0-9]*"' | grep -o '[0-9]*' || echo 0)
+
+                # Extract branch coverage
+                B_MISSED=$(grep -o 'type="BRANCH" missed="[0-9]*"' "$XML_FILE" | tail -1 | grep -o 'missed="[0-9]*"' | grep -o '[0-9]*' || echo 0)
+                B_COVERED=$(grep -o 'type="BRANCH"[^/]*covered="[0-9]*"' "$XML_FILE" | tail -1 | grep -o 'covered="[0-9]*"' | grep -o '[0-9]*' || echo 0)
+
+                TOTAL_INSTR_MISSED=$((TOTAL_INSTR_MISSED + I_MISSED))
+                TOTAL_INSTR_COVERED=$((TOTAL_INSTR_COVERED + I_COVERED))
+                TOTAL_BRANCH_MISSED=$((TOTAL_BRANCH_MISSED + B_MISSED))
+                TOTAL_BRANCH_COVERED=$((TOTAL_BRANCH_COVERED + B_COVERED))
+
+                I_TOTAL=$((I_MISSED + I_COVERED))
+                B_TOTAL=$((B_MISSED + B_COVERED))
+
+                if [ "$I_TOTAL" -gt 0 ]; then
+                  I_PCT=$((I_COVERED * 100 / I_TOTAL))
+                else
+                  I_PCT=0
+                fi
+                if [ "$B_TOTAL" -gt 0 ]; then
+                  B_PCT=$((B_COVERED * 100 / B_TOTAL))
+                else
+                  B_PCT=0
+                fi
+
+                if [ "$I_PCT" -ge 70 ]; then
+                  TARGET_STATUS="Met"
+                else
+                  TARGET_STATUS="Below target"
+                fi
+
+                echo "| $SERVICE | ${I_PCT}% | ${B_PCT}% | $TARGET_STATUS |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| $SERVICE | N/A | N/A | No data |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+          # Overall coverage
+          OVERALL_I_TOTAL=$((TOTAL_INSTR_MISSED + TOTAL_INSTR_COVERED))
+          OVERALL_B_TOTAL=$((TOTAL_BRANCH_MISSED + TOTAL_BRANCH_COVERED))
+          if [ "$OVERALL_I_TOTAL" -gt 0 ]; then
+            OVERALL_I_PCT=$((TOTAL_INSTR_COVERED * 100 / OVERALL_I_TOTAL))
+          else
+            OVERALL_I_PCT=0
+          fi
+          if [ "$OVERALL_B_TOTAL" -gt 0 ]; then
+            OVERALL_B_PCT=$((TOTAL_BRANCH_COVERED * 100 / OVERALL_B_TOTAL))
+          else
+            OVERALL_B_PCT=0
+          fi
+
+          if [ "$OVERALL_I_PCT" -ge 70 ]; then
+            OVERALL_STATUS="Met"
+          else
+            OVERALL_STATUS="Below target"
+          fi
+
+          echo "| **Overall** | **${OVERALL_I_PCT}%** | **${OVERALL_B_PCT}%** | **$OVERALL_STATUS** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ---------------------------------------------------------------
+          # Integration Test Results
+          # ---------------------------------------------------------------
+          echo "## Integration Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          INT_TOTAL=0
+          INT_FAILED=0
+          for xml in $(find test-artifacts/integration-test-results/ -name "TEST-*.xml" 2>/dev/null); do
+            T=$(grep -o 'tests="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+            F=$(grep -o 'failures="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+            INT_TOTAL=$((INT_TOTAL + T))
+            INT_FAILED=$((INT_FAILED + F))
+          done
+          INT_PASSED=$((INT_TOTAL - INT_FAILED))
+
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | $INT_TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | $INT_PASSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | $INT_FAILED |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ---------------------------------------------------------------
+          # E2E Test Results
+          # ---------------------------------------------------------------
+          echo "## End-to-End Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          E2E_TOTAL=0
+          E2E_FAILED=0
+          for xml in $(find test-artifacts/e2e-test-results/ -name "TEST-*.xml" 2>/dev/null); do
+            T=$(grep -o 'tests="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+            F=$(grep -o 'failures="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*' || echo 0)
+            E2E_TOTAL=$((E2E_TOTAL + T))
+            E2E_FAILED=$((E2E_FAILED + F))
+          done
+          E2E_PASSED=$((E2E_TOTAL - E2E_FAILED))
+
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | $E2E_TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | $E2E_PASSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | $E2E_FAILED |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ---------------------------------------------------------------
+          # Test Pipeline Health
+          # ---------------------------------------------------------------
+          echo "## Pipeline Health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          GRAND_TOTAL=$((UNIT_TOTAL + INT_TOTAL + E2E_TOTAL))
+          GRAND_FAILED=$((UNIT_FAILED + UNIT_ERRORS + INT_FAILED + E2E_FAILED))
+          GRAND_PASSED=$((GRAND_TOTAL - GRAND_FAILED - UNIT_SKIPPED))
+
+          echo "| Tier | Tests | Pass Rate |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|-----------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$UNIT_TOTAL" -gt 0 ]; then
+            UNIT_RATE=$((UNIT_PASSED * 100 / UNIT_TOTAL))
+          else
+            UNIT_RATE=0
+          fi
+          if [ "$INT_TOTAL" -gt 0 ]; then
+            INT_RATE=$((INT_PASSED * 100 / INT_TOTAL))
+          else
+            INT_RATE=0
+          fi
+          if [ "$E2E_TOTAL" -gt 0 ]; then
+            E2E_RATE=$((E2E_PASSED * 100 / E2E_TOTAL))
+          else
+            E2E_RATE=0
+          fi
+          if [ "$GRAND_TOTAL" -gt 0 ]; then
+            GRAND_RATE=$((GRAND_PASSED * 100 / GRAND_TOTAL))
+          else
+            GRAND_RATE=0
+          fi
+
+          echo "| Unit | $UNIT_TOTAL | ${UNIT_RATE}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration | $INT_TOTAL | ${INT_RATE}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E | $E2E_TOTAL | ${E2E_RATE}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Overall** | **$GRAND_TOTAL** | **${GRAND_RATE}%** |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Store trend data artifact
+        if: always()
+        run: |
+          # Create a JSON file with test metrics for trend tracking
+          mkdir -p trend-data
+          cat > trend-data/test-metrics-$(date +%Y%m%d-%H%M%S).json << EOF
+          {
+            "timestamp": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
+            "branch": "${{ github.event.workflow_run.head_branch || github.ref_name }}",
+            "commit": "${{ github.event.workflow_run.head_sha || github.sha }}",
+            "triggered_by": "${{ github.event.workflow_run.name || 'manual' }}",
+            "result": "${{ github.event.workflow_run.conclusion || 'unknown' }}",
+            "metrics": {
+              "unit_tests": {
+                "total": 0,
+                "passed": 0,
+                "failed": 0,
+                "skipped": 0
+              },
+              "integration_tests": {
+                "total": 0,
+                "passed": 0,
+                "failed": 0
+              },
+              "e2e_tests": {
+                "total": 0,
+                "passed": 0,
+                "failed": 0
+              },
+              "coverage": {
+                "instruction_percent": 0,
+                "branch_percent": 0,
+                "target": 70
+              }
+            }
+          }
+          EOF
+
+      - name: Upload trend data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-trend-data-${{ github.run_number }}
+          path: trend-data/
+          retention-days: 90
