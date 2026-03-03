@@ -54,6 +54,15 @@ configMapGenerator:
     literals:
       - SPRING_PROFILES_ACTIVE=kubernetes,staging
       - JWT_ENABLED=true
+  # Staging resilience overrides: production-like with slightly relaxed limits
+  - name: ftgo-resilience-staging-config
+    literals:
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_FAILURE_RATE_THRESHOLD=50
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_WAIT_DURATION_IN_OPEN_STATE=30s
+      - RESILIENCE4J_RETRY_CONFIGS_DEFAULT_MAX_ATTEMPTS=3
+      - RESILIENCE4J_BULKHEAD_CONFIGS_DEFAULT_MAX_CONCURRENT_CALLS=25
+      - RESILIENCE4J_RATELIMITER_CONFIGS_DEFAULT_LIMIT_FOR_PERIOD=50
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
 
 # Staging secrets - use SealedSecrets in real deployments
 # These placeholders demonstrate the pattern; replace with sealed-secrets

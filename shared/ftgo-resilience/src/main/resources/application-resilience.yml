@@ -1,0 +1,118 @@
+# =============================================================================
+# FTGO Resilience Library - Default Configuration
+# =============================================================================
+# These defaults are applied when the 'resilience' profile is active or when
+# this library is included as a dependency. Services can override any of these
+# properties in their own application.yml.
+# =============================================================================
+
+# --- Spring Boot Actuator Health Configuration ---
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,ftgoDiskSpace
+        readiness:
+          include: readinessState,ftgoDatabase,ftgoDependentService
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# --- Spring Boot Graceful Shutdown ---
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# --- FTGO Service Discovery ---
+ftgo:
+  service-discovery:
+    namespace: ftgo
+    cluster-domain: cluster.local
+    default-port: 8080
+  shutdown:
+    pre-wait-seconds: 5
+
+# --- Resilience4j Default Configuration ---
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+    instances:
+      order-service:
+        base-config: default
+      consumer-service:
+        base-config: default
+      restaurant-service:
+        base-config: default
+      courier-service:
+        base-config: default
+
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      order-service:
+        base-config: default
+      consumer-service:
+        base-config: default
+      restaurant-service:
+        base-config: default
+      courier-service:
+        base-config: default
+
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 25
+        max-wait-duration: 500ms
+    instances:
+      order-service:
+        base-config: default
+      consumer-service:
+        base-config: default
+      restaurant-service:
+        base-config: default
+      courier-service:
+        base-config: default
+
+  ratelimiter:
+    configs:
+      default:
+        limit-for-period: 50
+        limit-refresh-period: 1s
+        timeout-duration: 500ms
+    instances:
+      order-service:
+        base-config: default
+      consumer-service:
+        base-config: default
+      restaurant-service:
+        base-config: default
+      courier-service:
+        base-config: default

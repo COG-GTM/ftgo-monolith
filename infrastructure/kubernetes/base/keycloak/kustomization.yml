@@ -1,0 +1,30 @@
+# =============================================================================
+# Keycloak - Identity and Access Management for FTGO Microservices
+# =============================================================================
+# Deploys Keycloak as the OAuth2/OpenID Connect identity provider (token issuer)
+# for the FTGO microservices platform.
+#
+# Components:
+#   - Keycloak Deployment (single instance for dev, HA for production)
+#   - PostgreSQL database for Keycloak persistence
+#   - Service for internal cluster access
+#   - ConfigMap for realm configuration
+#   - Secret for admin credentials and database passwords
+#
+# Usage:
+#   kubectl apply -k infrastructure/kubernetes/base/keycloak/
+#
+# After deployment, access the Keycloak admin console at:
+#   http://keycloak.ftgo.svc.cluster.local:8080/admin
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo
+
+resources:
+  - deployment.yml
+  - service.yml
+  - configmap.yml
+  - secret.yml

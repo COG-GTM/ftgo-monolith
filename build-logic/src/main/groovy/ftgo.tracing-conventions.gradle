@@ -1,0 +1,31 @@
+// =============================================================================
+// ftgo.tracing-conventions - Distributed Tracing Convention Plugin
+// =============================================================================
+// Configures Micrometer Tracing with Brave bridge and Zipkin reporter for all
+// FTGO microservices. Provides a consistent distributed tracing baseline
+// including trace propagation, sampling configuration, and Zipkin reporting.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.tracing-conventions'
+//   }
+//
+// This plugin can be applied alongside ftgo.observability-conventions.
+// =============================================================================
+
+plugins {
+    id 'java'
+}
+
+dependencies {
+    // Micrometer Tracing with Brave bridge
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
+    // Zipkin Reporter for sending traces to Zipkin/Jaeger
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
+
+    // Spring Boot Actuator provides tracing auto-configuration
+    // (already included via spring-boot-conventions, but declared here for clarity)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}

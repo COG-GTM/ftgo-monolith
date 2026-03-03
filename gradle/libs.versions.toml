@@ -28,6 +28,10 @@ hibernate                   = "6.4.4.Final"
 # --- Observability ---
 micrometer                  = "1.12.5"
 micrometer-tracing          = "1.2.5"
+zipkin-reporter             = "2.16.4"
+
+# --- Resilience ---
+resilience4j                = "2.2.0"
 
 # --- Logging ---
 logstash-logback-encoder    = "7.4"
@@ -46,6 +50,10 @@ mockito                     = "5.11.0"
 testcontainers              = "1.19.7"
 assertj                     = "3.25.3"
 jacoco                      = "0.8.11"
+
+# --- JWT / Security ---
+jjwt                        = "0.12.5"
+nimbus-jose-jwt             = "9.37.3"
 
 # --- Utilities ---
 commons-lang3               = "3.14.0"
@@ -81,6 +89,17 @@ jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.pe
 micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+zipkin-reporter-brave               = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
+zipkin-sender-urlconnection         = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
+
+# --- Resilience ---
+resilience4j-spring-boot3           = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
+resilience4j-circuitbreaker         = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
+resilience4j-retry                  = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+resilience4j-bulkhead               = { module = "io.github.resilience4j:resilience4j-bulkhead", version.ref = "resilience4j" }
+resilience4j-ratelimiter             = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "resilience4j" }
+resilience4j-micrometer             = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j" }
+resilience4j-all                    = { module = "io.github.resilience4j:resilience4j-all", version.ref = "resilience4j" }
 
 # --- Logging ---
 logstash-logback-encoder            = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
@@ -109,6 +128,13 @@ testcontainers-mysql                = { module = "org.testcontainers:mysql", ver
 testcontainers-junit-jupiter        = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 assertj-core                        = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 spring-security-test                = { module = "org.springframework.security:spring-security-test" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server" }
+spring-security-oauth2-jose         = { module = "org.springframework.security:spring-security-oauth2-jose" }
+
+# --- JWT ---
+jjwt-api                            = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl                           = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson                        = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # --- Utilities ---
 commons-lang3                       = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
@@ -140,6 +166,24 @@ observability = [
     "micrometer-registry-prometheus",
     "micrometer-tracing-bridge-brave",
 ]
+
+# Distributed tracing dependencies
+tracing = [
+    "micrometer-tracing-bridge-brave",
+    "zipkin-reporter-brave",
+    "zipkin-sender-urlconnection",
+]
+
+# Resilience dependencies
+resilience = [
+    "resilience4j-spring-boot3",
+    "resilience4j-circuitbreaker",
+    "resilience4j-retry",
+    "resilience4j-bulkhead",
+    "resilience4j-ratelimiter",
+    "resilience4j-micrometer",
+]
+
 
 # Structured logging dependencies
 logging = [
@@ -177,6 +221,13 @@ testing-security = [
     "mockito-core",
     "mockito-junit-jupiter",
     "assertj-core",
+]
+
+# JWT dependencies
+jjwt = [
+    "jjwt-api",
+    "jjwt-impl",
+    "jjwt-jackson",
 ]
 
 # REST API testing

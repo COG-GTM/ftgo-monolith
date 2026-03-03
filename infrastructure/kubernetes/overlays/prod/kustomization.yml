@@ -95,6 +95,16 @@ configMapGenerator:
       - SPRING_PROFILES_ACTIVE=kubernetes,prod
       - JWT_ENABLED=true
       - JAVA_OPTS=-Xmx1536m -Xms512m -XX:+UseG1GC
+  # Production resilience overrides: strict thresholds for reliability
+  - name: ftgo-resilience-prod-config
+    literals:
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_FAILURE_RATE_THRESHOLD=50
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_WAIT_DURATION_IN_OPEN_STATE=30s
+      - RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_MINIMUM_NUMBER_OF_CALLS=5
+      - RESILIENCE4J_RETRY_CONFIGS_DEFAULT_MAX_ATTEMPTS=3
+      - RESILIENCE4J_BULKHEAD_CONFIGS_DEFAULT_MAX_CONCURRENT_CALLS=25
+      - RESILIENCE4J_RATELIMITER_CONFIGS_DEFAULT_LIMIT_FOR_PERIOD=50
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=when_authorized
 
 # Production secrets - MUST use SealedSecrets
 # These are placeholders; real values must be encrypted with kubeseal
