@@ -1,0 +1,105 @@
+# =============================================================================
+# FTGO Shared Libraries - CI Build and Test
+# =============================================================================
+# Builds and tests the shared libraries (ftgo-common, ftgo-domain, ftgo-common-jpa)
+# on PRs and pushes to main branches. Triggers only when shared library code changes.
+# =============================================================================
+
+name: "CI: Shared Libraries"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-shared-libraries.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-shared-libraries.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Shared Libraries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Compile Shared Libraries
+        run: |
+          ./gradlew :ftgo-common:compileJava \
+            :ftgo-common-jpa:compileJava \
+            :ftgo-domain:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Run Shared Libraries Tests
+        run: |
+          ./gradlew :ftgo-common:test \
+            :ftgo-common-jpa:test \
+            :ftgo-domain:test \
+            -x :ftgo-end-to-end-tests-common:test \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-application:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-libraries-test-reports
+          path: |
+            ftgo-common/build/reports/tests/
+            ftgo-common/build/test-results/
+            ftgo-common-jpa/build/reports/tests/
+            ftgo-common-jpa/build/test-results/
+            ftgo-domain/build/reports/tests/
+            ftgo-domain/build/test-results/
+          retention-days: 14
+
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "## CI: Shared Libraries" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Modules built:" >> $GITHUB_STEP_SUMMARY
+          echo "- ftgo-common" >> $GITHUB_STEP_SUMMARY
+          echo "- ftgo-common-jpa" >> $GITHUB_STEP_SUMMARY
+          echo "- ftgo-domain" >> $GITHUB_STEP_SUMMARY

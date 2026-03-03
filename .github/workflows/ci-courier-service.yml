@@ -1,0 +1,105 @@
+# =============================================================================
+# FTGO Courier Service - CI Build and Test
+# =============================================================================
+# Builds and tests the Courier Service on PRs and pushes to main branches.
+# Triggers only when courier-service or shared library code changes.
+# =============================================================================
+
+name: "CI: Courier Service"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-courier-service/**'
+      - 'ftgo-courier-service-api/**'
+      - 'services/ftgo-courier-service/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-courier-service.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration'
+    paths:
+      - 'ftgo-courier-service/**'
+      - 'ftgo-courier-service-api/**'
+      - 'services/ftgo-courier-service/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'shared/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/libs.versions.toml'
+      - 'buildSrc/**'
+      - '.github/workflows/ci-courier-service.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Courier Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Compile Courier Service
+        run: |
+          ./gradlew :ftgo-courier-service:compileJava \
+            :ftgo-courier-service-api:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Run Courier Service Tests
+        run: |
+          ./gradlew :ftgo-courier-service:test \
+            -x :ftgo-end-to-end-tests-common:test \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-application:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: courier-service-test-reports
+          path: |
+            ftgo-courier-service/build/reports/tests/
+            ftgo-courier-service/build/test-results/
+          retention-days: 14
+
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "## CI: Courier Service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "ftgo-courier-service/build/reports/tests/test" ]; then
+            echo "Test reports uploaded as artifacts." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test reports generated." >> $GITHUB_STEP_SUMMARY
+          fi

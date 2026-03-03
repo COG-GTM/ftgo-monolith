@@ -1,5 +1,11 @@
 = FTGO Monolith
 
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml/badge.svg?branch=feat/microservices-migration[CI: Order Service,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml/badge.svg?branch=feat/microservices-migration[CI: Consumer Service,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml/badge.svg?branch=feat/microservices-migration[CI: Restaurant Service,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml/badge.svg?branch=feat/microservices-migration[CI: Courier Service,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml]
+image:https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml/badge.svg?branch=feat/microservices-migration[CI: Shared Libraries,link=https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml]
+
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
