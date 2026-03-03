@@ -77,13 +77,18 @@ jobs:
             -x :ftgo-end-to-end-tests:compileJava
 
       - name: Run Courier Service Tests
-        env:
-          # JDK 17+ module access flags required by legacy Mockito/Spring test libraries
-          _JAVA_OPTIONS: >-
-            --add-opens java.base/java.lang=ALL-UNNAMED
-            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
-            --add-opens java.base/java.util=ALL-UNNAMED
         run: |
+          # Configure JDK 17+ module access for legacy Mockito/Spring test libraries
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/add-opens.gradle << 'INIT'
+          allprojects {
+            tasks.withType(Test) {
+              jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+            }
+          }
+          INIT
           ./gradlew :ftgo-courier-service:test \
             -x :ftgo-end-to-end-tests-common:test \
             -x :ftgo-end-to-end-tests:test \
