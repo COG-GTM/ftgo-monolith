@@ -46,6 +46,10 @@ mockito                     = "5.11.0"
 testcontainers              = "1.19.7"
 assertj                     = "3.25.3"
 
+# --- JWT / Security ---
+jjwt                        = "0.12.5"
+nimbus-jose-jwt             = "9.37.3"
+
 # --- Utilities ---
 commons-lang3               = "3.14.0"
 lombok                      = "1.18.32"
@@ -108,6 +112,13 @@ testcontainers-mysql                = { module = "org.testcontainers:mysql", ver
 testcontainers-junit-jupiter        = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 assertj-core                        = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 spring-security-test                = { module = "org.springframework.security:spring-security-test" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server" }
+spring-security-oauth2-jose         = { module = "org.springframework.security:spring-security-oauth2-jose" }
+
+# --- JWT ---
+jjwt-api                            = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl                           = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson                        = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # --- Utilities ---
 commons-lang3                       = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
@@ -176,6 +187,13 @@ testing-security = [
     "mockito-core",
     "mockito-junit-jupiter",
     "assertj-core",
+]
+
+# JWT dependencies
+jjwt = [
+    "jjwt-api",
+    "jjwt-impl",
+    "jjwt-jackson",
 ]
 
 # REST API testing

@@ -1,0 +1,50 @@
+# =============================================================================
+# Keycloak Services
+# =============================================================================
+# Internal cluster services for Keycloak and its PostgreSQL database.
+#
+# Keycloak service exposes:
+#   - Port 8080: HTTP (admin console, OIDC endpoints)
+#
+# Services use internal DNS:
+#   - keycloak.ftgo.svc.cluster.local:8080
+#   - keycloak-postgres.ftgo.svc.cluster.local:5432
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: ftgo
+  labels:
+    app: keycloak
+    component: identity
+    part-of: ftgo-platform
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: keycloak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-postgres
+  namespace: ftgo
+  labels:
+    app: keycloak-postgres
+    component: identity-db
+    part-of: ftgo-platform
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: keycloak-postgres
