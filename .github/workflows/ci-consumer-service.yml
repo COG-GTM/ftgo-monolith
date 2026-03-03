@@ -78,14 +78,25 @@ jobs:
 
       - name: Run Consumer Service Tests
         run: |
-          # Configure JDK 17+ module access for legacy Mockito/Spring test libraries
+          # Configure JDK 17 compatibility for legacy test libraries
           mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/add-opens.gradle << 'INIT'
+          cat > ~/.gradle/init.d/jdk17-compat.gradle << 'INIT'
           allprojects {
+            afterEvaluate {
+              configurations.all {
+                resolutionStrategy {
+                  force 'org.mockito:mockito-core:4.11.0'
+                  force 'net.bytebuddy:byte-buddy:1.14.11'
+                  force 'net.bytebuddy:byte-buddy-agent:1.14.11'
+                }
+              }
+            }
             tasks.withType(Test) {
               jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
                       '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED',
                       '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+              systemProperty 'jdk.attach.allowAttachSelf', 'true'
             }
           }
           INIT

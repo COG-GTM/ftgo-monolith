@@ -78,14 +78,27 @@ jobs:
 
       - name: Run Order Service Tests
         run: |
-          # Configure JDK 17+ module access for legacy Mockito/Spring test libraries
+          # Configure JDK 17 compatibility for legacy test libraries
+          # Legacy Mockito 2.x / ByteBuddy 1.7.x cannot create mocks on JDK 17
+          # (sun.misc.Unsafe.defineClass was removed). Force JDK 17-compatible versions.
           mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/add-opens.gradle << 'INIT'
+          cat > ~/.gradle/init.d/jdk17-compat.gradle << 'INIT'
           allprojects {
+            afterEvaluate {
+              configurations.all {
+                resolutionStrategy {
+                  force 'org.mockito:mockito-core:4.11.0'
+                  force 'net.bytebuddy:byte-buddy:1.14.11'
+                  force 'net.bytebuddy:byte-buddy-agent:1.14.11'
+                }
+              }
+            }
             tasks.withType(Test) {
               jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
                       '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                      '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED',
                       '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+              systemProperty 'jdk.attach.allowAttachSelf', 'true'
             }
           }
           INIT
