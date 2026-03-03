@@ -1,0 +1,68 @@
+# =============================================================================
+# FTGO Microservices - Container Image Cleanup and Retention
+# =============================================================================
+# Automatically cleans up old and untagged container images from GHCR.
+# Runs on a weekly schedule and can be triggered manually.
+# =============================================================================
+
+name: Docker Image Cleanup
+
+on:
+  schedule:
+    # Run weekly on Sunday at 2:00 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      keep_versions:
+        description: 'Number of tagged versions to keep per service'
+        required: false
+        default: '10'
+      dry_run:
+        description: 'Dry run mode (true/false)'
+        required: false
+        default: 'true'
+
+env:
+  KEEP_VERSIONS: ${{ github.event.inputs.keep_versions || '10' }}
+  DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Cleanup ${{ matrix.service }} images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ftgo-order-service
+          - ftgo-consumer-service
+          - ftgo-restaurant-service
+          - ftgo-courier-service
+    steps:
+      - name: Delete old untagged images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'ftgo-${{ matrix.service }}'
+          package-type: 'container'
+          min-versions-to-keep: ${{ env.KEEP_VERSIONS }}
+          delete-only-untagged-versions: 'true'
+
+      - name: Delete old pre-release images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'ftgo-${{ matrix.service }}'
+          package-type: 'container'
+          min-versions-to-keep: ${{ env.KEEP_VERSIONS }}
+          delete-only-pre-release-versions: 'true'
+
+      - name: Generate cleanup summary
+        run: |
+          echo "## Image Cleanup: ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package:** ftgo-${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Versions kept:** ${{ env.KEEP_VERSIONS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry run:** ${{ env.DRY_RUN }}" >> $GITHUB_STEP_SUMMARY
