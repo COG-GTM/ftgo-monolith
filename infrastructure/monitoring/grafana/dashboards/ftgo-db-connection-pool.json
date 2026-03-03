@@ -1,0 +1,256 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "HikariCP database connection pool metrics for all FTGO microservices",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Connection Pool Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.7 },
+              { "color": "red", "value": 0.9 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "background", "graphMode": "area", "orientation": "horizontal", "textMode": "value_and_name" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=~\"$service\"} / hikaricp_connections_max{job=~\"$service\"}",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "title": "Connection Pool Utilization %",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "id": 3,
+      "title": "Connection Counts",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never", "stacking": { "mode": "normal" } },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Active"
+        },
+        {
+          "expr": "hikaricp_connections_idle{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Idle"
+        },
+        {
+          "expr": "hikaricp_connections_pending{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Pending"
+        }
+      ],
+      "title": "Connection States",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "hikaricp_connections{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Total"
+        },
+        {
+          "expr": "hikaricp_connections_max{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Max"
+        },
+        {
+          "expr": "hikaricp_connections_min{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Min"
+        }
+      ],
+      "title": "Pool Size Configuration",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 6,
+      "title": "Connection Acquisition",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_acquire_seconds_sum{job=~\"$service\"}[5m]) / rate(hikaricp_connections_acquire_seconds_count{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - Avg Acquire"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(hikaricp_connections_acquire_seconds_bucket{job=~\"$service\"}[5m]))",
+          "legendFormat": "{{ job }} - P99 Acquire"
+        }
+      ],
+      "title": "Connection Acquire Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_usage_seconds_sum{job=~\"$service\"}[5m]) / rate(hikaricp_connections_usage_seconds_count{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - Avg Usage"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(hikaricp_connections_usage_seconds_bucket{job=~\"$service\"}[5m]))",
+          "legendFormat": "{{ job }} - P99 Usage"
+        }
+      ],
+      "title": "Connection Usage Duration",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+      "id": 9,
+      "title": "Connection Lifecycle",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_creation_seconds_count{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - Creation Rate"
+        },
+        {
+          "expr": "rate(hikaricp_connections_timeout_total{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - Timeout Rate"
+        }
+      ],
+      "title": "Connection Creation & Timeout Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_creation_seconds_sum{job=~\"$service\"}[5m]) / rate(hikaricp_connections_creation_seconds_count{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - Avg Creation Time"
+        }
+      ],
+      "title": "Connection Creation Time",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["ftgo", "database", "connection-pool", "hikaricp", "microservices"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "query": "prometheus",
+        "type": "datasource"
+      },
+      {
+        "allValue": "ftgo-.*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(up{job=~\"ftgo-.*\"}, job)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "service",
+        "query": "label_values(up{job=~\"ftgo-.*\"}, job)",
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "FTGO - DB Connection Pool",
+  "uid": "ftgo-db-connection-pool"
+}
