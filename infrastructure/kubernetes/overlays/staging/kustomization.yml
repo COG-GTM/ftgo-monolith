@@ -49,6 +49,11 @@ configMapGenerator:
     literals:
       - SPRING_PROFILES_ACTIVE=kubernetes,staging
       - SPRING_JPA_SHOW_SQL=false
+  - name: ftgo-api-gateway-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,staging
+      - JWT_ENABLED=true
 
 # Staging secrets - use SealedSecrets in real deployments
 # These placeholders demonstrate the pattern; replace with sealed-secrets
@@ -83,4 +88,10 @@ secretGenerator:
     literals:
       - db-username=REPLACE_VIA_SEALED_SECRET
       - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-api-gateway-secret
+    behavior: replace
+    literals:
+      - jwt-secret=REPLACE_VIA_SEALED_SECRET
+      - redis-password=REPLACE_VIA_SEALED_SECRET
     type: Opaque

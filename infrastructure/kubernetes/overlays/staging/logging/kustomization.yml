@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/logging
+
+patches:
+  # Staging: moderate resources, 30-day retention
+  - target:
+      kind: StatefulSet
+      name: elasticsearch
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3/value
+        value: "-Xms1g -Xmx1g"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "2Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "3Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "50Gi"
+  - target:
+      kind: DaemonSet
+      name: fluentd
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/env/5/value
+        value: "staging"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/6/value
+        value: "staging"
+  - target:
+      kind: Deployment
+      name: kibana
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"

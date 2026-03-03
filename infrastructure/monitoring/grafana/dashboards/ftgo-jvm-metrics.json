@@ -1,0 +1,299 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "JVM metrics for all FTGO microservices - memory, GC, threads, class loading",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Heap Memory",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=~\"$service\", area=\"heap\"}",
+          "legendFormat": "{{ job }} - Used"
+        },
+        {
+          "expr": "jvm_memory_committed_bytes{job=~\"$service\", area=\"heap\"}",
+          "legendFormat": "{{ job }} - Committed"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{job=~\"$service\", area=\"heap\"}",
+          "legendFormat": "{{ job }} - Max"
+        }
+      ],
+      "title": "Heap Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.7 },
+              { "color": "red", "value": 0.9 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=~\"$service\", area=\"heap\"} / jvm_memory_max_bytes{job=~\"$service\", area=\"heap\"}",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "title": "Heap Memory Usage %",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 4,
+      "title": "Non-Heap Memory",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=~\"$service\", area=\"nonheap\"}",
+          "legendFormat": "{{ job }} - Used"
+        },
+        {
+          "expr": "jvm_memory_committed_bytes{job=~\"$service\", area=\"nonheap\"}",
+          "legendFormat": "{{ job }} - Committed"
+        }
+      ],
+      "title": "Non-Heap Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 6,
+      "title": "Garbage Collection",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - {{ action }} {{ cause }}"
+        }
+      ],
+      "title": "GC Pause Time Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_count{job=~\"$service\"}[5m])",
+          "legendFormat": "{{ job }} - {{ action }} {{ cause }}"
+        }
+      ],
+      "title": "GC Pause Count Rate",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "id": 9,
+      "title": "Threads",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Live"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Daemon"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Peak"
+        }
+      ],
+      "title": "Thread Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "jvm_threads_states_threads{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - {{ state }}"
+        }
+      ],
+      "title": "Thread States",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "id": 12,
+      "title": "Class Loading & CPU",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "jvm_classes_loaded_classes{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Loaded"
+        }
+      ],
+      "title": "Loaded Classes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+      "id": 14,
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - Process CPU"
+        },
+        {
+          "expr": "system_cpu_usage{job=~\"$service\"}",
+          "legendFormat": "{{ job }} - System CPU"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["ftgo", "jvm", "microservices"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "query": "prometheus",
+        "type": "datasource"
+      },
+      {
+        "allValue": "ftgo-.*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(up{job=~\"ftgo-.*\"}, job)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "service",
+        "query": "label_values(up{job=~\"ftgo-.*\"}, job)",
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "FTGO - JVM Metrics",
+  "uid": "ftgo-jvm-metrics"
+}
