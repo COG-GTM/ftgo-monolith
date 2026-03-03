@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-staging
+
+resources:
+  - ../../base
+
+patches:
+  # Staging: match production replica count for realistic testing
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 6
+
+commonLabels:
+  environment: staging
+
+# Staging environment ConfigMap overrides
+configMapGenerator:
+  - name: ftgo-order-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,staging
+      - SPRING_JPA_SHOW_SQL=false
+  - name: ftgo-consumer-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,staging
+      - SPRING_JPA_SHOW_SQL=false
+  - name: ftgo-restaurant-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,staging
+      - SPRING_JPA_SHOW_SQL=false
+  - name: ftgo-courier-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,staging
+      - SPRING_JPA_SHOW_SQL=false
+
+# Staging secrets - use SealedSecrets in real deployments
+# These placeholders demonstrate the pattern; replace with sealed-secrets
+secretGenerator:
+  - name: ftgo-db-secret
+    behavior: replace
+    literals:
+      - root-password=REPLACE_VIA_SEALED_SECRET
+      - username=REPLACE_VIA_SEALED_SECRET
+      - password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-order-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-consumer-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-restaurant-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-courier-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque

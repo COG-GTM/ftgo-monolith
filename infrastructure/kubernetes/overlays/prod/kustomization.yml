@@ -1,0 +1,126 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-prod
+
+resources:
+  - ../../base
+
+patches:
+  # Production: higher replicas, stricter resource limits
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 3
+      - op: replace
+        path: /spec/maxReplicas
+        value: 10
+  # Production: higher resource limits
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 2Gi
+  # Production MySQL: larger storage
+  - target:
+      kind: StatefulSet
+      name: ftgo-mysql
+    patch: |
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 20Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 4Gi
+
+commonLabels:
+  environment: prod
+
+# Production environment ConfigMap overrides
+configMapGenerator:
+  - name: ftgo-order-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,prod
+      - SPRING_JPA_SHOW_SQL=false
+      - JAVA_OPTS=-Xmx1536m -Xms512m -XX:+UseG1GC
+  - name: ftgo-consumer-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,prod
+      - SPRING_JPA_SHOW_SQL=false
+      - JAVA_OPTS=-Xmx1536m -Xms512m -XX:+UseG1GC
+  - name: ftgo-restaurant-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,prod
+      - SPRING_JPA_SHOW_SQL=false
+      - JAVA_OPTS=-Xmx1536m -Xms512m -XX:+UseG1GC
+  - name: ftgo-courier-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,prod
+      - SPRING_JPA_SHOW_SQL=false
+      - JAVA_OPTS=-Xmx1536m -Xms512m -XX:+UseG1GC
+
+# Production secrets - MUST use SealedSecrets
+# These are placeholders; real values must be encrypted with kubeseal
+secretGenerator:
+  - name: ftgo-db-secret
+    behavior: replace
+    literals:
+      - root-password=REPLACE_VIA_SEALED_SECRET
+      - username=REPLACE_VIA_SEALED_SECRET
+      - password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-order-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-consumer-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-restaurant-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
+  - name: ftgo-courier-service-secret
+    behavior: replace
+    literals:
+      - db-username=REPLACE_VIA_SEALED_SECRET
+      - db-password=REPLACE_VIA_SEALED_SECRET
+    type: Opaque
