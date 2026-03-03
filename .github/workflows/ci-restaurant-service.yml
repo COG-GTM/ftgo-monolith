@@ -77,6 +77,12 @@ jobs:
             -x :ftgo-end-to-end-tests:compileJava
 
       - name: Run Restaurant Service Tests
+        env:
+          # JDK 17+ module access flags required by legacy Mockito/Spring test libraries
+          _JAVA_OPTIONS: >-
+            --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+            --add-opens java.base/java.util=ALL-UNNAMED
         run: |
           ./gradlew :ftgo-restaurant-service:test \
             -x :ftgo-end-to-end-tests-common:test \
