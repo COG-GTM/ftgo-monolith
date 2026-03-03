@@ -1,17 +1,32 @@
+// =============================================================================
 // FTGO Common JPA - Shared Library Build Configuration
+// =============================================================================
 // This build file will be used when ftgo-common-jpa is migrated to shared/ftgo-common-jpa.
-// Currently, the monolith's ftgo-common-jpa module (at the repo root) remains the active build.
+// Currently, the monolith's ftgo-common-jpa module (at the repo root) remains the
+// active build.
 //
 // Package: com.ftgo.common.jpa
 // Contains: Shared JPA configuration, base entities, and persistence utilities
+//
+// Convention plugins applied (requires root Gradle 8.7+ and includeBuild):
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+//
+// To activate: uncomment the plugins block and dependencies below after
+// the root Gradle wrapper is upgraded and includeBuild('build-logic') is enabled.
+// =============================================================================
+
+// plugins {
+//     id 'ftgo.java-conventions'
+//     id 'ftgo.testing-conventions'
+//     id 'ftgo.publishing-conventions'
+// }
 
 dependencies {
     // Shared libraries
     // implementation project(':shared:ftgo-common')
 
     // Spring Data JPA
-    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
-    // Testing
-    // testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.2.5'
 }

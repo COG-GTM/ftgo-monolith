@@ -1,0 +1,17 @@
+// =============================================================================
+// Build Logic - Included Build for Convention Plugins
+// =============================================================================
+// This is a standalone Gradle build that produces convention plugins consumed
+// by the main FTGO project. It is included via `includeBuild` in the root
+// settings.gradle.
+// =============================================================================
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../gradle/libs.versions.toml'))
+        }
+    }
+}
+
+rootProject.name = 'build-logic'

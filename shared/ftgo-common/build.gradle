@@ -1,14 +1,40 @@
+// =============================================================================
 // FTGO Common - Shared Library Build Configuration
+// =============================================================================
 // This build file will be used when ftgo-common is migrated to shared/ftgo-common.
-// Currently, the monolith's ftgo-common module (at the repo root) remains the active build.
+// Currently, the monolith's ftgo-common module (at the repo root) remains the
+// active build.
 //
 // Package: com.ftgo.common
 // Contains: Money, PersonName, Address, and other shared value objects and utilities
+//
+// Convention plugins applied (requires root Gradle 8.7+ and includeBuild):
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+//
+// To activate: uncomment the plugins block and dependencies below after
+// the root Gradle wrapper is upgraded and includeBuild('build-logic') is enabled.
+// =============================================================================
+
+// plugins {
+//     id 'ftgo.java-conventions'
+//     id 'ftgo.testing-conventions'
+//     id 'ftgo.publishing-conventions'
+// }
 
 dependencies {
-    // JSON serialization
-    // implementation 'com.fasterxml.jackson.core:jackson-databind'
+    // JPA (for embeddable value objects like Money)
+    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.2.5'
 
-    // Testing
-    // testImplementation 'junit:junit'
+    // JSON serialization
+    // implementation libs.jackson.databind
+    // implementation libs.jackson.core
+    // implementation libs.jackson.datatype.jsr310
+
+    // Utilities
+    // implementation libs.commons.lang3
+
+    // Database driver
+    // runtimeOnly libs.mysql.connector
 }
