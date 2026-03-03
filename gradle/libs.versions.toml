@@ -30,6 +30,9 @@ micrometer                  = "1.12.5"
 micrometer-tracing          = "1.2.5"
 zipkin-reporter             = "2.16.4"
 
+# --- Resilience ---
+resilience4j                = "2.2.0"
+
 # --- Logging ---
 logstash-logback-encoder    = "7.4"
 logback                     = "1.4.14"
@@ -88,6 +91,15 @@ micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-regis
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
 zipkin-reporter-brave               = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
 zipkin-sender-urlconnection         = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
+
+# --- Resilience ---
+resilience4j-spring-boot3           = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
+resilience4j-circuitbreaker         = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
+resilience4j-retry                  = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+resilience4j-bulkhead               = { module = "io.github.resilience4j:resilience4j-bulkhead", version.ref = "resilience4j" }
+resilience4j-ratelimiter             = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "resilience4j" }
+resilience4j-micrometer             = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j" }
+resilience4j-all                    = { module = "io.github.resilience4j:resilience4j-all", version.ref = "resilience4j" }
 
 # --- Logging ---
 logstash-logback-encoder            = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
@@ -161,6 +173,17 @@ tracing = [
     "zipkin-reporter-brave",
     "zipkin-sender-urlconnection",
 ]
+
+# Resilience dependencies
+resilience = [
+    "resilience4j-spring-boot3",
+    "resilience4j-circuitbreaker",
+    "resilience4j-retry",
+    "resilience4j-bulkhead",
+    "resilience4j-ratelimiter",
+    "resilience4j-micrometer",
+]
+
 
 # Structured logging dependencies
 logging = [
