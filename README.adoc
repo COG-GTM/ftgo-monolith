@@ -3,7 +3,74 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Java Version
+
+This project requires **Java 8** (JDK 1.8) or later.
+
+== Prerequisites
+
+* Java 8 JDK (1.8+) - https://adoptopenjdk.net/[Download]
+* Docker and Docker Compose (for running infrastructure services)
+* MySQL 5.x
+
+== Getting Started
+
+=== 1. Build the project
+
+[source,bash]
+----
+./gradlew assemble
+----
+
+=== 2. Start infrastructure services
+
+[source,bash]
+----
+./start-infrastructure-services.sh
+----
+
+=== 3. Build and run the application
+
+[source,bash]
+----
+./build-and-run.sh
+----
+
+=== 4. Run tests
+
+[source,bash]
+----
+./gradlew test
+----
+
+== Project Structure
+
+The application is organized as a multi-module Gradle project:
+
+* `ftgo-application` - Main Spring Boot application entry point
+* `ftgo-common` - Shared value objects (Money, Address, PersonName)
+* `ftgo-common-jpa` - Common JPA configuration
+* `ftgo-domain` - Domain entities (Order, Restaurant, Consumer, Courier)
+* `ftgo-order-service` - Order management service
+* `ftgo-consumer-service` - Consumer management service
+* `ftgo-restaurant-service` - Restaurant management service
+* `ftgo-courier-service` - Courier management service
+* `ftgo-order-service-api` / `ftgo-consumer-service-api` / `ftgo-restaurant-service-api` / `ftgo-courier-service-api` - API DTOs
+* `ftgo-end-to-end-tests` - End-to-end integration tests
+* `ftgo-flyway` - Database migration scripts
+
+== Java 8 Features Used
+
+This project leverages Java 8 language features and APIs including:
+
+* **Lambda expressions** - Used throughout for concise functional-style code
+* **Stream API** - For data processing in collections (e.g., `OrderLineItems`, `Plan`)
+* **Optional** - For null-safe return types and fluent error handling with `orElseThrow()`
+* **Method references** - For improved readability (e.g., `Money::add`, `OrderLineItem::getTotal`)
+* **`java.time` API** - `LocalDateTime` for date/time handling in orders and deliveries
+* **`String.join()`** and `String.format()` - For cleaner string construction
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 

@@ -6,7 +6,6 @@ import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Embeddable
 public class OrderLineItems {
@@ -31,21 +30,20 @@ public class OrderLineItems {
   }
 
   OrderLineItem findOrderLineItem(String lineItemId) {
-    return lineItems.stream().filter(li -> li.getMenuItemId().equals(lineItemId)).findFirst().get();
+    return lineItems.stream()
+            .filter(li -> li.getMenuItemId().equals(lineItemId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Line item not found: " + lineItemId));
   }
 
   Money changeToOrderTotal(OrderRevision orderRevision) {
-    AtomicReference<Money> delta = new AtomicReference<>(Money.ZERO);
-
-    orderRevision.getRevisedLineItemQuantities().forEach((lineItemId, newQuantity) -> {
-      OrderLineItem lineItem = findOrderLineItem(lineItemId);
-      delta.set(delta.get().add(lineItem.deltaForChangedQuantity(newQuantity)));
-    });
-    return delta.get();
+    return orderRevision.getRevisedLineItemQuantities().entrySet().stream()
+            .map(entry -> findOrderLineItem(entry.getKey()).deltaForChangedQuantity(entry.getValue()))
+            .reduce(Money.ZERO, Money::add);
   }
 
   void updateLineItems(OrderRevision orderRevision) {
-    getLineItems().stream().forEach(li -> {
+    getLineItems().forEach(li -> {
       Integer revised = orderRevision.getRevisedLineItemQuantities().get(li.getMenuItemId());
       li.setQuantity(revised);
     });
