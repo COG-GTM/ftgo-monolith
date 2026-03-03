@@ -1,14 +1,80 @@
+// =============================================================================
 // FTGO Common - Shared Library Build Configuration
-// This build file will be used when ftgo-common is migrated to shared/ftgo-common.
-// Currently, the monolith's ftgo-common module (at the repo root) remains the active build.
+// =============================================================================
+// Standalone, versioned shared library extracted from the legacy ftgo-common module.
+// Contains common value objects (Money, Address, PersonName), Jackson serialization
+// modules, Spring configuration, and shared exception types.
 //
-// Package: com.ftgo.common
-// Contains: Money, PersonName, Address, and other shared value objects and utilities
+// Package: net.chrisrichardson.ftgo.common
+// Version: 1.0.0
+// =============================================================================
+
+version = ftgoCommonVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
 
 dependencies {
-    // JSON serialization
-    // implementation 'com.fasterxml.jackson.core:jackson-databind'
+    // JPA annotations (@Embeddable, @Access)
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    // Jackson JSON serialization
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    // MySQL connector (runtime)
+    compile 'mysql:mysql-connector-java:5.1.39'
 
     // Testing
-    // testImplementation 'junit:junit'
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // JAXB runtime dependencies (Java 8 compatibility)
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-common:publishToMavenLocal
+//   ./gradlew :shared:ftgo-common:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common'
+            version = ftgoCommonVersion
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and Jackson serialization modules for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
