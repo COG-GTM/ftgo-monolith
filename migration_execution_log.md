@@ -21,11 +21,11 @@
 | 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | Phase 4 | Completed | [PR #93](https://github.com/COG-GTM/ftgo-monolith/pull/93) | Success | None |
 | 3 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | Phase 4 | Completed | [PR #96](https://github.com/COG-GTM/ftgo-monolith/pull/96) | Success (conflicts resolved) | settings.gradle |
 | 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | Phase 5 | Completed | [PR #94](https://github.com/COG-GTM/ftgo-monolith/pull/94) | Success (conflicts resolved) | settings.gradle |
-| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Pending | - | - | - |
-| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Pending | - | - | - |
-| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | Phase 3 | Pending | - | - | - |
-| 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | Phase 4 | Pending | - | - | - |
-| 4 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | Phase 4 | Pending | - | - | - |
+| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Completed | [PR #97](https://github.com/COG-GTM/ftgo-monolith/pull/97) | Success | None |
+| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Completed | [PR #98](https://github.com/COG-GTM/ftgo-monolith/pull/98) | Success | None |
+| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | Phase 3 | Completed | [PR #101](https://github.com/COG-GTM/ftgo-monolith/pull/101) | Success | None |
+| 4 | EM-42 | Implement Distributed Tracing with Micrometer Tracing and Zipkin | Phase 4 | Completed | [PR #99](https://github.com/COG-GTM/ftgo-monolith/pull/99) | Success | None |
+| 4 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | Phase 4 | Completed | [PR #100](https://github.com/COG-GTM/ftgo-monolith/pull/100) | Success (conflicts resolved) | gradle.properties, gradle/libs.versions.toml |
 | 5 | EM-37 | Implement Role-Based Authorization Framework | Phase 3 | Pending | - | - | - |
 | 5 | EM-46 | Establish Centralized Error Handling and Exception Patterns | Phase 5 | Pending | - | - | - |
 | 5 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | Phase 5 | Pending | - | - | - |
@@ -39,6 +39,8 @@
 | 2 | EM-32 | shared/ftgo-common/build.gradle | Accepted EM-32 (incoming) version as service-specific file; preserved EM-28 convention plugin comments as documentation |
 | 3 | EM-43 | settings.gradle | Combined both sides: kept shared:ftgo-security (from EM-39) and added shared:ftgo-logging (from EM-43) |
 | 3 | EM-45 | settings.gradle | Combined both sides: kept shared:ftgo-security + shared:ftgo-logging and added shared:ftgo-openapi (from EM-45) |
+| 4 | EM-44 | gradle.properties | Combined both sides: kept ftgoTracingVersion (from EM-42) and added ftgoResilienceVersion (from EM-44) |
+| 4 | EM-44 | gradle/libs.versions.toml | Combined both sides: kept tracing bundle (from EM-42) and added resilience bundle (from EM-44) |
 
 ## Batch Summary
 
@@ -47,6 +49,7 @@
 | 1 | 1 | 1 | 0 | Pass | b423aba |
 | 2 | 4 | 4 | 1 | Pass | f76e108 |
 | 3 | 7 | 7 | 2 | Pass | b269ac9 |
+| 4 | 5 | 5 | 1 | Pass | f033f48 |
 
 ## Deferred Tasks
 
