@@ -8,8 +8,9 @@ metadata:
     app.kubernetes.io/part-of: ftgo
 spec:
   ports:
-  - port: 3306
-    targetPort: 3306
+    - port: 3306
+      targetPort: 3306
+      name: mysql
   clusterIP: None
   selector:
     app.kubernetes.io/name: ftgo-mysql
@@ -94,10 +95,10 @@ spec:
             - name: ftgo-mysql-persistent-storage
               mountPath: /var/lib/mysql
   volumeClaimTemplates:
-  - metadata:
-      name: ftgo-mysql-persistent-storage
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 1Gi
+    - metadata:
+        name: ftgo-mysql-persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
