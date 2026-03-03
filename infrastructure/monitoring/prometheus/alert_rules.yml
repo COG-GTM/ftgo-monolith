@@ -1,0 +1,200 @@
+# =============================================================================
+# Prometheus Alerting Rules for FTGO Microservices
+# =============================================================================
+# Defines critical threshold alerts for service health, latency, error rates,
+# JVM metrics, and database connection pool saturation.
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # Service Health Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+
+      - alert: HighRestartRate
+        expr: increase(process_uptime_seconds[1h]) < 300 and up == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Service {{ $labels.job }} may be restart-looping"
+          description: "{{ $labels.job }} uptime is less than 5 minutes, suggesting frequent restarts."
+
+  # ---------------------------------------------------------------------------
+  # RED Metrics - Request Rate, Errors, Duration
+  # ---------------------------------------------------------------------------
+  - name: ftgo_red_metrics
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has > 5% HTTP 5xx error rate for the last 5 minutes. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P99 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} P99 latency is above 5 seconds. Current value: {{ $value | humanizeDuration }}"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P95 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} P95 latency is above 2 seconds. Current value: {{ $value | humanizeDuration }}"
+
+      - alert: HighRequestRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count[5m])) by (job) > 1000
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "High request rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} is receiving more than 1000 requests/sec."
+
+  # ---------------------------------------------------------------------------
+  # JVM Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_jvm_metrics
+    rules:
+      - alert: HighJvmMemoryUsage
+        expr: |
+          (jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap memory usage is above 85%. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: CriticalJvmMemoryUsage
+        expr: |
+          (jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical JVM heap usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap memory usage is above 95%. Possible OOM risk. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: HighGcPauseTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.job }}"
+          description: "{{ $labels.job }} average GC pause time is above 500ms."
+
+      - alert: HighThreadCount
+        expr: jvm_threads_live_threads > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High thread count on {{ $labels.job }}"
+          description: "{{ $labels.job }} has more than 500 live threads. Current: {{ $value }}"
+
+  # ---------------------------------------------------------------------------
+  # Database Connection Pool Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_db_connection_pool
+    rules:
+      - alert: HighDbConnectionPoolUsage
+        expr: |
+          (hikaricp_connections_active / hikaricp_connections_max) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High DB connection pool usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} HikariCP active connections exceed 80% of max. Current: {{ $value | humanizePercentage }}"
+
+      - alert: DbConnectionPoolExhausted
+        expr: |
+          (hikaricp_connections_active / hikaricp_connections_max) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DB connection pool nearly exhausted on {{ $labels.job }}"
+          description: "{{ $labels.job }} HikariCP active connections exceed 95% of max. Queries may start blocking."
+
+      - alert: DbConnectionTimeout
+        expr: |
+          rate(hikaricp_connections_timeout_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DB connection timeouts on {{ $labels.job }}"
+          description: "{{ $labels.job }} is experiencing HikariCP connection acquisition timeouts."
+
+  # ---------------------------------------------------------------------------
+  # Business Metrics Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_business_metrics
+    rules:
+      - alert: HighOrderCancellationRate
+        expr: |
+          (
+            rate(ftgo_orders_cancelled_total[15m])
+            /
+            rate(ftgo_orders_created_total[15m])
+          ) > 0.30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High order cancellation rate"
+          description: "More than 30% of orders are being cancelled in the last 15 minutes."
+
+      - alert: HighConsumerValidationFailureRate
+        expr: |
+          (
+            rate(ftgo_consumers_validation_failed_total[10m])
+            /
+            (rate(ftgo_consumers_validated_total[10m]) + rate(ftgo_consumers_validation_failed_total[10m]))
+          ) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High consumer validation failure rate"
+          description: "More than 20% of consumer validations are failing."
+
+      - alert: NoCouriersAvailable
+        expr: ftgo_couriers_available == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No couriers available for delivery"
+          description: "There are zero available couriers for the last 5 minutes. Deliveries will be delayed."

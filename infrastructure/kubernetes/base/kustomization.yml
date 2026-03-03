@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yml
   - mysql
+  - api-gateway
   - order-service
   - consumer-service
   - restaurant-service

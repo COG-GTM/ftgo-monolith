@@ -1,0 +1,20 @@
+# =============================================================================
+# Grafana Dashboard Provisioning
+# =============================================================================
+# Auto-provisions dashboards from JSON files when Grafana starts.
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'FTGO Dashboards'
+    orgId: 1
+    folder: 'FTGO'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

@@ -29,6 +29,10 @@ hibernate                   = "6.4.4.Final"
 micrometer                  = "1.12.5"
 micrometer-tracing          = "1.2.5"
 
+# --- Logging ---
+logstash-logback-encoder    = "7.4"
+logback                     = "1.4.14"
+
 # --- Serialization ---
 jackson                     = "2.17.0"
 
@@ -62,6 +66,7 @@ spring-boot-starter-data-jpa        = { module = "org.springframework.boot:sprin
 spring-boot-starter-actuator        = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-validation      = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-test            = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-security        = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-devtools                = { module = "org.springframework.boot:spring-boot-devtools" }
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
 
@@ -72,8 +77,14 @@ mysql-connector                     = { module = "com.mysql:mysql-connector-j", 
 jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
 
 # --- Observability ---
+micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+
+# --- Logging ---
+logstash-logback-encoder            = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
+logback-classic                     = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core                        = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
 
 # --- Serialization ---
 jackson-databind                    = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
@@ -96,6 +107,7 @@ testcontainers-bom                  = { module = "org.testcontainers:testcontain
 testcontainers-mysql                = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
 testcontainers-junit-jupiter        = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 assertj-core                        = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+spring-security-test                = { module = "org.springframework.security:spring-security-test" }
 
 # --- Utilities ---
 commons-lang3                       = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
@@ -123,8 +135,16 @@ spring-boot-data = [
 
 # Observability dependencies
 observability = [
+    "micrometer-core",
     "micrometer-registry-prometheus",
     "micrometer-tracing-bridge-brave",
+]
+
+# Structured logging dependencies
+logging = [
+    "logstash-logback-encoder",
+    "logback-classic",
+    "logback-core",
 ]
 
 # Jackson serialization
@@ -134,9 +154,24 @@ jackson = [
     "jackson-datatype-jsr310",
 ]
 
+# Spring Security
+spring-boot-security = [
+    "spring-boot-starter-security",
+]
+
 # Standard test dependencies
 testing = [
     "spring-boot-starter-test",
+    "junit-jupiter",
+    "mockito-core",
+    "mockito-junit-jupiter",
+    "assertj-core",
+]
+
+# Security testing
+testing-security = [
+    "spring-boot-starter-test",
+    "spring-security-test",
     "junit-jupiter",
     "mockito-core",
     "mockito-junit-jupiter",

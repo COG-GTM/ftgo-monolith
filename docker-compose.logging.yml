@@ -1,0 +1,126 @@
+# =============================================================================
+# FTGO Logging Stack - Docker Compose for Local Development
+# =============================================================================
+# Runs the EFK (Elasticsearch + Fluentd + Kibana) stack for local development.
+# Use alongside docker-compose.microservices.yml to aggregate logs from all
+# FTGO microservices.
+#
+# Usage:
+#   # Start logging stack only
+#   docker compose -f docker-compose.logging.yml up -d
+#
+#   # Start logging + microservices together
+#   docker compose -f docker-compose.microservices.yml -f docker-compose.logging.yml up -d
+#
+#   # View Kibana dashboards
+#   open http://localhost:5601
+#
+#   # Check Elasticsearch health
+#   curl http://localhost:9200/_cluster/health?pretty
+#
+# NOTE: This does NOT replace or conflict with the legacy docker-compose.yml.
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Elasticsearch - Log Storage and Indexing
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: ftgo-elasticsearch
+    environment:
+      - cluster.name=ftgo-logs
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - ./infrastructure/logging/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    networks:
+      - ftgo-logging-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Fluentd - Log Collection and Forwarding
+  # ---------------------------------------------------------------------------
+  fluentd:
+    build:
+      context: ./infrastructure/logging/fluentd
+      dockerfile: Dockerfile
+    container_name: ftgo-fluentd
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - ELASTICSEARCH_SCHEME=http
+      - FTGO_ENVIRONMENT=development
+      - FTGO_CLUSTER=local
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./infrastructure/logging/fluentd/fluent-local.conf:/fluentd/etc/fluent.conf:ro
+      - fluentd-buffer:/var/log/fluentd-buffers
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - ftgo-logging-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Kibana - Log Visualization and Dashboards
+  # ---------------------------------------------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    container_name: ftgo-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]
+      - SERVER_NAME=ftgo-kibana
+      - TELEMETRY_OPTIN=false
+    ports:
+      - "5601:5601"
+    volumes:
+      - ./infrastructure/logging/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
+    networks:
+      - ftgo-logging-network
+    restart: unless-stopped
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  fluentd-buffer:
+    driver: local
+
+networks:
+  ftgo-logging-network:
+    driver: bridge
+    # Allow connection from microservices network
+    name: ftgo-logging-network

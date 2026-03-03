@@ -1,0 +1,30 @@
+# =============================================================================
+# Kibana Configuration for FTGO Log Visualization
+# =============================================================================
+# Connects to Elasticsearch and provides log search, visualization, and
+# dashboarding capabilities for all FTGO microservices.
+# =============================================================================
+
+# --- Server Settings ---
+server.name: ftgo-kibana
+server.host: "0.0.0.0"
+server.port: 5601
+
+# --- Elasticsearch Connection ---
+elasticsearch.hosts: ["http://${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}"]
+elasticsearch.requestTimeout: 30000
+
+# --- Logging ---
+logging.root.level: info
+
+# --- Index Pattern ---
+# Default index pattern matching FTGO log indices
+# Created automatically on first startup via saved objects import
+
+# --- Telemetry ---
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+
+# --- Saved Objects ---
+# Import default dashboards on startup
+# server.defaultRoute: "/app/dashboards"
