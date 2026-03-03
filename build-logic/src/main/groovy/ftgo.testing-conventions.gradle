@@ -1,0 +1,83 @@
+// =============================================================================
+// ftgo.testing-conventions - Testing Convention Plugin
+// =============================================================================
+// Configures standard testing infrastructure for all new FTGO modules.
+// Sets up JUnit 5, integration test source set, and common test dependencies.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.testing-conventions'
+//   }
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+}
+
+// ---------------------------------------------------------------------------
+// Unit test configuration
+// ---------------------------------------------------------------------------
+
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.2.5'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+        exceptionFormat = 'full'
+    }
+
+    // Fail the build on any test failure
+    ignoreFailures = false
+}
+
+// ---------------------------------------------------------------------------
+// Integration test source set and task
+// ---------------------------------------------------------------------------
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+            srcDir 'src/integration-test/java'
+        }
+        resources.srcDir 'src/integration-test/resources'
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+
+    shouldRunAfter tasks.named('test')
+}
+
+// Include integration tests in the check lifecycle
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
+}

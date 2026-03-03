@@ -7,6 +7,11 @@
 //
 // Package: net.chrisrichardson.ftgo.common
 // Version: 1.0.0
+//
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
 // =============================================================================
 
 version = ftgoCommonVersion

@@ -1,0 +1,71 @@
+// =============================================================================
+// ftgo.docker-conventions - Docker Convention Plugin
+// =============================================================================
+// Configures Docker-related build tasks for FTGO microservices.
+// Sets up standardized Docker image naming, labels, and build tasks.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.docker-conventions'
+//   }
+//
+// Prerequisites: Requires ftgo.spring-boot-conventions to be applied first
+// for the bootJar task.
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+}
+
+// ---------------------------------------------------------------------------
+// Docker image configuration
+// ---------------------------------------------------------------------------
+
+ext {
+    // Default Docker registry and image naming
+    dockerRegistry = findProperty('dockerRegistry') ?: 'ftgo'
+    dockerImageName = "${dockerRegistry}/${project.name}"
+    dockerImageTag = findProperty('dockerImageTag') ?: project.version
+}
+
+// ---------------------------------------------------------------------------
+// Docker build task
+// ---------------------------------------------------------------------------
+
+tasks.register('dockerBuild', Exec) {
+    description = 'Builds the Docker image for this service.'
+    group = 'docker'
+
+    dependsOn 'bootJar'
+
+    workingDir project.projectDir
+
+    commandLine 'docker', 'build',
+            '--tag', "${dockerImageName}:${dockerImageTag}",
+            '--tag', "${dockerImageName}:latest",
+            '--build-arg', "JAR_FILE=build/libs/${project.name}-${project.version}.jar",
+            '.'
+
+    doFirst {
+        // Verify Dockerfile exists
+        if (!project.file('Dockerfile').exists()) {
+            throw new GradleException(
+                "Dockerfile not found in ${project.projectDir}. " +
+                "Create a Dockerfile or remove the ftgo.docker-conventions plugin."
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Docker push task
+// ---------------------------------------------------------------------------
+
+tasks.register('dockerPush', Exec) {
+    description = 'Pushes the Docker image to the registry.'
+    group = 'docker'
+
+    dependsOn 'dockerBuild'
+
+    commandLine 'docker', 'push', "${dockerImageName}:${dockerImageTag}"
+}

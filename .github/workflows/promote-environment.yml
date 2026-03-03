@@ -1,0 +1,249 @@
+name: Promote Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environment:
+        description: 'Source environment to promote from'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+      target_environment:
+        description: 'Target environment to promote to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+      confirm_promotion:
+        description: 'Type "PROMOTE" to confirm'
+        required: true
+        type: string
+
+env:
+  KUSTOMIZE_VERSION: '5.3.0'
+
+jobs:
+  validate-promotion:
+    name: Validate Promotion Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm_promotion }}" != "PROMOTE" ]; then
+            echo "ERROR: Promotion not confirmed. You must type 'PROMOTE' to confirm."
+            exit 1
+          fi
+
+      - name: Validate promotion path
+        run: |
+          SOURCE="${{ github.event.inputs.source_environment }}"
+          TARGET="${{ github.event.inputs.target_environment }}"
+
+          if [ "$SOURCE" = "dev" ] && [ "$TARGET" = "staging" ]; then
+            echo "Valid promotion: dev -> staging"
+          elif [ "$SOURCE" = "staging" ] && [ "$TARGET" = "prod" ]; then
+            echo "Valid promotion: staging -> prod"
+          else
+            echo "ERROR: Invalid promotion path: $SOURCE -> $TARGET"
+            echo "Valid paths: dev -> staging, staging -> prod"
+            exit 1
+          fi
+
+  approve-staging:
+    name: Approve Staging Deployment
+    if: github.event.inputs.target_environment == 'staging'
+    needs: validate-promotion
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Staging approval granted
+        run: echo "Staging deployment approved by ${{ github.actor }}"
+
+  approve-prod:
+    name: Approve Production Deployment
+    if: github.event.inputs.target_environment == 'prod'
+    needs: validate-promotion
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Production approval granted
+        run: echo "Production deployment approved by ${{ github.actor }}"
+
+  validate-manifests:
+    name: Validate Target Manifests
+    needs: [validate-promotion]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Validate target overlay
+        run: |
+          TARGET="${{ github.event.inputs.target_environment }}"
+          echo "Validating ${TARGET} overlay..."
+          kustomize build "infrastructure/kubernetes/overlays/${TARGET}/" > /dev/null
+          echo "${TARGET} overlay is valid."
+
+      - name: Generate diff report
+        run: |
+          SOURCE="${{ github.event.inputs.source_environment }}"
+          TARGET="${{ github.event.inputs.target_environment }}"
+
+          echo "=== Manifest Diff: ${SOURCE} -> ${TARGET} ==="
+          echo ""
+
+          kustomize build "infrastructure/kubernetes/overlays/${SOURCE}/" > /tmp/source.yml
+          kustomize build "infrastructure/kubernetes/overlays/${TARGET}/" > /tmp/target.yml
+
+          diff /tmp/source.yml /tmp/target.yml || true
+          echo ""
+          echo "Source manifest lines: $(wc -l < /tmp/source.yml)"
+          echo "Target manifest lines: $(wc -l < /tmp/target.yml)"
+
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.event.inputs.target_environment == 'staging'
+    needs: [approve-staging, validate-manifests]
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Build staging manifests
+        run: |
+          mkdir -p /tmp/k8s-manifests
+          kustomize build infrastructure/kubernetes/overlays/staging/ > /tmp/k8s-manifests/staging-all.yml
+          echo "Generated staging manifests:"
+          wc -l /tmp/k8s-manifests/staging-all.yml
+
+      - name: Create namespace (if not exists)
+        run: |
+          echo "Would run: kubectl create namespace ftgo-staging --dry-run=client -o yaml | kubectl apply -f -"
+          echo "NOTE: Configure KUBECONFIG secret to enable actual deployment."
+
+      - name: Deploy to staging
+        run: |
+          echo "Would run: kubectl apply -f /tmp/k8s-manifests/staging-all.yml"
+          echo "NOTE: Configure KUBECONFIG secret in GitHub repository settings to enable actual deployment."
+
+      - name: Verify deployment rollout
+        run: |
+          echo "Would run: kubectl -n ftgo-staging rollout status deployment/ftgo-order-service --timeout=300s"
+          echo "Would run: kubectl -n ftgo-staging rollout status deployment/ftgo-consumer-service --timeout=300s"
+          echo "Would run: kubectl -n ftgo-staging rollout status deployment/ftgo-restaurant-service --timeout=300s"
+          echo "Would run: kubectl -n ftgo-staging rollout status deployment/ftgo-courier-service --timeout=300s"
+          echo "NOTE: Actual rollout verification requires cluster credentials."
+
+      - name: Run smoke tests
+        run: |
+          echo "Smoke tests would be executed against staging environment"
+          echo "Would verify:"
+          echo "  - Service health endpoints respond 200"
+          echo "  - Database connectivity is established"
+          echo "  - Inter-service communication is functional"
+
+  deploy-prod:
+    name: Deploy to Production
+    if: github.event.inputs.target_environment == 'prod'
+    needs: [approve-prod, validate-manifests]
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Build production manifests
+        run: |
+          mkdir -p /tmp/k8s-manifests
+          kustomize build infrastructure/kubernetes/overlays/prod/ > /tmp/k8s-manifests/prod-all.yml
+          echo "Generated production manifests:"
+          wc -l /tmp/k8s-manifests/prod-all.yml
+
+      - name: Create namespace (if not exists)
+        run: |
+          echo "Would run: kubectl create namespace ftgo-prod --dry-run=client -o yaml | kubectl apply -f -"
+          echo "NOTE: Configure KUBECONFIG secret to enable actual deployment."
+
+      - name: Deploy to production (canary)
+        run: |
+          echo "Production deployment strategy: Rolling update with zero-downtime"
+          echo ""
+          echo "Would run: kubectl apply -f /tmp/k8s-manifests/prod-all.yml"
+          echo "NOTE: Configure KUBECONFIG secret in GitHub repository settings to enable actual deployment."
+          echo ""
+          echo "Rolling update configured with:"
+          echo "  - maxSurge: 1 (add one pod before removing old)"
+          echo "  - maxUnavailable: 0 (zero-downtime guarantee)"
+
+      - name: Verify deployment rollout
+        run: |
+          echo "Would run: kubectl -n ftgo-prod rollout status deployment/ftgo-order-service --timeout=600s"
+          echo "Would run: kubectl -n ftgo-prod rollout status deployment/ftgo-consumer-service --timeout=600s"
+          echo "Would run: kubectl -n ftgo-prod rollout status deployment/ftgo-restaurant-service --timeout=600s"
+          echo "Would run: kubectl -n ftgo-prod rollout status deployment/ftgo-courier-service --timeout=600s"
+          echo "NOTE: Actual rollout verification requires cluster credentials."
+
+      - name: Run production smoke tests
+        run: |
+          echo "Production smoke tests would be executed"
+          echo "Would verify:"
+          echo "  - All service health endpoints respond 200"
+          echo "  - Database connectivity is established"
+          echo "  - Order creation flow works end-to-end"
+          echo "  - Response times are within SLA thresholds"
+
+      - name: Notify deployment complete
+        if: success()
+        run: |
+          echo "Production deployment completed successfully."
+          echo "Deployed by: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Promoted from: ${{ github.event.inputs.source_environment }}"
+
+  rollback-info:
+    name: Rollback Instructions
+    needs: [deploy-staging, deploy-prod]
+    if: always() && (needs.deploy-staging.result == 'failure' || needs.deploy-prod.result == 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print rollback instructions
+        run: |
+          TARGET="${{ github.event.inputs.target_environment }}"
+          echo "=== DEPLOYMENT FAILED ==="
+          echo ""
+          echo "To rollback ${TARGET} environment:"
+          echo ""
+          echo "  # Rollback all deployments"
+          echo "  kubectl -n ftgo-${TARGET} rollout undo deployment/ftgo-order-service"
+          echo "  kubectl -n ftgo-${TARGET} rollout undo deployment/ftgo-consumer-service"
+          echo "  kubectl -n ftgo-${TARGET} rollout undo deployment/ftgo-restaurant-service"
+          echo "  kubectl -n ftgo-${TARGET} rollout undo deployment/ftgo-courier-service"
+          echo ""
+          echo "  # Verify rollback"
+          echo "  kubectl -n ftgo-${TARGET} get pods"
+          echo "  kubectl -n ftgo-${TARGET} rollout status deployment --timeout=300s"

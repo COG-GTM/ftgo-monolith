@@ -44,6 +44,24 @@ include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
 // ---------------------------------------------------------------------------
+// Shared Build Logic (convention plugins for new microservices)
+// ---------------------------------------------------------------------------
+// The build-logic/ directory contains convention plugins (ftgo.java-conventions,
+// ftgo.spring-boot-conventions, ftgo.testing-conventions, etc.) built with
+// Gradle 8.7+ and targeting Java 17+.
+//
+// IMPORTANT: The includeBuild directive below requires upgrading the root Gradle
+// wrapper to 7.0+ (recommended: 8.7). Until that upgrade, build-logic is a
+// standalone build that can be verified independently:
+//   cd build-logic && ./gradlew build
+//
+// After the root Gradle upgrade, uncomment the following line:
+// includeBuild('build-logic')
+//
+// See docs/adr/0002-shared-gradle-configuration.md for the full migration plan.
+// See gradle/libs.versions.toml for the centralized version catalog.
+
+// ---------------------------------------------------------------------------
 // New Microservices Structure (scaffolding - will become active during extraction)
 // ---------------------------------------------------------------------------
 
