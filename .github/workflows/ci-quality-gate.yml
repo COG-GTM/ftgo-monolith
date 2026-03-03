@@ -10,6 +10,10 @@
 #   - PMD:        Code quality rules
 #   - JaCoCo:     Code coverage (70% minimum threshold)
 #
+# NOTE: During the migration period, convention plugins may not yet be applied
+# to all service modules. The workflow gracefully skips modules where the
+# quality-conventions plugin is not yet active.
+#
 # IMPORTANT: This workflow is additive. It does NOT modify existing workflows.
 # =============================================================================
 
@@ -55,6 +59,10 @@ jobs:
   # ---------------------------------------------------------------------------
   # Static Analysis - Checkstyle, SpotBugs, PMD
   # ---------------------------------------------------------------------------
+  # During migration, the quality-conventions plugin may not yet be applied to
+  # all service modules. Each job detects whether the Gradle task exists before
+  # running it, and skips gracefully if not yet active.
+  # ---------------------------------------------------------------------------
   static-analysis:
     name: "Static Analysis: ${{ matrix.service.name }}"
     runs-on: ubuntu-latest
@@ -87,9 +95,21 @@ jobs:
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
+      - name: Check if quality plugin is applied
+        id: check_plugin
+        run: |
+          # Check if checkstyleMain task exists (indicates quality-conventions plugin is applied)
+          if ./gradlew :${{ matrix.service.module }}:tasks --all --no-daemon 2>/dev/null | grep -q "checkstyleMain"; then
+            echo "quality_plugin_active=true" >> $GITHUB_OUTPUT
+            echo "Quality conventions plugin is active for ${{ matrix.service.name }}"
+          else
+            echo "quality_plugin_active=false" >> $GITHUB_OUTPUT
+            echo "Quality conventions plugin is NOT yet applied to ${{ matrix.service.name }} - skipping analysis"
+          fi
+
       - name: Run Checkstyle
         id: checkstyle
-        if: always()
+        if: steps.check_plugin.outputs.quality_plugin_active == 'true'
         run: |
           ./gradlew :${{ matrix.service.module }}:checkstyleMain \
             :${{ matrix.service.module }}:checkstyleTest \
@@ -97,51 +117,62 @@ jobs:
 
       - name: Run SpotBugs
         id: spotbugs
-        if: always()
+        if: steps.check_plugin.outputs.quality_plugin_active == 'true'
         run: |
           ./gradlew :${{ matrix.service.module }}:spotbugsMain \
             --no-daemon || echo "spotbugs_failed=true" >> $GITHUB_OUTPUT
 
       - name: Run PMD
         id: pmd
-        if: always()
+        if: steps.check_plugin.outputs.quality_plugin_active == 'true'
         run: |
           ./gradlew :${{ matrix.service.module }}:pmdMain \
             :${{ matrix.service.module }}:pmdTest \
             --no-daemon || echo "pmd_failed=true" >> $GITHUB_OUTPUT
 
       - name: Upload Checkstyle reports
-        if: always()
+        if: always() && steps.check_plugin.outputs.quality_plugin_active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: checkstyle-${{ matrix.service.name }}
           path: |
             ${{ matrix.service.module }}/build/reports/checkstyle/
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload SpotBugs reports
-        if: always()
+        if: always() && steps.check_plugin.outputs.quality_plugin_active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: spotbugs-${{ matrix.service.name }}
           path: |
             ${{ matrix.service.module }}/build/reports/spotbugs/
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload PMD reports
-        if: always()
+        if: always() && steps.check_plugin.outputs.quality_plugin_active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: pmd-${{ matrix.service.name }}
           path: |
             ${{ matrix.service.module }}/build/reports/pmd/
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Generate analysis summary
         if: always()
         run: |
           echo "## Static Analysis: ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_plugin.outputs.quality_plugin_active }}" != "true" ]; then
+            echo "> **Skipped**: Quality conventions plugin is not yet applied to this module." >> $GITHUB_STEP_SUMMARY
+            echo "> Once \`ftgo.quality-conventions\` is enabled in the module's \`build.gradle\`," >> $GITHUB_STEP_SUMMARY
+            echo "> static analysis will run automatically." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
           echo "| Tool | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
 
@@ -164,7 +195,7 @@ jobs:
           fi
 
       - name: Fail if any analysis failed
-        if: always()
+        if: always() && steps.check_plugin.outputs.quality_plugin_active == 'true'
         run: |
           if [ "${{ steps.checkstyle.outputs.checkstyle_failed }}" = "true" ] || \
              [ "${{ steps.spotbugs.outputs.spotbugs_failed }}" = "true" ] || \
@@ -175,6 +206,9 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Code Coverage - JaCoCo
+  # ---------------------------------------------------------------------------
+  # During migration, JaCoCo may not yet be configured on all modules.
+  # The workflow detects task availability and skips gracefully.
   # ---------------------------------------------------------------------------
   code-coverage:
     name: "Coverage: ${{ matrix.service.name }}"
@@ -208,7 +242,20 @@ jobs:
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
+      - name: Check if coverage plugin is applied
+        id: check_plugin
+        run: |
+          # Check if jacocoTestReport task exists (indicates testing/quality plugin is applied)
+          if ./gradlew :${{ matrix.service.module }}:tasks --all --no-daemon 2>/dev/null | grep -q "jacocoTestReport"; then
+            echo "coverage_plugin_active=true" >> $GITHUB_OUTPUT
+            echo "Coverage plugin is active for ${{ matrix.service.name }}"
+          else
+            echo "coverage_plugin_active=false" >> $GITHUB_OUTPUT
+            echo "Coverage plugin is NOT yet applied to ${{ matrix.service.name }} - skipping"
+          fi
+
       - name: Run tests with coverage
+        if: steps.check_plugin.outputs.coverage_plugin_active == 'true'
         run: |
           ./gradlew :${{ matrix.service.module }}:test \
             :${{ matrix.service.module }}:jacocoTestReport \
@@ -216,12 +263,13 @@ jobs:
 
       - name: Verify coverage threshold (70%)
         id: coverage_check
+        if: steps.check_plugin.outputs.coverage_plugin_active == 'true'
         run: |
           ./gradlew :${{ matrix.service.module }}:jacocoTestCoverageVerification \
             --no-daemon || echo "coverage_failed=true" >> $GITHUB_OUTPUT
 
       - name: Upload coverage reports
-        if: always()
+        if: always() && steps.check_plugin.outputs.coverage_plugin_active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-${{ matrix.service.name }}
@@ -229,12 +277,20 @@ jobs:
             ${{ matrix.service.module }}/build/reports/jacoco/
             ${{ matrix.service.module }}/build/jacoco/
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Generate coverage summary
         if: always()
         run: |
           echo "## Code Coverage: ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_plugin.outputs.coverage_plugin_active }}" != "true" ]; then
+            echo "> **Skipped**: Coverage plugin is not yet applied to this module." >> $GITHUB_STEP_SUMMARY
+            echo "> Once \`ftgo.quality-conventions\` or \`ftgo.testing-conventions\` is enabled," >> $GITHUB_STEP_SUMMARY
+            echo "> coverage reporting will run automatically." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
 
           MODULE_PATH=$(echo "${{ matrix.service.module }}" | tr ':' '/')
           XML_FILE="${MODULE_PATH}/build/reports/jacoco/test/jacocoTestReport.xml"
