@@ -1,0 +1,100 @@
+# =============================================================================
+# FTGO Tracing Stack - Docker Compose for Local Development
+# =============================================================================
+# Runs Zipkin for distributed trace collection and visualization in local
+# development. Use alongside docker-compose.microservices.yml to trace
+# requests across all FTGO microservices.
+#
+# Usage:
+#   # Start tracing stack only
+#   docker compose -f docker-compose.tracing.yml up -d
+#
+#   # Start tracing + microservices together
+#   docker compose -f docker-compose.microservices.yml -f docker-compose.tracing.yml up -d
+#
+#   # Start full observability stack (tracing + monitoring + logging)
+#   docker compose -f docker-compose.microservices.yml \
+#     -f docker-compose.tracing.yml \
+#     -f docker-compose.monitoring.yml \
+#     -f docker-compose.logging.yml up -d
+#
+#   # View Zipkin UI
+#   open http://localhost:9411
+#
+# NOTE: This does NOT replace or conflict with the legacy docker-compose.yml.
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Zipkin - Distributed Trace Collection & Visualization
+  # ---------------------------------------------------------------------------
+  # Zipkin is a distributed tracing system that collects timing data needed
+  # to troubleshoot latency problems in service architectures. It receives
+  # trace data from services instrumented with Micrometer Tracing / Brave.
+  #
+  # Features:
+  #   - Trace collection via HTTP (POST /api/v2/spans)
+  #   - Service dependency visualization
+  #   - Latency analysis per service and endpoint
+  #   - In-memory storage (suitable for local development)
+  #
+  # For production, consider using Jaeger or Zipkin with Elasticsearch storage.
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.3
+    container_name: ftgo-zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      # Use in-memory storage for local development
+      STORAGE_TYPE: mem
+      # Enable self-tracing for debugging (optional)
+      SELF_TRACING_ENABLED: "false"
+      # Java heap size
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9411/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ftgo-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Jaeger (Alternative) - Distributed Tracing Backend
+  # ---------------------------------------------------------------------------
+  # Uncomment this section to use Jaeger instead of (or alongside) Zipkin.
+  # Jaeger provides a Zipkin-compatible collector endpoint, so services
+  # configured to send to Zipkin can also work with Jaeger.
+  #
+  # Access:
+  #   Jaeger UI: http://localhost:16686
+  #   Zipkin-compatible endpoint: http://localhost:9412/api/v2/spans
+  # ---------------------------------------------------------------------------
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.56
+  #   container_name: ftgo-jaeger
+  #   ports:
+  #     - "16686:16686"    # Jaeger UI
+  #     - "14268:14268"    # Jaeger collector HTTP
+  #     - "9412:9411"      # Zipkin-compatible collector
+  #   environment:
+  #     COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+  #     SPAN_STORAGE_TYPE: memory
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:16686/ || exit 1"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 15s
+  #   networks:
+  #     - ftgo-network
+  #   restart: unless-stopped
+
+networks:
+  ftgo-network:
+    driver: bridge

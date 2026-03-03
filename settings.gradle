@@ -77,5 +77,6 @@ include "shared:ftgo-domain"
 include "shared:ftgo-common-jpa"
 include "shared:ftgo-security"
 include "shared:ftgo-logging"
+include "shared:ftgo-tracing"
 include "shared:ftgo-openapi"
 

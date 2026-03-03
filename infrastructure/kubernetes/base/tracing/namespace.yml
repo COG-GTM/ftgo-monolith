@@ -1,0 +1,14 @@
+# =============================================================================
+# FTGO Tracing Namespace
+# =============================================================================
+# Dedicated namespace for distributed tracing infrastructure (Zipkin/Jaeger).
+# Separates tracing components from application workloads.
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ftgo-tracing
+  labels:
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
