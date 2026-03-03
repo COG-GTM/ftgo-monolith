@@ -1,0 +1,13 @@
+# =============================================================================
+# FTGO Error Handling Auto-Configuration
+# =============================================================================
+# Registers the error handling auto-configuration class so that any Spring Boot
+# application that includes this library on its classpath will automatically
+# get centralized exception handling via @ControllerAdvice.
+#
+# For Spring Boot 2.x: Uses spring.factories (this file)
+# For Spring Boot 3.x: Uses META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+# =============================================================================
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.errorhandling.config.FtgoErrorHandlingAutoConfiguration
