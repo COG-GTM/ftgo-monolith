@@ -28,6 +28,7 @@ hibernate                   = "6.4.4.Final"
 # --- Observability ---
 micrometer                  = "1.12.5"
 micrometer-tracing          = "1.2.5"
+zipkin-reporter             = "2.16.4"
 
 # --- Logging ---
 logstash-logback-encoder    = "7.4"
@@ -81,6 +82,8 @@ jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.pe
 micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+zipkin-reporter-brave               = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
+zipkin-sender-urlconnection         = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
 
 # --- Logging ---
 logstash-logback-encoder            = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
@@ -139,6 +142,13 @@ observability = [
     "micrometer-core",
     "micrometer-registry-prometheus",
     "micrometer-tracing-bridge-brave",
+]
+
+# Distributed tracing dependencies
+tracing = [
+    "micrometer-tracing-bridge-brave",
+    "zipkin-reporter-brave",
+    "zipkin-sender-urlconnection",
 ]
 
 # Structured logging dependencies
