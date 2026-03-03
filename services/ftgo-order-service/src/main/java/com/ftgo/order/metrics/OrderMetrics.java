@@ -74,7 +74,7 @@ public class OrderMetrics {
     }
 
     public void incrementOrdersCancelled() {
-        ordersCreated.increment();
+        ordersCancelled.increment();
     }
 
     public void incrementOrdersAccepted() {
