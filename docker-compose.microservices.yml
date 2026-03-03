@@ -1,0 +1,146 @@
+# =============================================================================
+# FTGO Microservices - Local Development Docker Compose
+# =============================================================================
+# This file runs all FTGO microservices using images from GHCR.
+# For local development and testing of the microservices architecture.
+#
+# Usage:
+#   docker compose -f docker-compose.microservices.yml up
+#   docker compose -f docker-compose.microservices.yml up ftgo-order-service
+#
+# NOTE: This does NOT replace the legacy docker-compose.yml which runs
+# the monolithic application. Both can coexist.
+# =============================================================================
+
+version: '3.8'
+
+x-common-env: &common-env
+  SPRING_PROFILES_ACTIVE: docker
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+  JAVA_OPTS: -Xmx256m
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 10s
+  start_period: 60s
+  retries: 3
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure Services
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: mysqlpw
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+
+  # ---------------------------------------------------------------------------
+  # FTGO Microservices (pulling from GHCR)
+  # ---------------------------------------------------------------------------
+  ftgo-order-service:
+    image: ghcr.io/cog-gtm/ftgo-ftgo-order-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-order-service/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo_order
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+    restart: unless-stopped
+
+  ftgo-consumer-service:
+    image: ghcr.io/cog-gtm/ftgo-ftgo-consumer-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-consumer-service/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo_consumer
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+    restart: unless-stopped
+
+  ftgo-restaurant-service:
+    image: ghcr.io/cog-gtm/ftgo-ftgo-restaurant-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-restaurant-service/Dockerfile
+    ports:
+      - "8083:8080"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo_restaurant
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+    restart: unless-stopped
+
+  ftgo-courier-service:
+    image: ghcr.io/cog-gtm/ftgo-ftgo-courier-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-courier-service/Dockerfile
+    ports:
+      - "8084:8080"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo_courier
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      <<: *common-healthcheck
+    networks:
+      - ftgo-network
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  ftgo-network:
+    driver: bridge
