@@ -15,12 +15,12 @@ public class ConsumerController {
   @Autowired
   private ConsumerService consumerService;
 
-  @RequestMapping(method= RequestMethod.POST)
+  @PostMapping
   public CreateConsumerResponse create(@RequestBody CreateConsumerRequest request) {
     return new CreateConsumerResponse(consumerService.create(request.getName()).getId());
   }
 
-  @RequestMapping(method= RequestMethod.GET,  path="/{consumerId}")
+  @GetMapping("/{consumerId}")
   public ResponseEntity<GetConsumerResponse> get(@PathVariable long consumerId) {
     return consumerService.findById(consumerId)
             .map(consumer -> new ResponseEntity<>(new GetConsumerResponse(consumer.getName()), HttpStatus.OK))

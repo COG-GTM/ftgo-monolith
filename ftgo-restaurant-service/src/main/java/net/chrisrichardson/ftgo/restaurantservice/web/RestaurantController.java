@@ -15,13 +15,13 @@ public class RestaurantController {
   @Autowired
   private RestaurantService restaurantService;
 
-  @RequestMapping(method = RequestMethod.POST)
+  @PostMapping
   public CreateRestaurantResponse create(@RequestBody CreateRestaurantRequest request) {
     Restaurant r = restaurantService.create(request);
     return new CreateRestaurantResponse(r.getId());
   }
 
-  @RequestMapping(method = RequestMethod.GET, path = "/{restaurantId}")
+  @GetMapping("/{restaurantId}")
   public ResponseEntity<GetRestaurantResponse> get(@PathVariable long restaurantId) {
     return restaurantService.findById(restaurantId)
             .map(r -> new ResponseEntity<>(makeGetRestaurantResponse(r), HttpStatus.OK))

@@ -30,7 +30,7 @@ public class MoneyModule extends SimpleModule {
         else
           return new Money(str);
       } else
-        throw ctxt.mappingException(getValueClass());
+        throw ctxt.wrongTokenException(jp, Money.class, JsonToken.VALUE_STRING, "Expected a string value for Money");
     }
   }
 

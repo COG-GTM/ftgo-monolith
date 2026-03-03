@@ -1,9 +1,7 @@
 package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -30,17 +28,22 @@ public class MenuItem {
 
   @Override
   public boolean equals(Object o) {
-    return EqualsBuilder.reflectionEquals(this, o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MenuItem menuItem = (MenuItem) o;
+    return Objects.equals(id, menuItem.id) &&
+            Objects.equals(name, menuItem.name) &&
+            Objects.equals(price, menuItem.price);
   }
 
   @Override
   public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
+    return Objects.hash(id, name, price);
   }
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this);
+    return "MenuItem{id='" + id + "', name='" + name + "', price=" + price + "}";
   }
 
   public String getId() {
