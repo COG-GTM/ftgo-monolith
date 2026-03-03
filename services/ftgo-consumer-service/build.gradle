@@ -7,9 +7,9 @@
 
 dependencies {
     // Shared libraries
-    // implementation project(':shared-ftgo-common')
-    // implementation project(':shared-ftgo-domain')
-    // implementation project(':shared-ftgo-common-jpa')
+    // implementation project(':shared:ftgo-common')
+    // implementation project(':shared:ftgo-domain')
+    // implementation project(':shared:ftgo-common-jpa')
 
     // Spring Boot
     // implementation 'org.springframework.boot:spring-boot-starter-web'
