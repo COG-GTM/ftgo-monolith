@@ -23,6 +23,17 @@
 //     id 'ftgo.docker-conventions'
 // }
 
+// Exclude metrics source files from compilation until convention plugins are active.
+// These files require Spring Boot 3.x and Micrometer 1.12+ which are provided by
+// ftgo.spring-boot-conventions and ftgo.observability-conventions.
+sourceSets {
+    main {
+        java {
+            exclude 'com/ftgo/**/metrics/**'
+        }
+    }
+}
+
 dependencies {
     // Shared libraries
     // implementation project(':shared:ftgo-common')
