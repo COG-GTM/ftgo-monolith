@@ -1,11 +1,12 @@
 // =============================================================================
-// FTGO Logging - Shared Logging Library Build Configuration
+// FTGO Authorization - Shared Role-Based Access Control Library Build Configuration
 // =============================================================================
-// Provides structured JSON logging with correlation ID propagation for all
-// FTGO microservices. Uses Logback with logstash-logback-encoder for JSON
-// output and Spring Boot auto-configuration for seamless integration.
+// Standalone, versioned shared library providing role-based authorization (RBAC)
+// for all FTGO microservices. Contains role definitions, permission model,
+// method-level security annotations, custom permission evaluator for resource
+// ownership validation, and role hierarchy configuration.
 //
-// Package: com.ftgo.logging
+// Package: net.chrisrichardson.ftgo.authorization
 // Version: 1.0.0
 //
 // Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
@@ -14,29 +15,30 @@
 //   ftgo.publishing-conventions - Maven publishing for shared libraries
 // =============================================================================
 
-version = ftgoLoggingVersion
+version = '1.0.0'
 group = 'net.chrisrichardson.ftgo'
 
 apply plugin: 'maven-publish'
 
 dependencies {
-    // Spring Boot base (for auto-configuration support)
-    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+    // Spring Boot Security starter
+    compile "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
 
-    // Spring Web (optional - for servlet filter support)
+    // Spring Boot Web (for servlet support)
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
-    // Spring AOP (for LoggingAspect)
-    compile "org.springframework.boot:spring-boot-starter-aop:$springBootVersion"
+    // Jackson JSON serialization (for error responses)
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
 
-    // Logstash Logback Encoder - structured JSON logging
-    compile 'net.logstash.logback:logstash-logback-encoder:7.4'
-
-    // SLF4J API
+    // SLF4J for logging
     compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // FTGO JWT (for user context and token claims)
+    compile project(':shared:ftgo-jwt')
 
     // Testing
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "org.springframework.security:spring-security-test:5.0.6.RELEASE"
 }
 
 // ---------------------------------------------------------------------------
@@ -44,8 +46,8 @@ dependencies {
 // ---------------------------------------------------------------------------
 // Publishes the library to the local Maven repository and a project-local repo.
 // Usage:
-//   ./gradlew :shared:ftgo-logging:publishToMavenLocal
-//   ./gradlew :shared:ftgo-logging:publish
+//   ./gradlew :shared:ftgo-authorization:publishToMavenLocal
+//   ./gradlew :shared:ftgo-authorization:publish
 // ---------------------------------------------------------------------------
 
 publishing {
@@ -54,12 +56,12 @@ publishing {
             from components.java
 
             groupId = 'net.chrisrichardson.ftgo'
-            artifactId = 'ftgo-logging'
-            version = ftgoLoggingVersion
+            artifactId = 'ftgo-authorization'
+            version = '1.0.0'
 
             pom {
-                name = 'FTGO Logging Library'
-                description = 'Structured JSON logging with correlation ID propagation for FTGO microservices'
+                name = 'FTGO Authorization Library'
+                description = 'Role-based access control (RBAC) with role hierarchy, method-level security, custom permission evaluator, and resource ownership validation for FTGO microservices'
                 url = 'https://github.com/COG-GTM/ftgo-monolith'
 
                 licenses {

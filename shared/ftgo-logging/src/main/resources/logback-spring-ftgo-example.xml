@@ -7,7 +7,14 @@
   and customize as needed.
 
   This uses Spring profiles to switch between JSON (production) and plain
-  text (development) log output.
+  text (development) log output. Deployed environments use async appenders
+  for non-blocking log output.
+
+  Environment Log Level Summary:
+    local/dev:   Root=DEBUG, FTGO=DEBUG, Frameworks=WARN  (plain text)
+    docker:      Root=INFO,  FTGO=INFO,  Frameworks=WARN  (JSON, async)
+    staging:     Root=INFO,  FTGO=INFO,  Frameworks=WARN  (JSON, async)
+    production:  Root=INFO,  FTGO=INFO,  Frameworks=ERROR (JSON, async)
   =============================================================================
 -->
 <configuration>
@@ -15,10 +22,13 @@
     <include resource="ftgo-logback-defaults.xml" />
 
     <!-- ===================================================================== -->
-    <!-- Profile: default / dev - Human-readable console output                -->
+    <!-- Profile: default / dev / local - Human-readable console output        -->
+    <!-- ===================================================================== -->
+    <!-- Uses CONSOLE_PLAIN (not async) for immediate output during dev.       -->
+    <!-- Root level DEBUG with FTGO packages at DEBUG for maximum visibility.   -->
     <!-- ===================================================================== -->
     <springProfile name="default,dev,local">
-        <root level="INFO">
+        <root level="DEBUG">
             <appender-ref ref="CONSOLE_PLAIN" />
         </root>
         <!-- Enable debug logging for FTGO packages in development -->
@@ -29,30 +39,40 @@
     <!-- ===================================================================== -->
     <!-- Profile: docker - JSON output for Docker Compose local dev with EFK   -->
     <!-- ===================================================================== -->
+    <!-- Uses ASYNC_JSON to avoid blocking application threads.                 -->
+    <!-- ===================================================================== -->
     <springProfile name="docker">
         <root level="INFO">
-            <appender-ref ref="CONSOLE_JSON" />
+            <appender-ref ref="ASYNC_JSON" />
         </root>
     </springProfile>
 
     <!-- ===================================================================== -->
     <!-- Profile: staging - JSON output with INFO level                        -->
     <!-- ===================================================================== -->
+    <!-- Uses ASYNC_JSON to avoid blocking application threads.                 -->
+    <!-- ===================================================================== -->
     <springProfile name="staging">
         <root level="INFO">
-            <appender-ref ref="CONSOLE_JSON" />
+            <appender-ref ref="ASYNC_JSON" />
         </root>
     </springProfile>
 
     <!-- ===================================================================== -->
-    <!-- Profile: production - JSON output with WARN level for framework       -->
+    <!-- Profile: production - JSON output with ERROR level for frameworks     -->
+    <!-- ===================================================================== -->
+    <!-- Uses ASYNC_JSON to avoid blocking application threads.                 -->
+    <!-- Frameworks set to ERROR to reduce noise in production.                 -->
+    <!-- FTGO application code remains at INFO.                                 -->
     <!-- ===================================================================== -->
     <springProfile name="production,prod">
         <root level="INFO">
-            <appender-ref ref="CONSOLE_JSON" />
+            <appender-ref ref="ASYNC_JSON" />
         </root>
-        <!-- Tighter logging in production -->
+        <!-- Tighter logging in production for framework packages -->
         <logger name="org.springframework" level="ERROR" />
         <logger name="org.hibernate" level="ERROR" />
+        <logger name="org.apache" level="ERROR" />
+        <logger name="com.zaxxer.hikari" level="ERROR" />
     </springProfile>
 </configuration>
