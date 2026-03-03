@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  =============================================================================
+  FTGO SpotBugs Exclusion Filter
+  =============================================================================
+  Excludes known false positives and patterns that are acceptable in the
+  FTGO codebase. Keep exclusions minimal and well-documented.
+  
+  See: https://spotbugs.readthedocs.io/en/stable/filter.html
+  =============================================================================
+-->
+<FindBugsFilter>
+    <!-- Exclude generated code -->
+    <Match>
+        <Package name="~.*\.generated\..*"/>
+    </Match>
+
+    <!-- Exclude DTO/model classes from certain checks (they are simple data carriers) -->
+    <Match>
+        <Or>
+            <Class name="~.*Request$"/>
+            <Class name="~.*Response$"/>
+            <Class name="~.*DTO$"/>
+            <Class name="~.*Dto$"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude Spring configuration classes from certain checks -->
+    <Match>
+        <Or>
+            <Class name="~.*Configuration$"/>
+            <Class name="~.*Config$"/>
+        </Or>
+        <Bug pattern="MS_SHOULD_BE_FINAL"/>
+    </Match>
+
+    <!-- Exclude test classes -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*Tests\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*IT\.java"/>
+    </Match>
+
+    <!-- Exclude main application entry points (Spring Boot convention) -->
+    <Match>
+        <Or>
+            <Class name="~.*Application$"/>
+            <Class name="~.*Main$"/>
+        </Or>
+    </Match>
+
+    <!-- Allow serialization-related warnings in domain entities using JPA -->
+    <Match>
+        <Or>
+            <Bug pattern="SE_BAD_FIELD"/>
+            <Bug pattern="SE_NO_SERIALVERSIONID"/>
+        </Or>
+        <Or>
+            <Package name="~com\.ftgo\..*\.domain"/>
+            <Package name="~com\.ftgo\.domain\..*"/>
+            <Package name="~net\.chrisrichardson\.ftgo\..*\.domain"/>
+        </Or>
+    </Match>
+</FindBugsFilter>

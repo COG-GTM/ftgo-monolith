@@ -1,0 +1,162 @@
+// =============================================================================
+// ftgo.quality-conventions - Code Quality Convention Plugin
+// =============================================================================
+// Configures static analysis and code quality tools for all FTGO microservices
+// and shared libraries. Integrates Checkstyle, SpotBugs, PMD, and JaCoCo to
+// enforce consistent code quality standards across the project.
+//
+// Tools configured:
+//   - Checkstyle: Code style enforcement (Google Java Style based)
+//   - SpotBugs:   Static bug detection
+//   - PMD:        Code quality and best practice rules
+//   - JaCoCo:     Code coverage (minimum 70% threshold)
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.quality-conventions'
+//   }
+//
+// Quality reports are generated under build/reports/{checkstyle,spotbugs,pmd,jacoco}/
+// =============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs'
+    id 'jacoco'
+}
+
+// ---------------------------------------------------------------------------
+// Checkstyle - Code Style Enforcement
+// ---------------------------------------------------------------------------
+// Based on Google Java Style with project-specific customizations.
+// See build-logic/src/main/resources/config/checkstyle/checkstyle.xml
+
+checkstyle {
+    toolVersion = '10.15.0'
+    configFile = rootProject.file("build-logic/src/main/resources/config/checkstyle/checkstyle.xml")
+    configProperties = ['config_loc': rootProject.file("build-logic/src/main/resources/config/checkstyle").absolutePath]
+    maxWarnings = 0
+    maxErrors = 0
+    ignoreFailures = false
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated code from analysis
+    exclude '**/generated/**'
+}
+
+// ---------------------------------------------------------------------------
+// SpotBugs - Static Bug Detection
+// ---------------------------------------------------------------------------
+// Identifies potential bugs, security vulnerabilities, and performance issues.
+// See build-logic/src/main/resources/config/spotbugs/exclusion-filter.xml
+
+spotbugs {
+    toolVersion = '4.8.4'
+    effort = 'max'
+    reportLevel = 'medium'
+    ignoreFailures = false
+    excludeFilter = rootProject.file("build-logic/src/main/resources/config/spotbugs/exclusion-filter.xml")
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated code from analysis
+    exclude '**/generated/**'
+}
+
+// ---------------------------------------------------------------------------
+// PMD - Code Quality Rules
+// ---------------------------------------------------------------------------
+// Enforces best practices, design patterns, and common error detection.
+// See build-logic/src/main/resources/config/pmd/ruleset.xml
+
+pmd {
+    toolVersion = '7.0.0'
+    consoleOutput = true
+    ruleSetFiles = files(rootProject.file("build-logic/src/main/resources/config/pmd/ruleset.xml"))
+    ruleSets = [] // Clear default rulesets, use only our custom ruleset
+    ignoreFailures = false
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated code from analysis
+    exclude '**/generated/**'
+}
+
+// ---------------------------------------------------------------------------
+// JaCoCo - Code Coverage
+// ---------------------------------------------------------------------------
+// Enforces minimum 70% code coverage threshold.
+// Coverage reports generated in XML and HTML formats for CI integration.
+
+jacoco {
+    toolVersion = '0.8.11'
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    // Exclude generated code, DTOs, configuration classes from coverage
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/configuration/**',
+                '**/*Configuration.class',
+                '**/*Config.class',
+                '**/*Application.class',
+                '**/*Main.class',
+                '**/dto/**',
+                '**/model/*Request.class',
+                '**/model/*Response.class',
+                '**/generated/**',
+            ])
+        }))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('jacocoTestReport')
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Integrate quality checks into the build lifecycle
+// ---------------------------------------------------------------------------
+
+// Ensure test generates coverage data
+tasks.named('test') {
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+// Wire quality checks into the 'check' lifecycle task
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
