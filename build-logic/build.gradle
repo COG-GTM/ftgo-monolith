@@ -1,0 +1,26 @@
+// =============================================================================
+// Build Logic - Convention Plugins Build Configuration
+// =============================================================================
+// Compiles convention plugins that standardize build configuration across
+// all new FTGO microservices and shared libraries.
+// =============================================================================
+
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
+}
+
+// Versions must match gradle/libs.versions.toml
+def springBootVersion = '3.2.5'
+def springDepMgmtVersion = '1.1.5'
+
+dependencies {
+    // Spring Boot Gradle plugin - used by spring-boot-conventions
+    implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+    // Spring dependency management plugin
+    implementation "io.spring.gradle:dependency-management-plugin:${springDepMgmtVersion}"
+}
