@@ -1,0 +1,91 @@
+// =============================================================================
+// FTGO JWT - Shared JWT Authentication Library Build Configuration
+// =============================================================================
+// Standalone, versioned shared library providing JWT-based authentication
+// for all FTGO microservices. Contains JWT encoder/decoder, token validation
+// filter, claims extraction, token refresh mechanism, and user context
+// propagation via Spring Security's SecurityContextHolder.
+//
+// Package: net.chrisrichardson.ftgo.jwt
+// Version: 1.0.0
+//
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+// =============================================================================
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot Security starter
+    compile "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
+
+    // Spring Boot Web (for servlet filter support)
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Spring Boot Actuator (for actuator endpoint security)
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    // Jackson JSON serialization (for error responses and JWT claims)
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    // JJWT - JSON Web Token library (consistent with API Gateway)
+    compile 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtime 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtime 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // SLF4J for logging
+    compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // FTGO Security (base security configuration)
+    compile project(':shared:ftgo-security')
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "org.springframework.security:spring-security-test:5.0.6.RELEASE"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-jwt:publishToMavenLocal
+//   ./gradlew :shared:ftgo-jwt:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-jwt'
+            version = '1.0.0'
+
+            pom {
+                name = 'FTGO JWT Authentication Library'
+                description = 'JWT-based authentication with token validation, claims extraction, refresh mechanism, and user context propagation for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}
