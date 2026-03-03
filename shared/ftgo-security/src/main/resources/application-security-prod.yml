@@ -1,0 +1,24 @@
+# =============================================================================
+# FTGO Security - Production Security Profile
+# =============================================================================
+# Strict security settings for production deployment.
+# Activate with: spring.profiles.active=security,security-prod
+# =============================================================================
+
+ftgo:
+  security:
+    cors:
+      allowed-origins:
+        - https://api-gateway.ftgo.com
+        - https://www.ftgo.com
+      allow-credentials: true
+      max-age: 7200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
