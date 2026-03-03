@@ -18,6 +18,7 @@
 
 plugins {
     id 'ftgo.java-conventions'
+    id 'ftgo.observability-conventions'
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
 }
@@ -27,9 +28,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-    // Observability - version managed by Spring Boot BOM
-    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // API documentation
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'

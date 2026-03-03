@@ -1,0 +1,30 @@
+// =============================================================================
+// ftgo.observability-conventions - Observability Convention Plugin
+// =============================================================================
+// Configures Micrometer metrics, Prometheus registry, and Spring Boot Actuator
+// for all FTGO microservices. Provides a consistent observability baseline
+// including JVM metrics, HTTP server metrics, and database connection pool metrics.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.observability-conventions'
+//   }
+//
+// This plugin is automatically applied by ftgo.spring-boot-conventions.
+// =============================================================================
+
+plugins {
+    id 'java'
+}
+
+dependencies {
+    // Micrometer core for custom metrics
+    implementation 'io.micrometer:micrometer-core'
+
+    // Prometheus registry for metrics exposition
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Spring Boot Actuator provides the /actuator/prometheus endpoint
+    // (already included via spring-boot-conventions, but declared here for clarity)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}

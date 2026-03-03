@@ -72,6 +72,7 @@ mysql-connector                     = { module = "com.mysql:mysql-connector-j", 
 jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
 
 # --- Observability ---
+micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
 
@@ -123,6 +124,7 @@ spring-boot-data = [
 
 # Observability dependencies
 observability = [
+    "micrometer-core",
     "micrometer-registry-prometheus",
     "micrometer-tracing-bridge-brave",
 ]
