@@ -13,6 +13,7 @@ FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
 
 # Install required build tools
+# hadolint ignore=DL3018
 RUN apk add --no-cache bash
 
 # Copy Gradle wrapper and build configuration first for dependency caching
@@ -21,19 +22,28 @@ COPY gradle/ gradle/
 COPY build.gradle settings.gradle gradle.properties ./
 COPY buildSrc/ buildSrc/
 
-# Copy shared libraries that the service depends on
+# Copy all monolith modules required by the Gradle multi-project build.
 COPY ftgo-common/ ftgo-common/
 COPY ftgo-common-jpa/ ftgo-common-jpa/
 COPY ftgo-domain/ ftgo-domain/
+COPY ftgo-order-service/ ftgo-order-service/
+COPY ftgo-order-service-api/ ftgo-order-service-api/
+COPY ftgo-consumer-service/ ftgo-consumer-service/
+COPY ftgo-consumer-service-api/ ftgo-consumer-service-api/
+COPY ftgo-restaurant-service/ ftgo-restaurant-service/
+COPY ftgo-restaurant-service-api/ ftgo-restaurant-service-api/
+COPY ftgo-courier-service/ ftgo-courier-service/
 COPY ftgo-courier-service-api/ ftgo-courier-service-api/
+COPY ftgo-application/ ftgo-application/
+COPY ftgo-flyway/ ftgo-flyway/
+COPY ftgo-test-util/ ftgo-test-util/
 COPY common-swagger/ common-swagger/
+COPY services/ services/
+COPY shared/ shared/
 
 # Download dependencies (cached layer)
-RUN chmod +x gradlew && \
-    ./gradlew :ftgo-courier-service:dependencies --no-daemon 2>/dev/null || true
-
-# Copy service source code
-COPY ftgo-courier-service/ ftgo-courier-service/
+RUN chmod +x gradlew
+RUN ./gradlew :ftgo-courier-service:dependencies --no-daemon 2>/dev/null; true
 
 # Build the service JAR
 RUN ./gradlew :ftgo-courier-service:build -x test --no-daemon
@@ -49,6 +59,7 @@ LABEL org.opencontainers.image.description="FTGO Courier Service"
 LABEL org.opencontainers.image.vendor="COG-GTM"
 
 # Install tini for proper PID 1 signal handling and curl for health checks
+# hadolint ignore=DL3018
 RUN apk add --no-cache tini curl
 
 # Create non-root user

@@ -218,10 +218,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:sha-${{ github.sha }}'
+          image-ref: '${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ steps.sha.outputs.short }}'
           format: 'sarif'
           output: 'trivy-results-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
@@ -237,7 +241,7 @@ jobs:
       - name: Run Trivy (table output for logs)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:sha-${{ github.sha }}'
+          image-ref: '${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ steps.sha.outputs.short }}'
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
