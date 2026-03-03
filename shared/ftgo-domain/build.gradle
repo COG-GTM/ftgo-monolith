@@ -1,0 +1,17 @@
+// FTGO Domain - Shared Library Build Configuration
+// This build file will be used when ftgo-domain is migrated to shared/ftgo-domain.
+// Currently, the monolith's ftgo-domain module (at the repo root) remains the active build.
+//
+// Package: com.ftgo.domain
+// Contains: Core domain entities (Order, Consumer, Restaurant, Courier) and domain events
+
+dependencies {
+    // Shared libraries
+    // implementation project(':shared:ftgo-common')
+
+    // JPA
+    // implementation 'javax.persistence:javax.persistence-api'
+
+    // Testing
+    // testImplementation 'junit:junit'
+}
