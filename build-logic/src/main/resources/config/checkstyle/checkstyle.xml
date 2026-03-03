@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  =============================================================================
+  FTGO Checkstyle Configuration
+  =============================================================================
+  Based on Google Java Style Guide with project-specific customizations.
+  See: https://google.github.io/styleguide/javaguide.html
+
+  Severity levels:
+    error   - Build-breaking violations (must fix before merge)
+    warning - Should fix, but does not block the build
+  =============================================================================
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Suppress warnings via @SuppressWarnings annotation -->
+    <module name="SuppressWarningsFilter"/>
+
+    <!-- File-level checks -->
+
+    <!-- No trailing whitespace -->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="message" value="Line has trailing whitespace."/>
+    </module>
+
+    <!-- File must end with a newline -->
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf"/>
+    </module>
+
+    <!-- Maximum file length -->
+    <module name="FileLength">
+        <property name="max" value="500"/>
+        <property name="severity" value="warning"/>
+    </module>
+
+    <!-- No tab characters -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Enable @SuppressWarnings -->
+        <module name="SuppressWarningsHolder"/>
+
+        <!-- ==================== Naming Conventions ==================== -->
+
+        <!-- Package names: all lowercase -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- Type names: UpperCamelCase -->
+        <module name="TypeName"/>
+
+        <!-- Method names: lowerCamelCase -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Member variable names: lowerCamelCase -->
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Parameter names: lowerCamelCase -->
+        <module name="ParameterName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Local variable names: lowerCamelCase -->
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Constant names: UPPER_SNAKE_CASE -->
+        <module name="ConstantName"/>
+
+        <!-- ==================== Import Checks ==================== -->
+
+        <!-- No wildcard imports -->
+        <module name="AvoidStarImport"/>
+
+        <!-- No redundant imports -->
+        <module name="RedundantImport"/>
+
+        <!-- No unused imports -->
+        <module name="UnusedImports"/>
+
+        <!-- ==================== Size Violations ==================== -->
+
+        <!-- Maximum line length: 120 characters -->
+        <module name="LineLength">
+            <property name="max" value="120"/>
+            <property name="ignorePattern" value="^package.*|^import.*|a]href|href|http://|https://|ftp://"/>
+        </module>
+
+        <!-- Maximum method length -->
+        <module name="MethodLength">
+            <property name="max" value="60"/>
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!-- Maximum number of parameters -->
+        <module name="ParameterNumber">
+            <property name="max" value="7"/>
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!-- ==================== Whitespace ==================== -->
+
+        <module name="GenericWhitespace"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+        </module>
+
+        <!-- ==================== Coding ==================== -->
+
+        <!-- Require default clause in switch statements -->
+        <module name="MissingSwitchDefault"/>
+
+        <!-- Fall-through in switch must be commented -->
+        <module name="FallThrough"/>
+
+        <!-- No empty statements (stray semicolons) -->
+        <module name="EmptyStatement"/>
+
+        <!-- Equals and hashCode must be overridden together -->
+        <module name="EqualsHashCode"/>
+
+        <!-- String literal equality must use .equals() -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- No assignments in subexpressions -->
+        <module name="InnerAssignment">
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!-- Simplify boolean expressions -->
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+
+        <!-- ==================== Design ==================== -->
+
+        <!-- One top-level class per file -->
+        <module name="OneTopLevelClass"/>
+
+        <!-- Utility classes should have private constructors -->
+        <module name="HideUtilityClassConstructor">
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!-- ==================== Miscellaneous ==================== -->
+
+        <!-- Array style: Java style (String[] args, not String args[]) -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- Require @Override annotation -->
+        <module name="MissingOverride"/>
+
+        <!-- Upper-case 'L' suffix for long literals -->
+        <module name="UpperEll"/>
+    </module>
+</module>

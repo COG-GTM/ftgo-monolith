@@ -1,0 +1,106 @@
+// =============================================================================
+// FTGO Test Utils - Shared Test Utility Library Build Configuration
+// =============================================================================
+// Reusable test utilities for all FTGO microservices and shared libraries.
+// Contains test data builders, custom assertions, shared test configuration,
+// and Testcontainers configuration for integration tests.
+//
+// Package: net.chrisrichardson.ftgo.testutils
+// Version: 1.0.0
+//
+// Usage: Add as a testCompile dependency in service build.gradle:
+//   testCompile project(':shared:ftgo-test-utils')
+//
+// Future: When root Gradle is upgraded to 8.7+, replace with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+// =============================================================================
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // FTGO domain entities (Order, Consumer, Restaurant, Courier)
+    compile project(':ftgo-domain')
+
+    // FTGO common value objects (Money, Address, PersonName)
+    compile project(':ftgo-common')
+
+    // Spring Boot Test starter (includes Spring TestContext, MockMvc)
+    compile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // JUnit 5 (Jupiter) API and engine (using 5.3.x for Java 8 compatibility)
+    compile "org.junit.jupiter:junit-jupiter-api:5.3.2"
+    compile "org.junit.jupiter:junit-jupiter-engine:5.3.2"
+
+    // JUnit 4 vintage engine (for backward compatibility during migration)
+    compile "junit:junit:4.12"
+    compile "org.junit.vintage:junit-vintage-engine:5.3.2"
+
+    // Mockito for mocking (using version compatible with Java 8)
+    compile "org.mockito:mockito-core:2.23.4"
+    compile "org.mockito:mockito-junit-jupiter:2.23.4"
+
+    // AssertJ for fluent assertions (using version compatible with Java 8)
+    compile "org.assertj:assertj-core:3.11.1"
+
+    // Rest-Assured for API testing
+    // Note: Legacy monolith uses com.jayway.restassured:rest-assured:2.9.0
+    // New microservices should use io.rest-assured:rest-assured:5.4.0
+    // We include the legacy version for backward compatibility with existing tests
+    compile "com.jayway.restassured:rest-assured:$restAssuredVersion"
+    compile "com.jayway.restassured:spring-mock-mvc:$restAssuredVersion"
+
+    // Testcontainers for integration tests (using version compatible with Java 8)
+    compile "org.testcontainers:testcontainers:1.17.6"
+    compile "org.testcontainers:mysql:1.17.6"
+    compile "org.testcontainers:junit-jupiter:1.17.6"
+
+    // Spring Security Test (for authenticated test scenarios)
+    compile "org.springframework.security:spring-security-test:5.0.6.RELEASE"
+
+    // Jackson for JSON serialization in tests
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    // SLF4J for logging in test utilities
+    compile 'org.slf4j:slf4j-api:1.7.25'
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-test-utils'
+            version = '1.0.0'
+
+            pom {
+                name = 'FTGO Test Utilities Library'
+                description = 'Shared test data builders, custom assertions, Testcontainers configuration, and test templates for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

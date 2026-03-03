@@ -82,4 +82,6 @@ include "shared:ftgo-tracing"
 include "shared:ftgo-openapi"
 include "shared:ftgo-resilience"
 include "shared:ftgo-authorization"
+include "shared:ftgo-error-handling"
+include "shared:ftgo-test-utils"
 

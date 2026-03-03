@@ -1,11 +1,12 @@
 // =============================================================================
-// FTGO Logging - Shared Logging Library Build Configuration
+// FTGO Error Handling - Shared Error Handling Library Build Configuration
 // =============================================================================
-// Provides structured JSON logging with correlation ID propagation for all
-// FTGO microservices. Uses Logback with logstash-logback-encoder for JSON
-// output and Spring Boot auto-configuration for seamless integration.
+// Standalone, versioned shared library providing centralized error handling
+// for all FTGO microservices. Contains @ControllerAdvice-based global exception
+// handler, standardized ErrorResponse DTO, error code constants, Bean Validation
+// support, and inter-service communication error handling.
 //
-// Package: com.ftgo.logging
+// Package: com.ftgo.errorhandling
 // Version: 1.0.0
 //
 // Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
@@ -14,29 +15,32 @@
 //   ftgo.publishing-conventions - Maven publishing for shared libraries
 // =============================================================================
 
-version = ftgoLoggingVersion
+version = '1.0.0'
 group = 'net.chrisrichardson.ftgo'
 
 apply plugin: 'maven-publish'
 
 dependencies {
-    // Spring Boot base (for auto-configuration support)
-    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
-
-    // Spring Web (optional - for servlet filter support)
+    // Spring Boot Web (for @ControllerAdvice, @RestController, HttpStatus)
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
-    // Spring AOP (for LoggingAspect)
-    compile "org.springframework.boot:spring-boot-starter-aop:$springBootVersion"
+    // Bean Validation API (javax.validation / jakarta.validation)
+    compile "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
 
-    // Logstash Logback Encoder - structured JSON logging
-    compile 'net.logstash.logback:logstash-logback-encoder:7.4'
+    // Jackson JSON serialization (for ErrorResponse serialization)
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
 
-    // SLF4J API
+    // SLF4J for logging
     compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // FTGO shared libraries (optional - for handling FTGO-specific exceptions)
+    compile project(":shared:ftgo-common")
+    compile project(":shared:ftgo-domain")
 
     // Testing
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 }
 
 // ---------------------------------------------------------------------------
@@ -44,8 +48,8 @@ dependencies {
 // ---------------------------------------------------------------------------
 // Publishes the library to the local Maven repository and a project-local repo.
 // Usage:
-//   ./gradlew :shared:ftgo-logging:publishToMavenLocal
-//   ./gradlew :shared:ftgo-logging:publish
+//   ./gradlew :shared:ftgo-error-handling:publishToMavenLocal
+//   ./gradlew :shared:ftgo-error-handling:publish
 // ---------------------------------------------------------------------------
 
 publishing {
@@ -54,12 +58,12 @@ publishing {
             from components.java
 
             groupId = 'net.chrisrichardson.ftgo'
-            artifactId = 'ftgo-logging'
-            version = ftgoLoggingVersion
+            artifactId = 'ftgo-error-handling'
+            version = '1.0.0'
 
             pom {
-                name = 'FTGO Logging Library'
-                description = 'Structured JSON logging with correlation ID propagation for FTGO microservices'
+                name = 'FTGO Error Handling Library'
+                description = 'Centralized error handling with @ControllerAdvice, standardized error responses, error codes, and Bean Validation for FTGO microservices'
                 url = 'https://github.com/COG-GTM/ftgo-monolith'
 
                 licenses {

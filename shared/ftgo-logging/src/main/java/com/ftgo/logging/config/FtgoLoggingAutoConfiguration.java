@@ -1,7 +1,9 @@
 package com.ftgo.logging.config;
 
+import com.ftgo.logging.aspect.LoggingAspect;
 import com.ftgo.logging.filter.CorrelationIdFilter;
 import com.ftgo.logging.filter.ServiceNameInitializer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
  * <ul>
  *   <li>{@link CorrelationIdFilter} - Populates MDC with correlation ID and request context</li>
  *   <li>{@link ServiceNameInitializer} - Sets the service name in MDC from application properties</li>
+ *   <li>{@link LoggingAspect} - Provides automatic method entry/exit logging for @Loggable classes</li>
  * </ul>
  *
  * <p>Services only need to add this library as a dependency and set
@@ -51,5 +54,16 @@ public class FtgoLoggingAutoConfiguration {
     @ConditionalOnMissingBean(ServiceNameInitializer.class)
     public ServiceNameInitializer serviceNameInitializer() {
         return new ServiceNameInitializer("unknown-service");
+    }
+
+    /**
+     * Registers the logging aspect for automatic method entry/exit logging.
+     * Only registered when AspectJ is available on the classpath.
+     */
+    @Bean
+    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
+    @ConditionalOnMissingBean(LoggingAspect.class)
+    public LoggingAspect loggingAspect() {
+        return new LoggingAspect();
     }
 }

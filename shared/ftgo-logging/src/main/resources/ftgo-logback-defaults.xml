@@ -5,13 +5,14 @@
   =============================================================================
   This file provides shared Logback configuration that can be included by
   any FTGO microservice. It defines structured JSON output with standard
-  fields for cross-service log correlation.
+  fields for cross-service log correlation, sensitive data masking, and
+  async appenders for production use.
 
   Usage in service logback-spring.xml:
     <configuration>
       <include resource="ftgo-logback-defaults.xml" />
       <root level="INFO">
-        <appender-ref ref="CONSOLE_JSON" />
+        <appender-ref ref="ASYNC_JSON" />
       </root>
     </configuration>
 
@@ -27,25 +28,36 @@
 
 <included>
     <!-- ===================================================================== -->
+    <!-- Sensitive Data Masking Converter                                       -->
+    <!-- ===================================================================== -->
+    <conversionRule conversionWord="maskedMsg"
+                    converterClass="com.ftgo.logging.masking.SensitiveDataMaskingConverter" />
+
+    <!-- ===================================================================== -->
     <!-- Properties                                                            -->
     <!-- ===================================================================== -->
     <property name="SERVICE_NAME" value="${spring.application.name:-unknown-service}" />
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] [%X{traceId:-}] [%X{spanId:-}] %logger{36} - %msg%n" />
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] [%X{traceId:-}] [%X{spanId:-}] [%X{userId:-}] [%X{serviceName:-}] %logger{36} - %maskedMsg%n" />
 
     <!-- ===================================================================== -->
     <!-- JSON Console Appender (Production / Staging)                          -->
     <!-- ===================================================================== -->
     <!-- Outputs structured JSON logs to stdout for collection by Fluentd.     -->
     <!-- Each log entry includes: @timestamp, level, logger, message,          -->
-    <!-- service, correlationId, traceId, spanId, and all MDC fields.          -->
+    <!-- service, correlationId, traceId, spanId, userId, and all MDC fields.  -->
+    <!-- Sensitive data is automatically masked via MaskingJsonGeneratorDecorator. -->
     <!-- ===================================================================== -->
     <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <!-- Include standard fields -->
+            <!-- Sensitive data masking for JSON output -->
+            <jsonGeneratorDecorator class="com.ftgo.logging.masking.MaskingJsonGeneratorDecorator" />
+
+            <!-- Include standard MDC fields -->
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
             <includeMdcKeyName>serviceName</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
             <includeMdcKeyName>requestMethod</includeMdcKeyName>
             <includeMdcKeyName>requestUri</includeMdcKeyName>
             <includeMdcKeyName>requestId</includeMdcKeyName>
@@ -72,10 +84,26 @@
     </appender>
 
     <!-- ===================================================================== -->
+    <!-- Async JSON Console Appender (Production / Staging / Docker)           -->
+    <!-- ===================================================================== -->
+    <!-- Wraps CONSOLE_JSON in an async appender to avoid blocking application -->
+    <!-- threads. Configured with a queue of 1024 and neverBlock=true to       -->
+    <!-- prevent application slowdowns under high log volume.                   -->
+    <!-- ===================================================================== -->
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="CONSOLE_JSON" />
+    </appender>
+
+    <!-- ===================================================================== -->
     <!-- Plain Text Console Appender (Local Development)                       -->
     <!-- ===================================================================== -->
     <!-- Human-readable console output for local development. Includes         -->
-    <!-- correlation ID and trace context for debugging.                        -->
+    <!-- correlation ID, trace context, and userId for debugging.              -->
+    <!-- Sensitive data is masked via the %maskedMsg conversion word.           -->
     <!-- ===================================================================== -->
     <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -96,10 +124,14 @@
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Sensitive data masking for file output -->
+            <jsonGeneratorDecorator class="com.ftgo.logging.masking.MaskingJsonGeneratorDecorator" />
+
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
             <includeMdcKeyName>serviceName</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
             <fieldNames>
                 <timestamp>@timestamp</timestamp>
                 <version>[ignore]</version>
@@ -107,6 +139,17 @@
             </fieldNames>
             <customFields>{"service":"${SERVICE_NAME}"}</customFields>
         </encoder>
+    </appender>
+
+    <!-- ===================================================================== -->
+    <!-- Async File Appender                                                    -->
+    <!-- ===================================================================== -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_JSON" />
     </appender>
 
     <!-- ===================================================================== -->
