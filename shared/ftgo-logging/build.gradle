@@ -1,0 +1,77 @@
+// =============================================================================
+// FTGO Logging - Shared Logging Library Build Configuration
+// =============================================================================
+// Provides structured JSON logging with correlation ID propagation for all
+// FTGO microservices. Uses Logback with logstash-logback-encoder for JSON
+// output and Spring Boot auto-configuration for seamless integration.
+//
+// Package: com.ftgo.logging
+// Version: 1.0.0
+//
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
+//   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
+//   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
+//   ftgo.publishing-conventions - Maven publishing for shared libraries
+// =============================================================================
+
+version = ftgoLoggingVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot base (for auto-configuration support)
+    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+
+    // Spring Web (optional - for servlet filter support)
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    // Logstash Logback Encoder - structured JSON logging
+    compile 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    // SLF4J API
+    compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-logging:publishToMavenLocal
+//   ./gradlew :shared:ftgo-logging:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-logging'
+            version = ftgoLoggingVersion
+
+            pom {
+                name = 'FTGO Logging Library'
+                description = 'Structured JSON logging with correlation ID propagation for FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

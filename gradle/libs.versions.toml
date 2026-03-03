@@ -29,6 +29,10 @@ hibernate                   = "6.4.4.Final"
 micrometer                  = "1.12.5"
 micrometer-tracing          = "1.2.5"
 
+# --- Logging ---
+logstash-logback-encoder    = "7.4"
+logback                     = "1.4.14"
+
 # --- Serialization ---
 jackson                     = "2.17.0"
 
@@ -76,6 +80,11 @@ jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.pe
 micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave     = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+
+# --- Logging ---
+logstash-logback-encoder            = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
+logback-classic                     = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core                        = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
 
 # --- Serialization ---
 jackson-databind                    = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
@@ -129,6 +138,13 @@ observability = [
     "micrometer-core",
     "micrometer-registry-prometheus",
     "micrometer-tracing-bridge-brave",
+]
+
+# Structured logging dependencies
+logging = [
+    "logstash-logback-encoder",
+    "logback-classic",
+    "logback-core",
 ]
 
 # Jackson serialization

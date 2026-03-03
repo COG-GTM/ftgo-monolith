@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: ftgo-logging
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: logging
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9200
+      targetPort: 9200
+      name: http
+    - port: 9300
+      targetPort: 9300
+      name: transport
+  selector:
+    app.kubernetes.io/name: elasticsearch
