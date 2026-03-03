@@ -1,0 +1,58 @@
+# =============================================================================
+# FTGO Monolith - Docker Build Context Ignore File
+# =============================================================================
+# Excludes unnecessary files from the Docker build context to improve
+# build speed and reduce image size.
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+.vscode
+.project
+.classpath
+.settings
+
+# Build outputs (will be rebuilt inside Docker)
+**/build/
+**/out/
+**/target/
+
+# Documentation
+docs/
+LICENSE
+
+# CI/CD
+.github/
+.circleci/
+.travis.yml
+Jenkinsfile
+
+# Docker (avoid recursive inclusion)
+**/docker-compose*.yml
+**/.dockerignore
+
+# Kubernetes
+deployment/
+
+# Tests (end-to-end only - unit tests excluded via -x test flag)
+ftgo-end-to-end-tests/
+ftgo-end-to-end-tests-common/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

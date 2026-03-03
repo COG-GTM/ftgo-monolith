@@ -1,0 +1,101 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-dev
+
+resources:
+  - ../../base
+
+patches:
+  # Dev environment: reduce replicas and resources for cost savings
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3
+  # Dev: reduce resource requests
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 256Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 512Mi
+
+commonLabels:
+  environment: dev
+
+# Dev environment ConfigMap overrides
+configMapGenerator:
+  - name: ftgo-order-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,dev
+      - SPRING_JPA_SHOW_SQL=true
+  - name: ftgo-consumer-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,dev
+      - SPRING_JPA_SHOW_SQL=true
+  - name: ftgo-restaurant-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,dev
+      - SPRING_JPA_SHOW_SQL=true
+  - name: ftgo-courier-service-config
+    behavior: merge
+    literals:
+      - SPRING_PROFILES_ACTIVE=kubernetes,dev
+      - SPRING_JPA_SHOW_SQL=true
+
+# Dev secrets - base64 encoded dev credentials
+secretGenerator:
+  - name: ftgo-db-secret
+    behavior: replace
+    literals:
+      - root-password=ZGV2LXJvb3QtcGFzc3dvcmQ=
+      - username=ZGV2LXVzZXI=
+      - password=ZGV2LXBhc3N3b3Jk
+    type: Opaque
+  - name: ftgo-order-service-secret
+    behavior: replace
+    literals:
+      - db-username=ZGV2LXVzZXI=
+      - db-password=ZGV2LXBhc3N3b3Jk
+    type: Opaque
+  - name: ftgo-consumer-service-secret
+    behavior: replace
+    literals:
+      - db-username=ZGV2LXVzZXI=
+      - db-password=ZGV2LXBhc3N3b3Jk
+    type: Opaque
+  - name: ftgo-restaurant-service-secret
+    behavior: replace
+    literals:
+      - db-username=ZGV2LXVzZXI=
+      - db-password=ZGV2LXBhc3N3b3Jk
+    type: Opaque
+  - name: ftgo-courier-service-secret
+    behavior: replace
+    literals:
+      - db-username=ZGV2LXVzZXI=
+      - db-password=ZGV2LXBhc3N3b3Jk
+    type: Opaque
