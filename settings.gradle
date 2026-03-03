@@ -75,4 +75,5 @@ include "services:ftgo-courier-service"
 include "shared:ftgo-common"
 include "shared:ftgo-domain"
 include "shared:ftgo-common-jpa"
+include "shared:ftgo-security"
 

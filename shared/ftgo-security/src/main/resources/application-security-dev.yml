@@ -1,0 +1,25 @@
+# =============================================================================
+# FTGO Security - Development Security Profile
+# =============================================================================
+# Relaxed security settings for local development.
+# Activate with: spring.profiles.active=security,security-dev
+# =============================================================================
+
+ftgo:
+  security:
+    cors:
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:8080
+        - http://localhost:8081
+        - http://127.0.0.1:3000
+        - http://127.0.0.1:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
