@@ -2,7 +2,8 @@
 // ftgo.testing-conventions - Testing Convention Plugin
 // =============================================================================
 // Configures standard testing infrastructure for all new FTGO modules.
-// Sets up JUnit 5, integration test source set, and common test dependencies.
+// Sets up JUnit 5, integration test source set, JaCoCo code coverage,
+// and common test dependencies.
 //
 // Usage in build.gradle:
 //   plugins {
@@ -12,6 +13,54 @@
 
 plugins {
     id 'ftgo.java-conventions'
+    id 'jacoco'
+}
+
+// ---------------------------------------------------------------------------
+// JaCoCo code coverage configuration
+// ---------------------------------------------------------------------------
+
+jacoco {
+    toolVersion = '0.8.11'
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    // Exclude generated code, DTOs, configuration classes from coverage
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/configuration/**',
+                '**/*Configuration.class',
+                '**/*Config.class',
+                '**/*Application.class',
+                '**/*Main.class',
+                '**/dto/**',
+                '**/model/*Request.class',
+                '**/model/*Response.class',
+            ])
+        }))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('jacocoTestReport')
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -37,6 +86,12 @@ tasks.named('test') {
 
     // Fail the build on any test failure
     ignoreFailures = false
+
+    // Enable parallel test execution for faster feedback
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    // Generate JaCoCo coverage data
+    finalizedBy tasks.named('jacocoTestReport')
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +130,21 @@ tasks.register('integrationTest', Test) {
     }
 
     shouldRunAfter tasks.named('test')
+}
+
+// JaCoCo report for integration tests
+tasks.register('jacocoIntegrationTestReport', JacocoReport) {
+    description = 'Generates JaCoCo coverage report for integration tests.'
+    group = 'verification'
+
+    executionData tasks.named('integrationTest')
+    sourceSets sourceSets.main
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
 
 // Include integration tests in the check lifecycle
