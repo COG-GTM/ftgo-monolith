@@ -42,7 +42,7 @@ spring:
             exposedHeaders:
               - X-Correlation-Id
               - X-RateLimit-Remaining
-            allowCredentials: true
+            allowCredentials: false
             maxAge: 3600
 
       # Redis rate limiter defaults
@@ -90,7 +90,7 @@ ftgo:
       allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
       allowed-headers: "*"
       exposed-headers: X-Correlation-Id,X-RateLimit-Remaining
-      allow-credentials: true
+      allow-credentials: false
       max-age: 3600
 
 # =============================================================================

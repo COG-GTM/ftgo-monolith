@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.gateway.config;
 import net.chrisrichardson.ftgo.gateway.filter.CorrelationIdFilter;
 import net.chrisrichardson.ftgo.gateway.filter.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -39,7 +41,9 @@ public class GatewayRoutesConfig {
     @Bean
     public RouteLocator ftgoRouteLocator(RouteLocatorBuilder builder,
                                           JwtAuthenticationFilter jwtFilter,
-                                          CorrelationIdFilter correlationIdFilter) {
+                                          CorrelationIdFilter correlationIdFilter,
+                                          RedisRateLimiter redisRateLimiter,
+                                          KeyResolver apiKeyResolver) {
         return builder.routes()
                 // =====================================================================
                 // Order Service Routes
@@ -53,7 +57,8 @@ public class GatewayRoutesConfig {
                                         .setName("orderServiceCircuitBreaker")
                                         .setFallbackUri("forward:/fallback/orders"))
                                 .requestRateLimiter(rl -> rl
-                                        .setRateLimiter(null) // Uses default RedisRateLimiter bean
+                                        .setRateLimiter(redisRateLimiter)
+                                        .setKeyResolver(apiKeyResolver)
                                         .setDenyEmptyKey(false))
                                 .rewritePath("/api/orders/(?<segment>.*)", "/orders/${segment}")
                         )
@@ -83,7 +88,8 @@ public class GatewayRoutesConfig {
                                         .setName("consumerServiceCircuitBreaker")
                                         .setFallbackUri("forward:/fallback/consumers"))
                                 .requestRateLimiter(rl -> rl
-                                        .setRateLimiter(null)
+                                        .setRateLimiter(redisRateLimiter)
+                                        .setKeyResolver(apiKeyResolver)
                                         .setDenyEmptyKey(false))
                                 .rewritePath("/api/consumers/(?<segment>.*)", "/consumers/${segment}")
                         )
@@ -113,7 +119,8 @@ public class GatewayRoutesConfig {
                                         .setName("restaurantServiceCircuitBreaker")
                                         .setFallbackUri("forward:/fallback/restaurants"))
                                 .requestRateLimiter(rl -> rl
-                                        .setRateLimiter(null)
+                                        .setRateLimiter(redisRateLimiter)
+                                        .setKeyResolver(apiKeyResolver)
                                         .setDenyEmptyKey(false))
                                 .rewritePath("/api/restaurants/(?<segment>.*)", "/restaurants/${segment}")
                         )
@@ -143,7 +150,8 @@ public class GatewayRoutesConfig {
                                         .setName("courierServiceCircuitBreaker")
                                         .setFallbackUri("forward:/fallback/couriers"))
                                 .requestRateLimiter(rl -> rl
-                                        .setRateLimiter(null)
+                                        .setRateLimiter(redisRateLimiter)
+                                        .setKeyResolver(apiKeyResolver)
                                         .setDenyEmptyKey(false))
                                 .rewritePath("/api/couriers/(?<segment>.*)", "/couriers/${segment}")
                         )

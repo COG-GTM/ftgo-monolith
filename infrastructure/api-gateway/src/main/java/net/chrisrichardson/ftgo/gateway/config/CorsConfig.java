@@ -14,6 +14,10 @@ import java.util.List;
  *
  * <p>Centralizes CORS handling at the gateway level so individual
  * microservices do not need to configure CORS independently.
+ *
+ * <p>Note: When {@code allowCredentials} is {@code true}, wildcard origins
+ * are automatically converted to {@code allowedOriginPatterns} to comply
+ * with the CORS specification (credentials + wildcard origin is invalid).
  */
 @Configuration
 public class CorsConfig {
@@ -30,7 +34,7 @@ public class CorsConfig {
     @Value("${ftgo.gateway.cors.exposed-headers:X-Correlation-Id,X-RateLimit-Remaining}")
     private String exposedHeaders;
 
-    @Value("${ftgo.gateway.cors.allow-credentials:true}")
+    @Value("${ftgo.gateway.cors.allow-credentials:false}")
     private boolean allowCredentials;
 
     @Value("${ftgo.gateway.cors.max-age:3600}")
@@ -39,7 +43,16 @@ public class CorsConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+
+        // When credentials are enabled and origins contain "*", use allowedOriginPatterns
+        // to comply with CORS spec (credentials + wildcard origin is invalid)
+        List<String> origins = List.of(allowedOrigins.split(","));
+        if (allowCredentials && origins.contains("*")) {
+            corsConfig.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            corsConfig.setAllowedOrigins(origins);
+        }
+
         corsConfig.setAllowedMethods(List.of(allowedMethods.split(",")));
         corsConfig.setAllowedHeaders(List.of(allowedHeaders.split(",")));
         corsConfig.setExposedHeaders(List.of(exposedHeaders.split(",")));
