@@ -19,7 +19,6 @@ data:
     path.logs: /usr/share/elasticsearch/logs
     bootstrap.memory_lock: false
     xpack.security.enabled: false
-    xpack.ilm.enabled: true
     http.cors.enabled: true
     http.cors.allow-origin: "*"
     http.cors.allow-headers: "X-Requested-With,Content-Type,Content-Length,Authorization"

@@ -55,8 +55,6 @@ spec:
               value: "-Xms512m -Xmx512m"
             - name: xpack.security.enabled
               value: "false"
-            - name: xpack.ilm.enabled
-              value: "true"
             - name: bootstrap.memory_lock
               value: "false"
           resources:

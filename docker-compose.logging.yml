@@ -35,7 +35,6 @@ services:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - xpack.security.enabled=false
-      - xpack.ilm.enabled=true
       - bootstrap.memory_lock=true
     ulimits:
       memlock:
@@ -78,7 +77,7 @@ services:
       - "24224:24224"
       - "24224:24224/udp"
     volumes:
-      - ./infrastructure/logging/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+      - ./infrastructure/logging/fluentd/fluent-local.conf:/fluentd/etc/fluent.conf:ro
       - fluentd-buffer:/var/log/fluentd-buffers
     depends_on:
       elasticsearch:

@@ -35,7 +35,11 @@ bootstrap.memory_lock: true
 xpack.security.enabled: false
 
 # --- Index Lifecycle Management ---
-xpack.ilm.enabled: true
+# ILM is enabled by default in ES 8.x; no explicit setting needed
+
+# --- Disk Watermarks (relaxed for local dev) ---
+# Override these in production via environment variables
+cluster.routing.allocation.disk.threshold_enabled: false
 
 # --- Cross-Origin Resource Sharing (for Kibana) ---
 http.cors.enabled: true
