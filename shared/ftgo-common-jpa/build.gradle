@@ -1,32 +1,77 @@
 // =============================================================================
 // FTGO Common JPA - Shared Library Build Configuration
 // =============================================================================
-// This build file will be used when ftgo-common-jpa is migrated to shared/ftgo-common-jpa.
-// Currently, the monolith's ftgo-common-jpa module (at the repo root) remains the
-// active build.
+// Standalone, versioned shared library extracted from the legacy ftgo-common-jpa module.
+// Contains JPA ORM mappings for common value objects (Money, Address) that are
+// shared across all FTGO microservices with database access.
 //
-// Package: com.ftgo.common.jpa
-// Contains: Shared JPA configuration, base entities, and persistence utilities
+// Package: net.chrisrichardson.ftgo.common
+// Version: 1.0.0
 //
-// Convention plugins applied (requires root Gradle 8.7+ and includeBuild):
+// Future: When root Gradle is upgraded to 8.7+, replace this with convention plugins:
 //   ftgo.java-conventions       - Java 17, UTF-8, standard repositories
 //   ftgo.testing-conventions    - JUnit 5, Mockito, integration tests
 //   ftgo.publishing-conventions - Maven publishing for shared libraries
-//
-// To activate: uncomment the plugins block and dependencies below after
-// the root Gradle wrapper is upgraded and includeBuild('build-logic') is enabled.
 // =============================================================================
 
-// plugins {
-//     id 'ftgo.java-conventions'
-//     id 'ftgo.testing-conventions'
-//     id 'ftgo.publishing-conventions'
-// }
+version = ftgoCommonVersion
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'maven-publish'
 
 dependencies {
-    // Shared libraries
-    // implementation project(':shared:ftgo-common')
+    // Shared common value objects (Money, Address, PersonName)
+    compile project(":shared:ftgo-common")
 
-    // Spring Data JPA
-    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.2.5'
+    // Spring Data JPA (provides JPA annotations and ORM support)
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+
+    // JAXB runtime dependencies (Java 8 compatibility)
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+}
+
+// ---------------------------------------------------------------------------
+// Maven Publishing Configuration
+// ---------------------------------------------------------------------------
+// Publishes the library to the local Maven repository and a project-local repo.
+// Usage:
+//   ./gradlew :shared:ftgo-common-jpa:publishToMavenLocal
+//   ./gradlew :shared:ftgo-common-jpa:publish
+// ---------------------------------------------------------------------------
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common-jpa'
+            version = ftgoCommonVersion
+
+            pom {
+                name = 'FTGO Common JPA Library'
+                description = 'Shared JPA ORM mappings for common value objects used across FTGO microservices'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'projectLocal'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
