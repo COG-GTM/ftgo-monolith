@@ -31,6 +31,9 @@ mysql-connector = "8.3.0"
 # --- Serialization ---
 jackson = "2.17.0"
 
+# --- Security ---
+spring-security = "6.2.4"
+
 # --- Testing ---
 junit-jupiter = "5.10.2"
 rest-assured = "5.4.0"
@@ -58,7 +61,14 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
 
+# --- Security ---
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
+spring-security-config = { module = "org.springframework.security:spring-security-config", version.ref = "spring-security" }
+spring-security-web = { module = "org.springframework.security:spring-security-web", version.ref = "spring-security" }
+
 # --- Observability ---
+micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
 

@@ -1,0 +1,37 @@
+// =============================================================================
+// ftgo-courier-service-api — Courier Service API DTOs for cross-service communication
+// Contains request/response DTOs for the Courier Service
+// Migrated from monolith module: ftgo-courier-service-api
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    compile project(':shared-ftgo-common')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-courier-service-api'
+            version = project.version
+
+            pom {
+                name = 'FTGO Courier Service API'
+                description = 'API DTOs for cross-service communication with the FTGO Courier Service.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

@@ -1,0 +1,266 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "FTGO Business Metrics — Orders, Consumers, Restaurants, and Deliveries",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 300,
+      "title": "Order Service Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "title": "Orders Created (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(orders_created_total{service=\"order-service\"}[5m])", "legendFormat": "Orders Created/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "title": "Orders Cancelled (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(orders_cancelled_total{service=\"order-service\"}[5m])", "legendFormat": "Orders Cancelled/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 0.3 }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "title": "Cancellation Rate",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(orders_cancelled_total{service=\"order-service\"}[5m]) / rate(orders_created_total{service=\"order-service\"}[5m])", "legendFormat": "Cancellation Rate" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "id": 4,
+      "title": "Cumulative Order Value",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "orders_total_value_total{service=\"order-service\"} / 100", "legendFormat": "Total Value (USD)" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "id": 5,
+      "title": "Orders by State",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "orders_by_state{service=\"order-service\"}", "legendFormat": "{{ state }}" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "id": 301,
+      "title": "Consumer Service Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "id": 10,
+      "title": "Consumers Registered (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(consumers_registered_total{service=\"consumer-service\"}[5m])", "legendFormat": "Registrations/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "id": 11,
+      "title": "Consumers Validated (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(consumers_validated_total{service=\"consumer-service\"}[5m])", "legendFormat": "Validations/s" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "id": 302,
+      "title": "Restaurant Service Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 27 },
+      "id": 20,
+      "title": "Restaurants Created (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(restaurants_created_total{service=\"restaurant-service\"}[5m])", "legendFormat": "Restaurants Created/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 27 },
+      "id": 21,
+      "title": "Menus Updated (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(menus_updated_total{service=\"restaurant-service\"}[5m])", "legendFormat": "Menu Updates/s" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 35 },
+      "id": 303,
+      "title": "Courier / Delivery Service Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 36 },
+      "id": 30,
+      "title": "Deliveries Assigned (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(deliveries_assigned_total{service=\"courier-service\"}[5m])", "legendFormat": "Assigned/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 36 },
+      "id": 31,
+      "title": "Deliveries Completed (rate)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(deliveries_completed_total{service=\"courier-service\"}[5m])", "legendFormat": "Completed/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 36 },
+      "id": 32,
+      "title": "Delivery Time (p50 / p95 / p99)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(deliveries_average_time_seconds_bucket{service=\"courier-service\"}[5m]))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, rate(deliveries_average_time_seconds_bucket{service=\"courier-service\"}[5m]))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, rate(deliveries_average_time_seconds_bucket{service=\"courier-service\"}[5m]))", "legendFormat": "p99" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["ftgo", "business-metrics", "orders", "consumers", "restaurants", "deliveries"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "query": "prometheus",
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "FTGO Business Metrics",
+  "uid": "ftgo-business-metrics",
+  "version": 1
+}

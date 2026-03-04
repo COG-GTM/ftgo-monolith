@@ -1,0 +1,143 @@
+# =============================================================================
+# Prometheus Alerting Rules for FTGO Microservices
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # Service Health Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (job)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (job)
+          > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has an error rate above 5% for the last 2 minutes. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: HighResponseLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job))
+          > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} p95 latency is above 2 seconds. Current value: {{ $value | humanizeDuration }}"
+
+      - alert: HighRequestRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count[5m])) by (job) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} is receiving more than 1000 req/s for 5 minutes. Current value: {{ $value }}"
+
+  # ---------------------------------------------------------------------------
+  # JVM Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_jvm_health
+    rules:
+      - alert: HighHeapUsage
+        expr: |
+          jvm_memory_used_bytes{area="heap"}
+          /
+          jvm_memory_max_bytes{area="heap"}
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High heap usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap usage is above 85%. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: CriticalHeapUsage
+        expr: |
+          jvm_memory_used_bytes{area="heap"}
+          /
+          jvm_memory_max_bytes{area="heap"}
+          > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical heap usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap usage is above 95%. Immediate attention required. Current value: {{ $value | humanizePercentage }}"
+
+      - alert: HighGcPauseTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m])
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.job }}"
+          description: "{{ $labels.job }} average GC pause time is above 500ms. Current value: {{ $value | humanizeDuration }}"
+
+      - alert: HighThreadCount
+        expr: jvm_threads_live_threads > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High thread count on {{ $labels.job }}"
+          description: "{{ $labels.job }} has more than 500 live threads. Current value: {{ $value }}"
+
+  # ---------------------------------------------------------------------------
+  # Business Metrics Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_business_metrics
+    rules:
+      - alert: HighOrderCancellationRate
+        expr: |
+          rate(orders_cancelled_total[15m])
+          /
+          rate(orders_created_total[15m])
+          > 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High order cancellation rate"
+          description: "More than 30% of orders are being cancelled over the last 15 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      - alert: NoOrdersCreated
+        expr: |
+          rate(orders_created_total[15m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No orders being created"
+          description: "No new orders have been created in the last 30 minutes. This may indicate an outage."
+
+      - alert: DeliveryTimeExceeded
+        expr: |
+          histogram_quantile(0.95, rate(deliveries_average_time_seconds_bucket[15m])) > 3600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Delivery times exceeding threshold"
+          description: "P95 delivery time exceeds 1 hour. Current value: {{ $value | humanizeDuration }}"

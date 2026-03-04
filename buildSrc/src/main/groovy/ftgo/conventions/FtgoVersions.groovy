@@ -43,6 +43,9 @@ class FtgoVersions {
     static final String MAPSTRUCT = '1.5.5.Final'
     static final String SLF4J = '2.0.12'
 
+    // --- Security ---
+    static final String SPRING_SECURITY = '6.2.4'
+
     // --- Docker / Container ---
     static final String JIB = '3.4.1'
 
