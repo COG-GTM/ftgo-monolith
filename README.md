@@ -1,5 +1,11 @@
 # FTGO Platform
 
+[![CI: Order Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml)
+[![CI: Consumer Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml)
+[![CI: Restaurant Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml)
+[![CI: Courier Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml)
+[![CI: Shared Libraries](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml)
+
 FTGO (Food To Go) is an online food delivery platform, originally built as a monolith and currently being migrated to a microservices architecture.
 
 This repository is a **mono-repo** containing both the existing monolith and the new microservices structure, allowing a gradual, side-by-side migration.

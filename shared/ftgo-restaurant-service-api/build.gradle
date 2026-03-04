@@ -1,0 +1,40 @@
+// =============================================================================
+// ftgo-restaurant-service-api — Restaurant Service API DTOs for cross-service communication
+// Contains request/response DTOs and event objects for the Restaurant Service
+// Migrated from monolith module: ftgo-restaurant-service-api
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    compile project(':shared-ftgo-common')
+
+    // JPA annotations needed for MenuItemDTO (@Embeddable, @Access)
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-restaurant-service-api'
+            version = project.version
+
+            pom {
+                name = 'FTGO Restaurant Service API'
+                description = 'API DTOs and event objects for cross-service communication with the FTGO Restaurant Service.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

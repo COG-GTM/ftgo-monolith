@@ -52,12 +52,35 @@ project(':services-ftgo-courier-service').projectDir = file('services/ftgo-couri
 include 'shared-ftgo-common'
 project(':shared-ftgo-common').projectDir = file('shared/ftgo-common')
 
+include 'shared-ftgo-metrics-lib'
+project(':shared-ftgo-metrics-lib').projectDir = file('shared/ftgo-metrics-lib')
+
 include 'shared-ftgo-common-jpa'
 project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
 
 include 'shared-ftgo-domain'
 project(':shared-ftgo-domain').projectDir = file('shared/ftgo-domain')
 
+// --- Shared API/DTO Libraries (cross-service communication) ---
+include 'shared-ftgo-order-service-api'
+project(':shared-ftgo-order-service-api').projectDir = file('shared/ftgo-order-service-api')
+
+include 'shared-ftgo-consumer-service-api'
+project(':shared-ftgo-consumer-service-api').projectDir = file('shared/ftgo-consumer-service-api')
+
+include 'shared-ftgo-restaurant-service-api'
+project(':shared-ftgo-restaurant-service-api').projectDir = file('shared/ftgo-restaurant-service-api')
+
+include 'shared-ftgo-courier-service-api'
+project(':shared-ftgo-courier-service-api').projectDir = file('shared/ftgo-courier-service-api')
+
+// --- Shared Security Library ---
+include 'shared-ftgo-security-lib'
+project(':shared-ftgo-security-lib').projectDir = file('shared/ftgo-security-lib')
+
+// --- Shared OpenAPI Library ---
+include 'shared-ftgo-openapi-lib'
+project(':shared-ftgo-openapi-lib').projectDir = file('shared/ftgo-openapi-lib')
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================
