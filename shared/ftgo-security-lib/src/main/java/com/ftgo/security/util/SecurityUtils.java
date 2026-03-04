@@ -1,11 +1,14 @@
 package com.ftgo.security.util;
 
+import com.ftgo.security.jwt.FtgoUserDetails;
+import com.ftgo.security.jwt.JwtAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -13,7 +16,17 @@ import java.util.stream.Collectors;
  * Utility class for common security operations.
  *
  * <p>Provides static helper methods for accessing the current security context,
- * extracting authentication details, and checking authorization.
+ * extracting authentication details, and checking authorization. Includes
+ * JWT-specific methods for accessing user details from JWT tokens.
+ *
+ * <p>JWT-specific methods:
+ * <ul>
+ *   <li>{@link #getCurrentUserDetails()} — full user details from JWT</li>
+ *   <li>{@link #getCurrentUserId()} — user ID from JWT {@code sub} claim</li>
+ *   <li>{@link #getCurrentRoles()} — roles from JWT {@code roles} claim</li>
+ *   <li>{@link #getClaim(String)} — arbitrary claim from JWT</li>
+ *   <li>{@link #getAllClaims()} — all JWT claims</li>
+ * </ul>
  */
 public final class SecurityUtils {
 
@@ -74,5 +87,66 @@ public final class SecurityUtils {
      */
     public static boolean isAuthenticated() {
         return getCurrentAuthentication().isPresent();
+    }
+
+    // =========================================================================
+    // JWT-specific methods
+    // =========================================================================
+
+    /**
+     * Returns the {@link FtgoUserDetails} from the current JWT authentication, if present.
+     *
+     * <p>This method only returns a value when the current authentication is a
+     * {@link JwtAuthenticationToken} (i.e., the request was authenticated via JWT).
+     *
+     * @return an Optional containing the user details, or empty if not JWT-authenticated
+     */
+    public static Optional<FtgoUserDetails> getCurrentUserDetails() {
+        return getCurrentAuthentication()
+                .filter(auth -> auth instanceof JwtAuthenticationToken)
+                .map(auth -> ((JwtAuthenticationToken) auth).getUserDetails());
+    }
+
+    /**
+     * Returns the current user's ID from the JWT {@code sub} claim.
+     *
+     * @return an Optional containing the user ID, or empty if not JWT-authenticated
+     */
+    public static Optional<String> getCurrentUserId() {
+        return getCurrentUserDetails()
+                .map(FtgoUserDetails::getUserId);
+    }
+
+    /**
+     * Returns the current user's roles from the JWT {@code roles} claim.
+     *
+     * @return a collection of role strings, or an empty collection if not JWT-authenticated
+     */
+    public static Collection<String> getCurrentRoles() {
+        return getCurrentUserDetails()
+                .map(FtgoUserDetails::getRoles)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
+     * Returns a specific claim value from the current JWT token.
+     *
+     * @param claimName the claim name to retrieve
+     * @return an Optional containing the claim value, or empty if not present or not JWT-authenticated
+     */
+    public static Optional<Object> getClaim(String claimName) {
+        return getCurrentUserDetails()
+                .map(details -> details.getClaim(claimName));
+    }
+
+    /**
+     * Returns all claims from the current JWT token.
+     *
+     * @return an unmodifiable map of all JWT claims, or an empty map if not JWT-authenticated
+     */
+    public static Map<String, Object> getAllClaims() {
+        return getCurrentUserDetails()
+                .map(FtgoUserDetails::getClaims)
+                .orElse(Collections.emptyMap());
     }
 }

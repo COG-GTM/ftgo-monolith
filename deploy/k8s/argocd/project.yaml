@@ -1,0 +1,56 @@
+# =============================================================================
+# ArgoCD AppProject — FTGO Platform
+# =============================================================================
+# Restricts which repositories, clusters, and namespaces the FTGO
+# applications can deploy to.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ftgo
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  description: FTGO Microservices Platform
+  sourceRepos:
+    - https://github.com/COG-GTM/ftgo-monolith.git
+  destinations:
+    - namespace: ftgo-dev
+      server: https://kubernetes.default.svc
+    - namespace: ftgo-staging
+      server: https://kubernetes.default.svc
+    - namespace: ftgo-prod
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: '*'
+    - group: apps
+      kind: '*'
+    - group: autoscaling
+      kind: '*'
+    - group: policy
+      kind: '*'
+    - group: networking.k8s.io
+      kind: '*'
+    - group: external-secrets.io
+      kind: '*'
+    - group: bitnami.com
+      kind: '*'
+  roles:
+    - name: admin
+      description: Full access to FTGO project
+      policies:
+        - p, proj:ftgo:admin, applications, *, ftgo/*, allow
+      groups:
+        - ftgo-admins
+    - name: deployer
+      description: Can sync applications
+      policies:
+        - p, proj:ftgo:deployer, applications, sync, ftgo/*, allow
+        - p, proj:ftgo:deployer, applications, get, ftgo/*, allow
+      groups:
+        - ftgo-deployers

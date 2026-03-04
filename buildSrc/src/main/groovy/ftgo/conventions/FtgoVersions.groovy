@@ -47,6 +47,7 @@ class FtgoVersions {
 
     // --- Security ---
     static final String SPRING_SECURITY = '6.2.4'
+    static final String JJWT = '0.12.5'
 
     // --- Docker / Container ---
     static final String JIB = '3.4.1'

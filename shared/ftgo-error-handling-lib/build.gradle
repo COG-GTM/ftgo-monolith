@@ -1,0 +1,108 @@
+// =============================================================================
+// ftgo-error-handling-lib — Shared error handling library for FTGO microservices
+// Provides centralized @ControllerAdvice, standardized ErrorResponse DTO,
+// error code constants, and Bean Validation support.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    compileJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    compileTestJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot Web (for @ControllerAdvice, @ExceptionHandler, servlet API)
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot Validation (Bean Validation / jakarta.validation)
+    compile "org.springframework.boot:spring-boot-starter-validation:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:${FtgoVersions.SPRING_BOOT}"
+
+    // Jackson for JSON serialization of error responses
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${FtgoVersions.JACKSON}"
+
+    // Micrometer Tracing API (for traceId extraction)
+    compile "io.micrometer:micrometer-tracing:${FtgoVersions.MICROMETER_TRACING}"
+
+    // Spring Security (for AccessDeniedException, AuthenticationException handling)
+    compile "org.springframework.security:spring-security-core:${FtgoVersions.SPRING_SECURITY}"
+    compile "org.springframework.security:spring-security-web:${FtgoVersions.SPRING_SECURITY}"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Shared FTGO common (for existing exceptions)
+    compile project(':shared-ftgo-common')
+
+    // Shared FTGO domain (for OrderMinimumNotMetException)
+    compile project(':shared-ftgo-domain')
+
+    // OpenAPI annotations (optional, for schema docs)
+    compile "org.springdoc:springdoc-openapi-starter-webmvc-ui:${FtgoVersions.SPRINGDOC_OPENAPI}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+    testCompile "io.micrometer:micrometer-tracing-test:${FtgoVersions.MICROMETER_TRACING}"
+    testCompile "org.springframework.security:spring-security-test:${FtgoVersions.SPRING_SECURITY}"
+}
+
+// Configure test task
+test {
+    useJUnitPlatform()
+    scanForTestClasses = false
+    include '**/*Test.class'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-error-handling-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Error Handling Library'
+                description = 'Shared error handling library for FTGO microservices providing centralized @ControllerAdvice, standardized ErrorResponse DTO, error code constants, and Bean Validation support.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

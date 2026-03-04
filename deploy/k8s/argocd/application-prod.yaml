@@ -1,0 +1,40 @@
+# =============================================================================
+# ArgoCD Application — Production Environment
+# =============================================================================
+# Manual sync only — requires approval before promotion from staging.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ftgo-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo-platform
+    environment: prod
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ftgo
+  source:
+    repoURL: https://github.com/COG-GTM/ftgo-monolith.git
+    targetRevision: main
+    path: deploy/helm/ftgo
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ftgo-prod
+  syncPolicy:
+    # No automated sync — requires manual approval
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
