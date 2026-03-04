@@ -61,6 +61,49 @@ services:
       - ftgo-network
 
   # ---------------------------------------------------------------------------
+  # API Gateway
+  # ---------------------------------------------------------------------------
+  ftgo-api-gateway:
+    <<: *service-defaults
+    image: ghcr.io/cog-gtm/ftgo-monolith/ftgo-api-gateway:${IMAGE_TAG:-latest}
+    container_name: ftgo-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      ftgo-order-service:
+        condition: service_started
+      ftgo-consumer-service:
+        condition: service_started
+      ftgo-restaurant-service:
+        condition: service_started
+      ftgo-courier-service:
+        condition: service_started
+    environment:
+      <<: *common-env
+      SERVER_PORT: "8080"
+      FTGO_ORDER_SERVICE_URL: "http://ftgo-order-service:8081"
+      FTGO_CONSUMER_SERVICE_URL: "http://ftgo-consumer-service:8082"
+      FTGO_RESTAURANT_SERVICE_URL: "http://ftgo-restaurant-service:8083"
+      FTGO_COURIER_SERVICE_URL: "http://ftgo-courier-service:8084"
+      SPRING_REDIS_HOST: "ftgo-redis"
+
+  # ---------------------------------------------------------------------------
+  # Redis (for API Gateway rate limiting)
+  # ---------------------------------------------------------------------------
+  ftgo-redis:
+    image: redis:7-alpine
+    container_name: ftgo-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ftgo-network
+
+  # ---------------------------------------------------------------------------
   # Order Service
   # ---------------------------------------------------------------------------
   ftgo-order-service:
