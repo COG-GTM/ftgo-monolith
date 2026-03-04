@@ -1,0 +1,2 @@
+net.chrisrichardson.ftgo.metrics.config.FtgoMetricsAutoConfiguration
+net.chrisrichardson.ftgo.metrics.config.PrometheusMetricsConfiguration

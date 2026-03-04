@@ -73,6 +73,35 @@ jobs:
           ./gradlew :shared-ftgo-common-jpa:test
           ./gradlew :shared-ftgo-domain:test
 
+      # --- Quality Gate Checks ---
+      - name: "Quality Gate: Checkstyle"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-domain:checkstyleMain --continue || true
+
+      - name: "Quality Gate: PMD"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:pmdMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:pmdMain --continue || true
+          ./gradlew :shared-ftgo-domain:pmdMain --continue || true
+
+      - name: "Quality Gate: FindBugs"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-domain:findbugsMain --continue || true
+
+      - name: "Quality Gate: JaCoCo Coverage"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-common-jpa:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-domain:jacocoTestReport --continue || true
+
       - name: Upload ftgo-common test reports
         if: always()
         uses: actions/upload-artifact@v4

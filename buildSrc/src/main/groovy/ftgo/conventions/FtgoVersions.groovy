@@ -21,6 +21,8 @@ class FtgoVersions {
     // --- Observability ---
     static final String MICROMETER = '1.12.5'
     static final String MICROMETER_TRACING = '1.2.5'
+    static final String BRAVE = '6.0.2'
+    static final String ZIPKIN_REPORTER = '3.3.0'
 
     // --- Data & Persistence ---
     static final String FLYWAY = '10.11.0'
@@ -42,6 +44,10 @@ class FtgoVersions {
     static final String LOMBOK = '1.18.32'
     static final String MAPSTRUCT = '1.5.5.Final'
     static final String SLF4J = '2.0.12'
+
+    // --- Security ---
+    static final String SPRING_SECURITY = '6.2.4'
+    static final String JJWT = '0.12.5'
 
     // --- Docker / Container ---
     static final String JIB = '3.4.1'
