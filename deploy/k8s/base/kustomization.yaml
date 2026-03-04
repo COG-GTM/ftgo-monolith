@@ -23,7 +23,9 @@ resources:
   - configmap.yaml
   - mysql-statefulset.yaml
   - mysql-service.yaml
+  - api-gateway.yaml
   - order-service.yaml
   - consumer-service.yaml
   - restaurant-service.yaml
   - courier-service.yaml
+  - efk-logging.yaml

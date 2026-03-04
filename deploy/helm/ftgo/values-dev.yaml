@@ -41,3 +41,40 @@ serviceDefaults:
     SPRING_PROFILES_ACTIVE: kubernetes,dev
     JAVA_OPTS: "-Xmx256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
     LOG_LEVEL: DEBUG
+    FTGO_LOGGING_JSON_ENABLED: "true"
+    FTGO_LOGGING_ASYNC_ENABLED: "true"
+    FTGO_LOGGING_INCLUDE_CALLER_DATA: "true"
+
+# -- Logging / EFK Stack (Dev) ------------------------------------------------
+logging:
+  enabled: true
+  retentionDays: 7
+  elasticsearch:
+    replicas: 1
+    javaOpts: "-Xms256m -Xmx256m"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    storage:
+      size: 5Gi
+  fluentd:
+    logLevel: info
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+  kibana:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi

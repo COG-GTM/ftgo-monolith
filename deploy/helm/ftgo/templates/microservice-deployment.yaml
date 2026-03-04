@@ -6,6 +6,7 @@ Iterates over all enabled microservices and creates a Deployment for each.
 */}}
 
 {{- $services := list
+  (dict "key" "apiGateway" "config" .Values.apiGateway)
   (dict "key" "orderService" "config" .Values.orderService)
   (dict "key" "consumerService" "config" .Values.consumerService)
   (dict "key" "restaurantService" "config" .Values.restaurantService)
@@ -48,7 +49,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ default 45 $.Values.serviceDefaults.terminationGracePeriodSeconds }}
       containers:
         - name: {{ $svc.config.name }}
           image: {{ include "ftgo.serviceImage" (dict "global" $.Values.global "service" $svc.config "serviceName" $svc.config.name) }}
@@ -57,6 +58,10 @@ spec:
             - name: http
               containerPort: {{ $svc.config.port }}
               protocol: TCP
+          {{- with $.Values.serviceDefaults.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             {{- include "ftgo.envVars" (dict "defaults" $.Values.serviceDefaults "service" $svc.config "serviceName" $svc.config.name "port" $svc.config.port) | nindent 12 }}
           {{- with (default $.Values.serviceDefaults.resources $svc.config.resources) }}
