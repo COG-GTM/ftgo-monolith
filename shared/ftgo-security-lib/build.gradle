@@ -51,6 +51,14 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${FtgoVersions.JACKSON}"
 
+    // JWT (JJWT library)
+    compile "io.jsonwebtoken:jjwt-api:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-impl:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-jackson:${FtgoVersions.JJWT}"
+
+    // Spring Boot OAuth2 Resource Server
+    compile "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${FtgoVersions.SPRING_BOOT}"
+
     // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
     testCompile "org.springframework.security:spring-security-test:${FtgoVersions.SPRING_SECURITY}"
