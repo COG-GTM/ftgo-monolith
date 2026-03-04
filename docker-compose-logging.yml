@@ -1,0 +1,122 @@
+# =============================================================================
+# Docker Compose — EFK Logging Stack (Elasticsearch + Fluentd + Kibana)
+# =============================================================================
+# Provides local development centralized logging infrastructure for FTGO services.
+#
+# Usage:
+#   docker-compose -f docker-compose-logging.yml up -d
+#
+# Combined with other stacks:
+#   docker-compose -f docker-compose-services.yml -f docker-compose-logging.yml up -d
+#
+# Combined with full observability:
+#   docker-compose -f docker-compose-services.yml \
+#     -f docker-compose-metrics.yml \
+#     -f docker-compose-tracing.yml \
+#     -f docker-compose-logging.yml up -d
+#
+# Endpoints:
+#   - Elasticsearch: http://localhost:9200
+#   - Kibana:        http://localhost:5601
+#   - Fluentd:       localhost:24224 (forward input)
+#
+# After startup, run the ILM setup script:
+#   ./deploy/efk/setup-ilm.sh dev
+#
+# Import Kibana dashboards:
+#   curl -X POST "http://localhost:5601/api/saved_objects/_import" \
+#     -H "kbn-xsrf: true" --form file=@deploy/efk/kibana/dashboards/service-logs-overview.ndjson
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Elasticsearch — Log Storage & Search Engine
+  # ---------------------------------------------------------------------------
+  # Single-node Elasticsearch for local development log storage.
+  # Logs are indexed with daily rotation and searchable via Kibana.
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: ftgo-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=ftgo-logging
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ftgo-logging
+
+  # ---------------------------------------------------------------------------
+  # Fluentd — Log Collector & Forwarder
+  # ---------------------------------------------------------------------------
+  # Custom Fluentd image with Elasticsearch plugin. Accepts logs via the
+  # Docker Fluentd logging driver (forward protocol on port 24224) and
+  # forwards them to Elasticsearch with FTGO-specific transformations.
+  # ---------------------------------------------------------------------------
+  fluentd:
+    build:
+      context: ./deploy/efk/fluentd
+      dockerfile: Dockerfile
+    container_name: ftgo-fluentd
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - FTGO_ENVIRONMENT=dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ftgo-logging
+
+  # ---------------------------------------------------------------------------
+  # Kibana — Log Visualization & Dashboards
+  # ---------------------------------------------------------------------------
+  # Provides a web UI for searching, visualizing, and analyzing FTGO logs.
+  # Pre-configured dashboards can be imported after startup.
+  # ---------------------------------------------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: ftgo-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+      - TELEMETRY_ENABLED=false
+      - "XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=ftgo-kibana-encryption-key-dev-only-32chars!"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ftgo-logging
+
+volumes:
+  elasticsearch-data:
+    driver: local
+
+networks:
+  ftgo-logging:
+    driver: bridge

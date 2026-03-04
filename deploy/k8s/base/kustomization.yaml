@@ -27,3 +27,4 @@ resources:
   - consumer-service.yaml
   - restaurant-service.yaml
   - courier-service.yaml
+  - efk-logging.yaml
