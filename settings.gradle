@@ -58,6 +58,9 @@ project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
 include 'shared-ftgo-domain'
 project(':shared-ftgo-domain').projectDir = file('shared/ftgo-domain')
 
+include 'shared-ftgo-security-lib'
+project(':shared-ftgo-security-lib').projectDir = file('shared/ftgo-security-lib')
+
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================
