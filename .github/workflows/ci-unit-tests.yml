@@ -37,10 +37,12 @@ jobs:
       - name: Find modules with unit tests
         id: find
         run: |
-          # Discover all subprojects that contain src/test/java
+          # Discover new microservice modules under services/ and shared/
+          # that contain src/test/java.
+          # Legacy ftgo-* modules are already tested by their own per-service
+          # CI workflows and require JDK 8 (incompatible with JDK 17 used here).
           modules="[]"
-          for dir in services/*/src/test/java shared/*/src/test/java \
-                     ftgo-*/src/test/java; do
+          for dir in services/*/src/test/java shared/*/src/test/java; do
             if [ -d "$dir" ]; then
               # Extract module path (e.g., services/ftgo-consumer-service)
               module_dir=$(echo "$dir" | sed 's|/src/test/java||')
@@ -94,13 +96,8 @@ jobs:
           # Convert directory path to Gradle project name
           # e.g., services/ftgo-consumer-service -> :services-ftgo-consumer-service
           # e.g., shared/ftgo-common -> :shared-ftgo-common
-          # e.g., ftgo-order-service -> :ftgo-order-service
           module="${{ matrix.module }}"
-          if [[ "$module" == */* ]]; then
-            gradle_name=":$(echo "$module" | tr '/' '-')"
-          else
-            gradle_name=":$module"
-          fi
+          gradle_name=":$(echo "$module" | tr '/' '-')"
           echo "name=$gradle_name" >> "$GITHUB_OUTPUT"
           echo "Gradle project: $gradle_name"
 
