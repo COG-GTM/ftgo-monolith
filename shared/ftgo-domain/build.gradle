@@ -1,8 +1,40 @@
-// Shared domain library for FTGO microservices
-// Contains shared domain value objects (e.g., Money, Address)
+// =============================================================================
+// ftgo-domain — Shared domain library for FTGO microservices
+// Contains all JPA entities, repositories, and domain configuration
+// Migrated from monolith module: ftgo-domain
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
 
 dependencies {
     compile project(':shared-ftgo-common')
+    compile project(':shared-ftgo-common-jpa')
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-domain'
+            version = project.version
+
+            pom {
+                name = 'FTGO Domain Library'
+                description = 'Shared domain library for FTGO microservices containing JPA entities, Spring Data repositories, and domain configuration.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
