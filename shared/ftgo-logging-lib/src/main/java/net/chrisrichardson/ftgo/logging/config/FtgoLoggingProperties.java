@@ -19,6 +19,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     include-caller-data: false
  *     service-name: ftgo-order-service
  *     correlation-id-header: X-Correlation-ID
+ *     masking:
+ *       enabled: true
+ *     aspect:
+ *       enabled: true
+ *       include-args: true
+ *       include-result: false
+ *       slow-threshold-ms: 1000
  * </pre>
  */
 @ConfigurationProperties(prefix = "ftgo.logging")
@@ -72,6 +79,16 @@ public class FtgoLoggingProperties {
      * Defaults to {@code X-Correlation-ID}.
      */
     private String correlationIdHeader = "X-Correlation-ID";
+
+    /**
+     * Sensitive data masking configuration.
+     */
+    private Masking masking = new Masking();
+
+    /**
+     * Method entry/exit logging aspect configuration.
+     */
+    private Aspect aspect = new Aspect();
 
     public boolean isEnabled() {
         return enabled;
@@ -135,5 +152,98 @@ public class FtgoLoggingProperties {
 
     public void setCorrelationIdHeader(String correlationIdHeader) {
         this.correlationIdHeader = correlationIdHeader;
+    }
+
+    public Masking getMasking() {
+        return masking;
+    }
+
+    public void setMasking(Masking masking) {
+        this.masking = masking;
+    }
+
+    public Aspect getAspect() {
+        return aspect;
+    }
+
+    public void setAspect(Aspect aspect) {
+        this.aspect = aspect;
+    }
+
+    /**
+     * Configuration for sensitive data masking in log output.
+     */
+    public static class Masking {
+
+        /**
+         * Whether sensitive data masking is enabled. Defaults to {@code true}.
+         */
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    /**
+     * Configuration for the method entry/exit logging aspect.
+     */
+    public static class Aspect {
+
+        /**
+         * Whether the logging aspect is enabled. Defaults to {@code false}.
+         */
+        private boolean enabled = false;
+
+        /**
+         * Whether to include method arguments in entry log. Defaults to {@code true}.
+         */
+        private boolean includeArgs = true;
+
+        /**
+         * Whether to include return value in exit log. Defaults to {@code false}.
+         */
+        private boolean includeResult = false;
+
+        /**
+         * Threshold in milliseconds for slow execution warning. Defaults to {@code 1000}.
+         */
+        private long slowThresholdMs = 1000;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isIncludeArgs() {
+            return includeArgs;
+        }
+
+        public void setIncludeArgs(boolean includeArgs) {
+            this.includeArgs = includeArgs;
+        }
+
+        public boolean isIncludeResult() {
+            return includeResult;
+        }
+
+        public void setIncludeResult(boolean includeResult) {
+            this.includeResult = includeResult;
+        }
+
+        public long getSlowThresholdMs() {
+            return slowThresholdMs;
+        }
+
+        public void setSlowThresholdMs(long slowThresholdMs) {
+            this.slowThresholdMs = slowThresholdMs;
+        }
     }
 }

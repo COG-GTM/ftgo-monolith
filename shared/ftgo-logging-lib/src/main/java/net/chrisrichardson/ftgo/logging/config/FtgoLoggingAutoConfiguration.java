@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.logging.config;
 
+import net.chrisrichardson.ftgo.logging.aspect.LoggingAspect;
 import net.chrisrichardson.ftgo.logging.filter.CorrelationIdFilter;
 import net.chrisrichardson.ftgo.logging.mdc.MdcContextLifecycle;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import org.springframework.core.env.Environment;
  *   <li>Registers a servlet filter for correlation ID extraction and MDC population</li>
  *   <li>Provides MDC context lifecycle management for request context propagation</li>
  *   <li>Configures structured JSON logging via Logback programmatically at startup</li>
+ *   <li>Registers the method entry/exit logging aspect (when enabled and AOP is on classpath)</li>
  * </ul>
  *
  * <p>Activated when {@code ftgo.logging.enabled=true} (default).
@@ -93,5 +95,24 @@ public class FtgoLoggingAutoConfiguration {
         FtgoLogbackInitializer initializer = new FtgoLogbackInitializer(properties, serviceName);
         initializer.initialize();
         return initializer;
+    }
+
+    /**
+     * Registers the logging aspect for automatic method entry/exit logging.
+     * Only activated when {@code ftgo.logging.aspect.enabled=true} and
+     * AspectJ is on the classpath.
+     */
+    @Bean
+    @ConditionalOnMissingBean(LoggingAspect.class)
+    @ConditionalOnProperty(prefix = "ftgo.logging.aspect", name = "enabled", havingValue = "true")
+    @ConditionalOnClass(name = "org.aspectj.lang.annotation.Aspect")
+    public LoggingAspect loggingAspect(FtgoLoggingProperties properties) {
+        FtgoLoggingProperties.Aspect aspectProps = properties.getAspect();
+        log.info("FTGO Logging: Method entry/exit logging aspect enabled (includeArgs={}, includeResult={}, slowThreshold={}ms)",
+                aspectProps.isIncludeArgs(), aspectProps.isIncludeResult(), aspectProps.getSlowThresholdMs());
+        return new LoggingAspect(
+                aspectProps.isIncludeArgs(),
+                aspectProps.isIncludeResult(),
+                aspectProps.getSlowThresholdMs());
     }
 }
