@@ -27,12 +27,12 @@
 | 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Completed | [PR #118](https://github.com/COG-GTM/ftgo-monolith/pull/118) | Success (conflicts resolved) | settings.gradle |
 | 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Completed | [PR #117](https://github.com/COG-GTM/ftgo-monolith/pull/117) | Success | None |
 | 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Completed | [PR #116](https://github.com/COG-GTM/ftgo-monolith/pull/116) | Success (conflicts resolved) | settings.gradle |
-| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Pending | - | - | - |
-| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Pending | - | - | - |
-| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Pending | - | - | - |
-| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Pending | - | - | - |
-| 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Pending | - | - | - |
-| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Pending | - | - | - |
+| 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Completed | [PR #119](https://github.com/COG-GTM/ftgo-monolith/pull/119) | Success | None |
+| 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Completed | [PR #120](https://github.com/COG-GTM/ftgo-monolith/pull/120) | Success | None |
+| 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Completed | [PR #121](https://github.com/COG-GTM/ftgo-monolith/pull/121) | Success | None |
+| 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Completed | [PR #122](https://github.com/COG-GTM/ftgo-monolith/pull/122) | Success | None |
+| 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Completed | [PR #123](https://github.com/COG-GTM/ftgo-monolith/pull/123) | Success | None |
+| 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Completed | [PR #124](https://github.com/COG-GTM/ftgo-monolith/pull/124) | Success | None |
 | 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Pending | - | - | - |
 | 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Pending | - | - | - |
 | 5 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Pending | - | - | - |
@@ -47,3 +47,6 @@
 ### Batch 3
 - **EM-39 (settings.gradle):** Multiple Batch 3 PRs added module includes to settings.gradle. Resolved by keeping all entries from HEAD (EM-31 API/DTO modules + EM-39 security-lib) and appending incoming entries. Build passed after resolution.
 - **EM-45 (settings.gradle):** Same pattern — appended openapi-lib include to existing entries. Build passed after resolution.
+
+### Batch 4
+- No conflicts — all 6 PRs squash-merged cleanly. Auto-merges occurred on settings.gradle, libs.versions.toml, FtgoVersions.groovy, and service build.gradle files but all resolved automatically by git.
