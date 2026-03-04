@@ -112,6 +112,54 @@ serviceDefaults:
   tolerations: []
   affinity: {}
 
+# -- Logging / EFK Stack ------------------------------------------------------
+logging:
+  enabled: true
+  # Log retention (days) — overridden per environment
+  retentionDays: 7
+  elasticsearch:
+    replicas: 1
+    image:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    javaOpts: "-Xms512m -Xmx512m"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    storage:
+      size: 10Gi
+      storageClassName: ""
+  fluentd:
+    image:
+      repository: fluent/fluentd-kubernetes-daemonset
+      tag: v1.16-debian-elasticsearch8-1
+      pullPolicy: IfNotPresent
+    logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  kibana:
+    image:
+      repository: docker.elastic.co/kibana/kibana
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
 # -- Order Service ------------------------------------------------------------
 orderService:
   enabled: true
