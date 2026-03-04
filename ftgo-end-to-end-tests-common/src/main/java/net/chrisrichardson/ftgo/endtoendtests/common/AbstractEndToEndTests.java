@@ -48,20 +48,12 @@ public abstract class AbstractEndToEndTests {
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
-    StringBuilder sb = new StringBuilder("http://");
-    sb.append(getHost());
-    sb.append(":");
-    sb.append(port);
-    sb.append("/");
-    sb.append(path);
-
-    for (String pe : pathElements) {
-      sb.append("/");
-      sb.append(pe);
+    String base = "http://" + getHost() + ":" + port + "/" + path;
+    if (pathElements.length > 0) {
+      base = base + "/" + String.join("/", pathElements);
     }
-    String s = sb.toString();
-    System.out.println("url=" + s);
-    return s;
+    System.out.println("url=" + base);
+    return base;
   }
 
   private String consumerBaseUrl(String... pathElements) {

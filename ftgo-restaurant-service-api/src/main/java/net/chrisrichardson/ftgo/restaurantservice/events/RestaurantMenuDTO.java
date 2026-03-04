@@ -1,8 +1,6 @@
 package net.chrisrichardson.ftgo.restaurantservice.events;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import java.util.Objects;
 
 import java.util.List;
 
@@ -14,12 +12,15 @@ public class RestaurantMenuDTO {
 
   @Override
   public boolean equals(Object o) {
-    return EqualsBuilder.reflectionEquals(this, o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RestaurantMenuDTO that = (RestaurantMenuDTO) o;
+    return Objects.equals(menuItems, that.menuItems);
   }
 
   @Override
   public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
+    return Objects.hash(menuItems);
   }
 
   public List<MenuItemDTO> getMenuItemDTOs() {
@@ -28,7 +29,7 @@ public class RestaurantMenuDTO {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this);
+    return "RestaurantMenuDTO{menuItems=" + menuItems + "}";
   }
 
   public void setMenuItemDTOs(List<MenuItemDTO> menuItems) {

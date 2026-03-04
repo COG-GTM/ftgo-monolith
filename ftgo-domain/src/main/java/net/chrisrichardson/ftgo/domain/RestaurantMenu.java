@@ -1,8 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import java.util.Objects;
 
 import javax.persistence.*;
 import java.util.List;
@@ -20,12 +18,15 @@ public class RestaurantMenu {
 
   @Override
   public boolean equals(Object o) {
-    return EqualsBuilder.reflectionEquals(this, o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RestaurantMenu that = (RestaurantMenu) o;
+    return Objects.equals(menuItems, that.menuItems);
   }
 
   @Override
   public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
+    return Objects.hash(menuItems);
   }
 
   public List<MenuItem> getMenuItems() {
@@ -34,7 +35,7 @@ public class RestaurantMenu {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this);
+    return "RestaurantMenu{menuItems=" + menuItems + "}";
   }
 
   public void setMenuItems(List<MenuItem> menuItems) {

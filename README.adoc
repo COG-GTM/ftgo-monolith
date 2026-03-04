@@ -3,7 +3,62 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Prerequisites
+
+* **Java 8** (JDK 1.8) or later
+* **Gradle** (uses the included Gradle wrapper)
+* **Docker** and **Docker Compose** (for running MySQL and infrastructure services)
+
+== Setup and Running
+
+=== Build the project
+
+[source,bash]
+----
+./gradlew build
+----
+
+=== Start infrastructure services (MySQL)
+
+[source,bash]
+----
+./start-infrastructure-services.sh
+----
+
+=== Build and run the application
+
+[source,bash]
+----
+./build-and-run.sh
+----
+
+=== Run tests
+
+[source,bash]
+----
+./gradlew test
+----
+
+=== Run end-to-end tests
+
+[source,bash]
+----
+./run-end-to-end-tests.sh
+----
+
+== Java 8 Features
+
+This project targets **Java 8** and uses the following Java 8 language features and APIs:
+
+* **Lambda expressions** for concise anonymous function definitions
+* **Method references** (e.g., `Money::add`, `OrderLineItem::getTotal`) for cleaner functional-style code
+* **Streams API** for declarative data processing on collections
+* **`java.util.Optional`** for safer handling of nullable values
+* **`java.time.LocalDateTime`** for date and time handling (replacing legacy `java.util.Date`)
+* **`java.util.Objects`** for `equals()`, `hashCode()`, and null-safe comparisons (replacing Apache Commons Lang builders)
+* **`String.join()`** for efficient string concatenation
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
