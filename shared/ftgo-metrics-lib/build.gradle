@@ -1,0 +1,55 @@
+// =============================================================================
+// ftgo-metrics-lib — Shared metrics library for FTGO microservices
+// Provides Micrometer + Prometheus configuration and custom business metrics
+// definitions for all FTGO services.
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Micrometer core + Prometheus registry
+    compile "io.micrometer:micrometer-core:${msMicrometerVersion}"
+    compile "io.micrometer:micrometer-registry-prometheus:${msMicrometerVersion}"
+
+    // Spring Boot Actuator (exposes /actuator/prometheus endpoint)
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
+
+    // Spring context (for @Component, @Configuration, @Bean, @ConditionalOn*)
+    compile "org.springframework.boot:spring-boot:$springBootVersion"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:1.7.25"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "io.micrometer:micrometer-test:${msMicrometerVersion}"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-metrics-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Metrics Library'
+                description = 'Shared metrics library for FTGO microservices providing Micrometer/Prometheus configuration and custom business metrics.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

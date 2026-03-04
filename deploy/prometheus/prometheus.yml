@@ -1,0 +1,83 @@
+# =============================================================================
+# Prometheus Configuration for FTGO Microservices
+# =============================================================================
+# Scrape configuration for all FTGO services exposing metrics via
+# Spring Boot Actuator at /actuator/prometheus.
+#
+# For local development, services run on different ports:
+#   - Order Service:      8081
+#   - Consumer Service:   8082
+#   - Restaurant Service: 8083
+#   - Courier Service:    8084
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# Load alerting rules
+rule_files:
+  - "alert-rules.yml"
+
+# Alertmanager configuration (optional, for local dev)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ---------------------------------------------------------------------------
+  # FTGO Order Service
+  # ---------------------------------------------------------------------------
+  - job_name: "ftgo-order-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["ftgo-order-service:8081"]
+        labels:
+          service: "order-service"
+          team: "orders"
+
+  # ---------------------------------------------------------------------------
+  # FTGO Consumer Service
+  # ---------------------------------------------------------------------------
+  - job_name: "ftgo-consumer-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["ftgo-consumer-service:8082"]
+        labels:
+          service: "consumer-service"
+          team: "consumers"
+
+  # ---------------------------------------------------------------------------
+  # FTGO Restaurant Service
+  # ---------------------------------------------------------------------------
+  - job_name: "ftgo-restaurant-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["ftgo-restaurant-service:8083"]
+        labels:
+          service: "restaurant-service"
+          team: "restaurants"
+
+  # ---------------------------------------------------------------------------
+  # FTGO Courier Service
+  # ---------------------------------------------------------------------------
+  - job_name: "ftgo-courier-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["ftgo-courier-service:8084"]
+        labels:
+          service: "courier-service"
+          team: "couriers"
