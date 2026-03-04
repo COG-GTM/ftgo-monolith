@@ -1,0 +1,101 @@
+# =============================================================================
+# FTGO Microservices - Gradle Version Catalog
+# =============================================================================
+# Centralized dependency version management for the FTGO microservices.
+# This file defines all dependency versions used by the new microservice modules
+# under services/ and shared/ directories.
+#
+# NOTE: This version catalog is currently consumed by the convention plugins
+# via the FtgoVersions constants class. When the project upgrades to Gradle 7.5+,
+# this file will be natively consumed by Gradle's version catalog feature.
+# See docs/shared-gradle-configuration.md for the upgrade path.
+# =============================================================================
+
+[versions]
+# --- Platform & Language ---
+java = "17"
+
+# --- Spring Boot & Spring Framework ---
+spring-boot = "3.2.5"
+spring-dependency-management = "1.1.4"
+
+# --- Observability ---
+micrometer = "1.12.5"
+micrometer-tracing = "1.2.5"
+
+# --- Data & Persistence ---
+flyway = "10.11.0"
+hibernate = "6.4.4.Final"
+mysql-connector = "8.3.0"
+
+# --- Serialization ---
+jackson = "2.17.0"
+
+# --- Testing ---
+junit-jupiter = "5.10.2"
+rest-assured = "5.4.0"
+mockito = "5.11.0"
+assertj = "3.25.3"
+testcontainers = "1.19.7"
+
+# --- Utilities ---
+commons-lang3 = "3.14.0"
+lombok = "1.18.32"
+mapstruct = "1.5.5.Final"
+slf4j = "2.0.12"
+
+# --- Docker / Container ---
+jib = "3.4.1"
+
+# --- API Documentation ---
+springdoc-openapi = "2.4.0"
+
+[libraries]
+# --- Spring Boot Starters ---
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+
+# --- Observability ---
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+
+# --- Data & Persistence ---
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+mysql-connector-java = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
+
+# --- Serialization ---
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+
+# --- Testing ---
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-spring-mock-mvc = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
+
+# --- Utilities ---
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+
+# --- API Documentation ---
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management" }
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
