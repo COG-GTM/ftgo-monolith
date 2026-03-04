@@ -24,6 +24,7 @@ if (java17Home) {
     tasks.withType(JavaCompile) {
         options.fork = true
         options.forkOptions.javaHome = file(java17Home)
+        options.compilerArgs += ['-parameters']
     }
     // Configure the test task to run with Java 17 and JUnit 5
     test {
