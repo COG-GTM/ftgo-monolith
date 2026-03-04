@@ -52,6 +52,9 @@ project(':services-ftgo-courier-service').projectDir = file('services/ftgo-couri
 include 'shared-ftgo-common'
 project(':shared-ftgo-common').projectDir = file('shared/ftgo-common')
 
+include 'shared-ftgo-metrics-lib'
+project(':shared-ftgo-metrics-lib').projectDir = file('shared/ftgo-metrics-lib')
+
 include 'shared-ftgo-common-jpa'
 project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
 
