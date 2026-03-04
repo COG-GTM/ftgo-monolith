@@ -58,6 +58,19 @@ project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
 include 'shared-ftgo-domain'
 project(':shared-ftgo-domain').projectDir = file('shared/ftgo-domain')
 
+// --- Shared API/DTO Libraries (cross-service communication) ---
+include 'shared-ftgo-order-service-api'
+project(':shared-ftgo-order-service-api').projectDir = file('shared/ftgo-order-service-api')
+
+include 'shared-ftgo-consumer-service-api'
+project(':shared-ftgo-consumer-service-api').projectDir = file('shared/ftgo-consumer-service-api')
+
+include 'shared-ftgo-restaurant-service-api'
+project(':shared-ftgo-restaurant-service-api').projectDir = file('shared/ftgo-restaurant-service-api')
+
+include 'shared-ftgo-courier-service-api'
+project(':shared-ftgo-courier-service-api').projectDir = file('shared/ftgo-courier-service-api')
+
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================
