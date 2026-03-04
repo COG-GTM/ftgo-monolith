@@ -1,0 +1,208 @@
+name: "CI: Unit Tests"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Discover modules that have test sources
+  # ---------------------------------------------------------------------------
+  discover:
+    name: Discover Testable Modules
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.find.outputs.modules }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find modules with unit tests
+        id: find
+        run: |
+          # Discover new microservice modules under services/ and shared/
+          # that contain src/test/java.
+          # Legacy ftgo-* modules are already tested by their own per-service
+          # CI workflows and require JDK 8 (incompatible with JDK 17 used here).
+          modules="[]"
+          for dir in services/*/src/test/java shared/*/src/test/java; do
+            if [ -d "$dir" ]; then
+              # Extract module path (e.g., services/ftgo-consumer-service)
+              module_dir=$(echo "$dir" | sed 's|/src/test/java||')
+              modules=$(echo "$modules" | jq -c ". + [\"$module_dir\"]")
+            fi
+          done
+          echo "modules=$modules" >> "$GITHUB_OUTPUT"
+          echo "Discovered modules: $modules"
+
+  # ---------------------------------------------------------------------------
+  # Run unit tests in parallel across all modules (matrix strategy)
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: "Unit Tests: ${{ matrix.module }}"
+    needs: discover
+    if: ${{ needs.discover.outputs.modules != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.discover.outputs.modules) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-unit-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-unit-
+            ${{ runner.os }}-gradle-
+
+      - name: Configure Java 17 path for Gradle compatibility
+        run: |
+          # The shared/ftgo-security-lib build.gradle detects Java 17 via well-known
+          # paths to set scanForTestClasses=false (required because Gradle 4.10.2
+          # cannot read JDK 17 class files during test discovery).
+          # CI runners install JDK at a different location, so create a symlink.
+          sudo mkdir -p /usr/lib/jvm
+          sudo ln -sf "$JAVA_HOME" /usr/lib/jvm/java-17-openjdk-amd64
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Derive Gradle project name
+        id: project
+        run: |
+          # Convert directory path to Gradle project name
+          # e.g., services/ftgo-consumer-service -> :services-ftgo-consumer-service
+          # e.g., shared/ftgo-common -> :shared-ftgo-common
+          module="${{ matrix.module }}"
+          gradle_name=":$(echo "$module" | tr '/' '-')"
+          echo "name=$gradle_name" >> "$GITHUB_OUTPUT"
+          echo "Gradle project: $gradle_name"
+
+      - name: Run unit tests
+        run: |
+          echo "::group::Running unit tests for ${{ steps.project.outputs.name }}"
+          ./gradlew ${{ steps.project.outputs.name }}:test \
+            --no-daemon \
+            --parallel \
+            -Dorg.gradle.workers.max=2 \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-end-to-end-tests-common:test
+          echo "::endgroup::"
+
+      - name: Generate JaCoCo coverage report
+        if: always()
+        continue-on-error: true
+        run: |
+          ./gradlew ${{ steps.project.outputs.name }}:jacocoTestReport \
+            --no-daemon \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-end-to-end-tests-common:test || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-${{ hashFiles(format('{0}', matrix.module)) }}
+          path: |
+            ${{ matrix.module }}/build/reports/tests/
+            ${{ matrix.module }}/build/test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ hashFiles(format('{0}', matrix.module)) }}
+          path: |
+            ${{ matrix.module }}/build/reports/jacoco/
+            ${{ matrix.module }}/build/jacoco/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        continue-on-error: true
+        with:
+          files: "${{ matrix.module }}/build/test-results/test/**/*.xml"
+          check_name: "Unit Test Results - ${{ matrix.module }}"
+          comment_mode: "off"
+
+  # ---------------------------------------------------------------------------
+  # Aggregate results and generate summary
+  # ---------------------------------------------------------------------------
+  unit-tests-summary:
+    name: Unit Tests Summary
+    needs: [unit-tests]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unit-test-results-*
+          path: test-results/
+          merge-multiple: true
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-report-*
+          path: coverage-reports/
+          merge-multiple: true
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Unit Test Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | Details |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|---------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Result | ${{ needs.unit-tests.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Workflow | Unit Tests |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Trigger | ${{ github.event_name }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Count test XML files for summary
+          total_files=$(find test-results/ -name '*.xml' 2>/dev/null | wc -l || echo 0)
+          echo "Total test result files: $total_files" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check unit test results
+        if: needs.unit-tests.result == 'failure'
+        run: |
+          echo "::error::Unit tests failed. See individual job logs for details."
+          exit 1
