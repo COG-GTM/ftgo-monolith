@@ -1,11 +1,52 @@
-// Shared common library for FTGO microservices
-// Contains common utilities, exceptions, and base classes
+// =============================================================================
+// ftgo-common — Shared common library for FTGO microservices
+// Contains value objects, utilities, exceptions, and Jackson serialization
+// Migrated from monolith module: ftgo-common
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
 
 dependencies {
+    // JPA annotations (@Embeddable, @Access) for value objects
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    // Jackson JSON serialization
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    // Apache Commons Lang (EqualsBuilder, HashCodeBuilder, ToStringBuilder)
     compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
 
+    // Spring framework (for @Configuration, @Bean, @Autowired, @PostConstruct)
+    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+
+    // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common'
+            version = project.version
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared common library for FTGO microservices containing value objects, utilities, exceptions, and Jackson serialization modules.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
