@@ -1,0 +1,75 @@
+name: "CI: Order Service"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-order-service.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-order-service.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Order Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-order-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-order-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Order Service
+        run: ./gradlew :services-ftgo-order-service:build
+
+      - name: Run Order Service Tests
+        run: ./gradlew :services-ftgo-order-service:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-service-test-reports
+          path: services/ftgo-order-service/build/reports/tests/
+          retention-days: 14

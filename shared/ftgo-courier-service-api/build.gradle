@@ -1,7 +1,7 @@
 // =============================================================================
-// ftgo-common-jpa — Shared JPA library for FTGO microservices
-// Contains common JPA configurations, ORM mappings, and persistence utilities
-// Migrated from monolith module: ftgo-common-jpa
+// ftgo-courier-service-api — Courier Service API DTOs for cross-service communication
+// Contains request/response DTOs for the Courier Service
+// Migrated from monolith module: ftgo-courier-service-api
 // =============================================================================
 
 version = '1.0.0'
@@ -10,9 +10,6 @@ apply plugin: 'maven-publish'
 
 dependencies {
     compile project(':shared-ftgo-common')
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 }
 
 publishing {
@@ -21,12 +18,12 @@ publishing {
             from components.java
 
             groupId = 'net.chrisrichardson.ftgo'
-            artifactId = 'ftgo-common-jpa'
+            artifactId = 'ftgo-courier-service-api'
             version = project.version
 
             pom {
-                name = 'FTGO Common JPA Library'
-                description = 'Shared JPA library for FTGO microservices containing ORM mappings, persistence utilities, and common JPA configurations.'
+                name = 'FTGO Courier Service API'
+                description = 'API DTOs for cross-service communication with the FTGO Courier Service.'
             }
         }
     }
