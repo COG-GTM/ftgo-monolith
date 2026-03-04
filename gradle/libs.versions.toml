@@ -22,6 +22,8 @@ spring-dependency-management = "1.1.4"
 # --- Observability ---
 micrometer = "1.12.5"
 micrometer-tracing = "1.2.5"
+brave = "6.0.2"
+zipkin-reporter = "3.3.0"
 
 # --- Data & Persistence ---
 flyway = "10.11.0"
@@ -71,6 +73,9 @@ spring-security-web = { module = "org.springframework.security:spring-security-w
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+micrometer-tracing-core = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer-tracing" }
+zipkin-reporter-brave = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
+zipkin-sender-urlconnection = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
 
 # --- Data & Persistence ---
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }

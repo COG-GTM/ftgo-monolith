@@ -17,6 +17,9 @@ dependencies {
     // Security
     compile project(':shared-ftgo-security-lib')
 
+    // Distributed Tracing (Micrometer Tracing + Brave + Zipkin)
+    compile project(':shared-ftgo-tracing-lib')
+
     // Testing
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile "org.springframework.security:spring-security-test:6.2.4"
