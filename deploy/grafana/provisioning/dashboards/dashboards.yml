@@ -1,0 +1,16 @@
+# =============================================================================
+# Grafana Dashboard Provisioning
+# =============================================================================
+apiVersion: 1
+
+providers:
+  - name: "FTGO Dashboards"
+    orgId: 1
+    folder: "FTGO"
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
