@@ -1,13 +1,11 @@
 package com.ftgo.restaurant.security;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 /**
- * Security configuration for the Restaurant Service.
+ * Security authorization rules for the Restaurant Service.
  *
- * <p>Enables method-level security and defines the authorization rules
- * for restaurant-related endpoints using {@code @PreAuthorize} annotations.
+ * <p>Method-level security is enabled via {@code @EnableMethodSecurity} in the shared
+ * {@code FtgoBaseSecurityConfig}. This class documents the authorization rules that
+ * must be applied when controllers are implemented.
  *
  * <h3>Permission Matrix</h3>
  * <table>
@@ -20,39 +18,36 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * </table>
  *
  * <p>Resource ownership for RESTAURANT_OWNER is enforced using
- * {@code hasPermission()} with the
- * {@link com.ftgo.security.authorization.FtgoPermissionEvaluator}.
+ * {@code hasPermission()} with the {@code FtgoPermissionEvaluator}
+ * from {@code shared/ftgo-security-lib}.
+ *
+ * <h3>Required {@code @PreAuthorize} Annotations</h3>
+ * <pre>
+ * // List restaurants — CUSTOMER or above
+ * &#064;PreAuthorize("hasRole('CUSTOMER')")
+ * &#064;GetMapping("/restaurants")
+ * public List&lt;Restaurant&gt; listRestaurants() { ... }
+ *
+ * // Create restaurant — RESTAURANT_OWNER or ADMIN
+ * &#064;PreAuthorize("hasRole('RESTAURANT_OWNER')")
+ * &#064;PostMapping("/restaurants")
+ * public Restaurant createRestaurant(...) { ... }
+ *
+ * // Update restaurant — RESTAURANT_OWNER (own) or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('RESTAURANT_OWNER') "
+ *     + "and hasPermission(#id, 'Restaurant', 'UPDATE'))")
+ * &#064;PutMapping("/restaurants/{id}")
+ * public Restaurant updateRestaurant(&#064;PathVariable String id, ...) { ... }
+ *
+ * // Delete restaurant — RESTAURANT_OWNER (own) or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('RESTAURANT_OWNER') "
+ *     + "and hasPermission(#id, 'Restaurant', 'DELETE'))")
+ * &#064;DeleteMapping("/restaurants/{id}")
+ * public void deleteRestaurant(&#064;PathVariable String id) { ... }
+ * </pre>
  */
-@Configuration
-@EnableMethodSecurity
-public class RestaurantServiceSecurityConfig {
-    // Method-level security is enabled via @EnableMethodSecurity.
-    // Authorization rules are applied directly on controller methods
-    // using @PreAuthorize annotations.
-    //
-    // Supported expressions:
-    //   hasRole('CUSTOMER')          — role check with hierarchy support
-    //   hasRole('RESTAURANT_OWNER')  — restaurant owner access
-    //   hasRole('ADMIN')             — admin access
-    //   hasPermission(#id, 'Restaurant', 'UPDATE') — ownership check
-    //   hasPermission(#id, 'Restaurant', 'DELETE') — ownership check
-    //
-    // Example controller usage:
-    //   @PreAuthorize("hasRole('CUSTOMER')")
-    //   @GetMapping("/restaurants")
-    //   public List<Restaurant> listRestaurants() { ... }
-    //
-    //   @PreAuthorize("hasRole('RESTAURANT_OWNER')")
-    //   @PostMapping("/restaurants")
-    //   public Restaurant createRestaurant(...) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or (hasRole('RESTAURANT_OWNER') "
-    //       + "and hasPermission(#id, 'Restaurant', 'UPDATE'))")
-    //   @PutMapping("/restaurants/{id}")
-    //   public Restaurant updateRestaurant(@PathVariable String id, ...) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or (hasRole('RESTAURANT_OWNER') "
-    //       + "and hasPermission(#id, 'Restaurant', 'DELETE'))")
-    //   @DeleteMapping("/restaurants/{id}")
-    //   public void deleteRestaurant(@PathVariable String id) { ... }
+public final class RestaurantServiceSecurityConfig {
+    private RestaurantServiceSecurityConfig() {
+        // Documentation-only class — not instantiable
+    }
 }

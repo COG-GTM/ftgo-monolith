@@ -1,13 +1,11 @@
 package com.ftgo.order.security;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 /**
- * Security configuration for the Order Service.
+ * Security authorization rules for the Order Service.
  *
- * <p>Enables method-level security and defines the authorization rules
- * for order-related endpoints using {@code @PreAuthorize} annotations.
+ * <p>Method-level security is enabled via {@code @EnableMethodSecurity} in the shared
+ * {@code FtgoBaseSecurityConfig}. This class documents the authorization rules that
+ * must be applied when controllers are implemented.
  *
  * <h3>Permission Matrix</h3>
  * <table>
@@ -20,34 +18,29 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * <p>* RESTAURANT_OWNER inherits CUSTOMER permissions via role hierarchy.
  *
  * <p>Resource ownership is enforced using {@code hasPermission()} with the
- * {@link com.ftgo.security.authorization.FtgoPermissionEvaluator}.
+ * {@code FtgoPermissionEvaluator} from {@code shared/ftgo-security-lib}.
+ *
+ * <h3>Required {@code @PreAuthorize} Annotations</h3>
+ * <pre>
+ * // Create order — requires CUSTOMER role
+ * &#064;PreAuthorize("hasRole('CUSTOMER')")
+ * &#064;PostMapping("/orders")
+ * public Order createOrder(...) { ... }
+ *
+ * // View order — CUSTOMER (own), RESTAURANT_OWNER, COURIER, or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or hasRole('COURIER') or hasRole('RESTAURANT_OWNER') "
+ *     + "or (hasRole('CUSTOMER') and hasPermission(#id, 'Order', 'VIEW'))")
+ * &#064;GetMapping("/orders/{id}")
+ * public Order getOrder(&#064;PathVariable String id) { ... }
+ *
+ * // Cancel order — CUSTOMER (own) or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and hasPermission(#id, 'Order', 'CANCEL'))")
+ * &#064;PostMapping("/orders/{id}/cancel")
+ * public Order cancelOrder(&#064;PathVariable String id) { ... }
+ * </pre>
  */
-@Configuration
-@EnableMethodSecurity
-public class OrderServiceSecurityConfig {
-    // Method-level security is enabled via @EnableMethodSecurity.
-    // Authorization rules are applied directly on controller methods
-    // using @PreAuthorize annotations.
-    //
-    // Supported expressions:
-    //   hasRole('CUSTOMER')          — role check with hierarchy support
-    //   hasRole('RESTAURANT_OWNER')  — restaurant owner access
-    //   hasRole('COURIER')           — courier access
-    //   hasRole('ADMIN')             — admin access
-    //   hasPermission(#id, 'Order', 'VIEW')   — ownership check
-    //   hasPermission(#id, 'Order', 'CANCEL') — ownership check for cancel
-    //
-    // Example controller usage:
-    //   @PreAuthorize("hasRole('CUSTOMER')")
-    //   @PostMapping("/orders")
-    //   public Order createOrder(...) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or hasRole('COURIER') or hasRole('RESTAURANT_OWNER') "
-    //       + "or (hasRole('CUSTOMER') and hasPermission(#id, 'Order', 'VIEW'))")
-    //   @GetMapping("/orders/{id}")
-    //   public Order getOrder(@PathVariable String id) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and hasPermission(#id, 'Order', 'CANCEL'))")
-    //   @PostMapping("/orders/{id}/cancel")
-    //   public Order cancelOrder(@PathVariable String id) { ... }
+public final class OrderServiceSecurityConfig {
+    private OrderServiceSecurityConfig() {
+        // Documentation-only class — not instantiable
+    }
 }

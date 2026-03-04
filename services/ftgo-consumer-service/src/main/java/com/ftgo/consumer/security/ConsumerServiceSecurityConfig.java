@@ -1,13 +1,11 @@
 package com.ftgo.consumer.security;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 /**
- * Security configuration for the Consumer Service.
+ * Security authorization rules for the Consumer Service.
  *
- * <p>Enables method-level security and defines the authorization rules
- * for consumer-related endpoints using {@code @PreAuthorize} annotations.
+ * <p>Method-level security is enabled via {@code @EnableMethodSecurity} in the shared
+ * {@code FtgoBaseSecurityConfig}. This class documents the authorization rules that
+ * must be applied when controllers are implemented.
  *
  * <h3>Permission Matrix</h3>
  * <table>
@@ -19,26 +17,28 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * <p>* RESTAURANT_OWNER inherits CUSTOMER permissions via role hierarchy.
  *
  * <p>Resource ownership is enforced using {@code hasPermission()} with the
- * {@link com.ftgo.security.authorization.FtgoPermissionEvaluator}.
+ * {@code FtgoPermissionEvaluator} from {@code shared/ftgo-security-lib}.
+ *
+ * <h3>Required {@code @PreAuthorize} Annotations</h3>
+ * <pre>
+ * // Create consumer — requires CUSTOMER role
+ * &#064;PreAuthorize("hasRole('CUSTOMER')")
+ * &#064;PostMapping("/consumers")
+ * public Consumer createConsumer(...) { ... }
+ *
+ * // View own consumer — requires CUSTOMER + ownership or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and hasPermission(#id, 'Consumer', 'VIEW'))")
+ * &#064;GetMapping("/consumers/{id}")
+ * public Consumer getConsumer(&#064;PathVariable String id) { ... }
+ *
+ * // List all consumers — ADMIN only
+ * &#064;PreAuthorize("hasRole('ADMIN')")
+ * &#064;GetMapping("/consumers")
+ * public List&lt;Consumer&gt; listConsumers() { ... }
+ * </pre>
  */
-@Configuration
-@EnableMethodSecurity
-public class ConsumerServiceSecurityConfig {
-    // Method-level security is enabled via @EnableMethodSecurity.
-    // Authorization rules are applied directly on controller methods
-    // using @PreAuthorize annotations.
-    //
-    // Supported expressions:
-    //   hasRole('CUSTOMER')          — role check with hierarchy support
-    //   hasRole('ADMIN')             — admin access
-    //   hasPermission(#id, 'Consumer', 'VIEW') — ownership check
-    //
-    // Example controller usage:
-    //   @PreAuthorize("hasRole('CUSTOMER')")
-    //   @PostMapping("/consumers")
-    //   public Consumer createConsumer(...) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and hasPermission(#id, 'Consumer', 'VIEW'))")
-    //   @GetMapping("/consumers/{id}")
-    //   public Consumer getConsumer(@PathVariable String id) { ... }
+public final class ConsumerServiceSecurityConfig {
+    private ConsumerServiceSecurityConfig() {
+        // Documentation-only class — not instantiable
+    }
 }

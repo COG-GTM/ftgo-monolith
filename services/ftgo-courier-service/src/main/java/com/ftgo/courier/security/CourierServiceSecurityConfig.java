@@ -1,13 +1,11 @@
 package com.ftgo.courier.security;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 /**
- * Security configuration for the Courier Service.
+ * Security authorization rules for the Courier Service.
  *
- * <p>Enables method-level security and defines the authorization rules
- * for courier/delivery-related endpoints using {@code @PreAuthorize} annotations.
+ * <p>Method-level security is enabled via {@code @EnableMethodSecurity} in the shared
+ * {@code FtgoBaseSecurityConfig}. This class documents the authorization rules that
+ * must be applied when controllers are implemented.
  *
  * <h3>Permission Matrix</h3>
  * <table>
@@ -18,31 +16,31 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * </table>
  *
  * <p>Resource ownership and assignment checks are enforced using
- * {@code hasPermission()} with the
- * {@link com.ftgo.security.authorization.FtgoPermissionEvaluator}.
+ * {@code hasPermission()} with the {@code FtgoPermissionEvaluator}
+ * from {@code shared/ftgo-security-lib}.
+ *
+ * <h3>Required {@code @PreAuthorize} Annotations</h3>
+ * <pre>
+ * // Track delivery — CUSTOMER (own), COURIER (assigned), or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or hasRole('COURIER') "
+ *     + "or (hasRole('CUSTOMER') and hasPermission(#id, 'Delivery', 'TRACK'))")
+ * &#064;GetMapping("/deliveries/{id}/track")
+ * public DeliveryStatus trackDelivery(&#064;PathVariable String id) { ... }
+ *
+ * // Update delivery status — COURIER (assigned) or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('COURIER') "
+ *     + "and hasPermission(#id, 'Delivery', 'UPDATE_STATUS'))")
+ * &#064;PutMapping("/deliveries/{id}/status")
+ * public void updateDeliveryStatus(&#064;PathVariable String id, ...) { ... }
+ *
+ * // View courier's assigned orders — COURIER (own) or ADMIN
+ * &#064;PreAuthorize("hasRole('ADMIN') or (hasRole('COURIER') and hasPermission(#id, 'Courier', 'VIEW'))")
+ * &#064;GetMapping("/couriers/{id}/orders")
+ * public List&lt;Order&gt; getCourierOrders(&#064;PathVariable String id) { ... }
+ * </pre>
  */
-@Configuration
-@EnableMethodSecurity
-public class CourierServiceSecurityConfig {
-    // Method-level security is enabled via @EnableMethodSecurity.
-    // Authorization rules are applied directly on controller methods
-    // using @PreAuthorize annotations.
-    //
-    // Supported expressions:
-    //   hasRole('COURIER')           — courier access
-    //   hasRole('CUSTOMER')          — customer access (for delivery tracking)
-    //   hasRole('ADMIN')             — admin access
-    //   hasPermission(#id, 'Delivery', 'TRACK')          — ownership check
-    //   hasPermission(#id, 'Delivery', 'UPDATE_STATUS')  — assignment check
-    //
-    // Example controller usage:
-    //   @PreAuthorize("hasRole('ADMIN') or hasRole('COURIER') "
-    //       + "or (hasRole('CUSTOMER') and hasPermission(#id, 'Delivery', 'TRACK'))")
-    //   @GetMapping("/deliveries/{id}/track")
-    //   public DeliveryStatus trackDelivery(@PathVariable String id) { ... }
-    //
-    //   @PreAuthorize("hasRole('ADMIN') or (hasRole('COURIER') "
-    //       + "and hasPermission(#id, 'Delivery', 'UPDATE_STATUS'))")
-    //   @PutMapping("/deliveries/{id}/status")
-    //   public void updateDeliveryStatus(@PathVariable String id, ...) { ... }
+public final class CourierServiceSecurityConfig {
+    private CourierServiceSecurityConfig() {
+        // Documentation-only class — not instantiable
+    }
 }
