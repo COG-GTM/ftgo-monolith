@@ -33,13 +33,13 @@
 | 4 | EM-40 | Implement JWT-Based Authentication with Token Management | 3 | Completed | [PR #122](https://github.com/COG-GTM/ftgo-monolith/pull/122) | Success | None |
 | 4 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | 4 | Completed | [PR #123](https://github.com/COG-GTM/ftgo-monolith/pull/123) | Success | None |
 | 4 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | 5 | Completed | [PR #124](https://github.com/COG-GTM/ftgo-monolith/pull/124) | Success | None |
-| 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Pending | - | - | - |
-| 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Pending | - | - | - |
-| 5 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Pending | - | - | - |
-| 5 | EM-48 | Document Testing Strategy and Create Test Templates | 5 | Pending | - | - | - |
-| 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Pending | - | - | - |
-| 6 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | 4 | Pending | - | - | - |
-| 6 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | 4 | Pending | - | - | - |
+| 5 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | 2 | Completed | [PR #125](https://github.com/COG-GTM/ftgo-monolith/pull/125) | Success | None |
+| 5 | EM-37 | Implement Role-Based Authorization Framework | 3 | Completed | [PR #126](https://github.com/COG-GTM/ftgo-monolith/pull/126) | Success | None |
+| 5 | EM-46 | Establish Centralized Error Handling and Exception Patterns | 5 | Completed | [PR #127](https://github.com/COG-GTM/ftgo-monolith/pull/127) | Success | None |
+| 5 | EM-48 | Document Testing Strategy and Create Test Templates | 5 | Completed | [PR #128](https://github.com/COG-GTM/ftgo-monolith/pull/128) | Success (conflicts resolved) | settings.gradle |
+| 6 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | 3 | Completed | [PR #129](https://github.com/COG-GTM/ftgo-monolith/pull/129) | Success | None |
+| 6 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | 4 | Completed | [PR #130](https://github.com/COG-GTM/ftgo-monolith/pull/130) | Success (conflicts resolved) | deploy/helm/ftgo/values.yaml |
+| 6 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | 4 | Completed | [PR #131](https://github.com/COG-GTM/ftgo-monolith/pull/131) | Success (conflicts resolved) | settings.gradle |
 | 7 | EM-49 | Define Logging Standards and Structured Logging Configuration | 5 | Pending | - | - | - |
 
 ## Conflict Resolution History
@@ -50,3 +50,10 @@
 
 ### Batch 4
 - No conflicts — all 6 PRs squash-merged cleanly. Auto-merges occurred on settings.gradle, libs.versions.toml, FtgoVersions.groovy, and service build.gradle files but all resolved automatically by git.
+
+### Batch 5
+- **EM-48 (settings.gradle):** EM-48 added shared-ftgo-test-lib module include. Conflicted with EM-46's shared-ftgo-error-handling-lib added earlier in the batch. Resolved by keeping both entries. Build passed after resolution.
+
+### Batch 6
+- **EM-43 (deploy/helm/ftgo/values.yaml):** EM-38 added apiGateway section and EM-43 added logging/EFK section to values.yaml. Conflicted because both PRs added new top-level sections after serviceDefaults. Resolved by keeping both sections (apiGateway first, then logging). Build passed after resolution.
+- **EM-44 (settings.gradle):** EM-43 added shared-ftgo-logging-lib module include and EM-44 added shared-ftgo-resilience-lib. Conflicted on adjacent lines. Resolved by keeping both entries. Build passed after resolution.
