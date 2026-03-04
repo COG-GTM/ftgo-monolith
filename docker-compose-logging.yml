@@ -76,6 +76,8 @@ services:
       context: ./deploy/efk/fluentd
       dockerfile: Dockerfile
     container_name: ftgo-fluentd
+    volumes:
+      - ./deploy/efk/fluentd/fluent-docker-compose.conf:/fluentd/etc/fluent.conf:ro
     ports:
       - "24224:24224"
       - "24224:24224/udp"
