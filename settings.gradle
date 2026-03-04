@@ -81,6 +81,18 @@ project(':shared-ftgo-security-lib').projectDir = file('shared/ftgo-security-lib
 // --- Shared OpenAPI Library ---
 include 'shared-ftgo-openapi-lib'
 project(':shared-ftgo-openapi-lib').projectDir = file('shared/ftgo-openapi-lib')
+
+// --- Shared Tracing Library ---
+include 'shared-ftgo-tracing-lib'
+project(':shared-ftgo-tracing-lib').projectDir = file('shared/ftgo-tracing-lib')
+
+// --- Shared Error Handling Library ---
+include 'shared-ftgo-error-handling-lib'
+project(':shared-ftgo-error-handling-lib').projectDir = file('shared/ftgo-error-handling-lib')
+
+// --- Shared Test Library ---
+include 'shared-ftgo-test-lib'
+project(':shared-ftgo-test-lib').projectDir = file('shared/ftgo-test-lib')
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================

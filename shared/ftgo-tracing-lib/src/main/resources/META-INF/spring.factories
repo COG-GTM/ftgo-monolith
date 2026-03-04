@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  net.chrisrichardson.ftgo.tracing.config.FtgoTracingAutoConfiguration,\
+  net.chrisrichardson.ftgo.tracing.config.FtgoTracingLoggingConfiguration

@@ -1,0 +1,294 @@
+# =============================================================================
+# Docker Build & Push — GHCR (GitHub Container Registry)
+# =============================================================================
+# Builds and pushes Docker images for all FTGO microservices on merge.
+#
+# Image tagging strategy:
+#   - <service>:<version>-<git-sha>     (immutable release tag)
+#   - <service>:<branch>                (mutable branch pointer)
+#   - <service>:latest                  (only for default branch)
+#
+# Registry: ghcr.io/cog-gtm/ftgo-monolith/<service>
+# =============================================================================
+
+name: "Docker: Build & Push Images"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'mysql/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/docker-build-push.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**/docker/Dockerfile'
+      - 'mysql/Dockerfile'
+      - '.github/workflows/docker-build-push.yml'
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  # Service version — update on release (mirrors gradle.properties msSpringBootVersion)
+  SERVICE_VERSION: "0.1.0"
+
+jobs:
+  # ===========================================================================
+  # Determine which services changed (path-filtering for efficiency)
+  # ===========================================================================
+  changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      order: ${{ steps.filter.outputs.order }}
+      consumer: ${{ steps.filter.outputs.consumer }}
+      restaurant: ${{ steps.filter.outputs.restaurant }}
+      courier: ${{ steps.filter.outputs.courier }}
+      mysql: ${{ steps.filter.outputs.mysql }}
+      any_service: ${{ steps.filter.outputs.order == 'true' || steps.filter.outputs.consumer == 'true' || steps.filter.outputs.restaurant == 'true' || steps.filter.outputs.courier == 'true' || steps.filter.outputs.mysql == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect path changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared: &shared
+              - 'shared/**'
+              - 'buildSrc/**'
+              - 'gradle/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+            order:
+              - *shared
+              - 'services/ftgo-order-service/**'
+            consumer:
+              - *shared
+              - 'services/ftgo-consumer-service/**'
+            restaurant:
+              - *shared
+              - 'services/ftgo-restaurant-service/**'
+            courier:
+              - *shared
+              - 'services/ftgo-courier-service/**'
+            mysql:
+              - 'mysql/**'
+
+  # ===========================================================================
+  # Build & Push — Microservice Images (matrix)
+  # ===========================================================================
+  build-service:
+    name: "Build: ${{ matrix.service }}"
+    needs: changes
+    if: >-
+      github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: ftgo-order-service
+            dockerfile: services/ftgo-order-service/docker/Dockerfile
+            context: .
+            changed: ${{ needs.changes.outputs.order }}
+          - service: ftgo-consumer-service
+            dockerfile: services/ftgo-consumer-service/docker/Dockerfile
+            context: .
+            changed: ${{ needs.changes.outputs.consumer }}
+          - service: ftgo-restaurant-service
+            dockerfile: services/ftgo-restaurant-service/docker/Dockerfile
+            context: .
+            changed: ${{ needs.changes.outputs.restaurant }}
+          - service: ftgo-courier-service
+            dockerfile: services/ftgo-courier-service/docker/Dockerfile
+            context: .
+            changed: ${{ needs.changes.outputs.courier }}
+
+    steps:
+      - name: Skip if unchanged
+        if: matrix.changed != 'true'
+        run: echo "No changes detected for ${{ matrix.service }} — skipping."
+
+      - name: Checkout code
+        if: matrix.changed == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: matrix.changed == 'true' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags + labels)
+        if: matrix.changed == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            # <service>:<version>-<sha>
+            type=raw,value=${{ env.SERVICE_VERSION }}-{{sha}}
+            # <service>:<branch>
+            type=ref,event=branch
+            # <service>:pr-<number>
+            type=ref,event=pr
+            # <service>:latest (default branch only)
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service }}
+            org.opencontainers.image.version=${{ env.SERVICE_VERSION }}
+
+      - name: Build and push image
+        if: matrix.changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      # -----------------------------------------------------------------
+      # Vulnerability Scanning with Trivy
+      # -----------------------------------------------------------------
+      - name: Run Trivy vulnerability scanner
+        if: matrix.changed == 'true'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ env.SERVICE_VERSION }}-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        continue-on-error: true
+
+      - name: Upload Trivy scan results to GitHub Security
+        if: matrix.changed == 'true' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+        continue-on-error: true
+
+      - name: Upload Trivy scan results as artifact
+        if: matrix.changed == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-${{ matrix.service }}
+          path: 'trivy-${{ matrix.service }}.sarif'
+          retention-days: 30
+
+  # ===========================================================================
+  # Build & Push — MySQL Image
+  # ===========================================================================
+  build-mysql:
+    name: "Build: ftgo-mysql"
+    needs: changes
+    if: needs.changes.outputs.mysql == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/ftgo-mysql
+          tags: |
+            type=raw,value=${{ env.SERVICE_VERSION }}-{{sha}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=ftgo-mysql
+            org.opencontainers.image.version=${{ env.SERVICE_VERSION }}
+
+      - name: Build and push MySQL image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./mysql
+          file: ./mysql/Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/ftgo-mysql:${{ env.SERVICE_VERSION }}-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-ftgo-mysql.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        continue-on-error: true
+
+      - name: Upload Trivy scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-ftgo-mysql
+          path: 'trivy-ftgo-mysql.sarif'
+          retention-days: 30
+
+  # ===========================================================================
+  # Summary Gate
+  # ===========================================================================
+  docker-build-status:
+    name: Docker Build Status
+    if: always()
+    needs: [build-service, build-mysql]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check build results
+        run: |
+          echo "Service builds: ${{ needs.build-service.result }}"
+          echo "MySQL build:    ${{ needs.build-mysql.result }}"
+          if [[ "${{ needs.build-service.result }}" == "failure" ]]; then
+            echo "::error::One or more service image builds failed."
+            exit 1
+          fi
+          echo "All Docker builds completed successfully."

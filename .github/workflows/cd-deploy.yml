@@ -1,0 +1,211 @@
+# =============================================================================
+# CD Pipeline — Deploy to Kubernetes via Helm
+# =============================================================================
+# Automatically deploys to the dev environment on merge to main or the
+# migration branch. Uses Helm to render and apply K8s manifests.
+#
+# Deployment targets:
+#   - dev:     Automatic on merge to main/feat/microservices-migration-*
+#   - staging: Manual trigger via environment promotion workflow
+#   - prod:    Manual trigger via environment promotion workflow
+# =============================================================================
+
+name: "CD: Deploy to Kubernetes"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'deploy/helm/**'
+      - 'deploy/k8s/**'
+      - '.github/workflows/cd-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image_tag:
+        description: 'Image tag to deploy (default: latest for dev)'
+        required: false
+        default: 'latest'
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write  # For OIDC authentication to cloud providers
+
+env:
+  HELM_CHART_PATH: deploy/helm/ftgo
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Determine deployment parameters
+  # ---------------------------------------------------------------------------
+  prepare:
+    name: "Prepare Deployment"
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.params.outputs.environment }}
+      namespace: ${{ steps.params.outputs.namespace }}
+      values_file: ${{ steps.params.outputs.values_file }}
+      image_tag: ${{ steps.params.outputs.image_tag }}
+    steps:
+      - name: Determine parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+            TAG="${{ github.event.inputs.image_tag }}"
+          else
+            ENV="dev"
+            TAG="${{ github.sha }}"
+          fi
+
+          echo "environment=${ENV}" >> "$GITHUB_OUTPUT"
+          echo "namespace=ftgo-${ENV}" >> "$GITHUB_OUTPUT"
+          echo "values_file=values-${ENV}.yaml" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          echo "## Deployment Parameters" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environment | \`${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Namespace | \`ftgo-${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Validate Helm chart
+  # ---------------------------------------------------------------------------
+  validate:
+    name: "Validate Helm Chart"
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Lint Helm chart
+        run: |
+          helm lint ${{ env.HELM_CHART_PATH }} \
+            -f ${{ env.HELM_CHART_PATH }}/values.yaml \
+            -f ${{ env.HELM_CHART_PATH }}/${{ needs.prepare.outputs.values_file }}
+
+      - name: Template Helm chart (dry-run)
+        run: |
+          helm template ftgo ${{ env.HELM_CHART_PATH }} \
+            -f ${{ env.HELM_CHART_PATH }}/values.yaml \
+            -f ${{ env.HELM_CHART_PATH }}/${{ needs.prepare.outputs.values_file }} \
+            --set global.imageTag=${{ needs.prepare.outputs.image_tag }} \
+            --namespace ${{ needs.prepare.outputs.namespace }} \
+            > /tmp/rendered-manifests.yaml
+
+          echo "## Rendered Manifests" >> "$GITHUB_STEP_SUMMARY"
+          echo '```yaml' >> "$GITHUB_STEP_SUMMARY"
+          head -100 /tmp/rendered-manifests.yaml >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Deploy to target environment
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: "Deploy to ${{ needs.prepare.outputs.environment }}"
+    runs-on: ubuntu-latest
+    needs: [prepare, validate]
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+      url: "https://ftgo-${{ needs.prepare.outputs.environment }}.example.com"
+    concurrency:
+      group: deploy-${{ needs.prepare.outputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ${{ needs.prepare.outputs.namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ftgo ${{ env.HELM_CHART_PATH }} \
+            -f ${{ env.HELM_CHART_PATH }}/values.yaml \
+            -f ${{ env.HELM_CHART_PATH }}/${{ needs.prepare.outputs.values_file }} \
+            --set global.imageTag=${{ needs.prepare.outputs.image_tag }} \
+            --set namespaceCreate=false \
+            --namespace ${{ needs.prepare.outputs.namespace }} \
+            --wait \
+            --timeout 10m \
+            --atomic
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for all deployments to be ready..."
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            echo "Checking ${deploy}..."
+            kubectl rollout status deployment/${deploy} \
+              --namespace ${{ needs.prepare.outputs.namespace }} \
+              --timeout=300s
+          done
+
+          echo "Checking MySQL StatefulSet..."
+          kubectl rollout status statefulset/ftgo-mysql \
+            --namespace ${{ needs.prepare.outputs.namespace }} \
+            --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against ${{ needs.prepare.outputs.environment }}..."
+          for svc in ftgo-order-service:8081 ftgo-consumer-service:8082 ftgo-restaurant-service:8083 ftgo-courier-service:8084; do
+            NAME=$(echo $svc | cut -d: -f1)
+            PORT=$(echo $svc | cut -d: -f2)
+            echo "Checking ${NAME} health endpoint..."
+            kubectl exec -n ${{ needs.prepare.outputs.namespace }} \
+              deploy/${NAME} -- \
+              wget -qO- http://localhost:${PORT}/actuator/health || echo "Warning: ${NAME} health check failed"
+          done
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            STATUS=$(kubectl get deployment ${deploy} -n ${{ needs.prepare.outputs.namespace }} -o jsonpath='{.status.readyReplicas}/{.spec.replicas}' 2>/dev/null || echo "N/A")
+            echo "| ${deploy} | ${STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          MYSQL_STATUS=$(kubectl get statefulset ftgo-mysql -n ${{ needs.prepare.outputs.namespace }} -o jsonpath='{.status.readyReplicas}/{.spec.replicas}' 2>/dev/null || echo "N/A")
+          echo "| ftgo-mysql | ${MYSQL_STATUS} |" >> "$GITHUB_STEP_SUMMARY"

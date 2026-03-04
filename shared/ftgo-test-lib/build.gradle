@@ -1,0 +1,97 @@
+// =============================================================================
+// ftgo-test-lib — Shared test utility library for FTGO microservices
+// Contains test data builders, custom assertions, Testcontainers configuration,
+// and base test classes for unit, integration, contract, and API tests.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+// Required because Spring Boot 3.x / Spring Test 6.x APIs require Java 17+.
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler and test JVM for this module
+def java17Home = ['/usr/lib/jvm/java-17-openjdk-amd64', '/usr/lib/jvm/java-1.17.0-openjdk-amd64'].find { new File(it).exists() }
+if (java17Home) {
+    tasks.withType(JavaCompile) {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+        useJUnitPlatform()
+        scanForTestClasses = false
+        include '**/*Test.class'
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot (for @SpringBootTest, ApplicationContext, etc.)
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+
+    // JUnit 5
+    compile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    compile "org.junit.jupiter:junit-jupiter-api:${FtgoVersions.JUNIT_JUPITER}"
+    compile "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+
+    // Mockito
+    compile "org.mockito:mockito-core:${FtgoVersions.MOCKITO}"
+    compile "org.mockito:mockito-junit-jupiter:${FtgoVersions.MOCKITO}"
+
+    // AssertJ
+    compile "org.assertj:assertj-core:${FtgoVersions.ASSERTJ}"
+
+    // Rest-Assured
+    compile "io.rest-assured:rest-assured:${FtgoVersions.REST_ASSURED}"
+    compile "io.rest-assured:spring-mock-mvc:${FtgoVersions.REST_ASSURED}"
+
+    // Testcontainers
+    compile "org.testcontainers:testcontainers:${FtgoVersions.TESTCONTAINERS}"
+    compile "org.testcontainers:junit-jupiter:${FtgoVersions.TESTCONTAINERS}"
+    compile "org.testcontainers:mysql:${FtgoVersions.TESTCONTAINERS}"
+
+    // Jackson (for JSON test utilities)
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${FtgoVersions.JACKSON}"
+
+    // Spring Security Test
+    compile "org.springframework.security:spring-security-test:${FtgoVersions.SPRING_SECURITY}"
+
+    // SLF4J
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Test dependencies for self-testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-test-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Test Library'
+                description = 'Shared test utility library for FTGO microservices containing test data builders, custom assertions, Testcontainers configuration, and base test classes.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

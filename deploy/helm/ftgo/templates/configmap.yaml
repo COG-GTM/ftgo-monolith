@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-common-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-common-config" "context" $) | nindent 4 }}
+data:
+  database-url: "jdbc:mysql://ftgo-mysql.{{ .Values.global.namespace }}.svc.cluster.local:3306/ftgo"
+  management-endpoints: "health,info,metrics,prometheus"
