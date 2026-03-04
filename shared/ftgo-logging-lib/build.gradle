@@ -1,7 +1,8 @@
 // =============================================================================
 // ftgo-logging-lib — Shared centralized logging library for FTGO microservices
 // Provides structured JSON logging (Logback + logstash-logback-encoder),
-// MDC context propagation, correlation ID handling, and async appender config.
+// MDC context propagation, correlation ID handling, async appender config,
+// sensitive data masking, LogContext utility, and method entry/exit aspect.
 // =============================================================================
 
 import ftgo.conventions.FtgoVersions
@@ -56,6 +57,9 @@ dependencies {
     // Jackson for JSON processing (used by logstash-logback-encoder)
     compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
 
+    // Spring AOP (optional — for method entry/exit logging aspect)
+    compile "org.springframework.boot:spring-boot-starter-aop:${FtgoVersions.SPRING_BOOT}"
+
     // Test dependencies
     testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
     testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
@@ -80,7 +84,7 @@ publishing {
 
             pom {
                 name = 'FTGO Logging Library'
-                description = 'Shared centralized logging library for FTGO microservices providing structured JSON logging with Logback and logstash-logback-encoder, MDC context propagation, correlation ID handling, and async appender configuration.'
+                description = 'Shared centralized logging library for FTGO microservices providing structured JSON logging with Logback and logstash-logback-encoder, MDC context propagation, correlation ID handling, async appender configuration, sensitive data masking, and method entry/exit logging aspect.'
             }
         }
     }
