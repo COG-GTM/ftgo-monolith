@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.openapi.model;
+package net.chrisrichardson.ftgo.errorhandling.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -7,39 +7,28 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Standard error response envelope for FTGO REST endpoints.
+ * Standardized error response DTO for all FTGO microservices.
  *
- * <p>All error responses should use this envelope to provide a consistent error
- * format across all microservices. The error envelope includes:</p>
+ * <p>Every error returned by FTGO REST endpoints uses this envelope to
+ * ensure a consistent format across all services. The envelope includes:</p>
  * <ul>
  *     <li>{@code status} — Always "error"</li>
- *     <li>{@code code} — Application-specific error code</li>
+ *     <li>{@code code} — Application-specific error code from {@link net.chrisrichardson.ftgo.errorhandling.constants.FtgoErrorCodes}</li>
  *     <li>{@code message} — Human-readable error message</li>
  *     <li>{@code details} — Optional list of field-level validation errors</li>
  *     <li>{@code path} — The request path that caused the error</li>
-*     <li>{@code timestamp} — ISO 8601 timestamp of the error</li>
+ *     <li>{@code timestamp} — ISO 8601 timestamp of the error</li>
  *     <li>{@code traceId} — Distributed tracing identifier for log correlation</li>
  * </ul>
- *
- * <h3>Usage Example</h3>
- * <pre>{@code
- * @ExceptionHandler(OrderNotFoundException.class)
- * public ResponseEntity<ErrorResponse> handleNotFound(OrderNotFoundException ex,
- *                                                     HttpServletRequest request) {
- *     ErrorResponse error = ErrorResponse.of("ORDER_NOT_FOUND", ex.getMessage(),
- *                                            request.getRequestURI());
- *     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
- * }
- * }</pre>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Standard error response envelope")
-public class ErrorResponse {
+@Schema(description = "Standard error response envelope for FTGO services")
+public class FtgoErrorResponse {
 
-    @Schema(description = "Response status", example = "error")
+    @Schema(description = "Response status — always 'error'", example = "error")
     private final String status;
 
-    @Schema(description = "Application-specific error code", example = "ORDER_NOT_FOUND")
+    @Schema(description = "Application-specific error code", example = "ORD_NOT_FOUND")
     private final String code;
 
     @Schema(description = "Human-readable error message", example = "Order with id 123 not found")
@@ -57,17 +46,8 @@ public class ErrorResponse {
     @Schema(description = "Distributed trace ID for log correlation", example = "6a3e94b234f9a1c2")
     private final String traceId;
 
-    private ErrorResponse(String code, String message, List<FieldError> details, String path) {
-        this.status = "error";
-        this.code = code;
-        this.message = message;
-        this.details = details;
-        this.path = path;
-        this.timestamp = Instant.now();
-        this.traceId = null;
-    }
-
-    private ErrorResponse(String code, String message, List<FieldError> details, String path, String traceId) {
+    private FtgoErrorResponse(String code, String message, List<FieldError> details,
+                              String path, String traceId) {
         this.status = "error";
         this.code = code;
         this.message = message;
@@ -78,15 +58,16 @@ public class ErrorResponse {
     }
 
     /**
-     * Creates an error response with a code and message.
+     * Creates an error response without validation details.
      *
      * @param code    application-specific error code
      * @param message human-readable error message
      * @param path    the request path
-     * @return a new {@link ErrorResponse}
+     * @param traceId distributed trace ID (may be null)
+     * @return a new {@link FtgoErrorResponse}
      */
-    public static ErrorResponse of(String code, String message, String path) {
-        return new ErrorResponse(code, message, null, path);
+    public static FtgoErrorResponse of(String code, String message, String path, String traceId) {
+        return new FtgoErrorResponse(code, message, null, path, traceId);
     }
 
     /**
@@ -96,10 +77,12 @@ public class ErrorResponse {
      * @param message human-readable error message
      * @param details list of field-level validation errors
      * @param path    the request path
-     * @return a new {@link ErrorResponse}
+     * @param traceId distributed trace ID (may be null)
+     * @return a new {@link FtgoErrorResponse}
      */
-    public static ErrorResponse of(String code, String message, List<FieldError> details, String path) {
-        return new ErrorResponse(code, message, details, path);
+    public static FtgoErrorResponse of(String code, String message, List<FieldError> details,
+                                       String path, String traceId) {
+        return new FtgoErrorResponse(code, message, details, path, traceId);
     }
 
     public String getStatus() {
@@ -133,7 +116,7 @@ public class ErrorResponse {
     /**
      * Represents a single field-level validation error.
      */
-    @Schema(description = "Field-level validation error")
+    @Schema(description = "Field-level validation error detail")
     public static class FieldError {
 
         @Schema(description = "Field name that failed validation", example = "email")
