@@ -1,0 +1,45 @@
+# =============================================================================
+# FTGO Platform — Staging Environment Values
+# =============================================================================
+# Overrides for the ftgo-staging namespace. Production-like configuration
+# with reduced scale. Requires approval gate for promotion.
+# =============================================================================
+
+global:
+  namespace: ftgo-staging
+  imageTag: ""  # Set by CD pipeline to promoted image tag
+
+mysql:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  storage:
+    size: 10Gi
+
+serviceDefaults:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  env:
+    SPRING_PROFILES_ACTIVE: kubernetes,staging
+    JAVA_OPTS: "-Xmx384m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    LOG_LEVEL: INFO

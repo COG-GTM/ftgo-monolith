@@ -1,0 +1,181 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftgo-courier-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ftgo-courier-service
+        app.kubernetes.io/part-of: ftgo-platform
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8084"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      serviceAccountName: ftgo-courier-service
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: ftgo-courier-service
+          image: ghcr.io/cog-gtm/ftgo-monolith/ftgo-courier-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8084
+              protocol: TCP
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+            - name: SPRING_APPLICATION_NAME
+              value: ftgo-courier-service
+            - name: SPRING_PROFILES_ACTIVE
+              value: kubernetes
+            - name: JAVA_OPTS
+              value: "-Xmx384m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ftgo-common-config
+                  key: database-url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-credentials
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-credentials
+                  key: password
+            - name: FTGO_SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-jwt-secret
+                  key: jwt-secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8084
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: ftgo-courier-service
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ftgo-courier-service
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app.kubernetes.io/name: ftgo-courier-service
+    app.kubernetes.io/part-of: ftgo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftgo-courier-service
