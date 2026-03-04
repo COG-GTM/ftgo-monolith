@@ -93,6 +93,13 @@ project(':shared-ftgo-tracing-lib').projectDir = file('shared/ftgo-tracing-lib')
 include 'shared-ftgo-error-handling-lib'
 project(':shared-ftgo-error-handling-lib').projectDir = file('shared/ftgo-error-handling-lib')
 
+// --- Shared Logging Library ---
+include 'shared-ftgo-logging-lib'
+project(':shared-ftgo-logging-lib').projectDir = file('shared/ftgo-logging-lib')
+
+// --- Shared Resilience Library ---
+include 'shared-ftgo-resilience-lib'
+project(':shared-ftgo-resilience-lib').projectDir = file('shared/ftgo-resilience-lib')
 // --- Shared Test Library ---
 include 'shared-ftgo-test-lib'
 project(':shared-ftgo-test-lib').projectDir = file('shared/ftgo-test-lib')

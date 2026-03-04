@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  net.chrisrichardson.ftgo.resilience.config.FtgoResilienceAutoConfiguration,\
+  net.chrisrichardson.ftgo.resilience.config.FtgoGracefulShutdownConfiguration,\
+  net.chrisrichardson.ftgo.resilience.health.FtgoHealthIndicatorConfiguration,\
+  net.chrisrichardson.ftgo.resilience.discovery.FtgoServiceDiscoveryConfiguration

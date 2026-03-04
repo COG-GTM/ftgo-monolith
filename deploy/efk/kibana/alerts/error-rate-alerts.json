@@ -1,0 +1,109 @@
+{
+  "_comment": "Kibana alerting rules for FTGO log-based error rate monitoring",
+  "alerts": [
+    {
+      "name": "ftgo-high-error-rate",
+      "description": "Triggers when the error rate across any FTGO service exceeds 5% of total log volume in a 5-minute window",
+      "rule_type": "threshold",
+      "index": "ftgo-logs-*",
+      "conditions": {
+        "time_window": "5m",
+        "query": "level: ERROR",
+        "threshold": {
+          "comparator": "gt",
+          "value": 50,
+          "type": "count"
+        },
+        "group_by": "service"
+      },
+      "actions": {
+        "notify": {
+          "severity": "warning",
+          "message": "High error rate detected in service {{context.service}}: {{context.value}} errors in the last 5 minutes"
+        }
+      },
+      "schedule": {
+        "interval": "1m"
+      },
+      "tags": ["ftgo", "error-rate", "logging"]
+    },
+    {
+      "name": "ftgo-critical-error-spike",
+      "description": "Triggers when a single service produces more than 200 ERROR logs in a 5-minute window, indicating a critical failure",
+      "rule_type": "threshold",
+      "index": "ftgo-logs-*",
+      "conditions": {
+        "time_window": "5m",
+        "query": "level: ERROR",
+        "threshold": {
+          "comparator": "gt",
+          "value": 200,
+          "type": "count"
+        },
+        "group_by": "service"
+      },
+      "actions": {
+        "notify": {
+          "severity": "critical",
+          "message": "CRITICAL: Error spike in service {{context.service}}: {{context.value}} errors in the last 5 minutes. Immediate investigation required."
+        }
+      },
+      "schedule": {
+        "interval": "1m"
+      },
+      "tags": ["ftgo", "error-spike", "critical", "logging"]
+    },
+    {
+      "name": "ftgo-service-log-silence",
+      "description": "Triggers when a service stops producing logs for more than 10 minutes, which may indicate the service is down",
+      "rule_type": "threshold",
+      "index": "ftgo-logs-*",
+      "conditions": {
+        "time_window": "10m",
+        "query": "*",
+        "threshold": {
+          "comparator": "lt",
+          "value": 1,
+          "type": "count"
+        },
+        "group_by": "service"
+      },
+      "actions": {
+        "notify": {
+          "severity": "warning",
+          "message": "Service {{context.service}} has not produced any logs in the last 10 minutes. Check if the service is running."
+        }
+      },
+      "schedule": {
+        "interval": "5m"
+      },
+      "tags": ["ftgo", "service-health", "logging"]
+    },
+    {
+      "name": "ftgo-unhandled-exception-alert",
+      "description": "Triggers when unhandled exceptions (stack traces) are detected in any service",
+      "rule_type": "threshold",
+      "index": "ftgo-logs-*",
+      "conditions": {
+        "time_window": "5m",
+        "query": "level: ERROR AND _exists_: stackTrace",
+        "threshold": {
+          "comparator": "gt",
+          "value": 10,
+          "type": "count"
+        },
+        "group_by": "service"
+      },
+      "actions": {
+        "notify": {
+          "severity": "warning",
+          "message": "Unhandled exceptions detected in service {{context.service}}: {{context.value}} exceptions with stack traces in the last 5 minutes"
+        }
+      },
+      "schedule": {
+        "interval": "2m"
+      },
+      "tags": ["ftgo", "exceptions", "logging"]
+    }
+  ]
+}

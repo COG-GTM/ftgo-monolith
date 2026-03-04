@@ -18,6 +18,9 @@ class FtgoVersions {
     static final String SPRING_BOOT = '3.2.5'
     static final String SPRING_DEPENDENCY_MANAGEMENT = '1.1.4'
 
+    // --- Resilience ---
+    static final String RESILIENCE4J = '2.2.0'
+
     // --- Observability ---
     static final String MICROMETER = '1.12.5'
     static final String MICROMETER_TRACING = '1.2.5'

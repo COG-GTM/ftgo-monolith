@@ -45,3 +45,40 @@ serviceDefaults:
     SPRING_PROFILES_ACTIVE: kubernetes,prod
     JAVA_OPTS: "-Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
     LOG_LEVEL: WARN
+    FTGO_LOGGING_JSON_ENABLED: "true"
+    FTGO_LOGGING_ASYNC_ENABLED: "true"
+
+# -- Logging / EFK Stack (Production) ----------------------------------------
+logging:
+  enabled: true
+  retentionDays: 90
+  elasticsearch:
+    replicas: 1
+    javaOpts: "-Xms1g -Xmx1g"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    storage:
+      size: 100Gi
+      storageClassName: gp3
+  fluentd:
+    logLevel: warn
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  kibana:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi

@@ -31,7 +31,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 45
       containers:
         - name: ftgo-courier-service
           image: ghcr.io/cog-gtm/ftgo-monolith/ftgo-courier-service:latest
@@ -40,6 +40,10 @@ spec:
             - name: http
               containerPort: 8084
               protocol: TCP
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
           env:
             - name: SERVER_PORT
               value: "8084"
