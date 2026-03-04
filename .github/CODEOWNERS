@@ -1,0 +1,51 @@
+# =============================================================================
+# FTGO CODEOWNERS
+# =============================================================================
+# This file defines the default reviewers for pull requests.
+# Each line is a file pattern followed by one or more owners.
+# Order matters: later patterns take precedence over earlier ones.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# --- Default owners for everything ---
+*                                       @COG-GTM/ftgo-maintainers
+
+# --- Shared libraries ---
+/shared/ftgo-common/                    @COG-GTM/ftgo-platform
+/shared/ftgo-common-jpa/                @COG-GTM/ftgo-platform
+/shared/ftgo-domain/                    @COG-GTM/ftgo-platform
+/shared/ftgo-security-lib/              @COG-GTM/ftgo-platform
+/shared/ftgo-metrics-lib/               @COG-GTM/ftgo-platform
+/shared/ftgo-openapi-lib/               @COG-GTM/ftgo-platform
+
+# --- Shared API/DTO libraries ---
+/shared/ftgo-order-service-api/         @COG-GTM/ftgo-order-team
+/shared/ftgo-consumer-service-api/      @COG-GTM/ftgo-consumer-team
+/shared/ftgo-restaurant-service-api/    @COG-GTM/ftgo-restaurant-team
+/shared/ftgo-courier-service-api/       @COG-GTM/ftgo-courier-team
+
+# --- Microservices ---
+/services/ftgo-order-service/           @COG-GTM/ftgo-order-team
+/services/ftgo-consumer-service/        @COG-GTM/ftgo-consumer-team
+/services/ftgo-restaurant-service/      @COG-GTM/ftgo-restaurant-team
+/services/ftgo-courier-service/         @COG-GTM/ftgo-courier-team
+
+# --- Build & CI infrastructure ---
+/buildSrc/                              @COG-GTM/ftgo-platform
+/gradle/                                @COG-GTM/ftgo-platform
+/.github/                               @COG-GTM/ftgo-platform
+/config/                                @COG-GTM/ftgo-platform
+build.gradle                            @COG-GTM/ftgo-platform
+settings.gradle                         @COG-GTM/ftgo-platform
+gradle.properties                       @COG-GTM/ftgo-platform
+
+# --- Infrastructure & deployment ---
+/deploy/                                @COG-GTM/ftgo-platform
+/k8s/                                   @COG-GTM/ftgo-platform
+docker-compose*.yml                     @COG-GTM/ftgo-platform
+
+# --- Documentation ---
+/docs/                                  @COG-GTM/ftgo-maintainers
+CONTRIBUTING.md                         @COG-GTM/ftgo-maintainers
+README.md                               @COG-GTM/ftgo-maintainers

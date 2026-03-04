@@ -1,0 +1,92 @@
+// =============================================================================
+// ftgo-security-lib — Shared Spring Security library for FTGO microservices
+// Contains base SecurityFilterChain, CORS, exception handlers, and utilities
+// =============================================================================
+//
+// This module uses Spring Boot 3.x (Jakarta namespace) and Java 17,
+// overriding the root project's Java 1.8 / Spring Boot 2.x defaults.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+// Gradle 4.x uses JavaVersion enum; VERSION_17 is not available,
+// so we set compatibility via string properties.
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+// The default JAVA_HOME may point to Java 8; use Java 17 explicitly if available
+def java17Home = ['/usr/lib/jvm/java-17-openjdk-amd64', '/usr/lib/jvm/java-1.17.0-openjdk-amd64'].find { new File(it).exists() }
+if (java17Home) {
+    tasks.withType(JavaCompile) {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    // Configure the test task to run with Java 17 and JUnit 5
+    test {
+        executable = "${java17Home}/bin/java"
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+        useJUnitPlatform()
+        scanForTestClasses = false
+        include '**/*Test.class'
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Boot Web (for servlet filters, HTTP)
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot Security
+    compile "org.springframework.boot:spring-boot-starter-security:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot Actuator (for actuator endpoint security)
+    compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
+
+    // Jackson for JSON error responses
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${FtgoVersions.JACKSON}"
+
+    // JWT (JJWT library)
+    compile "io.jsonwebtoken:jjwt-api:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-impl:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-jackson:${FtgoVersions.JJWT}"
+
+    // Spring Boot OAuth2 Resource Server
+    compile "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${FtgoVersions.SPRING_BOOT}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.springframework.security:spring-security-test:${FtgoVersions.SPRING_SECURITY}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+    testCompile "org.hamcrest:hamcrest:2.2"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-security-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Security Library'
+                description = 'Shared Spring Security library for FTGO microservices containing base SecurityFilterChain, CORS configuration, exception handlers, and security utilities.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

@@ -18,6 +18,7 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    apply plugin: "jacoco"
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
@@ -40,4 +41,47 @@ subprojects {
 
     }
 
+    // =========================================================================
+    // JaCoCo Code Coverage Configuration
+    // =========================================================================
+    jacoco {
+        toolVersion = '0.8.11'
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+            csv.enabled = false
+        }
+    }
+
+    // Finalize test task with JaCoCo report generation
+    test.finalizedBy jacocoTestReport
+
+    // Parallel test execution for faster feedback
+    tasks.withType(Test) {
+        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        forkEvery = 100
+    }
+
 }
+
+// =============================================================================
+// Microservice Convention Plugins
+// =============================================================================
+// The following convention plugins are available in buildSrc for new
+// microservice modules under services/ and shared/:
+//
+//   - ftgo.java-conventions        : Java 17, UTF-8 encoding, compiler options
+//   - ftgo.spring-boot-conventions : Spring Boot 3.x + dependency management
+//   - ftgo.testing-conventions     : JUnit 5, Rest-Assured, test configuration
+//   - ftgo.docker-conventions      : Docker image build tasks
+//   - ftgo.publishing-conventions  : Maven publishing configuration
+//
+// These plugins are NOT applied to legacy monolith modules.
+// New modules consume them via: apply plugin: 'ftgo.java-conventions'
+//
+// Version catalog: gradle/libs.versions.toml
+// See docs/shared-gradle-configuration.md for full usage details.
+// =============================================================================

@@ -1,0 +1,92 @@
+name: "CI: Restaurant Service"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-restaurant-service/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-restaurant-service.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-restaurant-service/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-restaurant-service.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Restaurant Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-restaurant-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-restaurant-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Restaurant Service
+        run: ./gradlew :services-ftgo-restaurant-service:build
+
+      - name: Run Restaurant Service Tests
+        run: ./gradlew :services-ftgo-restaurant-service:test
+
+      # --- Quality Gate Checks ---
+      - name: "Quality Gate: Checkstyle"
+        if: always()
+        run: ./gradlew :services-ftgo-restaurant-service:checkstyleMain --continue || true
+
+      - name: "Quality Gate: PMD"
+        if: always()
+        run: ./gradlew :services-ftgo-restaurant-service:pmdMain --continue || true
+
+      - name: "Quality Gate: FindBugs"
+        if: always()
+        run: ./gradlew :services-ftgo-restaurant-service:findbugsMain --continue || true
+
+      - name: "Quality Gate: JaCoCo Coverage"
+        if: always()
+        run: ./gradlew :services-ftgo-restaurant-service:jacocoTestReport --continue || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restaurant-service-test-reports
+          path: services/ftgo-restaurant-service/build/reports/tests/
+          retention-days: 14

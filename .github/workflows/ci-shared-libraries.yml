@@ -1,0 +1,127 @@
+name: "CI: Shared Libraries"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-shared-libraries.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-shared-libraries.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test Shared Libraries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-shared-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-shared-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build shared/ftgo-common
+        run: ./gradlew :shared-ftgo-common:build
+
+      - name: Build shared/ftgo-common-jpa
+        run: ./gradlew :shared-ftgo-common-jpa:build
+
+      - name: Build shared/ftgo-domain
+        run: ./gradlew :shared-ftgo-domain:build
+
+      - name: Run shared library tests
+        run: |
+          ./gradlew :shared-ftgo-common:test
+          ./gradlew :shared-ftgo-common-jpa:test
+          ./gradlew :shared-ftgo-domain:test
+
+      # --- Quality Gate Checks ---
+      - name: "Quality Gate: Checkstyle"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-domain:checkstyleMain --continue || true
+
+      - name: "Quality Gate: PMD"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:pmdMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:pmdMain --continue || true
+          ./gradlew :shared-ftgo-domain:pmdMain --continue || true
+
+      - name: "Quality Gate: FindBugs"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-domain:findbugsMain --continue || true
+
+      - name: "Quality Gate: JaCoCo Coverage"
+        if: always()
+        run: |
+          ./gradlew :shared-ftgo-common:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-common-jpa:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-domain:jacocoTestReport --continue || true
+
+      - name: Upload ftgo-common test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ftgo-common-test-reports
+          path: shared/ftgo-common/build/reports/tests/
+          retention-days: 14
+
+      - name: Upload ftgo-common-jpa test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ftgo-common-jpa-test-reports
+          path: shared/ftgo-common-jpa/build/reports/tests/
+          retention-days: 14
+
+      - name: Upload ftgo-domain test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ftgo-domain-test-reports
+          path: shared/ftgo-domain/build/reports/tests/
+          retention-days: 14

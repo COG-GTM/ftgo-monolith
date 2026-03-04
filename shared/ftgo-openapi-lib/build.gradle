@@ -1,0 +1,77 @@
+// =============================================================================
+// ftgo-openapi-lib — Shared OpenAPI 3.0 library for FTGO microservices
+// Replaces the legacy common-swagger (Springfox 2.x) with SpringDoc OpenAPI 3.
+// Provides auto-configuration for Swagger UI, OpenAPI metadata, and
+// standardized API response models.
+// =============================================================================
+
+version = '1.0.0'
+
+apply plugin: 'maven-publish'
+
+// SpringDoc OpenAPI 2.x requires Java 17 (matching the microservices target).
+// Override the root-level Java 1.8 setting for this module.
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Fork the compiler to use Java 17 when the default JDK is older.
+// Searches common JDK 17 installation paths; CI agents and developer machines
+// should have JAVA_17_HOME set or JDK 17 installed in a standard location.
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    compileJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    compileTestJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+    }
+}
+
+dependencies {
+    // SpringDoc OpenAPI 3 with Swagger UI
+    compile "org.springdoc:springdoc-openapi-starter-webmvc-ui:${ftgo.conventions.FtgoVersions.SPRINGDOC_OPENAPI}"
+
+    // Spring Boot Web — uses microservices Spring Boot 3.x version
+    compile "org.springframework.boot:spring-boot-starter-web:${ftgo.conventions.FtgoVersions.SPRING_BOOT}"
+
+    // Jackson for JSON serialization of response models
+    compile "com.fasterxml.jackson.core:jackson-databind:${ftgo.conventions.FtgoVersions.JACKSON}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${ftgo.conventions.FtgoVersions.JACKSON}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${ftgo.conventions.FtgoVersions.SPRING_BOOT}"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-openapi-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO OpenAPI Library'
+                description = 'Shared OpenAPI 3.0 library for FTGO microservices. Provides SpringDoc auto-configuration, Swagger UI, and standardized API response models.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

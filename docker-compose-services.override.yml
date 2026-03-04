@@ -1,0 +1,47 @@
+# =============================================================================
+# Docker Compose Override — Local Builds
+# =============================================================================
+# Overrides GHCR images with local Docker builds for development.
+#
+# Usage:
+#   docker-compose \
+#     -f docker-compose-services.yml \
+#     -f docker-compose-services.override.yml \
+#     up -d --build
+#
+# To build only a single service locally while pulling the rest from GHCR,
+# comment out the services you do NOT want to build locally.
+# =============================================================================
+
+version: '3.8'
+
+services:
+  ftgo-mysql:
+    image: ftgo-mysql:local
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+
+  ftgo-order-service:
+    image: ftgo-order-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-order-service/docker/Dockerfile
+
+  ftgo-consumer-service:
+    image: ftgo-consumer-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-consumer-service/docker/Dockerfile
+
+  ftgo-restaurant-service:
+    image: ftgo-restaurant-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-restaurant-service/docker/Dockerfile
+
+  ftgo-courier-service:
+    image: ftgo-courier-service:local
+    build:
+      context: .
+      dockerfile: services/ftgo-courier-service/docker/Dockerfile
