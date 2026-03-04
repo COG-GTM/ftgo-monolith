@@ -6,6 +6,7 @@ Creates an HPA for each enabled microservice when autoscaling is enabled.
 */}}
 
 {{- $services := list
+  (dict "key" "apiGateway" "config" .Values.apiGateway)
   (dict "key" "orderService" "config" .Values.orderService)
   (dict "key" "consumerService" "config" .Values.consumerService)
   (dict "key" "restaurantService" "config" .Values.restaurantService)

@@ -112,6 +112,35 @@ serviceDefaults:
   tolerations: []
   affinity: {}
 
+# -- API Gateway --------------------------------------------------------------
+apiGateway:
+  enabled: true
+  name: ftgo-api-gateway
+  port: 8080
+  image:
+    repository: ""  # Uses global.imageRegistry/ftgo-api-gateway
+    tag: ""         # Uses global.imageTag
+  replicas: ""      # Uses serviceDefaults.replicas
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 75
+  env:
+    FTGO_ORDER_SERVICE_URL: "http://ftgo-order-service:8081"
+    FTGO_CONSUMER_SERVICE_URL: "http://ftgo-consumer-service:8082"
+    FTGO_RESTAURANT_SERVICE_URL: "http://ftgo-restaurant-service:8083"
+    FTGO_COURIER_SERVICE_URL: "http://ftgo-courier-service:8084"
+  serviceType: LoadBalancer
+
 # -- Order Service ------------------------------------------------------------
 orderService:
   enabled: true

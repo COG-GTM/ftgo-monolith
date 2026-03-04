@@ -1,0 +1,111 @@
+// =============================================================================
+// ftgo-api-gateway — Spring Cloud Gateway service for FTGO microservices
+// Single entry point for all microservices with JWT validation, rate limiting,
+// circuit breaker, CORS, SSL/TLS termination, and API versioning.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    tasks.withType(JavaCompile) {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+        options.compilerArgs += ['-parameters']
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+        useJUnitPlatform()
+        scanForTestClasses = false
+        include '**/*Test.class'
+    }
+}
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Spring Cloud Gateway (reactive, based on WebFlux)
+    compile "org.springframework.boot:spring-boot-starter-webflux:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.cloud:spring-cloud-starter-gateway:4.1.3"
+
+    // Spring Boot Actuator
+    compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot Security (reactive)
+    compile "org.springframework.boot:spring-boot-starter-security:${FtgoVersions.SPRING_BOOT}"
+
+    // JWT (JJWT library) — for gateway-level JWT validation
+    compile "io.jsonwebtoken:jjwt-api:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-impl:${FtgoVersions.JJWT}"
+    runtime "io.jsonwebtoken:jjwt-jackson:${FtgoVersions.JJWT}"
+
+    // Jackson for JSON processing
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${FtgoVersions.JACKSON}"
+
+    // Rate Limiting with Redis
+    compile "org.springframework.boot:spring-boot-starter-data-redis-reactive:${FtgoVersions.SPRING_BOOT}"
+
+    // Circuit Breaker (Resilience4j)
+    compile "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j:3.1.1"
+
+    // Micrometer for metrics
+    compile "io.micrometer:micrometer-core:${FtgoVersions.MICROMETER}"
+    compile "io.micrometer:micrometer-registry-prometheus:${FtgoVersions.MICROMETER}"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.springframework.security:spring-security-test:${FtgoVersions.SPRING_SECURITY}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+    testCompile "io.projectreactor:reactor-test:3.6.5"
+    testCompile "org.mockito:mockito-core:${FtgoVersions.MOCKITO}"
+    testCompile "org.assertj:assertj-core:${FtgoVersions.ASSERTJ}"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.1"
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-api-gateway'
+            version = project.version
+
+            pom {
+                name = 'FTGO API Gateway'
+                description = 'Spring Cloud Gateway service providing single entry point for FTGO microservices with JWT validation, rate limiting, circuit breaker, CORS, and API versioning.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}
