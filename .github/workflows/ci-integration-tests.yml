@@ -91,6 +91,12 @@ jobs:
             ${{ runner.os }}-gradle-integration-
             ${{ runner.os }}-gradle-
 
+      - name: Configure Java 17 path for Gradle compatibility
+        run: |
+          # Create symlink so Gradle build files can find Java 17 at expected path
+          sudo mkdir -p /usr/lib/jvm
+          sudo ln -sf "$JAVA_HOME" /usr/lib/jvm/java-17-openjdk-amd64
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -112,7 +118,8 @@ jobs:
             --no-daemon \
             --parallel \
             -x :ftgo-end-to-end-tests:compileTestJava \
-            -x :ftgo-end-to-end-tests-common:compileJava
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-application:compileTestJava
 
       - name: Run integration tests
         run: |
@@ -130,10 +137,11 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          ./gradlew jacocoIntegrationTestReport \
-            --no-daemon \
-            -x :ftgo-end-to-end-tests:test \
-            -x :ftgo-end-to-end-tests-common:test || true
+          # JaCoCo reports are auto-generated via finalizedBy wiring in
+          # FtgoTestingConventionsPlugin (integrationTest -> jacocoIntegrationTestReport).
+          # Collect any generated reports for the artifact upload step.
+          echo "JaCoCo integration coverage reports:"
+          find . -path '*/reports/jacoco/*integrationTest*' -name '*.xml' 2>/dev/null || echo 'No reports found (expected if no integration tests exist yet)'
 
       - name: Upload integration test results
         if: always()

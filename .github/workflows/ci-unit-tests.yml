@@ -87,6 +87,15 @@ jobs:
             ${{ runner.os }}-gradle-unit-
             ${{ runner.os }}-gradle-
 
+      - name: Configure Java 17 path for Gradle compatibility
+        run: |
+          # The shared/ftgo-security-lib build.gradle detects Java 17 via well-known
+          # paths to set scanForTestClasses=false (required because Gradle 4.10.2
+          # cannot read JDK 17 class files during test discovery).
+          # CI runners install JDK at a different location, so create a symlink.
+          sudo mkdir -p /usr/lib/jvm
+          sudo ln -sf "$JAVA_HOME" /usr/lib/jvm/java-17-openjdk-amd64
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
