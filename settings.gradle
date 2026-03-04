@@ -58,3 +58,29 @@ project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
 include 'shared-ftgo-domain'
 project(':shared-ftgo-domain').projectDir = file('shared/ftgo-domain')
 
+// =============================================================================
+// Version Catalog (gradle/libs.versions.toml)
+// =============================================================================
+// A Gradle version catalog has been created at gradle/libs.versions.toml to
+// centralize dependency versions for the new microservice modules.
+//
+// Currently, the convention plugins in buildSrc use the FtgoVersions constants
+// class (which mirrors the TOML file). When Gradle is upgraded to 7.5+,
+// enable native version catalog support by uncommenting the block below:
+//
+// dependencyResolutionManagement {
+//     versionCatalogs {
+//         libs {
+//             from(files('gradle/libs.versions.toml'))
+//         }
+//     }
+// }
+//
+// After enabling, convention plugins can reference versions as:
+//   libs.versions.spring.boot.get()
+// And dependencies as:
+//   libs.spring.boot.starter.web
+//
+// See docs/shared-gradle-configuration.md for the full upgrade guide.
+// =============================================================================
+
