@@ -40,6 +40,9 @@ dependencies {
     // Centralized Error Handling (@ControllerAdvice, Bean Validation)
     compile project(':shared-ftgo-error-handling-lib')
 
+    // Resilience (Circuit Breaker, Retry, Bulkhead, Rate Limiter, Health Indicators)
+    compile project(':shared-ftgo-resilience-lib')
+
     // Testing
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile "org.springframework.security:spring-security-test:6.2.4"

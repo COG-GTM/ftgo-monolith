@@ -19,6 +19,9 @@ java = "17"
 spring-boot = "3.2.5"
 spring-dependency-management = "1.1.4"
 
+# --- Resilience ---
+resilience4j = "2.2.0"
+
 # --- Observability ---
 micrometer = "1.12.5"
 micrometer-tracing = "1.2.5"

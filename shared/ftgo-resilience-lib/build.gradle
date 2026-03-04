@@ -1,0 +1,104 @@
+// =============================================================================
+// ftgo-resilience-lib — Shared resilience library for FTGO microservices
+// Provides Resilience4j circuit breaker, retry, bulkhead, rate limiter
+// configuration, health indicators, K8s service discovery, and graceful
+// shutdown support.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    compileJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    compileTestJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Resilience4j
+    compile "io.github.resilience4j:resilience4j-spring-boot3:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-circuitbreaker:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-retry:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-bulkhead:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-ratelimiter:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-micrometer:${FtgoVersions.RESILIENCE4J}"
+    compile "io.github.resilience4j:resilience4j-all:${FtgoVersions.RESILIENCE4J}"
+
+    // Spring Boot
+    compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-autoconfigure:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-aop:${FtgoVersions.SPRING_BOOT}"
+
+    // Micrometer for metrics integration
+    compile "io.micrometer:micrometer-core:${FtgoVersions.MICROMETER}"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Jackson for JSON
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+    testCompile "org.mockito:mockito-core:${FtgoVersions.MOCKITO}"
+    testCompile "org.mockito:mockito-junit-jupiter:${FtgoVersions.MOCKITO}"
+    testCompile "org.assertj:assertj-core:${FtgoVersions.ASSERTJ}"
+    testCompile "io.micrometer:micrometer-test:${FtgoVersions.MICROMETER}"
+}
+
+// Configure test task
+test {
+    useJUnitPlatform()
+    scanForTestClasses = false
+    include '**/*Test.class'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-resilience-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Resilience Library'
+                description = 'Shared resilience library for FTGO microservices providing Resilience4j circuit breaker, retry, bulkhead, rate limiter, health indicators, K8s service discovery, and graceful shutdown.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}
