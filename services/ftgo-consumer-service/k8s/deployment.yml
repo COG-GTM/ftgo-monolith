@@ -1,0 +1,57 @@
+# FTGO Consumer Service - Kubernetes Deployment
+# Placeholder for the Consumer microservice K8s manifests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-consumer-service
+  labels:
+    app: ftgo-consumer-service
+    domain: consumer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-consumer-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-consumer-service
+        domain: consumer
+    spec:
+      containers:
+        - name: ftgo-consumer-service
+          image: ftgo/consumer-service:latest
+          ports:
+            - containerPort: 8082
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-consumer-service
+spec:
+  selector:
+    app: ftgo-consumer-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8082
+  type: ClusterIP

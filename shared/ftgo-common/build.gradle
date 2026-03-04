@@ -1,0 +1,11 @@
+// Shared common library for FTGO microservices
+// Contains common utilities, exceptions, and base classes
+
+dependencies {
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}

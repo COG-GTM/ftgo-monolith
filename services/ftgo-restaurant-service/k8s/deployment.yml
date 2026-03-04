@@ -1,0 +1,57 @@
+# FTGO Restaurant Service - Kubernetes Deployment
+# Placeholder for the Restaurant microservice K8s manifests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-restaurant-service
+  labels:
+    app: ftgo-restaurant-service
+    domain: restaurant
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-restaurant-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-restaurant-service
+        domain: restaurant
+    spec:
+      containers:
+        - name: ftgo-restaurant-service
+          image: ftgo/restaurant-service:latest
+          ports:
+            - containerPort: 8083
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-restaurant-service
+spec:
+  selector:
+    app: ftgo-restaurant-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083
+  type: ClusterIP

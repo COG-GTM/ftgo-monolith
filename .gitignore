@@ -15,3 +15,16 @@ bin
 node_modules
 dist
 ftgo-api-gateway-graphql/jest_0
+
+# Docker
+.docker/
+
+# Terraform
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.backup
+
+# IDE
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,57 @@
+# FTGO Order Service - Kubernetes Deployment
+# Placeholder for the Order microservice K8s manifests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-order-service
+  labels:
+    app: ftgo-order-service
+    domain: order
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-order-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-order-service
+        domain: order
+    spec:
+      containers:
+        - name: ftgo-order-service
+          image: ftgo/order-service:latest
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-order-service
+spec:
+  selector:
+    app: ftgo-order-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8081
+  type: ClusterIP
