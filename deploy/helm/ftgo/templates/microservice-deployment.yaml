@@ -1,0 +1,91 @@
+{{- /*
+=============================================================================
+Microservice Deployment Template
+=============================================================================
+Iterates over all enabled microservices and creates a Deployment for each.
+*/}}
+
+{{- $services := list
+  (dict "key" "orderService" "config" .Values.orderService)
+  (dict "key" "consumerService" "config" .Values.consumerService)
+  (dict "key" "restaurantService" "config" .Values.restaurantService)
+  (dict "key" "courierService" "config" .Values.courierService)
+}}
+
+{{- range $svc := $services }}
+{{- if $svc.config.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc.config.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" $svc.config.name "context" $) | nindent 4 }}
+spec:
+  replicas: {{ include "ftgo.replicas" (dict "service" $svc.config "defaults" $.Values.serviceDefaults) }}
+  revisionHistoryLimit: {{ $.Values.serviceDefaults.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "ftgo.selectorLabels" (dict "name" $svc.config.name "context" $) | nindent 6 }}
+  strategy:
+    {{- toYaml $.Values.serviceDefaults.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ftgo.labels" (dict "name" $svc.config.name "context" $) | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ $svc.config.port | quote }}
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ $svc.config.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ $svc.config.name }}
+          image: {{ include "ftgo.serviceImage" (dict "global" $.Values.global "service" $svc.config "serviceName" $svc.config.name) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $svc.config.port }}
+              protocol: TCP
+          env:
+            {{- include "ftgo.envVars" (dict "defaults" $.Values.serviceDefaults "service" $svc.config "serviceName" $svc.config.name "port" $svc.config.port) | nindent 12 }}
+          {{- with (default $.Values.serviceDefaults.resources $svc.config.resources) }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.serviceDefaults.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.serviceDefaults.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.serviceDefaults.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with $.Values.serviceDefaults.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.serviceDefaults.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.serviceDefaults.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}

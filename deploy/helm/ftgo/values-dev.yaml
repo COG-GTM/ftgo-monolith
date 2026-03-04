@@ -1,0 +1,43 @@
+# =============================================================================
+# FTGO Platform — Development Environment Values
+# =============================================================================
+# Overrides for the ftgo-dev namespace. Minimal resources, single replicas,
+# relaxed autoscaling. Deployed automatically on merge to main.
+# =============================================================================
+
+global:
+  namespace: ftgo-dev
+  imageTag: latest
+
+mysql:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  storage:
+    size: 5Gi
+
+serviceDefaults:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 384Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+  podDisruptionBudget:
+    enabled: false
+  env:
+    SPRING_PROFILES_ACTIVE: kubernetes,dev
+    JAVA_OPTS: "-Xmx256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    LOG_LEVEL: DEBUG

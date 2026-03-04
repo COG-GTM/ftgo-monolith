@@ -1,0 +1,70 @@
+# =============================================================================
+# Kustomize Overlay — Development (ftgo-dev)
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-dev
+
+resources:
+  - ../../base
+
+patches:
+  # Scale down all deployments to 1 replica for dev
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  # Disable HPA in dev
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      $patch: delete
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: unused
+  # Disable PDB in dev
+  - target:
+      kind: PodDisruptionBudget
+    patch: |
+      $patch: delete
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: unused
+  # Reduce MySQL resources in dev
+  - target:
+      kind: StatefulSet
+      name: ftgo-mysql
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+  # Reduce service resources in dev
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 384Mi
+
+commonLabels:
+  environment: dev
+
+commonAnnotations:
+  ftgo.io/environment: dev
