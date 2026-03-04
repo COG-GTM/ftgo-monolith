@@ -70,6 +70,11 @@ serviceDefaults:
     limits:
       cpu: 500m
       memory: 512Mi
+  terminationGracePeriodSeconds: 45
+  lifecycle:
+    preStop:
+      exec:
+        command: ["sh", "-c", "sleep 5"]
   livenessProbe:
     httpGet:
       path: /actuator/health/liveness
