@@ -22,11 +22,11 @@
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | 1 | Completed | [PR #111](https://github.com/COG-GTM/ftgo-monolith/pull/111) | Success | None |
 | 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | 1 | Completed | [PR #113](https://github.com/COG-GTM/ftgo-monolith/pull/113) | Success | None |
 | 2 | EM-32 | Extract and Version ftgo-common Shared Library | 1 | Completed | [PR #112](https://github.com/COG-GTM/ftgo-monolith/pull/112) | Success | None |
-| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Pending | - | - | - |
-| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | 2 | Pending | - | - | - |
-| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Pending | - | - | - |
-| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Pending | - | - | - |
-| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Pending | - | - | - |
+| 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | 1 | Completed | [PR #115](https://github.com/COG-GTM/ftgo-monolith/pull/115) | Success | None |
+| 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | 2 | Completed | [PR #114](https://github.com/COG-GTM/ftgo-monolith/pull/114) | Success | None |
+| 3 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | 3 | Completed | [PR #118](https://github.com/COG-GTM/ftgo-monolith/pull/118) | Success (conflicts resolved) | settings.gradle |
+| 3 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | 4 | Completed | [PR #117](https://github.com/COG-GTM/ftgo-monolith/pull/117) | Success | None |
+| 3 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | 5 | Completed | [PR #116](https://github.com/COG-GTM/ftgo-monolith/pull/116) | Success (conflicts resolved) | settings.gradle |
 | 4 | EM-29 | Define Per-Service Database Schema Migration Strategy | 1 | Pending | - | - | - |
 | 4 | EM-34 | Set Up Container Registry and Docker Image Build Automation | 2 | Pending | - | - | - |
 | 4 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | 2 | Pending | - | - | - |
@@ -44,4 +44,6 @@
 
 ## Conflict Resolution History
 
-*(Updated after each batch)*
+### Batch 3
+- **EM-39 (settings.gradle):** Multiple Batch 3 PRs added module includes to settings.gradle. Resolved by keeping all entries from HEAD (EM-31 API/DTO modules + EM-39 security-lib) and appending incoming entries. Build passed after resolution.
+- **EM-45 (settings.gradle):** Same pattern — appended openapi-lib include to existing entries. Build passed after resolution.
