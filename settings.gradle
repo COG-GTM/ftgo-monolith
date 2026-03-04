@@ -77,6 +77,10 @@ project(':shared-ftgo-courier-service-api').projectDir = file('shared/ftgo-couri
 // --- Shared Security Library ---
 include 'shared-ftgo-security-lib'
 project(':shared-ftgo-security-lib').projectDir = file('shared/ftgo-security-lib')
+
+// --- Shared OpenAPI Library ---
+include 'shared-ftgo-openapi-lib'
+project(':shared-ftgo-openapi-lib').projectDir = file('shared/ftgo-openapi-lib')
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================
