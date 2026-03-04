@@ -1,0 +1,82 @@
+{
+  "_comment": "Elasticsearch index template for FTGO structured logs",
+  "index_patterns": ["ftgo-logs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.lifecycle.name": "ftgo-logs-dev",
+      "index.lifecycle.rollover_alias": "ftgo-logs",
+      "index.refresh_interval": "5s"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "service": {
+          "type": "keyword"
+        },
+        "logger": {
+          "type": "keyword"
+        },
+        "thread": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 1024
+            }
+          }
+        },
+        "stackTrace": {
+          "type": "text"
+        },
+        "traceId": {
+          "type": "keyword"
+        },
+        "spanId": {
+          "type": "keyword"
+        },
+        "correlationId": {
+          "type": "keyword"
+        },
+        "userId": {
+          "type": "keyword"
+        },
+        "requestId": {
+          "type": "keyword"
+        },
+        "requestMethod": {
+          "type": "keyword"
+        },
+        "requestUri": {
+          "type": "keyword"
+        },
+        "kubernetes": {
+          "properties": {
+            "namespace_name": {
+              "type": "keyword"
+            },
+            "pod_name": {
+              "type": "keyword"
+            },
+            "container_name": {
+              "type": "keyword"
+            },
+            "labels": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  },
+  "priority": 200
+}

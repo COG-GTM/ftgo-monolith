@@ -1,0 +1,115 @@
+{{- if .Values.mysql.enabled }}
+# =============================================================================
+# MySQL — Headless Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-mysql
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-mysql" "context" $) | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.mysql.port }}
+      targetPort: mysql
+      protocol: TCP
+      name: mysql
+  clusterIP: None
+  selector:
+    {{- include "ftgo.selectorLabels" (dict "name" "ftgo-mysql" "context" $) | nindent 4 }}
+---
+# =============================================================================
+# MySQL — StatefulSet (apps/v1)
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ftgo-mysql
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-mysql" "context" $) | nindent 4 }}
+spec:
+  serviceName: ftgo-mysql
+  replicas: {{ .Values.mysql.replicas }}
+  selector:
+    matchLabels:
+      {{- include "ftgo.selectorLabels" (dict "name" "ftgo-mysql" "context" $) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ftgo.labels" (dict "name" "ftgo-mysql" "context" $) | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mysql
+          image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
+          imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
+          ports:
+            - name: mysql
+              containerPort: {{ .Values.mysql.port }}
+              protocol: TCP
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.auth.existingSecret }}
+                  key: {{ .Values.mysql.auth.rootPasswordKey }}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.auth.existingSecret }}
+                  key: {{ .Values.mysql.auth.usernameKey }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.auth.existingSecret }}
+                  key: {{ .Values.mysql.auth.passwordKey }}
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.auth.existingSecret }}
+                  key: {{ .Values.mysql.auth.databaseKey }}
+          resources:
+            {{- toYaml .Values.mysql.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.mysql.storage.storageClassName }}
+        storageClassName: {{ .Values.mysql.storage.storageClassName | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.mysql.storage.size }}
+{{- end }}

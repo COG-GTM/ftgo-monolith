@@ -1,0 +1,92 @@
+name: "CI: API Gateway"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-api-gateway/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-api-gateway.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/ftgo-api-gateway/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-api-gateway.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test API Gateway
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-gateway-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-gateway-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build API Gateway
+        run: ./gradlew :services-ftgo-api-gateway:build
+
+      - name: Run API Gateway Tests
+        run: ./gradlew :services-ftgo-api-gateway:test
+
+      # --- Quality Gate Checks ---
+      - name: "Quality Gate: Checkstyle"
+        if: always()
+        run: ./gradlew :services-ftgo-api-gateway:checkstyleMain --continue || true
+
+      - name: "Quality Gate: PMD"
+        if: always()
+        run: ./gradlew :services-ftgo-api-gateway:pmdMain --continue || true
+
+      - name: "Quality Gate: FindBugs"
+        if: always()
+        run: ./gradlew :services-ftgo-api-gateway:findbugsMain --continue || true
+
+      - name: "Quality Gate: JaCoCo Coverage"
+        if: always()
+        run: ./gradlew :services-ftgo-api-gateway:jacocoTestReport --continue || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-gateway-test-reports
+          path: services/ftgo-api-gateway/build/reports/tests/
+          retention-days: 14

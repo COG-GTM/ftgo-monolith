@@ -1,0 +1,35 @@
+{{- /*
+=============================================================================
+Microservice PodDisruptionBudget Template
+=============================================================================
+Creates a PDB for each enabled microservice to ensure zero-downtime during
+voluntary disruptions (node drains, cluster upgrades, etc.).
+*/}}
+
+{{- $services := list
+  (dict "key" "apiGateway" "config" .Values.apiGateway)
+  (dict "key" "orderService" "config" .Values.orderService)
+  (dict "key" "consumerService" "config" .Values.consumerService)
+  (dict "key" "restaurantService" "config" .Values.restaurantService)
+  (dict "key" "courierService" "config" .Values.courierService)
+}}
+
+{{- range $svc := $services }}
+{{- if $svc.config.enabled }}
+{{- if $.Values.serviceDefaults.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc.config.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" $svc.config.name "context" $) | nindent 4 }}
+spec:
+  minAvailable: {{ $.Values.serviceDefaults.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "ftgo.selectorLabels" (dict "name" $svc.config.name "context" $) | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

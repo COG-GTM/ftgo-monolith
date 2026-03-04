@@ -1,0 +1,30 @@
+# =============================================================================
+# Elasticsearch Configuration — FTGO Platform
+# =============================================================================
+# Single-node configuration for local development and testing.
+# For production, use a multi-node cluster with dedicated master/data nodes.
+# =============================================================================
+
+cluster.name: ftgo-logging
+node.name: ftgo-es-node-1
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Discovery (single-node for development)
+discovery.type: single-node
+
+# Security (disabled for local development)
+xpack.security.enabled: false
+
+# Memory settings
+# Use 50% of available container memory (set via ES_JAVA_OPTS)
+bootstrap.memory_lock: true
+
+# Index settings
+action.auto_create_index: true
+
+# Path settings (mapped via Docker volumes)
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs

@@ -1,0 +1,67 @@
+{{- /*
+=============================================================================
+Microservice HorizontalPodAutoscaler Template
+=============================================================================
+Creates an HPA for each enabled microservice when autoscaling is enabled.
+*/}}
+
+{{- $services := list
+  (dict "key" "apiGateway" "config" .Values.apiGateway)
+  (dict "key" "orderService" "config" .Values.orderService)
+  (dict "key" "consumerService" "config" .Values.consumerService)
+  (dict "key" "restaurantService" "config" .Values.restaurantService)
+  (dict "key" "courierService" "config" .Values.courierService)
+}}
+
+{{- range $svc := $services }}
+{{- if $svc.config.enabled }}
+{{- $autoscaling := default $.Values.serviceDefaults.autoscaling $svc.config.autoscaling }}
+{{- if $autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $svc.config.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" $svc.config.name "context" $) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $svc.config.name }}
+  minReplicas: {{ $autoscaling.minReplicas }}
+  maxReplicas: {{ $autoscaling.maxReplicas }}
+  metrics:
+    {{- if $autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if $autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ $autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+{{- end }}
+{{- end }}
+{{- end }}
