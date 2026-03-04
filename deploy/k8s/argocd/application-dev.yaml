@@ -1,0 +1,43 @@
+# =============================================================================
+# ArgoCD Application — Development Environment
+# =============================================================================
+# Syncs automatically from the Helm chart when changes are pushed to main.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ftgo-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo-platform
+    environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ftgo
+  source:
+    repoURL: https://github.com/COG-GTM/ftgo-monolith.git
+    targetRevision: main
+    path: deploy/helm/ftgo
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ftgo-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

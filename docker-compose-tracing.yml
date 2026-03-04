@@ -1,0 +1,59 @@
+# =============================================================================
+# Docker Compose — Tracing Stack (Zipkin)
+# =============================================================================
+# Provides local development distributed tracing infrastructure for FTGO services.
+#
+# Usage:
+#   docker-compose -f docker-compose-tracing.yml up -d
+#
+# Combined with other stacks:
+#   docker-compose -f docker-compose.yml -f docker-compose-metrics.yml -f docker-compose-tracing.yml up -d
+#
+# Endpoints:
+#   - Zipkin UI: http://localhost:9411
+#
+# Services send traces to Zipkin via HTTP POST to:
+#   http://zipkin:9411/api/v2/spans
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Zipkin — Distributed Trace Collector & UI
+  # ---------------------------------------------------------------------------
+  # Zipkin collects and visualizes distributed traces from all FTGO services.
+  # Traces are stored in-memory by default (suitable for development).
+  # For production, configure an external storage backend (Elasticsearch, MySQL, etc.).
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    container_name: ftgo-zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      # In-memory storage (development only)
+      - STORAGE_TYPE=mem
+      # Increase collector queue for local dev
+      - COLLECTOR_SAMPLE_RATE=1.0
+    restart: unless-stopped
+    networks:
+      - ftgo-tracing
+
+  # ---------------------------------------------------------------------------
+  # Environment variables for FTGO services to enable tracing:
+  # ---------------------------------------------------------------------------
+  # Add the following environment variables to each FTGO service in
+  # docker-compose.yml to connect them to Zipkin:
+  #
+  #   FTGO_TRACING_ENABLED: "true"
+  #   FTGO_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+  #   FTGO_TRACING_SAMPLING_PROBABILITY: "1.0"
+  #
+  # Or use Spring Boot properties:
+  #   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+  # ---------------------------------------------------------------------------
+
+networks:
+  ftgo-tracing:
+    driver: bridge

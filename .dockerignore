@@ -1,0 +1,46 @@
+# =============================================================================
+# Docker Build Context Exclusions
+# =============================================================================
+# Reduces build context size for faster Docker builds.
+# Applied when building from the repository root.
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+.circleci
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Gradle build outputs (we rebuild inside the container)
+**/build/
+.gradle/
+
+# Documentation
+docs/
+*.md
+LICENSE.md
+
+# Deployment configs (not needed in image)
+deploy/
+deployment/
+k8s/
+
+# Shell scripts
+*.sh
+
+# Docker Compose files
+docker-compose*.yml
+
+# Tests directories (tests run in CI, not in image)
+**/tests/
+
+# OS files
+.DS_Store
+Thumbs.db

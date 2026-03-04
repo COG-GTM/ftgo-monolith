@@ -17,7 +17,8 @@ import java.util.List;
  *     <li>{@code message} — Human-readable error message</li>
  *     <li>{@code details} — Optional list of field-level validation errors</li>
  *     <li>{@code path} — The request path that caused the error</li>
- *     <li>{@code timestamp} — ISO 8601 timestamp of the error</li>
+*     <li>{@code timestamp} — ISO 8601 timestamp of the error</li>
+ *     <li>{@code traceId} — Distributed tracing identifier for log correlation</li>
  * </ul>
  *
  * <h3>Usage Example</h3>
@@ -53,6 +54,9 @@ public class ErrorResponse {
     @Schema(description = "ISO 8601 timestamp of the error", example = "2024-01-15T10:30:00Z")
     private final Instant timestamp;
 
+    @Schema(description = "Distributed trace ID for log correlation", example = "6a3e94b234f9a1c2")
+    private final String traceId;
+
     private ErrorResponse(String code, String message, List<FieldError> details, String path) {
         this.status = "error";
         this.code = code;
@@ -60,6 +64,17 @@ public class ErrorResponse {
         this.details = details;
         this.path = path;
         this.timestamp = Instant.now();
+        this.traceId = null;
+    }
+
+    private ErrorResponse(String code, String message, List<FieldError> details, String path, String traceId) {
+        this.status = "error";
+        this.code = code;
+        this.message = message;
+        this.details = details;
+        this.path = path;
+        this.timestamp = Instant.now();
+        this.traceId = traceId;
     }
 
     /**
@@ -109,6 +124,10 @@ public class ErrorResponse {
 
     public Instant getTimestamp() {
         return timestamp;
+    }
+
+    public String getTraceId() {
+        return traceId;
     }
 
     /**

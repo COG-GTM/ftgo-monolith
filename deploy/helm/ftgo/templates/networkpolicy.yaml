@@ -1,0 +1,61 @@
+{{- /*
+=============================================================================
+Network Policies
+=============================================================================
+Restricts traffic so that only microservices within the namespace can
+communicate with each other and MySQL.
+*/}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ftgo-default-deny
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-network-policy" "context" $) | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ftgo-allow-internal
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-network-policy" "context" $) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: ftgo-platform
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.global.namespace }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ftgo-allow-prometheus
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "ftgo.labels" (dict "name" "ftgo-network-policy" "context" $) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: ftgo-platform
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: http
