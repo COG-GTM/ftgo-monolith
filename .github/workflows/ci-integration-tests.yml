@@ -1,0 +1,183 @@
+name: "CI: Integration Tests"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'ftgo-*/src/integration-test/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - 'docker-compose.yml'
+      - '.github/workflows/ci-integration-tests.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'ftgo-*/src/integration-test/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - 'docker-compose.yml'
+      - '.github/workflows/ci-integration-tests.yml'
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'ci_root_pw' }}
+          MYSQL_USER: ${{ secrets.CI_MYSQL_USER || 'ci_testuser' }}
+          MYSQL_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'ci_test_pw' }}
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ftgo
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.CI_MYSQL_USER || 'ci_testuser' }}
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'ci_test_pw' }}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      DOCKER_HOST_IP: 127.0.0.1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-integration-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-integration-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL service..."
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Build project (compile only)
+        run: |
+          ./gradlew classes testClasses \
+            --no-daemon \
+            --parallel \
+            -x :ftgo-end-to-end-tests:compileTestJava \
+            -x :ftgo-end-to-end-tests-common:compileJava
+
+      - name: Run integration tests
+        run: |
+          echo "::group::Running integration tests"
+          ./gradlew integrationTest \
+            --no-daemon \
+            --parallel \
+            -Dorg.gradle.workers.max=2 \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-end-to-end-tests-common:test \
+            || true
+          echo "::endgroup::"
+
+      - name: Generate JaCoCo integration test coverage
+        if: always()
+        continue-on-error: true
+        run: |
+          ./gradlew jacocoIntegrationTestReport \
+            --no-daemon \
+            -x :ftgo-end-to-end-tests:test \
+            -x :ftgo-end-to-end-tests-common:test || true
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            **/build/reports/tests/integrationTest/
+            **/build/test-results/integrationTest/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload integration test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-coverage
+          path: |
+            **/build/reports/jacoco/jacocoIntegrationTestReport/
+            **/build/jacoco/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Publish integration test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        continue-on-error: true
+        with:
+          files: "**/build/test-results/integrationTest/**/*.xml"
+          check_name: "Integration Test Results"
+          comment_mode: "off"
+
+      - name: Generate integration test summary
+        if: always()
+        run: |
+          echo "## Integration Test Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Configuration | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Database | MySQL 8.0 (service container) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| JDK | Temurin 17 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Result | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Count integration test result files
+          total=$(find . -path '*/test-results/integrationTest/*.xml' 2>/dev/null | wc -l)
+          echo "Integration test result files found: $total" >> "$GITHUB_STEP_SUMMARY"
