@@ -1,0 +1,23 @@
+# FTGO Consumer Service Configuration
+# This file contains default configuration for the Consumer microservice.
+# Environment-specific overrides should be placed in application-{profile}.yml
+
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ftgo-consumer-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ftgo_consumer_service
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

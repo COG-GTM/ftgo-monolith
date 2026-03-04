@@ -1,0 +1,19 @@
+// Microservices version of ftgo-restaurant-service
+// This module will eventually replace the monolith's ftgo-restaurant-service
+// During migration, both coexist side by side.
+
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+    // Shared libraries (uncomment as migration progresses)
+    // compile project(':shared-ftgo-common')
+    // compile project(':shared-ftgo-domain')
+
+    // Spring Boot
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}

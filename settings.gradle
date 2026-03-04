@@ -28,3 +28,33 @@ include "ftgo-application"
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
+// =============================================================================
+// Microservices Modules (new structure under services/ and shared/)
+// These coexist with the monolith modules during the migration period.
+// Module naming convention: directory path with ':' separators
+// e.g., services/ftgo-order-service -> :services-ftgo-order-service
+// =============================================================================
+
+// --- Microservices ---
+include 'services-ftgo-order-service'
+project(':services-ftgo-order-service').projectDir = file('services/ftgo-order-service')
+
+include 'services-ftgo-consumer-service'
+project(':services-ftgo-consumer-service').projectDir = file('services/ftgo-consumer-service')
+
+include 'services-ftgo-restaurant-service'
+project(':services-ftgo-restaurant-service').projectDir = file('services/ftgo-restaurant-service')
+
+include 'services-ftgo-courier-service'
+project(':services-ftgo-courier-service').projectDir = file('services/ftgo-courier-service')
+
+// --- Shared Libraries (microservices) ---
+include 'shared-ftgo-common'
+project(':shared-ftgo-common').projectDir = file('shared/ftgo-common')
+
+include 'shared-ftgo-common-jpa'
+project(':shared-ftgo-common-jpa').projectDir = file('shared/ftgo-common-jpa')
+
+include 'shared-ftgo-domain'
+project(':shared-ftgo-domain').projectDir = file('shared/ftgo-domain')
+

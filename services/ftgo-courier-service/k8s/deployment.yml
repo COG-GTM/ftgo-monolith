@@ -1,0 +1,57 @@
+# FTGO Courier Service - Kubernetes Deployment
+# Placeholder for the Courier microservice K8s manifests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-courier-service
+  labels:
+    app: ftgo-courier-service
+    domain: courier
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ftgo-courier-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-courier-service
+        domain: courier
+    spec:
+      containers:
+        - name: ftgo-courier-service
+          image: ftgo/courier-service:latest
+          ports:
+            - containerPort: 8084
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftgo-courier-service
+spec:
+  selector:
+    app: ftgo-courier-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8084
+  type: ClusterIP

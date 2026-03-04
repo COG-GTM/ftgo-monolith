@@ -1,0 +1,8 @@
+// Shared domain library for FTGO microservices
+// Contains shared domain value objects (e.g., Money, Address)
+
+dependencies {
+    compile project(':shared-ftgo-common')
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}

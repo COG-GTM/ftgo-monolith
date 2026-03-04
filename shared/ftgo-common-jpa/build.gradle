@@ -1,0 +1,9 @@
+// Shared JPA library for FTGO microservices
+// Contains common JPA configurations, base entities, and repository utilities
+
+dependencies {
+    compile project(':shared-ftgo-common')
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
