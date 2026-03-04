@@ -81,6 +81,10 @@ project(':shared-ftgo-security-lib').projectDir = file('shared/ftgo-security-lib
 // --- Shared OpenAPI Library ---
 include 'shared-ftgo-openapi-lib'
 project(':shared-ftgo-openapi-lib').projectDir = file('shared/ftgo-openapi-lib')
+
+// --- Shared Tracing Library ---
+include 'shared-ftgo-tracing-lib'
+project(':shared-ftgo-tracing-lib').projectDir = file('shared/ftgo-tracing-lib')
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================

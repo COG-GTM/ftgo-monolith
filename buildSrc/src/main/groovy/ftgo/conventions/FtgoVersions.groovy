@@ -21,6 +21,8 @@ class FtgoVersions {
     // --- Observability ---
     static final String MICROMETER = '1.12.5'
     static final String MICROMETER_TRACING = '1.2.5'
+    static final String BRAVE = '6.0.2'
+    static final String ZIPKIN_REPORTER = '3.3.0'
 
     // --- Data & Persistence ---
     static final String FLYWAY = '10.11.0'

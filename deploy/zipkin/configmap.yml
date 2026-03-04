@@ -1,0 +1,44 @@
+# =============================================================================
+# Zipkin Tracing ConfigMap — Environment-specific tracing configuration
+# =============================================================================
+# Contains tracing configuration that FTGO services read to connect to Zipkin.
+# Values are injected as environment variables into service pods.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-tracing-config
+  labels:
+    app: ftgo-platform
+    component: tracing
+data:
+  # Zipkin collector endpoint for span reporting
+  FTGO_TRACING_ZIPKIN_ENDPOINT: "http://zipkin:9411/api/v2/spans"
+  # Tracing enabled flag
+  FTGO_TRACING_ENABLED: "true"
+  # B3 propagation for Zipkin compatibility
+  FTGO_TRACING_PROPAGATION_TYPE: "B3"
+---
+# Development environment — 100% sampling
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-tracing-config-dev
+  labels:
+    app: ftgo-platform
+    component: tracing
+    environment: dev
+data:
+  FTGO_TRACING_SAMPLING_PROBABILITY: "1.0"
+---
+# Production environment — 10% sampling
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-tracing-config-prod
+  labels:
+    app: ftgo-platform
+    component: tracing
+    environment: production
+data:
+  FTGO_TRACING_SAMPLING_PROBABILITY: "0.1"
