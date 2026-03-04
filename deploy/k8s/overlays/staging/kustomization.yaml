@@ -1,0 +1,33 @@
+# =============================================================================
+# Kustomize Overlay — Staging (ftgo-staging)
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-staging
+
+resources:
+  - ../../base
+
+patches:
+  # 2 replicas for staging
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  # Staging MySQL storage
+  - target:
+      kind: StatefulSet
+      name: ftgo-mysql
+    patch: |
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 10Gi
+
+commonLabels:
+  environment: staging
+
+commonAnnotations:
+  ftgo.io/environment: staging

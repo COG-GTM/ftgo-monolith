@@ -1,0 +1,29 @@
+# =============================================================================
+# Kustomize Base — FTGO Platform
+# =============================================================================
+# Base resources rendered from Helm chart. Use overlays for environment-specific
+# configuration. This base kustomization references the Helm-rendered manifests.
+#
+# Usage:
+#   kubectl kustomize deploy/k8s/overlays/dev | kubectl apply -f -
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: ftgo-base
+
+commonLabels:
+  app.kubernetes.io/part-of: ftgo-platform
+  app.kubernetes.io/managed-by: kustomize
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - mysql-statefulset.yaml
+  - mysql-service.yaml
+  - order-service.yaml
+  - consumer-service.yaml
+  - restaurant-service.yaml
+  - courier-service.yaml
