@@ -5,6 +5,22 @@
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'ftgo.quality-gate-conventions'
 
+// Configure Java 17 for test compilation and execution (required by ftgo-test-lib / Spring Boot 3.x)
+def java17Home = ['/usr/lib/jvm/java-17-openjdk-amd64', '/usr/lib/jvm/java-1.17.0-openjdk-amd64'].find { new File(it).exists() }
+if (java17Home) {
+    compileTestJava {
+        sourceCompatibility = '17'
+        targetCompatibility = '17'
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+        useJUnitPlatform()
+    }
+}
+
 dependencies {
     // Shared libraries (uncomment as migration progresses)
     // compile project(':shared-ftgo-common')
@@ -24,4 +40,5 @@ dependencies {
     // Testing
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile "org.springframework.security:spring-security-test:6.2.4"
+    testCompile project(':shared-ftgo-test-lib')
 }
