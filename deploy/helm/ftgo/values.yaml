@@ -117,6 +117,82 @@ serviceDefaults:
   tolerations: []
   affinity: {}
 
+# -- API Gateway --------------------------------------------------------------
+apiGateway:
+  enabled: true
+  name: ftgo-api-gateway
+  port: 8080
+  image:
+    repository: ""  # Uses global.imageRegistry/ftgo-api-gateway
+    tag: ""         # Uses global.imageTag
+  replicas: ""      # Uses serviceDefaults.replicas
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 75
+  env:
+    FTGO_ORDER_SERVICE_URL: "http://ftgo-order-service:8081"
+    FTGO_CONSUMER_SERVICE_URL: "http://ftgo-consumer-service:8082"
+    FTGO_RESTAURANT_SERVICE_URL: "http://ftgo-restaurant-service:8083"
+    FTGO_COURIER_SERVICE_URL: "http://ftgo-courier-service:8084"
+  serviceType: LoadBalancer
+
+# -- Logging / EFK Stack ------------------------------------------------------
+logging:
+  enabled: true
+  # Log retention (days) — overridden per environment
+  retentionDays: 7
+  elasticsearch:
+    replicas: 1
+    image:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    javaOpts: "-Xms512m -Xmx512m"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    storage:
+      size: 10Gi
+      storageClassName: ""
+  fluentd:
+    image:
+      repository: fluent/fluentd-kubernetes-daemonset
+      tag: v1.16-debian-elasticsearch8-1
+      pullPolicy: IfNotPresent
+    logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  kibana:
+    image:
+      repository: docker.elastic.co/kibana/kibana
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
 # -- Order Service ------------------------------------------------------------
 orderService:
   enabled: true

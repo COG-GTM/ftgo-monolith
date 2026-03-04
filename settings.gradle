@@ -48,6 +48,9 @@ project(':services-ftgo-restaurant-service').projectDir = file('services/ftgo-re
 include 'services-ftgo-courier-service'
 project(':services-ftgo-courier-service').projectDir = file('services/ftgo-courier-service')
 
+include 'services-ftgo-api-gateway'
+project(':services-ftgo-api-gateway').projectDir = file('services/ftgo-api-gateway')
+
 // --- Shared Libraries (microservices) ---
 include 'shared-ftgo-common'
 project(':shared-ftgo-common').projectDir = file('shared/ftgo-common')
@@ -89,6 +92,10 @@ project(':shared-ftgo-tracing-lib').projectDir = file('shared/ftgo-tracing-lib')
 // --- Shared Error Handling Library ---
 include 'shared-ftgo-error-handling-lib'
 project(':shared-ftgo-error-handling-lib').projectDir = file('shared/ftgo-error-handling-lib')
+
+// --- Shared Logging Library ---
+include 'shared-ftgo-logging-lib'
+project(':shared-ftgo-logging-lib').projectDir = file('shared/ftgo-logging-lib')
 
 // --- Shared Resilience Library ---
 include 'shared-ftgo-resilience-lib'

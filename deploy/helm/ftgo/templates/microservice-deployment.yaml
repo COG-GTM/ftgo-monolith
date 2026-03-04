@@ -6,6 +6,7 @@ Iterates over all enabled microservices and creates a Deployment for each.
 */}}
 
 {{- $services := list
+  (dict "key" "apiGateway" "config" .Values.apiGateway)
   (dict "key" "orderService" "config" .Values.orderService)
   (dict "key" "consumerService" "config" .Values.consumerService)
   (dict "key" "restaurantService" "config" .Values.restaurantService)

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+=============================================================================
+FTGO Structured JSON Logging — Logback Configuration
+=============================================================================
+Include this file in your service's logback-spring.xml:
+
+  <configuration>
+    <include resource="ftgo/logback-ftgo.xml"/>
+  </configuration>
+
+This provides:
+  - Structured JSON output via logstash-logback-encoder
+  - MDC fields: traceId, spanId, correlationId, service, userId, requestId
+  - Async appender for non-blocking log writes
+  - Console output to stdout (for container log collection)
+
+Environment-specific configuration is controlled via Spring properties:
+  ftgo.logging.json-enabled: true/false
+  ftgo.logging.async-enabled: true/false
+  ftgo.logging.async-queue-size: 1024
+=============================================================================
+-->
+<included>
+
+    <!-- Property defaults (overridden by Spring Boot properties) -->
+    <property name="SERVICE_NAME" value="${spring.application.name:-ftgo-service}" />
+
+    <!-- ================================================================= -->
+    <!-- JSON Console Appender (logstash-logback-encoder)                  -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Standard FTGO log fields -->
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <level>level</level>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <message>message</message>
+                <stackTrace>stackTrace</stackTrace>
+            </fieldNames>
+
+            <!-- Include MDC fields (traceId, spanId, correlationId, etc.) -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>service</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>requestMethod</includeMdcKeyName>
+            <includeMdcKeyName>requestUri</includeMdcKeyName>
+
+            <!-- Custom static fields -->
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+
+            <!-- Shorter logger class names -->
+            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Async Appender (wraps JSON console for non-blocking writes)       -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FTGO_JSON_CONSOLE" />
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Plain Console Appender (fallback for non-JSON mode)               -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_PLAIN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${SERVICE_NAME},%X{traceId:-},%X{spanId:-},%X{correlationId:-}] %c{36} - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Root logger — defaults to async JSON                              -->
+    <!-- ================================================================= -->
+    <!-- Use spring profiles to switch between JSON and plain:
+         - "json" profile (default): FTGO_ASYNC_JSON
+         - "plain" profile: FTGO_PLAIN_CONSOLE
+    -->
+
+</included>
