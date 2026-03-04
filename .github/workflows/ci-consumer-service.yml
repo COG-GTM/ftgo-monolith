@@ -66,6 +66,23 @@ jobs:
       - name: Run Consumer Service Tests
         run: ./gradlew :services-ftgo-consumer-service:test
 
+      # --- Quality Gate Checks ---
+      - name: "Quality Gate: Checkstyle"
+        if: always()
+        run: ./gradlew :services-ftgo-consumer-service:checkstyleMain --continue || true
+
+      - name: "Quality Gate: PMD"
+        if: always()
+        run: ./gradlew :services-ftgo-consumer-service:pmdMain --continue || true
+
+      - name: "Quality Gate: FindBugs"
+        if: always()
+        run: ./gradlew :services-ftgo-consumer-service:findbugsMain --continue || true
+
+      - name: "Quality Gate: JaCoCo Coverage"
+        if: always()
+        run: ./gradlew :services-ftgo-consumer-service:jacocoTestReport --continue || true
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

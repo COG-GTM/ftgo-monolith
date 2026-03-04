@@ -3,6 +3,7 @@
 // During migration, both coexist side by side.
 
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'ftgo.quality-gate-conventions'
 
 dependencies {
     // Shared libraries (uncomment as migration progresses)

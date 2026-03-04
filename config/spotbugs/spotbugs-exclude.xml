@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+
+  <!--
+    FTGO SpotBugs Exclusion Filter
+    Excludes known false positives and generated code from analysis.
+  -->
+
+  <!-- Exclude generated code -->
+  <Match>
+    <Source name="~.*[\\/]generated[\\/].*"/>
+  </Match>
+
+  <Match>
+    <Source name="~.*[\\/]generated-sources[\\/].*"/>
+  </Match>
+
+  <!-- Exclude Lombok-generated code -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP"/>
+    <Class name="~.*\.(dto|api|event|command)\..*"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+    <Class name="~.*\.(dto|api|event|command)\..*"/>
+  </Match>
+
+  <!-- Exclude Spring configuration classes from certain checks -->
+  <Match>
+    <Bug pattern="URF_UNREAD_FIELD"/>
+    <Class name="~.*Config.*"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="URF_UNREAD_FIELD"/>
+    <Class name="~.*Properties.*"/>
+  </Match>
+
+  <!-- Exclude test classes -->
+  <Match>
+    <Class name="~.*Test"/>
+  </Match>
+
+  <Match>
+    <Class name="~.*Tests"/>
+  </Match>
+
+  <Match>
+    <Class name="~.*IT"/>
+  </Match>
+
+  <!-- Suppress serialization warnings for Spring-managed beans -->
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+  </Match>
+
+  <!-- Suppress null-check warnings for Spring @Autowired fields -->
+  <Match>
+    <Bug pattern="NP_UNWRITTEN_FIELD"/>
+    <Class name="~.*Service.*|.*Controller.*|.*Repository.*"/>
+  </Match>
+
+</FindBugsFilter>

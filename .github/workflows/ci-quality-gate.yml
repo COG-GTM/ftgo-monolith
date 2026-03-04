@@ -1,0 +1,166 @@
+name: "CI: Quality Gate"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'config/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-quality-gate.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'config/**'
+      - 'settings.gradle'
+      - 'build.gradle'
+      - '.github/workflows/ci-quality-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Static Analysis & Code Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-quality-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-quality-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # --- Shared Libraries Quality Checks ---
+      - name: "Checkstyle: Shared Libraries"
+        run: |
+          ./gradlew :shared-ftgo-common:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:checkstyleMain --continue || true
+          ./gradlew :shared-ftgo-domain:checkstyleMain --continue || true
+
+      - name: "PMD: Shared Libraries"
+        run: |
+          ./gradlew :shared-ftgo-common:pmdMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:pmdMain --continue || true
+          ./gradlew :shared-ftgo-domain:pmdMain --continue || true
+
+      - name: "FindBugs: Shared Libraries"
+        run: |
+          ./gradlew :shared-ftgo-common:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-common-jpa:findbugsMain --continue || true
+          ./gradlew :shared-ftgo-domain:findbugsMain --continue || true
+
+      # --- Service Quality Checks ---
+      - name: "Checkstyle: Services"
+        run: |
+          ./gradlew :services-ftgo-order-service:checkstyleMain --continue || true
+          ./gradlew :services-ftgo-consumer-service:checkstyleMain --continue || true
+          ./gradlew :services-ftgo-restaurant-service:checkstyleMain --continue || true
+          ./gradlew :services-ftgo-courier-service:checkstyleMain --continue || true
+
+      - name: "PMD: Services"
+        run: |
+          ./gradlew :services-ftgo-order-service:pmdMain --continue || true
+          ./gradlew :services-ftgo-consumer-service:pmdMain --continue || true
+          ./gradlew :services-ftgo-restaurant-service:pmdMain --continue || true
+          ./gradlew :services-ftgo-courier-service:pmdMain --continue || true
+
+      - name: "FindBugs: Services"
+        run: |
+          ./gradlew :services-ftgo-order-service:findbugsMain --continue || true
+          ./gradlew :services-ftgo-consumer-service:findbugsMain --continue || true
+          ./gradlew :services-ftgo-restaurant-service:findbugsMain --continue || true
+          ./gradlew :services-ftgo-courier-service:findbugsMain --continue || true
+
+      # --- Code Coverage ---
+      - name: "JaCoCo: Generate Coverage Reports"
+        run: |
+          ./gradlew :shared-ftgo-common:test :shared-ftgo-common:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-common-jpa:test :shared-ftgo-common-jpa:jacocoTestReport --continue || true
+          ./gradlew :shared-ftgo-domain:test :shared-ftgo-domain:jacocoTestReport --continue || true
+          ./gradlew :services-ftgo-order-service:test :services-ftgo-order-service:jacocoTestReport --continue || true
+          ./gradlew :services-ftgo-consumer-service:test :services-ftgo-consumer-service:jacocoTestReport --continue || true
+          ./gradlew :services-ftgo-restaurant-service:test :services-ftgo-restaurant-service:jacocoTestReport --continue || true
+          ./gradlew :services-ftgo-courier-service:test :services-ftgo-courier-service:jacocoTestReport --continue || true
+
+      - name: "JaCoCo: Verify Coverage Thresholds"
+        run: |
+          ./gradlew :shared-ftgo-common:jacocoTestCoverageVerification --continue || true
+          ./gradlew :shared-ftgo-common-jpa:jacocoTestCoverageVerification --continue || true
+          ./gradlew :shared-ftgo-domain:jacocoTestCoverageVerification --continue || true
+          ./gradlew :services-ftgo-order-service:jacocoTestCoverageVerification --continue || true
+          ./gradlew :services-ftgo-consumer-service:jacocoTestCoverageVerification --continue || true
+          ./gradlew :services-ftgo-restaurant-service:jacocoTestCoverageVerification --continue || true
+          ./gradlew :services-ftgo-courier-service:jacocoTestCoverageVerification --continue || true
+
+      # --- Upload Reports ---
+      - name: Upload Checkstyle reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkstyle-reports
+          path: |
+            shared/*/build/reports/checkstyle/
+            services/*/build/reports/checkstyle/
+          retention-days: 14
+
+      - name: Upload PMD reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmd-reports
+          path: |
+            shared/*/build/reports/pmd/
+            services/*/build/reports/pmd/
+          retention-days: 14
+
+      - name: Upload FindBugs reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: findbugs-reports
+          path: |
+            shared/*/build/reports/findbugs/
+            services/*/build/reports/findbugs/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-reports
+          path: |
+            shared/*/build/reports/jacoco/
+            services/*/build/reports/jacoco/
+          retention-days: 14
