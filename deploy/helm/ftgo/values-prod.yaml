@@ -1,0 +1,84 @@
+# =============================================================================
+# FTGO Platform — Production Environment Values
+# =============================================================================
+# Overrides for the ftgo-prod namespace. Full production configuration
+# with HA replicas, strict resource limits, and autoscaling enabled.
+# Requires approval gate for promotion.
+# =============================================================================
+
+global:
+  namespace: ftgo-prod
+  imageTag: ""  # Set by CD pipeline to promoted image tag
+
+mysql:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  storage:
+    size: 50Gi
+    storageClassName: gp3
+
+serviceDefaults:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  env:
+    SPRING_PROFILES_ACTIVE: kubernetes,prod
+    JAVA_OPTS: "-Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    LOG_LEVEL: WARN
+    FTGO_LOGGING_JSON_ENABLED: "true"
+    FTGO_LOGGING_ASYNC_ENABLED: "true"
+
+# -- Logging / EFK Stack (Production) ----------------------------------------
+logging:
+  enabled: true
+  retentionDays: 90
+  elasticsearch:
+    replicas: 1
+    javaOpts: "-Xms1g -Xmx1g"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    storage:
+      size: 100Gi
+      storageClassName: gp3
+  fluentd:
+    logLevel: warn
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  kibana:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi

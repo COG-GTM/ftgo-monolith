@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  FTGO Checkstyle Suppressions
+  Suppresses checks for generated code, test code, and legacy modules.
+-->
+<suppressions>
+  <!-- Suppress all checks for generated source files -->
+  <suppress files="[\\/]generated[\\/]" checks=".*"/>
+  <suppress files="[\\/]generated-sources[\\/]" checks=".*"/>
+
+  <!-- Relax checks for test source files -->
+  <suppress files="[\\/]src[\\/]test[\\/]" checks="JavadocMethod"/>
+  <suppress files="[\\/]src[\\/]test[\\/]" checks="JavadocType"/>
+  <suppress files="[\\/]src[\\/]test[\\/]" checks="FileLength"/>
+  <suppress files="[\\/]src[\\/]test[\\/]" checks="MethodName"/>
+
+  <!-- Relax checks for integration test source files -->
+  <suppress files="[\\/]src[\\/]integration-test[\\/]" checks="JavadocMethod"/>
+  <suppress files="[\\/]src[\\/]integration-test[\\/]" checks="JavadocType"/>
+  <suppress files="[\\/]src[\\/]integration-test[\\/]" checks="FileLength"/>
+</suppressions>

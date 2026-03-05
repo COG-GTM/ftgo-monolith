@@ -1,0 +1,246 @@
+# =============================================================================
+# FTGO Platform — Default Helm Values
+# =============================================================================
+# Base values shared across all environments. Environment-specific overrides
+# are in values-dev.yaml, values-staging.yaml, and values-prod.yaml.
+# =============================================================================
+
+# -- Global settings ----------------------------------------------------------
+global:
+  namespace: ftgo-dev
+  imageRegistry: ghcr.io/cog-gtm/ftgo-monolith
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-credentials
+
+# -- Namespace creation -------------------------------------------------------
+namespaceCreate: true
+
+# -- External Secrets Operator ------------------------------------------------
+externalSecrets:
+  enabled: true
+  # SecretStore backend (e.g., aws-secrets-manager, vault, gcp-secret-manager)
+  backendType: aws-secrets-manager
+  # Reference to the SecretStore or ClusterSecretStore
+  secretStoreRef:
+    name: ftgo-secret-store
+    kind: ClusterSecretStore
+
+# -- MySQL StatefulSet --------------------------------------------------------
+mysql:
+  enabled: true
+  replicas: 1
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  port: 3306
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  storage:
+    size: 10Gi
+    storageClassName: ""
+  # Secret references (managed by external-secrets)
+  auth:
+    existingSecret: ftgo-mysql-credentials
+    rootPasswordKey: root-password
+    usernameKey: username
+    passwordKey: password
+    databaseKey: database
+
+# -- Microservice defaults (merged into each service) ------------------------
+serviceDefaults:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  terminationGracePeriodSeconds: 45
+  lifecycle:
+    preStop:
+      exec:
+        command: ["sh", "-c", "sleep 5"]
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: http
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startupProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 20
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  env:
+    SPRING_PROFILES_ACTIVE: kubernetes
+    JAVA_OPTS: "-Xmx384m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+  annotations: {}
+  labels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -- API Gateway --------------------------------------------------------------
+apiGateway:
+  enabled: true
+  name: ftgo-api-gateway
+  port: 8080
+  image:
+    repository: ""  # Uses global.imageRegistry/ftgo-api-gateway
+    tag: ""         # Uses global.imageTag
+  replicas: ""      # Uses serviceDefaults.replicas
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 75
+  env:
+    FTGO_ORDER_SERVICE_URL: "http://ftgo-order-service:8081"
+    FTGO_CONSUMER_SERVICE_URL: "http://ftgo-consumer-service:8082"
+    FTGO_RESTAURANT_SERVICE_URL: "http://ftgo-restaurant-service:8083"
+    FTGO_COURIER_SERVICE_URL: "http://ftgo-courier-service:8084"
+  serviceType: LoadBalancer
+
+# -- Logging / EFK Stack ------------------------------------------------------
+logging:
+  enabled: true
+  # Log retention (days) — overridden per environment
+  retentionDays: 7
+  elasticsearch:
+    replicas: 1
+    image:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    javaOpts: "-Xms512m -Xmx512m"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    storage:
+      size: 10Gi
+      storageClassName: ""
+  fluentd:
+    image:
+      repository: fluent/fluentd-kubernetes-daemonset
+      tag: v1.16-debian-elasticsearch8-1
+      pullPolicy: IfNotPresent
+    logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  kibana:
+    image:
+      repository: docker.elastic.co/kibana/kibana
+      tag: "8.12.0"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+# -- Order Service ------------------------------------------------------------
+orderService:
+  enabled: true
+  name: ftgo-order-service
+  port: 8081
+  image:
+    repository: ""  # Uses global.imageRegistry/ftgo-order-service
+    tag: ""         # Uses global.imageTag
+  replicas: ""      # Uses serviceDefaults.replicas
+  resources: {}     # Uses serviceDefaults.resources
+  autoscaling: {}   # Uses serviceDefaults.autoscaling
+  env: {}           # Merged with serviceDefaults.env
+
+# -- Consumer Service ---------------------------------------------------------
+consumerService:
+  enabled: true
+  name: ftgo-consumer-service
+  port: 8082
+  image:
+    repository: ""
+    tag: ""
+  replicas: ""
+  resources: {}
+  autoscaling: {}
+  env: {}
+
+# -- Restaurant Service -------------------------------------------------------
+restaurantService:
+  enabled: true
+  name: ftgo-restaurant-service
+  port: 8083
+  image:
+    repository: ""
+    tag: ""
+  replicas: ""
+  resources: {}
+  autoscaling: {}
+  env: {}
+
+# -- Courier Service ----------------------------------------------------------
+courierService:
+  enabled: true
+  name: ftgo-courier-service
+  port: 8084
+  image:
+    repository: ""
+    tag: ""
+  replicas: ""
+  resources: {}
+  autoscaling: {}
+  env: {}

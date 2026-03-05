@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+=============================================================================
+FTGO Shared logback-spring.xml — Profile-Based Logging Configuration
+=============================================================================
+Copy or include this in each service's src/main/resources/logback-spring.xml:
+
+  <configuration>
+    <include resource="ftgo/logback-spring.xml"/>
+  </configuration>
+
+Profiles:
+  - local:   Human-readable console + file with rotation
+  - dev:     JSON structured console, async, INFO app / WARN frameworks
+  - staging: JSON structured console, async, INFO app / WARN frameworks
+  - prod:    JSON structured console, async, INFO app / ERROR frameworks
+  - default: JSON structured console, async (same as dev)
+
+Sensitive data masking is applied via conversionRule (pattern layout)
+and MaskingMessageProvider (JSON layout).
+=============================================================================
+-->
+<included>
+
+    <!-- ================================================================= -->
+    <!-- Properties                                                        -->
+    <!-- ================================================================= -->
+    <property name="SERVICE_NAME" value="${spring.application.name:-ftgo-service}" />
+    <property name="LOG_DIR" value="${LOG_DIR:-logs}" />
+
+    <!-- ================================================================= -->
+    <!-- Sensitive Data Masking Conversion Rule (for pattern layouts)       -->
+    <!-- ================================================================= -->
+    <conversionRule conversionWord="maskedMsg"
+                    converterClass="net.chrisrichardson.ftgo.logging.masking.SensitiveDataMaskingConverter" />
+
+    <!-- ================================================================= -->
+    <!-- JSON Console Appender (logstash-logback-encoder + masking)         -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Standard FTGO log field names -->
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <level>level</level>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <message>[ignore]</message>
+                <stackTrace>stackTrace</stackTrace>
+            </fieldNames>
+
+            <!-- Masking message provider replaces default message field -->
+            <provider class="net.chrisrichardson.ftgo.logging.masking.MaskingMessageProvider" />
+
+            <!-- Include MDC fields -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>service</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>requestMethod</includeMdcKeyName>
+            <includeMdcKeyName>requestUri</includeMdcKeyName>
+
+            <!-- Custom static fields -->
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+
+            <!-- Shorter logger class names -->
+            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Async JSON Appender (wraps JSON console for non-blocking writes)  -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FTGO_JSON_CONSOLE" />
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Human-Readable Console Appender (with masking)                    -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_PLAIN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${SERVICE_NAME},%X{traceId:-},%X{spanId:-},%X{correlationId:-}] %c{36} - %maskedMsg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Rolling File Appender (local development only)                    -->
+    <!-- ================================================================= -->
+    <appender name="FTGO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${SERVICE_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${SERVICE_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${SERVICE_NAME},%X{traceId:-},%X{spanId:-},%X{correlationId:-}] %c{36} - %maskedMsg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================= -->
+    <!-- Profile: local — Human-readable console + file with rotation      -->
+    <!-- ================================================================= -->
+    <springProfile name="local">
+        <!-- Application code: DEBUG -->
+        <logger name="net.chrisrichardson.ftgo" level="DEBUG" />
+
+        <!-- Frameworks: INFO -->
+        <logger name="org.springframework" level="INFO" />
+        <logger name="org.hibernate" level="INFO" />
+        <logger name="org.apache" level="INFO" />
+        <logger name="io.micrometer" level="INFO" />
+
+        <root level="INFO">
+            <appender-ref ref="FTGO_PLAIN_CONSOLE" />
+            <appender-ref ref="FTGO_FILE" />
+        </root>
+    </springProfile>
+
+    <!-- ================================================================= -->
+    <!-- Profile: dev — JSON structured, async, INFO app / WARN frameworks -->
+    <!-- ================================================================= -->
+    <springProfile name="dev">
+        <!-- Application code: INFO -->
+        <logger name="net.chrisrichardson.ftgo" level="INFO" />
+
+        <!-- Frameworks: WARN -->
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+        <logger name="io.micrometer" level="WARN" />
+
+        <root level="WARN">
+            <appender-ref ref="FTGO_ASYNC_JSON" />
+        </root>
+    </springProfile>
+
+    <!-- ================================================================= -->
+    <!-- Profile: staging — JSON structured, async, INFO app / WARN fwks   -->
+    <!-- ================================================================= -->
+    <springProfile name="staging">
+        <!-- Application code: INFO -->
+        <logger name="net.chrisrichardson.ftgo" level="INFO" />
+
+        <!-- Frameworks: WARN -->
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+        <logger name="io.micrometer" level="WARN" />
+
+        <root level="WARN">
+            <appender-ref ref="FTGO_ASYNC_JSON" />
+        </root>
+    </springProfile>
+
+    <!-- ================================================================= -->
+    <!-- Profile: prod — JSON structured, async, INFO app / ERROR fwks     -->
+    <!-- ================================================================= -->
+    <springProfile name="prod">
+        <!-- Application code: INFO -->
+        <logger name="net.chrisrichardson.ftgo" level="INFO" />
+
+        <!-- Frameworks: ERROR -->
+        <logger name="org.springframework" level="ERROR" />
+        <logger name="org.hibernate" level="ERROR" />
+        <logger name="org.apache" level="ERROR" />
+        <logger name="io.micrometer" level="ERROR" />
+
+        <root level="WARN">
+            <appender-ref ref="FTGO_ASYNC_JSON" />
+        </root>
+    </springProfile>
+
+    <!-- ================================================================= -->
+    <!-- Default (no active profile) — JSON structured, async              -->
+    <!-- ================================================================= -->
+    <springProfile name="default">
+        <logger name="net.chrisrichardson.ftgo" level="INFO" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+        <logger name="io.micrometer" level="WARN" />
+
+        <root level="WARN">
+            <appender-ref ref="FTGO_ASYNC_JSON" />
+        </root>
+    </springProfile>
+
+</included>

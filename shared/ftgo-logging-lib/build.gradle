@@ -1,0 +1,98 @@
+// =============================================================================
+// ftgo-logging-lib — Shared centralized logging library for FTGO microservices
+// Provides structured JSON logging (Logback + logstash-logback-encoder),
+// MDC context propagation, correlation ID handling, async appender config,
+// sensitive data masking, LogContext utility, and method entry/exit aspect.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    compileJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    compileTestJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Logback (comes with Spring Boot, but we declare explicitly for the encoder)
+    compile "ch.qos.logback:logback-classic:1.4.14"
+    compile "ch.qos.logback:logback-core:1.4.14"
+
+    // Logstash Logback Encoder for structured JSON logging
+    compile "net.logstash.logback:logstash-logback-encoder:7.4"
+
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Web (for correlation ID filter)
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Jackson for JSON processing (used by logstash-logback-encoder)
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+
+    // Spring AOP (optional — for method entry/exit logging aspect)
+    compile "org.springframework.boot:spring-boot-starter-aop:${FtgoVersions.SPRING_BOOT}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+}
+
+// Configure test task
+test {
+    useJUnitPlatform()
+    scanForTestClasses = false
+    include '**/*Test.class'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-logging-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Logging Library'
+                description = 'Shared centralized logging library for FTGO microservices providing structured JSON logging with Logback and logstash-logback-encoder, MDC context propagation, correlation ID handling, async appender configuration, sensitive data masking, and method entry/exit logging aspect.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

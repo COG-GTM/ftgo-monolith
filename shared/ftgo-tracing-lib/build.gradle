@@ -1,0 +1,98 @@
+// =============================================================================
+// ftgo-tracing-lib — Shared distributed tracing library for FTGO microservices
+// Provides Micrometer Tracing + Brave bridge + Zipkin reporter configuration,
+// trace context propagation, sampling strategy, and custom span utilities.
+// =============================================================================
+
+import ftgo.conventions.FtgoVersions
+
+version = '1.0.0'
+
+// Override Java version from root project (1.8 -> 17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+// Configure Java 17 compiler for this module
+def java17Home = System.getenv('JAVA_17_HOME') ?:
+        ['/usr/lib/jvm/java-17-openjdk-amd64',
+         '/usr/lib/jvm/java-17-openjdk',
+         '/usr/lib/jvm/temurin-17-jdk-amd64',
+         '/usr/local/openjdk-17'].find { new File(it).exists() }
+
+if (java17Home) {
+    compileJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    compileTestJava {
+        options.fork = true
+        options.forkOptions.javaHome = file(java17Home)
+    }
+    test {
+        executable = "${java17Home}/bin/java"
+    }
+}
+
+apply plugin: 'maven-publish'
+
+dependencies {
+    // Micrometer Tracing API
+    compile "io.micrometer:micrometer-tracing:${FtgoVersions.MICROMETER_TRACING}"
+
+    // Micrometer Tracing Brave bridge (integrates Brave with Micrometer)
+    compile "io.micrometer:micrometer-tracing-bridge-brave:${FtgoVersions.MICROMETER_TRACING}"
+
+    // Zipkin Reporter for Brave (sends traces to Zipkin/Jaeger)
+    compile "io.zipkin.reporter2:zipkin-reporter-brave:${FtgoVersions.ZIPKIN_REPORTER}"
+    compile "io.zipkin.reporter2:zipkin-sender-urlconnection:${FtgoVersions.ZIPKIN_REPORTER}"
+
+    // Spring Boot auto-configuration support
+    compile "org.springframework.boot:spring-boot-autoconfigure:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Boot Actuator (for tracing endpoint integration)
+    compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
+
+    // Spring Web (for HTTP trace propagation filter)
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+
+    // SLF4J for logging
+    compile "org.slf4j:slf4j-api:${FtgoVersions.SLF4J}"
+
+    // Test dependencies
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.junit.jupiter:junit-jupiter:${FtgoVersions.JUNIT_JUPITER}"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:${FtgoVersions.JUNIT_JUPITER}"
+    testCompile "io.micrometer:micrometer-tracing-test:${FtgoVersions.MICROMETER_TRACING}"
+}
+
+// Configure test task
+test {
+    useJUnitPlatform()
+    scanForTestClasses = false
+    include '**/*Test.class'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = FtgoVersions.FTGO_GROUP
+            artifactId = 'ftgo-tracing-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Tracing Library'
+                description = 'Shared distributed tracing library for FTGO microservices providing Micrometer Tracing with Brave bridge, Zipkin reporter, trace context propagation, and custom span utilities.'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-common-config
+  labels:
+    app.kubernetes.io/part-of: ftgo-platform
+data:
+  database-url: "jdbc:mysql://ftgo-mysql:3306/ftgo"
+  management-endpoints: "health,info,metrics,prometheus"

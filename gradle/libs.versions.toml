@@ -19,9 +19,14 @@ java = "17"
 spring-boot = "3.2.5"
 spring-dependency-management = "1.1.4"
 
+# --- Resilience ---
+resilience4j = "2.2.0"
+
 # --- Observability ---
 micrometer = "1.12.5"
 micrometer-tracing = "1.2.5"
+brave = "6.0.2"
+zipkin-reporter = "3.3.0"
 
 # --- Data & Persistence ---
 flyway = "10.11.0"
@@ -33,6 +38,8 @@ jackson = "2.17.0"
 
 # --- Security ---
 spring-security = "6.2.4"
+jjwt = "0.12.5"
+spring-boot-oauth2-resource-server = "3.2.5"
 
 # --- Testing ---
 junit-jupiter = "5.10.2"
@@ -66,11 +73,18 @@ spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-
 spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
 spring-security-config = { module = "org.springframework.security:spring-security-config", version.ref = "spring-security" }
 spring-security-web = { module = "org.springframework.security:spring-security-web", version.ref = "spring-security" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server", version.ref = "spring-boot" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # --- Observability ---
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing" }
+micrometer-tracing-core = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer-tracing" }
+zipkin-reporter-brave = { module = "io.zipkin.reporter2:zipkin-reporter-brave", version.ref = "zipkin-reporter" }
+zipkin-sender-urlconnection = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
 
 # --- Data & Persistence ---
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }

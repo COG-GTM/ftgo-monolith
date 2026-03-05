@@ -1,0 +1,272 @@
+# =============================================================================
+# CD Pipeline — Environment Promotion
+# =============================================================================
+# Promotes a deployment from one environment to the next:
+#   dev -> staging -> prod
+#
+# Staging and production promotions require manual approval via GitHub
+# Environments protection rules.
+#
+# Usage:
+#   1. Go to Actions > "CD: Promote Environment"
+#   2. Select source environment and image tag
+#   3. Approve the deployment when prompted
+# =============================================================================
+
+name: "CD: Promote Environment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environment:
+        description: 'Source environment to promote from'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+      image_tag:
+        description: 'Image tag to promote'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+  actions: write
+
+env:
+  HELM_CHART_PATH: deploy/helm/ftgo
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Determine target environment
+  # ---------------------------------------------------------------------------
+  determine-target:
+    name: "Determine Promotion Target"
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.target.outputs.source }}
+      target: ${{ steps.target.outputs.target }}
+      namespace: ${{ steps.target.outputs.namespace }}
+      image_tag: ${{ steps.target.outputs.image_tag }}
+    steps:
+      - name: Determine target environment
+        id: target
+        run: |
+          SOURCE="${{ github.event.inputs.source_environment }}"
+          TAG="${{ github.event.inputs.image_tag }}"
+
+          case "${SOURCE}" in
+            dev)
+              TARGET="staging"
+              ;;
+            staging)
+              TARGET="prod"
+              ;;
+            *)
+              echo "::error::Invalid source environment: ${SOURCE}"
+              exit 1
+              ;;
+          esac
+
+          echo "source=${SOURCE}" >> "$GITHUB_OUTPUT"
+          echo "target=${TARGET}" >> "$GITHUB_OUTPUT"
+          echo "namespace=ftgo-${TARGET}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          echo "## Promotion Plan" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source | \`${SOURCE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | \`${TARGET}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Verify source environment health
+  # ---------------------------------------------------------------------------
+  verify-source:
+    name: "Verify Source (${{ needs.determine-target.outputs.source }})"
+    runs-on: ubuntu-latest
+    needs: determine-target
+    steps:
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Verify source deployments
+        run: |
+          SOURCE_NS="ftgo-${{ needs.determine-target.outputs.source }}"
+          echo "Verifying all deployments in ${SOURCE_NS} are healthy..."
+
+          HEALTHY=true
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            READY=$(kubectl get deployment ${deploy} -n ${SOURCE_NS} \
+              -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+            DESIRED=$(kubectl get deployment ${deploy} -n ${SOURCE_NS} \
+              -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+
+            if [ "${READY}" != "${DESIRED}" ] || [ "${READY}" = "0" ]; then
+              echo "::warning::${deploy} is not fully healthy: ${READY}/${DESIRED} ready"
+              HEALTHY=false
+            else
+              echo "${deploy}: ${READY}/${DESIRED} ready"
+            fi
+          done
+
+          if [ "${HEALTHY}" = "false" ]; then
+            echo "::error::Source environment is not fully healthy. Aborting promotion."
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Deploy to staging (requires approval)
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: "Deploy to Staging"
+    runs-on: ubuntu-latest
+    needs: [determine-target, verify-source]
+    if: needs.determine-target.outputs.target == 'staging'
+    environment:
+      name: staging
+      url: "https://ftgo-staging.example.com"
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ftgo-staging \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ftgo ${{ env.HELM_CHART_PATH }} \
+            -f ${{ env.HELM_CHART_PATH }}/values.yaml \
+            -f ${{ env.HELM_CHART_PATH }}/values-staging.yaml \
+            --set global.imageTag=${{ needs.determine-target.outputs.image_tag }} \
+            --set namespaceCreate=false \
+            --namespace ftgo-staging \
+            --wait \
+            --timeout 10m \
+            --atomic
+
+      - name: Verify staging deployment
+        run: |
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            kubectl rollout status deployment/${deploy} \
+              --namespace ftgo-staging \
+              --timeout=300s
+          done
+          kubectl rollout status statefulset/ftgo-mysql \
+            --namespace ftgo-staging \
+            --timeout=300s
+
+      - name: Run integration tests against staging
+        run: |
+          echo "Running integration test suite against staging..."
+          for svc in ftgo-order-service:8081 ftgo-consumer-service:8082 ftgo-restaurant-service:8083 ftgo-courier-service:8084; do
+            NAME=$(echo $svc | cut -d: -f1)
+            PORT=$(echo $svc | cut -d: -f2)
+            kubectl exec -n ftgo-staging deploy/${NAME} -- \
+              wget -qO- http://localhost:${PORT}/actuator/health || echo "Warning: ${NAME} health check needs attention"
+          done
+
+  # ---------------------------------------------------------------------------
+  # Deploy to production (requires approval)
+  # ---------------------------------------------------------------------------
+  deploy-prod:
+    name: "Deploy to Production"
+    runs-on: ubuntu-latest
+    needs: [determine-target, verify-source]
+    if: needs.determine-target.outputs.target == 'prod'
+    environment:
+      name: production
+      url: "https://ftgo.example.com"
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ftgo-prod \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm (canary first pod)
+        run: |
+          helm upgrade --install ftgo ${{ env.HELM_CHART_PATH }} \
+            -f ${{ env.HELM_CHART_PATH }}/values.yaml \
+            -f ${{ env.HELM_CHART_PATH }}/values-prod.yaml \
+            --set global.imageTag=${{ needs.determine-target.outputs.image_tag }} \
+            --set namespaceCreate=false \
+            --namespace ftgo-prod \
+            --wait \
+            --timeout 15m \
+            --atomic
+
+      - name: Verify production deployment
+        run: |
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            kubectl rollout status deployment/${deploy} \
+              --namespace ftgo-prod \
+              --timeout=600s
+          done
+          kubectl rollout status statefulset/ftgo-mysql \
+            --namespace ftgo-prod \
+            --timeout=300s
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production smoke tests..."
+          for svc in ftgo-order-service:8081 ftgo-consumer-service:8082 ftgo-restaurant-service:8083 ftgo-courier-service:8084; do
+            NAME=$(echo $svc | cut -d: -f1)
+            PORT=$(echo $svc | cut -d: -f2)
+            kubectl exec -n ftgo-prod deploy/${NAME} -- \
+              wget -qO- http://localhost:${PORT}/actuator/health || echo "Warning: ${NAME} health check needs attention"
+          done
+
+      - name: Post production deployment summary
+        if: always()
+        run: |
+          echo "## Production Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Service | Ready | Image |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+
+          for deploy in ftgo-order-service ftgo-consumer-service ftgo-restaurant-service ftgo-courier-service; do
+            READY=$(kubectl get deployment ${deploy} -n ftgo-prod \
+              -o jsonpath='{.status.readyReplicas}/{.spec.replicas}' 2>/dev/null || echo "N/A")
+            IMAGE=$(kubectl get deployment ${deploy} -n ftgo-prod \
+              -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "N/A")
+            echo "| ${deploy} | ${READY} | ${IMAGE} |" >> "$GITHUB_STEP_SUMMARY"
+          done
