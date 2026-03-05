@@ -1,21 +1,20 @@
 dependencies {
-    compile project(":ftgo-courier-service-api")
+    implementation project(":ftgo-courier-service-api")
 
-    compile project(":common-swagger")
-    compile project(":ftgo-domain")
+    implementation project(":common-swagger")
+    implementation project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile 'javax.el:javax.el-api:2.2.5'
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    implementation "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
+    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
-    testCompile 'io.rest-assured:rest-assured:3.0.6'
-    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
-    testCompile "io.rest-assured:json-path:3.0.6"
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
 
-    testCompile project(":ftgo-test-util")
+    testImplementation project(":ftgo-test-util")
 
 }

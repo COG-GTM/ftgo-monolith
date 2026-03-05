@@ -1,15 +1,13 @@
 dependencies {
-    compile project(":common-swagger")
-    compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-domain")
+    implementation project(":common-swagger")
+    implementation project(":ftgo-consumer-service-api")
+    implementation project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
 
-    compile 'javax.el:javax.el-api:2.2.5'
-
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "com.jayway.jsonpath:json-path:2.3.0"
 }
