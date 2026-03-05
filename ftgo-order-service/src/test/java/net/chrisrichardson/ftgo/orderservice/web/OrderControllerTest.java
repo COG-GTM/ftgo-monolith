@@ -45,7 +45,7 @@ public class OrderControllerTest {
             get("/orders/1").
     then().
             statusCode(200).
-            body("orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue())).
+            body("orderId", equalTo(Long.valueOf(OrderDetailsMother.ORDER_ID).intValue())).
             body("state", equalTo(OrderDetailsMother.CHICKEN_VINDALOO_ORDER_STATE.name())).
             body("orderTotal", equalTo(CHICKEN_VINDALOO_ORDER_TOTAL.asString()))
     ;

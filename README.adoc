@@ -3,6 +3,12 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Prerequisites
+
+* **Java 21** or later (Eclipse Temurin recommended)
+* **Gradle 8.5** (included via Gradle wrapper)
+* **Docker** and **Docker Compose** (for running the application with MySQL)
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

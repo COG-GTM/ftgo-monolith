@@ -1,4 +1,4 @@
 dependencies {
-    compile project(":ftgo-common")
-    compile project(":ftgo-common-jpa")
+    api project(":ftgo-common")
+    api project(":ftgo-common-jpa")
 }

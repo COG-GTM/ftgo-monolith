@@ -11,28 +11,40 @@ buildscript {
 }
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
 }
 
 
 subprojects {
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    apply plugin: "java-library"
+    apply plugin: "io.spring.dependency-management"
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
 
     group = "net.chrisrichardson.ftgo"
 
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        }
+    }
+
+    dependencies {
+        testImplementation 'junit:junit:4.13.2'
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    }
+
+    tasks.withType(Test) {
+        useJUnitPlatform()
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-parameters'
+    }
+
     repositories {
         mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
 
         maven {
             url "${project.rootDir}/build/repo"

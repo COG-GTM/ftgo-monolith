@@ -83,7 +83,7 @@ public class MoneySerializationTest {
     } catch (JsonMappingException e) {
       jsonMappingException = e;
     }
-    Assert.notNull(jsonMappingException);
+    Assert.notNull(jsonMappingException, "Expected JsonMappingException");
   }
 
 
