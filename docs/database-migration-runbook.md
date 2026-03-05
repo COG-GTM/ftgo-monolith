@@ -256,8 +256,8 @@ SELECT
     id, name, street1, street2, city, state, zip
 FROM ftgo.restaurants;
 
--- Copy restaurant menu items
-INSERT INTO ftgo_restaurant_service.restaurant_menu_items (restaurant_id, menu_item_id, name, price)
+-- Copy restaurant menu items (id column preserved as-is for JPA MenuItem.id compatibility)
+INSERT INTO ftgo_restaurant_service.restaurant_menu_items (restaurant_id, id, name, price)
 SELECT restaurant_id, id, name, price
 FROM ftgo.restaurant_menu_items;
 

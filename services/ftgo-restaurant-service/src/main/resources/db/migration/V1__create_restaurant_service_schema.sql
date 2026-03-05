@@ -38,12 +38,10 @@ CREATE TABLE IF NOT EXISTS restaurants
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS restaurant_menu_items
 (
-    id            BIGINT         NOT NULL AUTO_INCREMENT,
     restaurant_id BIGINT         NOT NULL,
-    menu_item_id  VARCHAR(255),
+    id            VARCHAR(255)   COMMENT 'Business menu-item identifier (maps to JPA MenuItem.id)',
     name          VARCHAR(255),
     price         DECIMAL(19, 2),
-    PRIMARY KEY (id),
     CONSTRAINT fk_menu_items_restaurant
         FOREIGN KEY (restaurant_id) REFERENCES restaurants (id)
             ON DELETE CASCADE

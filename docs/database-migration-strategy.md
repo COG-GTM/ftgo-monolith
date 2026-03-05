@@ -80,10 +80,11 @@ Each service owns its own database with independent schema and migration history
 - `restaurant_sequence` - Per-service ID generation
 
 **Changes from monolith:**
-- Added `AUTO_INCREMENT` primary key on `restaurant_menu_items`
-- Added `menu_item_id` column for business-level item identification
-- Added `NOT NULL` on `name`
-- Added `created_at` / `updated_at` audit columns
+- `restaurant_menu_items` retains original column structure (`id VARCHAR(255)` as business
+  menu-item identifier) to preserve JPA `MenuItem.id` mapping compatibility. No surrogate PK
+  is added since this is an embedded collection table (`@Embeddable`)
+- Added `NOT NULL` on `restaurants.name`
+- Added `created_at` / `updated_at` audit columns on `restaurants`
 
 ---
 
