@@ -103,6 +103,7 @@ project(':shared-ftgo-resilience-lib').projectDir = file('shared/ftgo-resilience
 // --- Shared Test Library ---
 include 'shared-ftgo-test-lib'
 project(':shared-ftgo-test-lib').projectDir = file('shared/ftgo-test-lib')
+
 // =============================================================================
 // Version Catalog (gradle/libs.versions.toml)
 // =============================================================================
