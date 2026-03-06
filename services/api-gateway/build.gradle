@@ -23,8 +23,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.security:spring-security-config'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
     implementation project(':libs:ftgo-jwt')
 
@@ -35,7 +33,6 @@ dependencies {
     implementation libs.micrometer.core
     implementation libs.micrometer.registry.prometheus
 
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

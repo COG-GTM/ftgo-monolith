@@ -9,8 +9,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -18,10 +22,21 @@ public class RateLimitGatewayFilterFactory
         extends AbstractGatewayFilterFactory<RateLimitGatewayFilterFactory.Config> {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitGatewayFilterFactory.class);
+    private static final long BUCKET_TTL_NANOS = TimeUnit.MINUTES.toNanos(10);
 
     private final Map<String, TokenBucket> buckets = new ConcurrentHashMap<>();
 
     public RateLimitGatewayFilterFactory() {
+        super(Config.class);
+        ScheduledExecutorService evictionExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "rate-limit-eviction");
+            t.setDaemon(true);
+            return t;
+        });
+        evictionExecutor.scheduleAtFixedRate(this::evictExpiredBuckets, 5, 5, TimeUnit.MINUTES);
+    }
+
+    RateLimitGatewayFilterFactory(boolean skipEviction) {
         super(Config.class);
     }
 
@@ -47,6 +62,22 @@ public class RateLimitGatewayFilterFactory
 
             return chain.filter(exchange);
         };
+    }
+
+    private void evictExpiredBuckets() {
+        long now = System.nanoTime();
+        Iterator<Map.Entry<String, TokenBucket>> it = buckets.entrySet().iterator();
+        int evicted = 0;
+        while (it.hasNext()) {
+            Map.Entry<String, TokenBucket> entry = it.next();
+            if (now - entry.getValue().getLastAccessTime() > BUCKET_TTL_NANOS) {
+                it.remove();
+                evicted++;
+            }
+        }
+        if (evicted > 0) {
+            log.debug("Evicted {} expired rate limit buckets, remaining: {}", evicted, buckets.size());
+        }
     }
 
     private String resolveKey(ServerWebExchange exchange) {
@@ -76,16 +107,19 @@ public class RateLimitGatewayFilterFactory
         private final int burstCapacity;
         private final AtomicLong availableTokens;
         private volatile long lastRefillTimestamp;
+        private volatile long lastAccessTime;
 
         TokenBucket(int requestsPerSecond, int burstCapacity) {
             this.requestsPerSecond = requestsPerSecond;
             this.burstCapacity = burstCapacity;
             this.availableTokens = new AtomicLong(burstCapacity);
             this.lastRefillTimestamp = System.nanoTime();
+            this.lastAccessTime = System.nanoTime();
         }
 
         synchronized boolean tryConsume() {
             refill();
+            lastAccessTime = System.nanoTime();
             long current = availableTokens.get();
             if (current > 0) {
                 availableTokens.decrementAndGet();
@@ -96,6 +130,10 @@ public class RateLimitGatewayFilterFactory
 
         long getAvailableTokens() {
             return availableTokens.get();
+        }
+
+        long getLastAccessTime() {
+            return lastAccessTime;
         }
 
         private void refill() {

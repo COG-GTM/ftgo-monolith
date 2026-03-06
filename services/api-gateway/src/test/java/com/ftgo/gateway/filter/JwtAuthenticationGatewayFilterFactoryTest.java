@@ -5,6 +5,7 @@ import com.ftgo.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import reactor.core.publisher.Mono;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.test.StepVerifier;
 
 import java.util.List;
@@ -142,7 +144,9 @@ class JwtAuthenticationGatewayFilterFactoryTest {
         when(tokenProvider.validateToken("valid-token")).thenReturn(true);
         when(tokenProvider.getSubject("valid-token")).thenReturn("user-456");
         when(tokenProvider.getRoles("valid-token")).thenReturn(List.of("ROLE_USER", "ROLE_MANAGER"));
-        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        ArgumentCaptor<ServerWebExchange> exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
+        when(chain.filter(exchangeCaptor.capture())).thenReturn(Mono.empty());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/orders")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
@@ -151,5 +155,11 @@ class JwtAuthenticationGatewayFilterFactoryTest {
 
         StepVerifier.create(filter.filter(exchange, chain))
                 .verifyComplete();
+
+        ServerWebExchange capturedExchange = exchangeCaptor.getValue();
+        assertThat(capturedExchange.getRequest().getHeaders().getFirst("X-User-Id"))
+                .isEqualTo("user-456");
+        assertThat(capturedExchange.getRequest().getHeaders().getFirst("X-User-Roles"))
+                .isEqualTo("ROLE_USER,ROLE_MANAGER");
     }
 }

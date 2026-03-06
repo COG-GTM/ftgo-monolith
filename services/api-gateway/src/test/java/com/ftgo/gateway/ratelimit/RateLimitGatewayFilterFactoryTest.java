@@ -27,7 +27,7 @@ class RateLimitGatewayFilterFactoryTest {
 
     @BeforeEach
     void setUp() {
-        filterFactory = new RateLimitGatewayFilterFactory();
+        filterFactory = new RateLimitGatewayFilterFactory(true);
     }
 
     @Test
