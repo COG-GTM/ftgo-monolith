@@ -39,6 +39,50 @@ public class GatewayRouteConfig {
     @Bean
     public RouteLocator ftgoRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                // ----- Versioned routes (e.g. /api/v1/orders/**) -----
+                // These must be defined before non-versioned routes so they match first.
+                // The rewritePath strips the version prefix: /api/v1/orders/123 -> /orders/123
+                .route("order-service-versioned", r -> r
+                        .path("/api/v*/orders/**")
+                        .filters(f -> f
+                                .circuitBreaker(config -> config
+                                        .setName("orderServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/orders"))
+                                .rewritePath("/api/v[^/]+/(?<remaining>.*)", "/${remaining}")
+                        )
+                        .uri(orderServiceUrl))
+
+                .route("consumer-service-versioned", r -> r
+                        .path("/api/v*/consumers/**")
+                        .filters(f -> f
+                                .circuitBreaker(config -> config
+                                        .setName("consumerServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/consumers"))
+                                .rewritePath("/api/v[^/]+/(?<remaining>.*)", "/${remaining}")
+                        )
+                        .uri(consumerServiceUrl))
+
+                .route("restaurant-service-versioned", r -> r
+                        .path("/api/v*/restaurants/**")
+                        .filters(f -> f
+                                .circuitBreaker(config -> config
+                                        .setName("restaurantServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/restaurants"))
+                                .rewritePath("/api/v[^/]+/(?<remaining>.*)", "/${remaining}")
+                        )
+                        .uri(restaurantServiceUrl))
+
+                .route("courier-service-versioned", r -> r
+                        .path("/api/v*/couriers/**")
+                        .filters(f -> f
+                                .circuitBreaker(config -> config
+                                        .setName("courierServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/couriers"))
+                                .rewritePath("/api/v[^/]+/(?<remaining>.*)", "/${remaining}")
+                        )
+                        .uri(courierServiceUrl))
+
+                // ----- Non-versioned routes (e.g. /api/orders/**) -----
                 // Order Service routes
                 .route("order-service", r -> r
                         .path("/api/orders/**")

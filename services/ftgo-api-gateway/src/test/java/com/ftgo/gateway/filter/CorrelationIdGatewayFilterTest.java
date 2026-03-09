@@ -64,6 +64,25 @@ class CorrelationIdGatewayFilterTest {
     }
 
     @Test
+    void shouldStoreCorrelationIdInExchangeAttributes() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/orders")
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        filter.filter(exchange, chain).block();
+
+        // Correlation ID should be stored in exchange attributes
+        String attrCorrelationId = exchange.getAttribute(CorrelationIdGatewayFilter.CORRELATION_ID_ATTR);
+        assertThat(attrCorrelationId).isNotNull().isNotBlank();
+
+        // Should match the response header
+        String responseCorrelationId = exchange.getResponse().getHeaders()
+                .getFirst(CorrelationIdGatewayFilter.CORRELATION_ID_HEADER);
+        assertThat(attrCorrelationId).isEqualTo(responseCorrelationId);
+    }
+
+    @Test
     void shouldHaveHigherPriorityThanJwtFilter() {
         assertThat(filter.getOrder()).isLessThan(-100); // JWT filter order is -100
     }

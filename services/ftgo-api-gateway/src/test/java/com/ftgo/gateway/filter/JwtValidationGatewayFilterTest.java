@@ -165,6 +165,34 @@ class JwtValidationGatewayFilterTest {
                 .compact();
     }
 
+    @Test
+    void shouldRejectTokenWithMissingIssuer() {
+        SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
+        // Generate a token without an issuer claim
+        String tokenWithoutIssuer = Jwts.builder()
+                .subject("user-123")
+                .claims(Map.of(
+                        "username", "john.doe",
+                        "roles", List.of("ROLE_USER"),
+                        "type", "access"
+                ))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(key, Jwts.SIG.HS256)
+                .compact();
+
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/orders")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenWithoutIssuer)
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        filter.filter(exchange, chain).block();
+
+        assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
     private String generateRefreshToken(String userId) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
