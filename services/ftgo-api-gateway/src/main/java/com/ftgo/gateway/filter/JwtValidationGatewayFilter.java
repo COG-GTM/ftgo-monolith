@@ -163,10 +163,13 @@ public class JwtValidationGatewayFilter implements GlobalFilter, Ordered {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        // Verify issuer
+        // Verify issuer — reject tokens with missing or mismatched issuer
         String issuer = claims.getIssuer();
-        if (issuer != null && !issuer.equals(jwtProperties.getIssuer())) {
-            throw new JwtException("Invalid issuer: " + issuer);
+        String expectedIssuer = jwtProperties.getIssuer();
+        if (expectedIssuer != null && !expectedIssuer.isBlank()) {
+            if (issuer == null || !issuer.equals(expectedIssuer)) {
+                throw new JwtException("Invalid or missing issuer: " + issuer);
+            }
         }
 
         return claims;
