@@ -30,7 +30,10 @@ public class OrderLineItems {
   }
 
   OrderLineItem findOrderLineItem(String lineItemId) {
-    return lineItems.stream().filter(li -> li.getMenuItemId().equals(lineItemId)).findFirst().get();
+    return lineItems.stream()
+            .filter(li -> li.getMenuItemId().equals(lineItemId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Line item not found: " + lineItemId));
   }
 
   // Using Java 8 stream reduce() instead of AtomicReference accumulation pattern

@@ -7,44 +7,73 @@ It's used to illustrate how to refactor a monolithic application to services.
 
 This project requires **Java 8** (JDK 1.8) or later. The build is configured with `sourceCompatibility = '1.8'` and `targetCompatibility = '1.8'`.
 
-== Setup and Running
+== Prerequisites
 
-=== Prerequisites
+* Java 8 JDK (1.8+) - https://adoptopenjdk.net/[Download]
+* Docker and Docker Compose (for running infrastructure services)
+* MySQL 5.x
 
-* Java 8 JDK (or later)
-* Docker and Docker Compose (for MySQL and infrastructure services)
+== Getting Started
 
-=== Build the project
+=== 1. Build the project
 
-  ./gradlew assemble
+[source,bash]
+----
+./gradlew assemble
+----
 
-=== Run the tests
+=== 2. Start infrastructure services
 
-  ./gradlew test
+[source,bash]
+----
+./start-infrastructure-services.sh
+----
+
+=== 3. Build and run the application
+
+[source,bash]
+----
+./build-and-run.sh
+----
+
+The application will start on the default Spring Boot port (8080).
+
+=== 4. Run tests
+
+[source,bash]
+----
+./gradlew test
+----
 
 NOTE: End-to-end tests require the infrastructure services (MySQL) to be running via Docker Compose.
 
-=== Start infrastructure services
+== Project Structure
 
-  ./start-infrastructure-services.sh
+The application is organized as a multi-module Gradle project:
 
-=== Run the application
-
-  ./build-and-run.sh
-
-The application will start on the default Spring Boot port (8080).
+* `ftgo-application` - Main Spring Boot application entry point
+* `ftgo-common` - Shared value objects (Money, Address, PersonName)
+* `ftgo-common-jpa` - Common JPA configuration
+* `ftgo-domain` - Domain entities (Order, Restaurant, Consumer, Courier)
+* `ftgo-order-service` - Order management service
+* `ftgo-consumer-service` - Consumer management service
+* `ftgo-restaurant-service` - Restaurant management service
+* `ftgo-courier-service` - Courier management service
+* `ftgo-order-service-api` / `ftgo-consumer-service-api` / `ftgo-restaurant-service-api` / `ftgo-courier-service-api` - API DTOs
+* `ftgo-end-to-end-tests` - End-to-end integration tests
+* `ftgo-flyway` - Database migration scripts
 
 == Java 8 Features Used
 
 This project leverages the following Java 8 features:
 
-* **`java.time` API** – `LocalDateTime` is used throughout for date/time handling instead of the legacy `java.util.Date`
-* **Lambda expressions** – Used extensively for functional-style callbacks and event handling
-* **Method references** – Used for concise delegation (e.g., `Money::add`, `OrderLineItem::getTotal`)
-* **Streams API** – Used for collection processing, filtering, mapping, and reducing
-* **`Optional`** – Used for null-safe value handling in repositories and service methods
-* **`java.util.Objects`** – Used for `equals()`, `hashCode()`, and `toString()` implementations instead of Apache Commons Lang reflection-based builders
-* **`String.join()` and `String.format()`** – Used for cleaner string building
+* **`java.time` API** - `LocalDateTime` is used throughout for date/time handling instead of the legacy `java.util.Date`
+* **Lambda expressions** - Used extensively for functional-style callbacks and event handling
+* **Method references** - Used for concise delegation (e.g., `Money::add`, `OrderLineItem::getTotal`)
+* **Streams API** - For collection processing, filtering, mapping, and reducing (e.g., `OrderLineItems`, `Plan`)
+* **`Optional`** - Used for null-safe value handling in repositories and service methods, with `orElseThrow()` for error handling
+* **`java.util.Objects`** - Used for `equals()`, `hashCode()`, and `toString()` implementations instead of Apache Commons Lang reflection-based builders
+* **`String.join()` and `String.format()`** - Used for cleaner string building
 
 == Learn more
 
