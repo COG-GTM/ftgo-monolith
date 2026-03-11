@@ -3,7 +3,50 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Java Version
+
+This project requires **Java 8** (JDK 1.8) or later. The build is configured with `sourceCompatibility = '1.8'` and `targetCompatibility = '1.8'`.
+
+== Setup and Running
+
+=== Prerequisites
+
+* Java 8 JDK (or later)
+* Docker and Docker Compose (for MySQL and infrastructure services)
+
+=== Build the project
+
+  ./gradlew assemble
+
+=== Run the tests
+
+  ./gradlew test
+
+NOTE: End-to-end tests require the infrastructure services (MySQL) to be running via Docker Compose.
+
+=== Start infrastructure services
+
+  ./start-infrastructure-services.sh
+
+=== Run the application
+
+  ./build-and-run.sh
+
+The application will start on the default Spring Boot port (8080).
+
+== Java 8 Features Used
+
+This project leverages the following Java 8 features:
+
+* **`java.time` API** – `LocalDateTime` is used throughout for date/time handling instead of the legacy `java.util.Date`
+* **Lambda expressions** – Used extensively for functional-style callbacks and event handling
+* **Method references** – Used for concise delegation (e.g., `Money::add`, `OrderLineItem::getTotal`)
+* **Streams API** – Used for collection processing, filtering, mapping, and reducing
+* **`Optional`** – Used for null-safe value handling in repositories and service methods
+* **`java.util.Objects`** – Used for `equals()`, `hashCode()`, and `toString()` implementations instead of Apache Commons Lang reflection-based builders
+* **`String.join()` and `String.format()`** – Used for cleaner string building
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
