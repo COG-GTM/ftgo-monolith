@@ -1,0 +1,13 @@
+# =============================================================================
+# Elasticsearch Configuration for FTGO Logging
+# =============================================================================
+
+cluster.name: "ftgo-logging"
+network.host: 0.0.0.0
+
+# Index lifecycle management
+action.auto_create_index: true
+
+# Disable X-Pack security for local development
+xpack.security.enabled: false
+xpack.monitoring.enabled: true
