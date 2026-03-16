@@ -25,14 +25,14 @@ public class RouteConfig {
     private final CircuitBreakerGatewayFilterFactory circuitBreakerFilterFactory;
     private final CorrelationIdFilter correlationIdFilter;
     private final RequestResponseLoggingFilter requestResponseLoggingFilter;
-    private final GatewayProperties gatewayProperties;
+    private final FtgoGatewayProperties gatewayProperties;
 
     public RouteConfig(JwtValidationFilter jwtValidationFilter,
                        RateLimitingFilter rateLimitingFilter,
                        CircuitBreakerGatewayFilterFactory circuitBreakerFilterFactory,
                        CorrelationIdFilter correlationIdFilter,
                        RequestResponseLoggingFilter requestResponseLoggingFilter,
-                       GatewayProperties gatewayProperties) {
+                       FtgoGatewayProperties gatewayProperties) {
         this.jwtValidationFilter = jwtValidationFilter;
         this.rateLimitingFilter = rateLimitingFilter;
         this.circuitBreakerFilterFactory = circuitBreakerFilterFactory;

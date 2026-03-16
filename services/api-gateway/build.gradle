@@ -24,12 +24,10 @@ dependencies {
     // Spring Boot Actuator for health checks and metrics
     compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
 
-    // Circuit Breaker - Resilience4j
-    compile "io.github.resilience4j:resilience4j-spring-boot:${resilience4jVersion}"
-    compile "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
+    // Circuit Breaker - Resilience4j (core libs only; spring-boot starter excluded
+    // because 0.13.x auto-config depends on Spring Boot 1.x actuator classes)
     compile "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
-    compile "io.github.resilience4j:resilience4j-ratelimiter:${resilience4jVersion}"
-    compile "io.github.resilience4j:resilience4j-timelimiter:${resilience4jVersion}"
+    compile "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
 
     // JWT validation
     compile "io.jsonwebtoken:jjwt:${jjwtVersion}"

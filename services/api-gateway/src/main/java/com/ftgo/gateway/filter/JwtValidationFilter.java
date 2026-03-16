@@ -1,6 +1,6 @@
 package com.ftgo.gateway.filter;
 
-import com.ftgo.gateway.config.GatewayProperties;
+import com.ftgo.gateway.config.FtgoGatewayProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -34,9 +34,9 @@ public class JwtValidationFilter implements GatewayFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(JwtValidationFilter.class);
 
-    private final GatewayProperties gatewayProperties;
+    private final FtgoGatewayProperties gatewayProperties;
 
-    public JwtValidationFilter(GatewayProperties gatewayProperties) {
+    public JwtValidationFilter(FtgoGatewayProperties gatewayProperties) {
         this.gatewayProperties = gatewayProperties;
     }
 

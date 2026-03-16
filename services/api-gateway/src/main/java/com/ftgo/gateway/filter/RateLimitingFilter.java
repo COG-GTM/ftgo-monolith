@@ -1,6 +1,6 @@
 package com.ftgo.gateway.filter;
 
-import com.ftgo.gateway.config.GatewayProperties;
+import com.ftgo.gateway.config.FtgoGatewayProperties;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
@@ -32,10 +32,10 @@ public class RateLimitingFilter implements GatewayFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
 
-    private final GatewayProperties gatewayProperties;
+    private final FtgoGatewayProperties gatewayProperties;
     private final Cache<String, AtomicInteger> requestCounts;
 
-    public RateLimitingFilter(GatewayProperties gatewayProperties) {
+    public RateLimitingFilter(FtgoGatewayProperties gatewayProperties) {
         this.gatewayProperties = gatewayProperties;
         this.requestCounts = Caffeine.newBuilder()
                 .expireAfterWrite(gatewayProperties.getRateLimit().getWindowSeconds(), TimeUnit.SECONDS)

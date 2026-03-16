@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "gateway")
-public class GatewayProperties {
+public class FtgoGatewayProperties {
 
     private Jwt jwt = new Jwt();
     private RateLimit rateLimit = new RateLimit();
