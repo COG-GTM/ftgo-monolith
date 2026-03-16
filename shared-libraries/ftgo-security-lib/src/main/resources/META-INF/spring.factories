@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  net.chrisrichardson.ftgo.security.config.FtgoSecurityAutoConfiguration
+  net.chrisrichardson.ftgo.security.config.FtgoSecurityAutoConfiguration,\
+  net.chrisrichardson.ftgo.security.jwt.JwtAutoConfiguration
