@@ -17,8 +17,8 @@
 | 3 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | Phase 2 | Completed | [PR #139](https://github.com/COG-GTM/ftgo-monolith/pull/139) | Success | None |
 | 4 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Completed | [PR #140](https://github.com/COG-GTM/ftgo-monolith/pull/140) | Success | None |
 | 4 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | Phase 3 | Completed | [PR #141](https://github.com/COG-GTM/ftgo-monolith/pull/141) | Success | None |
-| 5 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Pending | — | — | — |
-| 5 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | Phase 4 | Pending | — | — | — |
+| 5 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Completed | [PR #142](https://github.com/COG-GTM/ftgo-monolith/pull/142) | Success | None |
+| 5 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | Phase 4 | Completed | [PR #143](https://github.com/COG-GTM/ftgo-monolith/pull/143) | Success (conflicts resolved) | settings.gradle |
 | 6 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Pending | — | — | — |
 | 6 | EM-41 | Upgrade Micrometer/Prometheus Metrics and Add Service-Level Dashboards | Phase 4 | Pending | — | — | — |
 | 7 | EM-40 | Implement JWT-Based Authentication with Token Management | Phase 3 | Pending | — | — | — |
@@ -38,6 +38,11 @@
 - **File**: `shared-libraries/ftgo-common/build.gradle`
 - **Conflict**: EM-32 added explicit `maven-publish` plugin + publishing block; EM-28 added `ftgo.publishing-conventions` plugin
 - **Resolution**: Removed duplicate `maven-publish` apply and explicit publishing block, kept convention plugin which handles publishing. Kept EM-32's version/group and dependency declarations.
+
+### Batch 5
+- **File**: `settings.gradle`
+- **Conflict**: EM-39 added `ftgo-security-lib` include; EM-43 added `ftgo-logging-lib` include
+- **Resolution**: Combined both module includes, keeping both entries.
 
 ## Re-queued Tasks
 
