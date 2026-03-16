@@ -27,9 +27,9 @@
 | 8 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | Phase 5 | Completed | [PR #148](https://github.com/COG-GTM/ftgo-monolith/pull/148) | Success | None |
 | 9 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Completed | [PR #150](https://github.com/COG-GTM/ftgo-monolith/pull/150) | Success | None |
 | 10 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | Phase 4 | Completed | [PR #151](https://github.com/COG-GTM/ftgo-monolith/pull/151) | Success | None |
-| 11 | EM-37 | Implement Role-Based Authorization Framework | Phase 3 | Pending | — | — | — |
-| 11 | EM-46 | Establish Centralized Error Handling and Exception Patterns | Phase 5 | Pending | — | — | — |
-| 11 | EM-48 | Document Testing Strategy and Create Test Templates | Phase 5 | Pending | — | — | — |
+| 11 | EM-37 | Implement Role-Based Authorization Framework | Phase 3 | Completed | [PR #152](https://github.com/COG-GTM/ftgo-monolith/pull/152) | Success | None |
+| 11 | EM-46 | Establish Centralized Error Handling and Exception Patterns | Phase 5 | Completed | [PR #153](https://github.com/COG-GTM/ftgo-monolith/pull/153) | Success | None |
+| 11 | EM-48 | Document Testing Strategy and Create Test Templates | Phase 5 | Completed | [PR #154](https://github.com/COG-GTM/ftgo-monolith/pull/154) | Success | None |
 | 12 | EM-49 | Define Logging Standards and Structured Logging Configuration | Phase 5 | Pending | — | — | — |
 
 ## Conflict Resolution Log
