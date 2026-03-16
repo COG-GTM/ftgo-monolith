@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: ftgo-tracing
+  labels:
+    app: jaeger
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+        app.kubernetes.io/name: jaeger
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.52
+          ports:
+            - containerPort: 5775
+              name: zipkin-compact
+              protocol: UDP
+            - containerPort: 6831
+              name: jaeger-compact
+              protocol: UDP
+            - containerPort: 6832
+              name: jaeger-binary
+              protocol: UDP
+            - containerPort: 5778
+              name: config
+              protocol: TCP
+            - containerPort: 16686
+              name: ui
+              protocol: TCP
+            - containerPort: 14268
+              name: collector-http
+              protocol: TCP
+            - containerPort: 14250
+              name: collector-grpc
+              protocol: TCP
+            - containerPort: 9411
+              name: zipkin
+              protocol: TCP
+          env:
+            - name: COLLECTOR_ZIPKIN_HOST_PORT
+              value: ":9411"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 14269
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 14269
+            initialDelaySeconds: 30
+            periodSeconds: 15
