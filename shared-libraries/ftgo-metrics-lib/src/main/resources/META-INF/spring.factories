@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  net.chrisrichardson.ftgo.metrics.config.MetricsAutoConfiguration,\
+  net.chrisrichardson.ftgo.metrics.config.PrometheusRegistryConfiguration,\
+  net.chrisrichardson.ftgo.metrics.config.MetricsWebFilterConfiguration

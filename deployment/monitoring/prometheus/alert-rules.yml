@@ -1,0 +1,95 @@
+# =============================================================================
+# Prometheus Alert Rules for FTGO Microservices
+# =============================================================================
+# These rules define alerting conditions for service health,
+# performance, and business metrics.
+# =============================================================================
+
+groups:
+
+  # ---------------------------------------------------------------------------
+  # Service Health Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_service_health
+    rules:
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_total{outcome="SERVER_ERROR"}[5m])) by (job)
+            /
+            sum(rate(http_server_requests_total[5m])) by (job)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has an error rate above 5% for the last 2 minutes."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} p95 latency is above 1 second for 5 minutes."
+
+  # ---------------------------------------------------------------------------
+  # JVM Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_jvm_alerts
+    rules:
+
+      - alert: HighHeapUsage
+        expr: |
+          jvm_memory_used_bytes{area="heap"}
+          /
+          jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap usage is above 85% for 5 minutes."
+
+      - alert: HighGcPause
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.job }}"
+          description: "{{ $labels.job }} average GC pause time exceeds 500ms."
+
+  # ---------------------------------------------------------------------------
+  # Business Metric Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_business_alerts
+    rules:
+
+      - alert: NoOrdersCreated
+        expr: |
+          sum(rate(ftgo_orders_created_total[15m])) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No orders created in the last 15 minutes"
+          description: "The order creation rate has dropped to zero."

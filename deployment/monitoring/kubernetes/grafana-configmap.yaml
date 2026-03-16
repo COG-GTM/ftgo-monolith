@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: ftgo-monitoring
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: ftgo
+data:
+  prometheus.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.ftgo-monitoring.svc.cluster.local:9090
+        isDefault: true
+        editable: false
+        jsonData:
+          timeInterval: 10s
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: ftgo-monitoring
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: ftgo
+data:
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'FTGO Dashboards'
+        orgId: 1
+        folder: 'FTGO'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
