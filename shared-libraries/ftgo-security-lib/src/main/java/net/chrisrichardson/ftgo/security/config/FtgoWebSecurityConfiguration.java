@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo.security.config;
 
 import net.chrisrichardson.ftgo.security.handler.FtgoAccessDeniedHandler;
 import net.chrisrichardson.ftgo.security.handler.FtgoAuthenticationEntryPoint;
+import net.chrisrichardson.ftgo.security.jwt.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Base Spring Security configuration for FTGO microservices.
@@ -35,6 +38,9 @@ public class FtgoWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${ftgo.security.public-paths:/actuator/health,/actuator/info}")
     private String[] publicPaths;
 
+    @Autowired(required = false)
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
@@ -53,6 +59,10 @@ public class FtgoWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(publicPaths).permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated();
+
+        if (jwtAuthenticationFilter != null) {
+            http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        }
     }
 
     @Bean
