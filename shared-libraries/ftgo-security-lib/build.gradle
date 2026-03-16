@@ -16,6 +16,9 @@ dependencies {
 
     compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
 
+    // JWT support (JJWT – Java 8 compatible)
+    compile "io.jsonwebtoken:jjwt:0.9.1"
+
     testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
     testCompile "org.springframework.security:spring-security-test:5.0.6.RELEASE"
 }
