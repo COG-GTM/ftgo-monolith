@@ -1,0 +1,147 @@
+# =============================================================================
+# Docker Compose - Microservices Local Development
+# =============================================================================
+# This file provides a local development environment for the extracted
+# microservices. It is separate from the monolith's docker-compose.yml.
+#
+# Usage:
+#   Start all services:     docker-compose -f docker-compose.microservices.yml up
+#   Start specific service: docker-compose -f docker-compose.microservices.yml up order-service
+#   Build and start:        docker-compose -f docker-compose.microservices.yml up --build
+#   Stop all services:      docker-compose -f docker-compose.microservices.yml down
+#   View logs:              docker-compose -f docker-compose.microservices.yml logs -f
+#
+# Note: This file does NOT replace the existing docker-compose.yml which is
+# used for the monolith application. Both can run independently.
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure Services
+  # ---------------------------------------------------------------------------
+  mysql:
+    build: ./mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: mysqlpw
+    volumes:
+      - mysql-microservices-data:/var/lib/mysql
+    networks:
+      - ftgo-microservices
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Microservices
+  # ---------------------------------------------------------------------------
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/docker/Dockerfile
+    image: ghcr.io/cog-gtm/ftgo/order-service:local
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: -Xmx256m
+      SERVER_PORT: 8081
+    networks:
+      - ftgo-microservices
+    restart: unless-stopped
+
+  consumer-service:
+    build:
+      context: .
+      dockerfile: services/consumer-service/docker/Dockerfile
+    image: ghcr.io/cog-gtm/ftgo/consumer-service:local
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: -Xmx256m
+      SERVER_PORT: 8082
+    networks:
+      - ftgo-microservices
+    restart: unless-stopped
+
+  restaurant-service:
+    build:
+      context: .
+      dockerfile: services/restaurant-service/docker/Dockerfile
+    image: ghcr.io/cog-gtm/ftgo/restaurant-service:local
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: -Xmx256m
+      SERVER_PORT: 8083
+    networks:
+      - ftgo-microservices
+    restart: unless-stopped
+
+  courier-service:
+    build:
+      context: .
+      dockerfile: services/courier-service/docker/Dockerfile
+    image: ghcr.io/cog-gtm/ftgo/courier-service:local
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: -Xmx256m
+      SERVER_PORT: 8084
+    networks:
+      - ftgo-microservices
+    restart: unless-stopped
+
+# ---------------------------------------------------------------------------
+# Volumes
+# ---------------------------------------------------------------------------
+volumes:
+  mysql-microservices-data:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  ftgo-microservices:
+    driver: bridge
+    name: ftgo-microservices
