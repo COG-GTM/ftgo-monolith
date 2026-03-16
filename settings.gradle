@@ -38,6 +38,9 @@ include "services:consumer-service"
 include "services:restaurant-service"
 include "services:courier-service"
 
+// API Gateway (single entry point for all microservices)
+include "services:api-gateway"
+
 // Shared libraries (extracted from monolith common modules)
 include "shared-libraries:ftgo-common"
 include "shared-libraries:ftgo-common-jpa"

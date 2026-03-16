@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+# Gateway custom properties
+gateway:
+  jwt:
+    enabled: true
+    secret: ${GATEWAY_JWT_SECRET:changeme}
+    header-name: Authorization
+    token-prefix: "Bearer "
+  rate-limit:
+    enabled: true
+    max-requests: 100
+    window-seconds: 60
+  services:
+    order-service-url: http://order-service:8081
+    consumer-service-url: http://consumer-service:8082
+    restaurant-service-url: http://restaurant-service:8083
+    courier-service-url: http://courier-service:8084
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ftgo.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
