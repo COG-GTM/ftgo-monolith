@@ -1,0 +1,25 @@
+// Shared Library: ftgo-error-handling-lib
+// Centralized error handling for FTGO microservices.
+// Provides a standard exception hierarchy, error codes, and a
+// @ControllerAdvice-based GlobalExceptionHandler that formats all
+// error responses using the ErrorResponse model from ftgo-openapi-lib.
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'ftgo.java-conventions'
+apply plugin: 'ftgo.testing-conventions'
+apply plugin: 'ftgo.publishing-conventions'
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+
+    compile project(':shared-libraries:ftgo-openapi-lib')
+
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+
+    // Validation API (Bean Validation 2.0 – Java 8 compatible)
+    compile "javax.validation:validation-api:2.0.1.Final"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+}
