@@ -15,8 +15,8 @@
 | 2 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Completed | [PR #136](https://github.com/COG-GTM/ftgo-monolith/pull/136) | Success | None |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | Phase 1 | Completed | [PR #138](https://github.com/COG-GTM/ftgo-monolith/pull/138) | Success | None |
 | 3 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | Phase 2 | Completed | [PR #139](https://github.com/COG-GTM/ftgo-monolith/pull/139) | Success | None |
-| 4 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Pending | — | — | — |
-| 4 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | Phase 3 | Pending | — | — | — |
+| 4 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Completed | [PR #140](https://github.com/COG-GTM/ftgo-monolith/pull/140) | Success | None |
+| 4 | EM-38 | Configure API Gateway with Security, Routing, and Rate Limiting | Phase 3 | Completed | [PR #141](https://github.com/COG-GTM/ftgo-monolith/pull/141) | Success | None |
 | 5 | EM-39 | Implement Spring Security Foundation and Authentication Configuration | Phase 3 | Pending | — | — | — |
 | 5 | EM-43 | Set Up Centralized Logging with ELK/EFK Stack | Phase 4 | Pending | — | — | — |
 | 6 | EM-29 | Define Per-Service Database Schema Migration Strategy | Phase 1 | Pending | — | — | — |
