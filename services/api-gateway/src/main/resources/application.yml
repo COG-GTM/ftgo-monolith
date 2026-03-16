@@ -9,7 +9,7 @@ spring:
 gateway:
   jwt:
     enabled: true
-    secret: ftgo-secret-key-for-jwt-validation-minimum-256-bits-long
+    secret: ${GATEWAY_JWT_SECRET:changeme}
     header-name: Authorization
     token-prefix: "Bearer "
   rate-limit:

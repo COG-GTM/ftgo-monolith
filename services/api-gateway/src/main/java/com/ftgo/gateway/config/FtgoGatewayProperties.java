@@ -43,7 +43,7 @@ public class FtgoGatewayProperties {
     }
 
     public static class Jwt {
-        private String secret = "ftgo-secret-key-for-jwt-validation-minimum-256-bits-long";
+        private String secret;
         private boolean enabled = true;
         private String headerName = "Authorization";
         private String tokenPrefix = "Bearer ";
