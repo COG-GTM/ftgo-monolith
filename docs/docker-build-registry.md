@@ -58,14 +58,14 @@ gradle:4.10.2-jdk8 (Builder)
 ### Stage 2: Runtime
 
 ```
-openjdk:8-jre-alpine (Runtime)
+eclipse-temurin:8-jre-alpine (Runtime)
 ├── curl + dumb-init (minimal utilities)
 ├── Non-root user (appuser:appgroup)
 ├── Application JAR
 └── Health check + signal handling
 ```
 
-- Base image: `openjdk:8-jre-alpine` (~85MB vs ~500MB for full JDK)
+- Base image: `eclipse-temurin:8-jre-alpine` (~85MB vs ~500MB for full JDK)
 - **Non-root user**: Runs as `appuser` for security
 - **Signal handling**: Uses `dumb-init` as PID 1 for proper SIGTERM propagation
 - **Health checks**: Spring Boot Actuator `/actuator/health` endpoint

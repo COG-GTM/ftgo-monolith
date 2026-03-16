@@ -37,7 +37,7 @@ RUN gradle :services:courier-service:build -x test --no-daemon || true
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime - Minimal JRE image
 # ---------------------------------------------------------------------------
-FROM openjdk:8-jre-alpine
+FROM eclipse-temurin:8-jre-alpine
 
 LABEL service="courier-service"
 LABEL maintainer="ftgo-team"
