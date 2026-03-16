@@ -1,0 +1,83 @@
+# ============================================================================
+# FTGO Gradle Version Catalog
+# ============================================================================
+# Centralized dependency version management for all microservices.
+#
+# NOTE: This project currently uses Gradle 4.10.2 which does not natively
+# support version catalogs (requires Gradle 7.0+). Versions defined here are
+# mirrored in buildSrc/src/main/groovy/FtgoVersions.groovy for use by
+# convention plugins. When Gradle is upgraded to 7+, this file becomes the
+# native version catalog and FtgoVersions.groovy can be removed.
+#
+# Keep both files in sync when updating versions.
+# ============================================================================
+
+[versions]
+# --- Core Platform ---
+spring-boot = "2.0.3.RELEASE"
+spring-dependency-management = "1.0.3.RELEASE"
+
+# --- Observability ---
+micrometer = "1.0.4"
+
+# --- Database ---
+flyway = "6.0.0"
+mysql-connector = "5.1.39"
+
+# --- Serialization ---
+jackson = "2.9.7"
+
+# --- API Documentation ---
+springfox-swagger = "2.8.0"
+
+# --- Testing ---
+junit5 = "5.2.0"
+rest-assured = "3.0.6"
+rest-assured-legacy = "2.9.0"
+
+# --- Utilities ---
+commons-lang = "2.6"
+javax-el = "2.2.5"
+
+# --- Build Plugins ---
+docker-compose-plugin = "0.6.6"
+
+[libraries]
+# --- Spring Boot Starters ---
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+
+# --- Observability ---
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+
+# --- Database ---
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysql-connector" }
+
+# --- Serialization ---
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+
+# --- API Documentation ---
+springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox-swagger" }
+springfox-swagger-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox-swagger" }
+
+# --- Testing ---
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-spring-mock-mvc = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
+rest-assured-json-path = { module = "io.rest-assured:json-path", version.ref = "rest-assured" }
+
+# --- Utilities ---
+commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
+javax-el-api = { module = "javax.el:javax.el-api", version.ref = "javax-el" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }

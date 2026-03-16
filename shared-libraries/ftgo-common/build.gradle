@@ -2,6 +2,10 @@
 // Common utilities, value objects (Money, PersonName, Address), and JSON configuration.
 // Migrated from monolith module: ftgo-common
 
+apply plugin: 'ftgo.java-conventions'
+apply plugin: 'ftgo.testing-conventions'
+apply plugin: 'ftgo.publishing-conventions'
+
 dependencies {
     // Dependencies will be defined during the library extraction phase.
 }

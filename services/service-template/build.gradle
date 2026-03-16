@@ -2,16 +2,23 @@
 // Copy this template when creating a new microservice.
 // Replace "template" with your service name throughout.
 
+apply plugin: 'ftgo.spring-boot-conventions'
+apply plugin: 'ftgo.testing-conventions'
+apply plugin: 'ftgo.docker-conventions'
+
 dependencies {
-    // Shared libraries
+    // Shared libraries (uncomment and adjust for your service)
     // compile project(":shared-libraries:ftgo-common")
     // compile project(":shared-libraries:ftgo-domain")
 
-    // Spring Boot
-    // compile "org.springframework.boot:spring-boot-starter-web"
-    // compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    // compile "org.springframework.boot:spring-boot-starter-actuator"
+    // Spring Boot (uncomment during extraction phase)
+    // compile FtgoDependencies.SPRING_BOOT_STARTER_WEB
+    // compile FtgoDependencies.SPRING_BOOT_STARTER_DATA_JPA
+    // compile FtgoDependencies.SPRING_BOOT_STARTER_ACTUATOR
 
-    // Testing
-    // testCompile "org.springframework.boot:spring-boot-starter-test"
+    // Observability
+    // compile FtgoDependencies.MICROMETER_PROMETHEUS
+
+    // Database
+    // compile FtgoDependencies.FLYWAY_CORE
 }

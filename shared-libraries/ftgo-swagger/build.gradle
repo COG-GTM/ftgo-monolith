@@ -2,6 +2,9 @@
 // Swagger/OpenAPI documentation configuration shared across services.
 // Migrated from monolith module: common-swagger
 
+apply plugin: 'ftgo.java-conventions'
+apply plugin: 'ftgo.publishing-conventions'
+
 dependencies {
     // Dependencies will be defined during the library extraction phase.
 }
