@@ -2,6 +2,10 @@
 // JPA-related shared utilities and base entity classes.
 // Migrated from monolith module: ftgo-common-jpa
 
+apply plugin: 'ftgo.java-conventions'
+apply plugin: 'ftgo.testing-conventions'
+apply plugin: 'ftgo.publishing-conventions'
+
 dependencies {
     // compile project(":shared-libraries:ftgo-common")
     // Dependencies will be defined during the library extraction phase.
