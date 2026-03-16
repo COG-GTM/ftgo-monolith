@@ -66,21 +66,26 @@ The `detect-changes` job determines which services need to be built:
 
 Each service has a dedicated build job that runs independently and in parallel:
 
-| Job | Gradle Task | Condition |
-|-----|------------|-----------|
-| `build-order-service` | `:services:order-service:build` | order-service changed or shared changed |
-| `build-consumer-service` | `:services:consumer-service:build` | consumer-service changed or shared changed |
-| `build-restaurant-service` | `:services:restaurant-service:build` | restaurant-service changed or shared changed |
-| `build-courier-service` | `:services:courier-service:build` | courier-service changed or shared changed |
+| Job | Gradle Tasks | Condition |
+|-----|-------------|-----------|
+| `build-order-service` | `compileJava`, `test` | order-service changed or shared changed |
+| `build-consumer-service` | `compileJava`, `test` | consumer-service changed or shared changed |
+| `build-restaurant-service` | `compileJava`, `test` | restaurant-service changed or shared changed |
+| `build-courier-service` | `compileJava`, `test` | courier-service changed or shared changed |
 
 ### Build Steps (per service)
 
 1. **Checkout** — full repository checkout via `actions/checkout@v4`
 2. **JDK 8 setup** — Temurin JDK 8 via `actions/setup-java@v4` (project requirement)
 3. **Gradle cache** — caches `~/.gradle/caches` and `~/.gradle/wrapper` keyed on `*.gradle` files and wrapper properties
-4. **Gradle build** — runs `./gradlew :services:<service>:build` excluding end-to-end test modules
-5. **Test report upload** — on failure, uploads HTML test reports as artifacts (retained 14 days)
-6. **Build summary** — writes job status to GitHub Step Summary
+4. **Gradle compile** — runs `./gradlew :services:<service>:compileJava` excluding end-to-end test modules
+5. **Gradle test** — runs `./gradlew :services:<service>:test` excluding end-to-end test modules
+6. **Test report upload** — on failure, uploads HTML test reports as artifacts (retained 14 days)
+7. **Build summary** — writes job status to GitHub Step Summary
+
+> **Note**: The pipeline uses `compileJava` + `test` instead of `build` because the
+> Spring Boot plugin's `bootJar` task (part of `build`) requires a main class, which
+> is not yet present in scaffolded service modules.
 
 ---
 

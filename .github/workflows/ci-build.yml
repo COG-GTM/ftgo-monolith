@@ -134,9 +134,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build order-service
+      - name: Compile order-service
         run: |
-          ./gradlew :services:order-service:build \
+          ./gradlew :services:order-service:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Test order-service
+        run: |
+          ./gradlew :services:order-service:test \
             -x :ftgo-end-to-end-tests-common:compileJava \
             -x :ftgo-end-to-end-tests:compileJava
 
@@ -190,9 +196,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build consumer-service
+      - name: Compile consumer-service
         run: |
-          ./gradlew :services:consumer-service:build \
+          ./gradlew :services:consumer-service:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Test consumer-service
+        run: |
+          ./gradlew :services:consumer-service:test \
             -x :ftgo-end-to-end-tests-common:compileJava \
             -x :ftgo-end-to-end-tests:compileJava
 
@@ -246,9 +258,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build restaurant-service
+      - name: Compile restaurant-service
         run: |
-          ./gradlew :services:restaurant-service:build \
+          ./gradlew :services:restaurant-service:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Test restaurant-service
+        run: |
+          ./gradlew :services:restaurant-service:test \
             -x :ftgo-end-to-end-tests-common:compileJava \
             -x :ftgo-end-to-end-tests:compileJava
 
@@ -303,9 +321,15 @@ jobs:
         run: |
           chmod +x ./gradlew
 
-      - name: Build courier-service
+      - name: Compile courier-service
         run: |
-          ./gradlew :services:courier-service:build \
+          ./gradlew :services:courier-service:compileJava \
+            -x :ftgo-end-to-end-tests-common:compileJava \
+            -x :ftgo-end-to-end-tests:compileJava
+
+      - name: Test courier-service
+        run: |
+          ./gradlew :services:courier-service:test \
             -x :ftgo-end-to-end-tests-common:compileJava \
             -x :ftgo-end-to-end-tests:compileJava
 
