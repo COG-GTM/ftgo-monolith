@@ -4,14 +4,25 @@
     <springProperty scope="context" name="serviceName" source="spring.application.name" defaultValue="ftgo-application"/>
     <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
 
-    <!-- Console appender for local development (human-readable) -->
+    <!-- Register the sensitive data masking converter -->
+    <conversionRule conversionWord="maskedMsg"
+                    converterClass="net.chrisrichardson.ftgo.logging.SensitiveDataMaskingConverter"/>
+
+    <!-- ===================================================================
+         Console appender: human-readable for local development.
+         Includes traceId/spanId for correlation with distributed tracing.
+         Uses maskedMsg to prevent sensitive data from appearing in logs.
+         =================================================================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-N/A}/%X{spanId:-N/A}] [%X{correlationId:-N/A}] %-5level %logger{36} - %maskedMsg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- JSON appender for production / EFK stack ingestion -->
+    <!-- ===================================================================
+         JSON console appender: structured output for EFK stack ingestion.
+         Includes all MDC fields: correlationId, serviceName, traceId, spanId.
+         =================================================================== -->
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <includeMdcKeyName>correlationId</includeMdcKeyName>
@@ -28,7 +39,39 @@
         </encoder>
     </appender>
 
-    <!-- File appender with rolling policy for persistent log storage -->
+    <!-- ===================================================================
+         Async wrapper around JSON_CONSOLE for non-blocking logging in
+         deployed environments (staging, prod, k8s).
+         =================================================================== -->
+    <appender name="ASYNC_JSON_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="JSON_CONSOLE"/>
+    </appender>
+
+    <!-- ===================================================================
+         Rolling file appender for local development.
+         Uses human-readable pattern with daily rotation and size cap.
+         =================================================================== -->
+    <appender name="LOCAL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${serviceName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/${serviceName}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-N/A}/%X{spanId:-N/A}] [%X{correlationId:-N/A}] %-5level %logger{36} - %maskedMsg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================================
+         JSON file appender for persistent log storage in deployed environments.
+         Uses rolling policy with compression.
+         =================================================================== -->
     <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/var/log/ftgo/${serviceName}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -44,34 +87,54 @@
             <includeMdcKeyName>requestUri</includeMdcKeyName>
             <includeMdcKeyName>clientIp</includeMdcKeyName>
             <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
             <customFields>{"service":"${serviceName}"}</customFields>
             <timeZone>UTC</timeZone>
         </encoder>
     </appender>
 
-    <!-- Profile: local development (human-readable console output) -->
+    <!-- ===================================================================
+         Profile: local development (human-readable console + rolling file)
+         =================================================================== -->
     <springProfile name="default,local,dev">
         <root level="${logLevel}">
             <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOCAL_FILE"/>
         </root>
     </springProfile>
 
-    <!-- Profile: production / staging (JSON output for EFK ingestion) -->
-    <springProfile name="prod,staging,k8s">
+    <!-- ===================================================================
+         Profile: staging (async JSON console for non-blocking output)
+         =================================================================== -->
+    <springProfile name="staging">
         <root level="${logLevel}">
-            <appender-ref ref="JSON_CONSOLE"/>
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
         </root>
     </springProfile>
 
-    <!-- Profile: when file logging is needed alongside console -->
+    <!-- ===================================================================
+         Profile: production / Kubernetes (async JSON console)
+         =================================================================== -->
+    <springProfile name="prod,k8s">
+        <root level="${logLevel}">
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ===================================================================
+         Profile: file logging alongside console (deployed environments)
+         =================================================================== -->
     <springProfile name="file">
         <root level="${logLevel}">
-            <appender-ref ref="JSON_CONSOLE"/>
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
             <appender-ref ref="JSON_FILE"/>
         </root>
     </springProfile>
 
-    <!-- Reduce noisy loggers -->
+    <!-- ===================================================================
+         Logger-level overrides: reduce noise from framework loggers
+         =================================================================== -->
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.hibernate" level="WARN"/>
     <logger name="org.apache" level="WARN"/>

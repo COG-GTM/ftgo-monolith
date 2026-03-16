@@ -10,6 +10,7 @@ apply plugin: 'ftgo.publishing-conventions'
 
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-aop:$springBootVersion"
     compile "ch.qos.logback:logback-classic:1.2.3"
     compile "ch.qos.logback:logback-core:1.2.3"
     compile "net.logstash.logback:logstash-logback-encoder:5.3"
