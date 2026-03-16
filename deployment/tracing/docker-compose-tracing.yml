@@ -1,0 +1,48 @@
+###############################################################################
+# Docker Compose - Local Tracing Infrastructure
+#
+# Starts Zipkin and Jaeger for local development and testing.
+# Usage:
+#   docker-compose -f deployment/tracing/docker-compose-tracing.yml up -d
+#
+# UIs:
+#   Zipkin:  http://localhost:9411
+#   Jaeger:  http://localhost:16686
+###############################################################################
+
+version: '3.7'
+
+services:
+
+  # ---------- Zipkin ----------
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: ftgo-zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    networks:
+      - tracing
+
+  # ---------- Jaeger (all-in-one) ----------
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    container_name: ftgo-jaeger
+    ports:
+      - "5775:5775/udp"    # Zipkin-compatible compact thrift
+      - "6831:6831/udp"    # Jaeger compact thrift
+      - "6832:6832/udp"    # Jaeger binary thrift
+      - "5778:5778"        # Jaeger configs
+      - "16686:16686"      # Jaeger UI
+      - "14268:14268"      # Jaeger collector HTTP
+      - "14250:14250"      # Jaeger collector gRPC
+      - "9412:9411"        # Zipkin-compatible endpoint (mapped to 9412 to avoid conflict)
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - tracing
+
+networks:
+  tracing:
+    driver: bridge
