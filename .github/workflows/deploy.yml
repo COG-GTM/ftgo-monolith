@@ -1,0 +1,331 @@
+# =============================================================================
+# Kubernetes Deployment and Environment Promotion Workflow
+# =============================================================================
+# Deploys FTGO microservices to Kubernetes clusters using Kustomize overlays.
+#
+# Deployment Flow:
+#   1. On merge to feat/microservices-migration: auto-deploy to dev
+#   2. Manual promotion: dev -> staging (requires approval)
+#   3. Manual promotion: staging -> prod (requires approval)
+#
+# Prerequisites:
+#   - KUBECONFIG secrets configured per environment
+#   - Container images built and pushed by docker-build.yml
+# =============================================================================
+
+name: Deploy to Kubernetes
+
+on:
+  # Auto-deploy to dev on push to migration branch
+  push:
+    branches:
+      - feat/microservices-migration
+    paths:
+      - 'services/*/k8s/**'
+      - 'deployment/kubernetes/**'
+      - '.github/workflows/deploy.yml'
+
+  # Manual deployment trigger for environment promotion
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image_tag:
+        description: 'Image tag to deploy (e.g., sha-abc1234, feat-microservices-migration)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ftgo
+
+# Only one deployment per environment at a time
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Validate Kubernetes manifests
+  # ---------------------------------------------------------------------------
+  validate-manifests:
+    name: Validate K8s Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Validate base manifests (dry-run)
+        run: |
+          echo "Validating Kubernetes manifests..."
+          for service in order-service consumer-service restaurant-service courier-service; do
+            echo "--- Validating ${service} ---"
+            kubectl apply --dry-run=client -f services/${service}/k8s/deployment.yaml
+            kubectl apply --dry-run=client -f services/${service}/k8s/service.yaml
+            kubectl apply --dry-run=client -f services/${service}/k8s/configmap.yaml
+            kubectl apply --dry-run=client -f services/${service}/k8s/secret.yaml
+            kubectl apply --dry-run=client -f services/${service}/k8s/hpa.yaml
+          done
+          echo "--- Validating MySQL ---"
+          kubectl apply --dry-run=client -f deployment/kubernetes/stateful-services/ftgo-mysql-deployment.yml
+          kubectl apply --dry-run=client -f deployment/kubernetes/stateful-services/ftgo-db-secret.yml
+          echo "All manifests are valid."
+
+      - name: Validate Kustomize overlays
+        run: |
+          for env in dev staging prod; do
+            echo "--- Validating ${env} overlay ---"
+            kubectl kustomize deployment/kubernetes/overlays/${env} > /dev/null
+            echo "${env} overlay is valid."
+          done
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Development (auto on push, manual via workflow_dispatch)
+  # ---------------------------------------------------------------------------
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    if: >-
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment:
+      name: dev
+      url: https://dev.ftgo.internal
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Determine image tag
+        id: image-tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            echo "tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
+          echo "Image tag: $(grep tag $GITHUB_OUTPUT)"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl apply -f deployment/kubernetes/overlays/dev/namespace.yaml || true
+
+      - name: Update image tags
+        run: |
+          TAG="${{ steps.image-tag.outputs.tag }}"
+          cd deployment/kubernetes/overlays/dev
+          for service in order-service consumer-service restaurant-service courier-service; do
+            kustomize edit set image \
+              ghcr.io/cog-gtm/ftgo/${service}:latest=ghcr.io/cog-gtm/ftgo/${service}:${TAG}
+          done
+
+      - name: Deploy to dev with Kustomize
+        run: |
+          echo "Deploying to ftgo-dev namespace..."
+          kubectl apply -k deployment/kubernetes/overlays/dev/
+          echo "Deployment applied successfully."
+
+      - name: Wait for rollout
+        run: |
+          echo "Waiting for deployments to be ready..."
+          for service in order-service consumer-service restaurant-service courier-service; do
+            echo "Waiting for ${service}..."
+            kubectl rollout status deployment/${service} \
+              -n ftgo-dev \
+              --timeout=300s || true
+          done
+          echo "Waiting for MySQL StatefulSet..."
+          kubectl rollout status statefulset/ftgo-mysql \
+            -n ftgo-dev \
+            --timeout=300s || true
+
+      - name: Verify deployment health
+        run: |
+          echo "## Dev Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n ftgo-dev -o wide >> $GITHUB_STEP_SUMMARY 2>&1 || \
+            echo "Could not retrieve deployment status" >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Staging (manual with approval)
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.ftgo.internal
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl apply -f deployment/kubernetes/overlays/staging/namespace.yaml || true
+
+      - name: Update image tags
+        run: |
+          TAG="${{ github.event.inputs.image_tag }}"
+          cd deployment/kubernetes/overlays/staging
+          for service in order-service consumer-service restaurant-service courier-service; do
+            kustomize edit set image \
+              ghcr.io/cog-gtm/ftgo/${service}:latest=ghcr.io/cog-gtm/ftgo/${service}:${TAG}
+          done
+
+      - name: Deploy to staging with Kustomize
+        run: |
+          echo "Deploying to ftgo-staging namespace..."
+          kubectl apply -k deployment/kubernetes/overlays/staging/
+          echo "Deployment applied successfully."
+
+      - name: Wait for rollout
+        run: |
+          echo "Waiting for deployments to be ready..."
+          for service in order-service consumer-service restaurant-service courier-service; do
+            echo "Waiting for ${service}..."
+            kubectl rollout status deployment/${service} \
+              -n ftgo-staging \
+              --timeout=300s || true
+          done
+          echo "Waiting for MySQL StatefulSet..."
+          kubectl rollout status statefulset/ftgo-mysql \
+            -n ftgo-staging \
+            --timeout=300s || true
+
+      - name: Verify deployment health
+        run: |
+          echo "## Staging Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n ftgo-staging -o wide >> $GITHUB_STEP_SUMMARY 2>&1 || \
+            echo "Could not retrieve deployment status" >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Production (manual with approval gate)
+  # ---------------------------------------------------------------------------
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.environment == 'prod'
+    environment:
+      name: production
+      url: https://ftgo.internal
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl apply -f deployment/kubernetes/overlays/prod/namespace.yaml || true
+
+      - name: Update image tags
+        run: |
+          TAG="${{ github.event.inputs.image_tag }}"
+          cd deployment/kubernetes/overlays/prod
+          for service in order-service consumer-service restaurant-service courier-service; do
+            kustomize edit set image \
+              ghcr.io/cog-gtm/ftgo/${service}:latest=ghcr.io/cog-gtm/ftgo/${service}:${TAG}
+          done
+
+      - name: Deploy to production with Kustomize
+        run: |
+          echo "Deploying to ftgo-prod namespace..."
+          kubectl apply -k deployment/kubernetes/overlays/prod/
+          echo "Deployment applied successfully."
+
+      - name: Wait for rollout
+        run: |
+          echo "Waiting for deployments to be ready..."
+          for service in order-service consumer-service restaurant-service courier-service; do
+            echo "Waiting for ${service}..."
+            kubectl rollout status deployment/${service} \
+              -n ftgo-prod \
+              --timeout=600s || true
+          done
+          echo "Waiting for MySQL StatefulSet..."
+          kubectl rollout status statefulset/ftgo-mysql \
+            -n ftgo-prod \
+            --timeout=600s || true
+
+      - name: Verify deployment health
+        run: |
+          echo "## Production Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n ftgo-prod -o wide >> $GITHUB_STEP_SUMMARY 2>&1 || \
+            echo "Could not retrieve deployment status" >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------------
+  # Deployment Summary
+  # ---------------------------------------------------------------------------
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [validate-manifests, deploy-dev, deploy-staging, deploy-prod]
+    if: always()
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Manifest Validation | ${{ needs.validate-manifests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dev Deployment | ${{ needs.deploy-dev.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Staging Deployment | ${{ needs.deploy-staging.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production Deployment | ${{ needs.deploy-prod.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Ref**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "**Target Environment**: \`${{ github.event.inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Image Tag**: \`${{ github.event.inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
