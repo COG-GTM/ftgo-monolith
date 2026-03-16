@@ -1,0 +1,9 @@
+// Shared Library: ftgo-domain
+// Core domain entities shared across services (Order, Consumer, Restaurant, Courier).
+// Migrated from monolith module: ftgo-domain
+
+dependencies {
+    // compile project(":shared-libraries:ftgo-common")
+    // compile project(":shared-libraries:ftgo-common-jpa")
+    // Dependencies will be defined during the library extraction phase.
+}

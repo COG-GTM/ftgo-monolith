@@ -1,0 +1,7 @@
+// Shared Library: ftgo-common
+// Common utilities, value objects (Money, PersonName, Address), and JSON configuration.
+// Migrated from monolith module: ftgo-common
+
+dependencies {
+    // Dependencies will be defined during the library extraction phase.
+}
