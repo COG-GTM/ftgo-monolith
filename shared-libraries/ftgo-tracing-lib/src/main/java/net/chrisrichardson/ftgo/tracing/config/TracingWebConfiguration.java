@@ -1,14 +1,9 @@
 package net.chrisrichardson.ftgo.tracing.config;
 
-import brave.Tracer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Configuration for HTTP trace context propagation.

@@ -3,9 +3,6 @@ package net.chrisrichardson.ftgo.tracing.util;
 import brave.ScopedSpan;
 import brave.Span;
 import brave.Tracer;
-import brave.propagation.TraceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 
@@ -30,8 +27,6 @@ import java.util.concurrent.Callable;
  * }</pre>
  */
 public class SpanHelper {
-
-    private static final Logger log = LoggerFactory.getLogger(SpanHelper.class);
 
     private final Tracer tracer;
 
