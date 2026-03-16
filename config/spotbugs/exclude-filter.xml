@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    FTGO Monolith - SpotBugs Exclusion Filter
+    Java 8 / Spring Boot 2.0.3 compatible
+
+    This file defines exclusions for SpotBugs static analysis.
+    Only exclude patterns that are known false positives or
+    are accepted design decisions in the FTGO architecture.
+-->
+<FindBugsFilter>
+
+    <!-- ============================================ -->
+    <!-- Global Exclusions                            -->
+    <!-- ============================================ -->
+
+    <!-- Exclude generated code (Lombok, MapStruct, etc.) -->
+    <Match>
+        <Source name="~.*generated.*"/>
+    </Match>
+
+    <!-- Exclude test classes from production bug patterns -->
+    <Match>
+        <Class name="~.*Test$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*Test$"/>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+    <Match>
+        <Class name="~.*Tests$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- Exclude test data factories (Mother/Builder patterns) -->
+    <Match>
+        <Class name="~.*Mother$"/>
+    </Match>
+    <Match>
+        <Class name="~.*TestData$"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- Spring Framework Patterns                    -->
+    <!-- ============================================ -->
+
+    <!-- Spring @Autowired fields appear unread to SpotBugs -->
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Class name="~.*Configuration$"/>
+    </Match>
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Class name="~.*Controller$"/>
+    </Match>
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Class name="~.*Service$"/>
+    </Match>
+
+    <!-- Spring @Value injected fields -->
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+        <Class name="~.*Configuration$"/>
+    </Match>
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+        <Class name="~.*Properties$"/>
+    </Match>
+
+    <!-- Spring Boot main classes -->
+    <Match>
+        <Class name="~.*Application$"/>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+    <Match>
+        <Class name="~.*ApplicationMain$"/>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- JPA / Hibernate Patterns                     -->
+    <!-- ============================================ -->
+
+    <!-- JPA entities require default constructors and mutable fields -->
+    <Match>
+        <Annotation name="javax.persistence.Entity"/>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+    </Match>
+    <Match>
+        <Annotation name="javax.persistence.Entity"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Annotation name="javax.persistence.Embeddable"/>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+    </Match>
+
+    <!-- JPA entities often have serialization patterns that trigger warnings -->
+    <Match>
+        <Annotation name="javax.persistence.Entity"/>
+        <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    </Match>
+    <Match>
+        <Annotation name="javax.persistence.Entity"/>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- DTO / API Patterns                           -->
+    <!-- ============================================ -->
+
+    <!-- DTOs and request/response objects -->
+    <Match>
+        <Class name="~.*Request$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*Response$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*DTO$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*Dto$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- Value Objects                                -->
+    <!-- ============================================ -->
+
+    <!-- Money value object uses BigDecimal comparisons intentionally -->
+    <Match>
+        <Class name="net.chrisrichardson.ftgo.domain.Money"/>
+        <Bug pattern="EQ_COMPARETO_USE_OBJECT_EQUALS"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- Migration-Specific Exclusions                -->
+    <!-- ============================================ -->
+
+    <!-- Shared library classes may have broader access than needed during migration -->
+    <Match>
+        <Package name="~net\.chrisrichardson\.ftgo\.shared\..*"/>
+        <Bug pattern="OPM_OVERLY_PERMISSIVE_METHOD"/>
+    </Match>
+
+    <!-- API gateway routing configuration -->
+    <Match>
+        <Package name="~net\.chrisrichardson\.ftgo\.gateway\..*"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- ============================================ -->
+    <!-- Specific Bug Pattern Adjustments             -->
+    <!-- ============================================ -->
+
+    <!-- Allow System.out in CLI/bootstrap classes only -->
+    <Match>
+        <Class name="~.*Main$"/>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+
+    <!-- Suppress EI_EXPOSE_REP for immutable value objects returned from getters -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*Info$"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="~.*Info$"/>
+    </Match>
+
+</FindBugsFilter>

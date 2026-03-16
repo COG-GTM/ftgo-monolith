@@ -1,0 +1,105 @@
+# FTGO Monolith - Code Owners
+#
+# This file defines code ownership for the FTGO monolith and
+# microservices migration project. Code owners are automatically
+# requested for review when a pull request modifies files they own.
+#
+# Ownership follows the microservices migration team structure.
+# Each service team owns their extracted service code and the
+# corresponding monolith module.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============================================
+# Default Owners (fallback for all files)
+# ============================================
+* @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Core Domain and Shared Libraries
+# ============================================
+/ftgo-domain/                        @COG-GTM/ftgo-maintainers
+/ftgo-common/                        @COG-GTM/ftgo-maintainers
+/shared-libraries/                   @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Order Service
+# ============================================
+/ftgo-order-service/                 @COG-GTM/order-service-team
+/ftgo-order-service-api/             @COG-GTM/order-service-team
+/services/ftgo-order-service/        @COG-GTM/order-service-team
+
+# ============================================
+# Consumer Service
+# ============================================
+/ftgo-consumer-service/              @COG-GTM/consumer-service-team
+/ftgo-consumer-service-api/          @COG-GTM/consumer-service-team
+/services/ftgo-consumer-service/     @COG-GTM/consumer-service-team
+
+# ============================================
+# Restaurant Service
+# ============================================
+/ftgo-restaurant-service/            @COG-GTM/restaurant-service-team
+/ftgo-restaurant-service-api/        @COG-GTM/restaurant-service-team
+/services/ftgo-restaurant-service/   @COG-GTM/restaurant-service-team
+
+# ============================================
+# Courier Service
+# ============================================
+/ftgo-courier-service/               @COG-GTM/courier-service-team
+/ftgo-courier-service-api/           @COG-GTM/courier-service-team
+/services/ftgo-courier-service/      @COG-GTM/courier-service-team
+
+# ============================================
+# API Gateway
+# ============================================
+/services/ftgo-api-gateway/          @COG-GTM/platform-team
+
+# ============================================
+# Application Assembly
+# ============================================
+/ftgo-application/                   @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Infrastructure and DevOps
+# ============================================
+/deployment/                         @COG-GTM/platform-team
+/docker-compose.yml                  @COG-GTM/platform-team
+/.github/workflows/                  @COG-GTM/platform-team
+/config/                             @COG-GTM/platform-team
+
+# ============================================
+# Build System
+# ============================================
+/build.gradle                        @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
+/settings.gradle                     @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
+/gradle.properties                   @COG-GTM/ftgo-maintainers @COG-GTM/platform-team
+/buildSrc/                           @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Database Migrations
+# ============================================
+/ftgo-flyway/                        @COG-GTM/ftgo-maintainers
+/mysql/                              @COG-GTM/platform-team
+
+# ============================================
+# Documentation
+# ============================================
+/docs/                               @COG-GTM/ftgo-maintainers
+/CONTRIBUTING.md                     @COG-GTM/ftgo-maintainers
+/.github/PULL_REQUEST_TEMPLATE.md    @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Quality and Static Analysis Configuration
+# ============================================
+/config/checkstyle/                  @COG-GTM/ftgo-maintainers
+/config/spotbugs/                    @COG-GTM/ftgo-maintainers
+/config/pmd/                         @COG-GTM/ftgo-maintainers
+/.editorconfig                       @COG-GTM/ftgo-maintainers
+
+# ============================================
+# Testing
+# ============================================
+/ftgo-end-to-end-tests/              @COG-GTM/ftgo-maintainers
+/ftgo-end-to-end-tests-common/       @COG-GTM/ftgo-maintainers
+/ftgo-test-util/                     @COG-GTM/ftgo-maintainers
