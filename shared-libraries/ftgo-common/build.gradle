@@ -24,3 +24,23 @@ dependencies {
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 }
+
+// Override POM metadata for backward compatibility with original monolith package
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Common utilities, value objects (Money, PersonName, Address), and JSON configuration for FTGO microservices.'
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+}
