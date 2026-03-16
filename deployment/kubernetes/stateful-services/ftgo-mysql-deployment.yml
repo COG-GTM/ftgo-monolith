@@ -3,52 +3,105 @@ kind: Service
 metadata:
   name: ftgo-mysql
   labels:
-    name: ftgo-mysql
+    app: ftgo-mysql
+    part-of: ftgo
+    tier: database
 spec:
   ports:
-  - port: 3306
-    targetPort: 3306
+    - name: mysql
+      port: 3306
+      targetPort: 3306
   clusterIP: None
   selector:
-    role: ftgo-mysql
+    app: ftgo-mysql
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ftgo-mysql
+  labels:
+    app: ftgo-mysql
+    part-of: ftgo
+    tier: database
 spec:
-  serviceName: "mysql"
+  serviceName: "ftgo-mysql"
   replicas: 1
+  selector:
+    matchLabels:
+      app: ftgo-mysql
   template:
     metadata:
       labels:
-        role: ftgo-mysql
+        app: ftgo-mysql
+        part-of: ftgo
+        tier: database
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 30
       containers:
         - name: ftgo-mysql
-          image: msapatterns/mysql:latest
-          imagePullPolicy: Always
-          args:
-              - "--ignore-db-dir=lost+found"
+          image: mysql:8.0
           ports:
-              - containerPort: 3306
+            - name: mysql
+              containerPort: 3306
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: rootpassword
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: root-password
             - name: MYSQL_USER
-              value: mysqluser
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: username
             - name: MYSQL_PASSWORD
-              value: mysqlpw
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: password
+            - name: MYSQL_DATABASE
+              value: ftgo
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mysql
+                - -h
+                - localhost
+                - -u
+                - root
+                - -p${MYSQL_ROOT_PASSWORD}
+                - -e
+                - "SELECT 1"
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: ftgo-mysql-persistent-storage
               mountPath: /var/lib/mysql
   volumeClaimTemplates:
-  - metadata:
-      name: ftgo-mysql-persistent-storage
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 1Gi
----
+    - metadata:
+        name: ftgo-mysql-persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
