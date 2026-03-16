@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ftgo-tracing
+  labels:
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: tracing
