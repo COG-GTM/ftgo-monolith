@@ -46,4 +46,5 @@ include "shared-libraries:ftgo-common"
 include "shared-libraries:ftgo-common-jpa"
 include "shared-libraries:ftgo-domain"
 include "shared-libraries:ftgo-swagger"
+include "shared-libraries:ftgo-logging-lib"
 
