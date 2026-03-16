@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  part-of: ftgo
+  managed-by: kustomize
+
+resources:
+  # MySQL StatefulSet and Service
+  - ../stateful-services/ftgo-db-secret.yml
+  - ../stateful-services/ftgo-mysql-deployment.yml
+  # Order Service
+  - ../../../services/order-service/k8s/deployment.yaml
+  - ../../../services/order-service/k8s/service.yaml
+  - ../../../services/order-service/k8s/configmap.yaml
+  - ../../../services/order-service/k8s/secret.yaml
+  - ../../../services/order-service/k8s/hpa.yaml
+  # Consumer Service
+  - ../../../services/consumer-service/k8s/deployment.yaml
+  - ../../../services/consumer-service/k8s/service.yaml
+  - ../../../services/consumer-service/k8s/configmap.yaml
+  - ../../../services/consumer-service/k8s/secret.yaml
+  - ../../../services/consumer-service/k8s/hpa.yaml
+  # Courier Service
+  - ../../../services/courier-service/k8s/deployment.yaml
+  - ../../../services/courier-service/k8s/service.yaml
+  - ../../../services/courier-service/k8s/configmap.yaml
+  - ../../../services/courier-service/k8s/secret.yaml
+  - ../../../services/courier-service/k8s/hpa.yaml
+  # Restaurant Service
+  - ../../../services/restaurant-service/k8s/deployment.yaml
+  - ../../../services/restaurant-service/k8s/service.yaml
+  - ../../../services/restaurant-service/k8s/configmap.yaml
+  - ../../../services/restaurant-service/k8s/secret.yaml
+  - ../../../services/restaurant-service/k8s/hpa.yaml
