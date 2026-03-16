@@ -52,4 +52,5 @@ include "shared-libraries:ftgo-metrics-lib"
 include "shared-libraries:ftgo-resilience-lib"
 include "shared-libraries:ftgo-openapi-lib"
 include "shared-libraries:ftgo-tracing-lib"
+include "shared-libraries:ftgo-error-handling-lib"
 
