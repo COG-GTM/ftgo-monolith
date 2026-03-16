@@ -48,4 +48,5 @@ include "shared-libraries:ftgo-domain"
 include "shared-libraries:ftgo-swagger"
 include "shared-libraries:ftgo-security-lib"
 include "shared-libraries:ftgo-logging-lib"
+include "shared-libraries:ftgo-metrics-lib"
 

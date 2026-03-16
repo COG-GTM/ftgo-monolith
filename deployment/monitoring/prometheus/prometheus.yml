@@ -1,0 +1,111 @@
+# =============================================================================
+# Prometheus Configuration for FTGO Microservices
+# =============================================================================
+# Scrapes metrics from all FTGO services via Spring Boot Actuator
+# /actuator/prometheus endpoints.
+#
+# Usage:
+#   Referenced by docker-compose-monitoring.yml and K8s ConfigMap
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+  external_labels:
+    cluster: ftgo
+    environment: local
+
+# =============================================================================
+# Alerting (optional - can be extended with Alertmanager)
+# =============================================================================
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# =============================================================================
+# Scrape Configurations
+# =============================================================================
+scrape_configs:
+
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ---------------------------------------------------------------------------
+  # FTGO Order Service
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-order-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['order-service:8080']
+        labels:
+          service: 'order-service'
+          domain: 'order'
+
+  # ---------------------------------------------------------------------------
+  # FTGO Consumer Service
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-consumer-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['consumer-service:8080']
+        labels:
+          service: 'consumer-service'
+          domain: 'consumer'
+
+  # ---------------------------------------------------------------------------
+  # FTGO Restaurant Service
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-restaurant-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['restaurant-service:8080']
+        labels:
+          service: 'restaurant-service'
+          domain: 'restaurant'
+
+  # ---------------------------------------------------------------------------
+  # FTGO Courier Service
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-courier-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['courier-service:8080']
+        labels:
+          service: 'courier-service'
+          domain: 'courier'
+
+  # ---------------------------------------------------------------------------
+  # FTGO API Gateway
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-api-gateway'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['api-gateway:8080']
+        labels:
+          service: 'api-gateway'
+          domain: 'gateway'
+
+  # ---------------------------------------------------------------------------
+  # FTGO Monolith Application (for migration period)
+  # ---------------------------------------------------------------------------
+  - job_name: 'ftgo-monolith'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['ftgo-application:8081']
+        labels:
+          service: 'ftgo-monolith'
+          domain: 'monolith'
