@@ -1,5 +1,9 @@
 # FTGO Monolith — Microservices Migration
 
+[![CI Build](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-build.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-build.yml)
+[![Docker Build](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/docker-build.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/docker-build.yml)
+[![Deploy](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/deploy.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/deploy.yml)
+
 This repository contains the FTGO (Food To Go) monolithic application alongside the new microservices structure being built as part of the migration effort.
 
 For the original monolith documentation, see [README.adoc](README.adoc).
