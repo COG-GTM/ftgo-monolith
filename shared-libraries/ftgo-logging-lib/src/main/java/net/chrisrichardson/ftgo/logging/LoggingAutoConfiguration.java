@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.Ordered;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
@@ -13,10 +14,11 @@ import java.util.List;
 
 /**
  * Auto-configuration for the FTGO centralized logging library.
- * Registers the correlation ID servlet filter and provides a RestTemplate
- * bean pre-configured with correlation ID propagation.
+ * Registers the correlation ID servlet filter, logging aspect,
+ * and provides a RestTemplate bean pre-configured with correlation ID propagation.
  */
 @Configuration
+@EnableAspectJAutoProxy
 public class LoggingAutoConfiguration {
 
     @Value("${spring.application.name:ftgo-application}")
@@ -41,6 +43,11 @@ public class LoggingAutoConfiguration {
     @Bean
     public CorrelationIdInterceptor correlationIdInterceptor() {
         return new CorrelationIdInterceptor();
+    }
+
+    @Bean
+    public LoggingAspect loggingAspect() {
+        return new LoggingAspect();
     }
 
     /**
