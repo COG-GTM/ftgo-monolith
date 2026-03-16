@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!--
+    FTGO Monolith - PMD Ruleset Configuration
+    Java 8 / Spring Boot 2.0.3 compatible
+
+    This ruleset enforces code quality rules for the FTGO monolith
+    and extracted microservices. Rules are tuned for a Spring Boot
+    application undergoing microservices migration.
+-->
+<ruleset name="FTGO PMD Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                             https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        PMD rules for the FTGO monolith and microservices migration project.
+        Focuses on code quality, maintainability, and migration readiness.
+    </description>
+
+    <!-- ==================== -->
+    <!-- Best Practices       -->
+    <!-- ==================== -->
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Exclude rules that conflict with Spring patterns -->
+        <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <!-- Guard logging is not needed with SLF4J parameterized logging -->
+        <exclude name="GuardLogStatement"/>
+        <!-- AbstractClassWithoutAbstractMethod is common in Spring base classes -->
+        <exclude name="AbstractClassWithoutAbstractMethod"/>
+    </rule>
+
+    <!-- Unused private method - lower priority during migration -->
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod">
+        <properties>
+            <property name="violationSuppressXPath"
+                      value="//ClassOrInterfaceDeclaration[ends-with(@Image, 'Configuration')]"/>
+        </properties>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Code Style           -->
+    <!-- ==================== -->
+    <rule ref="category/java/codestyle.xml">
+        <!-- Allow short variable names for lambdas and loops -->
+        <exclude name="ShortVariable"/>
+        <!-- Allow long variable names for descriptive naming -->
+        <exclude name="LongVariable"/>
+        <!-- Exclude overly strict method naming rule -->
+        <exclude name="ShortMethodName"/>
+        <!-- Allow static imports for test assertions and constants -->
+        <exclude name="TooManyStaticImports"/>
+        <!-- Default package is used in some legacy patterns -->
+        <exclude name="DefaultPackage"/>
+        <!-- On-by-default rules that are too noisy -->
+        <exclude name="AtLeastOneConstructor"/>
+        <exclude name="CommentDefaultAccessModifier"/>
+        <exclude name="ConfusingTernary"/>
+        <exclude name="OnlyOneReturn"/>
+        <exclude name="CallSuperInConstructor"/>
+        <!-- Local variable could be final - too noisy during migration -->
+        <exclude name="LocalVariableCouldBeFinal"/>
+        <exclude name="MethodArgumentCouldBeFinal"/>
+    </rule>
+
+    <!-- Class naming must match file name -->
+    <rule ref="category/java/codestyle.xml/ClassNamingConventions">
+        <properties>
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]*"/>
+        </properties>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Design               -->
+    <!-- ==================== -->
+    <rule ref="category/java/design.xml">
+        <!-- Exclude rules that are too restrictive for Spring applications -->
+        <exclude name="LawOfDemeter"/>
+        <exclude name="LoosePackageCoupling"/>
+        <!-- Data classes are valid in DDD value objects and DTOs -->
+        <exclude name="DataClass"/>
+        <!-- Excessive imports are common in Spring configuration classes -->
+        <exclude name="ExcessiveImports"/>
+        <!-- Allow some complexity in service orchestration methods -->
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NPathComplexity"/>
+        <exclude name="TooManyMethods"/>
+        <exclude name="TooManyFields"/>
+        <exclude name="ExcessiveMethodLength"/>
+        <exclude name="ExcessiveClassLength"/>
+        <exclude name="GodClass"/>
+    </rule>
+
+    <!-- Use specific complexity thresholds -->
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="classReportLevel" value="80"/>
+            <property name="methodReportLevel" value="15"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/NPathComplexity">
+        <properties>
+            <property name="reportLevel" value="200"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="25"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="20"/>
+        </properties>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Error Prone          -->
+    <!-- ==================== -->
+    <rule ref="category/java/errorprone.xml">
+        <!-- Bean member access patterns in Spring -->
+        <exclude name="BeanMembersShouldSerialize"/>
+        <!-- Allow data flow anomaly in complex service methods -->
+        <exclude name="DataflowAnomalyAnalysis"/>
+        <!-- Null assignment used intentionally in some cleanup patterns -->
+        <exclude name="NullAssignment"/>
+        <!-- Missing serial version UID - JPA entities handle this differently -->
+        <exclude name="MissingSerialVersionUID"/>
+    </rule>
+
+    <!-- Empty catch blocks must have a comment explaining why -->
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+        <properties>
+            <property name="allowCommentedBlocks" value="true"/>
+            <property name="allowExceptionNameRegex" value="^(ignored|expected)$"/>
+        </properties>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Multithreading       -->
+    <!-- ==================== -->
+    <rule ref="category/java/multithreading.xml">
+        <!-- Exclude rules not applicable to Spring-managed beans -->
+        <exclude name="UseConcurrentHashMap"/>
+        <exclude name="DoNotUseThreads"/>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Performance          -->
+    <!-- ==================== -->
+    <rule ref="category/java/performance.xml">
+        <!-- Allow string concatenation in logging (SLF4J handles this) -->
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+        <!-- ConsecutiveLiteralAppends is too strict -->
+        <exclude name="ConsecutiveLiteralAppends"/>
+        <!-- InsufficientStringBufferDeclaration too noisy -->
+        <exclude name="InsufficientStringBufferDeclaration"/>
+    </rule>
+
+    <!-- ==================== -->
+    <!-- Security             -->
+    <!-- ==================== -->
+    <rule ref="category/java/security.xml"/>
+
+    <!-- ==================== -->
+    <!-- Exclusion Patterns   -->
+    <!-- ==================== -->
+
+    <!-- Exclude test files from strict design rules -->
+    <exclude-pattern>.*/src/test/.*</exclude-pattern>
+    <exclude-pattern>.*/ftgo-end-to-end-tests.*/.*</exclude-pattern>
+
+</ruleset>
