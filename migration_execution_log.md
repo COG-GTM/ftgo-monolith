@@ -10,9 +10,9 @@
 | Batch | Jira Key | Summary | Phase | Session Status | PR Link | Squash Status | Conflicts Resolved |
 |-------|----------|---------|-------|----------------|---------|---------------|-------------------|
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | Phase 1 | Completed | [PR #134](https://github.com/COG-GTM/ftgo-monolith/pull/134) | Success | None |
-| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | Phase 1 | Pending | — | — | — |
-| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Pending | — | — | — |
-| 2 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Pending | — | — | — |
+| 2 | EM-28 | Create Shared Parent Gradle Configuration for Microservices | Phase 1 | Completed | [PR #137](https://github.com/COG-GTM/ftgo-monolith/pull/137) | Success (conflicts resolved) | shared-libraries/ftgo-common/build.gradle |
+| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Completed | [PR #135](https://github.com/COG-GTM/ftgo-monolith/pull/135) | Success | None |
+| 2 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Completed | [PR #136](https://github.com/COG-GTM/ftgo-monolith/pull/136) | Success | None |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Versioned Shared Libraries | Phase 1 | Pending | — | — | — |
 | 3 | EM-35 | Configure Kubernetes Deployment Automation and Environment Promotion | Phase 2 | Pending | — | — | — |
 | 4 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Pending | — | — | — |
@@ -34,7 +34,10 @@
 
 ## Conflict Resolution Log
 
-_No conflicts recorded yet._
+### Batch 2
+- **File**: `shared-libraries/ftgo-common/build.gradle`
+- **Conflict**: EM-32 added explicit `maven-publish` plugin + publishing block; EM-28 added `ftgo.publishing-conventions` plugin
+- **Resolution**: Removed duplicate `maven-publish` apply and explicit publishing block, kept convention plugin which handles publishing. Kept EM-32's version/group and dependency declarations.
 
 ## Re-queued Tasks
 
