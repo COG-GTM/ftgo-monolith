@@ -118,10 +118,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -157,7 +157,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -170,14 +170,14 @@ jobs:
           ./gradlew :ftgo-flyway:flywayMigrate \
             -Dflyway.url=jdbc:mysql://127.0.0.1:3306/ftgo?useSSL=false \
             -Dflyway.user=ftgo_user \
-            -Dflyway.password=ftgo_password \
+            -Dflyway.password=$MYSQL_PASSWORD \
             || echo "Flyway migration skipped (task may not be configured yet)"
 
       - name: Start application
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           # Build the application JAR
           ./gradlew :ftgo-application:bootJar \
@@ -218,7 +218,7 @@ jobs:
           FTGO_BASE_URL: http://localhost:8081
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           # Run E2E test suite via Gradle if available
           ./gradlew :ftgo-end-to-end-tests:test \

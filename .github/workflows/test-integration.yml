@@ -129,10 +129,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -168,7 +168,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -180,7 +180,7 @@ jobs:
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
         run: |
           ./gradlew integrationTest \
@@ -235,10 +235,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo_order
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -274,7 +274,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -286,7 +286,7 @@ jobs:
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo_order?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           ./gradlew :services:order-service:integrationTest \
             -x :ftgo-end-to-end-tests-common:compileJava \
@@ -328,10 +328,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo_consumer
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -367,7 +367,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -379,7 +379,7 @@ jobs:
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo_consumer?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           ./gradlew :services:consumer-service:integrationTest \
             -x :ftgo-end-to-end-tests-common:compileJava \
@@ -421,10 +421,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo_restaurant
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -460,7 +460,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -472,7 +472,7 @@ jobs:
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo_restaurant?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           ./gradlew :services:restaurant-service:integrationTest \
             -x :ftgo-end-to-end-tests-common:compileJava \
@@ -514,10 +514,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: ftgo_courier
           MYSQL_USER: ftgo_user
-          MYSQL_PASSWORD: ftgo_password
+          MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -553,7 +553,7 @@ jobs:
         run: |
           echo "Waiting for MySQL to accept connections..."
           for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=rootpassword --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --password=$MYSQL_ROOT_PASSWORD --silent 2>/dev/null; then
               echo "MySQL is ready."
               break
             fi
@@ -565,7 +565,7 @@ jobs:
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ftgo_courier?useSSL=false
           SPRING_DATASOURCE_USERNAME: ftgo_user
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
+          SPRING_DATASOURCE_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
         run: |
           ./gradlew :services:courier-service:integrationTest \
             -x :ftgo-end-to-end-tests-common:compileJava \

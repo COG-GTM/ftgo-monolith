@@ -25,7 +25,7 @@
 | 7 | EM-44 | Configure Health Checks, Service Discovery, and Resilience Patterns | Phase 4 | Completed | [PR #146](https://github.com/COG-GTM/ftgo-monolith/pull/146) | Success | None |
 | 8 | EM-45 | Define REST API Standards and Migrate from Springfox to SpringDoc OpenAPI 3 | Phase 5 | Completed | [PR #149](https://github.com/COG-GTM/ftgo-monolith/pull/149) | Success | None |
 | 8 | EM-47 | Create Code Review Guidelines and Static Analysis Quality Gates | Phase 5 | Completed | [PR #148](https://github.com/COG-GTM/ftgo-monolith/pull/148) | Success | None |
-| 9 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Pending | — | — | — |
+| 9 | EM-36 | Configure Automated Testing Pipeline (Unit, Integration, E2E) | Phase 2 | Completed | [PR #150](https://github.com/COG-GTM/ftgo-monolith/pull/150) | Success | None |
 | 10 | EM-42 | Implement Distributed Tracing with Spring Cloud Sleuth and Zipkin/Jaeger | Phase 4 | Pending | — | — | — |
 | 11 | EM-37 | Implement Role-Based Authorization Framework | Phase 3 | Pending | — | — | — |
 | 11 | EM-46 | Establish Centralized Error Handling and Exception Patterns | Phase 5 | Pending | — | — | — |
