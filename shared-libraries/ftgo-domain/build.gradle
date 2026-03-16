@@ -2,12 +2,14 @@
 // Core domain entities shared across services (Order, Consumer, Restaurant, Courier).
 // Migrated from monolith module: ftgo-domain
 
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
 apply plugin: 'ftgo.java-conventions'
 apply plugin: 'ftgo.testing-conventions'
 apply plugin: 'ftgo.publishing-conventions'
 
 dependencies {
-    // compile project(":shared-libraries:ftgo-common")
-    // compile project(":shared-libraries:ftgo-common-jpa")
-    // Dependencies will be defined during the library extraction phase.
+    compile project(":shared-libraries:ftgo-common")
+    compile project(":shared-libraries:ftgo-common-jpa")
 }
