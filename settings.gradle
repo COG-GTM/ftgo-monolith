@@ -50,4 +50,5 @@ include "shared-libraries:ftgo-security-lib"
 include "shared-libraries:ftgo-logging-lib"
 include "shared-libraries:ftgo-metrics-lib"
 include "shared-libraries:ftgo-resilience-lib"
+include "shared-libraries:ftgo-openapi-lib"
 
