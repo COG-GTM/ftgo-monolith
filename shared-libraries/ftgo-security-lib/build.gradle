@@ -1,0 +1,21 @@
+// Shared Library: ftgo-security-lib
+// Spring Security configuration for FTGO microservices.
+// Provides base security setup: CORS, CSRF disabled, actuator security, exception handlers.
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
+apply plugin: 'ftgo.java-conventions'
+apply plugin: 'ftgo.testing-conventions'
+apply plugin: 'ftgo.publishing-conventions'
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-security:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-web:${FtgoVersions.SPRING_BOOT}"
+    compile "org.springframework.boot:spring-boot-starter-actuator:${FtgoVersions.SPRING_BOOT}"
+
+    compile "com.fasterxml.jackson.core:jackson-databind:${FtgoVersions.JACKSON}"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:${FtgoVersions.SPRING_BOOT}"
+    testCompile "org.springframework.security:spring-security-test:5.0.6.RELEASE"
+}
