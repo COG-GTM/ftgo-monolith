@@ -1,0 +1,16 @@
+// Order Service - Microservice build configuration
+// This module will contain the extracted Order bounded context
+
+dependencies {
+    // Shared libraries
+    // compile project(":shared-libraries:ftgo-common")
+    // compile project(":shared-libraries:ftgo-domain")
+
+    // Spring Boot
+    // compile "org.springframework.boot:spring-boot-starter-web"
+    // compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    // compile "org.springframework.boot:spring-boot-starter-actuator"
+
+    // Testing
+    // testCompile "org.springframework.boot:spring-boot-starter-test"
+}

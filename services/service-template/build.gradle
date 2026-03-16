@@ -1,0 +1,17 @@
+// Service Template - Microservice build configuration
+// Copy this template when creating a new microservice.
+// Replace "template" with your service name throughout.
+
+dependencies {
+    // Shared libraries
+    // compile project(":shared-libraries:ftgo-common")
+    // compile project(":shared-libraries:ftgo-domain")
+
+    // Spring Boot
+    // compile "org.springframework.boot:spring-boot-starter-web"
+    // compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    // compile "org.springframework.boot:spring-boot-starter-actuator"
+
+    // Testing
+    // testCompile "org.springframework.boot:spring-boot-starter-test"
+}

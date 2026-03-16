@@ -28,3 +28,19 @@ include "ftgo-application"
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
+// =============================================================================
+// Microservices - New service modules (added alongside existing monolith)
+// =============================================================================
+
+// Services (bounded contexts)
+include "services:order-service"
+include "services:consumer-service"
+include "services:restaurant-service"
+include "services:courier-service"
+
+// Shared libraries (extracted from monolith common modules)
+include "shared-libraries:ftgo-common"
+include "shared-libraries:ftgo-common-jpa"
+include "shared-libraries:ftgo-domain"
+include "shared-libraries:ftgo-swagger"
+

@@ -1,0 +1,7 @@
+// Shared Library: ftgo-swagger
+// Swagger/OpenAPI documentation configuration shared across services.
+// Migrated from monolith module: common-swagger
+
+dependencies {
+    // Dependencies will be defined during the library extraction phase.
+}
