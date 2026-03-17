@@ -1,43 +1,28 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
-    }
-
-    apply plugin: WaitForMySqlPlugin
-}
+// ============================================================================
+// FTGO Microservices Platform - Root Build Configuration
+// ============================================================================
+// This root build applies shared settings to all subprojects.
+// Individual module configuration is handled by convention plugins in buildSrc/:
+//   - ftgo.java-conventions         : Java 17, UTF-8, compiler options
+//   - ftgo.spring-boot-conventions  : Spring Boot + dependency management
+//   - ftgo.testing-conventions      : JUnit 5, Rest-Assured, integration tests
+//   - ftgo.docker-conventions       : Docker image builds (Spring Boot Buildpacks)
+//   - ftgo.publishing-conventions   : Maven publishing for shared libraries
+//
+// Dependencies are centralized in gradle/libs.versions.toml (version catalog).
+// ============================================================================
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    alias(libs.plugins.versions)
 }
 
+// Register the WaitForMySql task at the root level for database readiness checks
+tasks.register('waitForMySql', WaitForMySql)
 
 subprojects {
-
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
-
-    group = "net.chrisrichardson.ftgo"
+    group = 'net.chrisrichardson.ftgo'
 
     repositories {
         mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
-
-        maven {
-            url "${project.rootDir}/build/repo"
-        }
-
     }
-
 }

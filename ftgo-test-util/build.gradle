@@ -1,3 +1,7 @@
+plugins {
+    id 'ftgo.java-conventions'
+}
+
 dependencies {
-    compile "junit:junit:4.12"
+    implementation libs.junit.jupiter
 }

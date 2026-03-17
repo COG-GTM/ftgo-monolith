@@ -1,0 +1,63 @@
+// ============================================================================
+// ftgo.testing-conventions
+// ============================================================================
+// Standardized testing configuration with JUnit 5, Rest-Assured, and
+// integration test source set support.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.testing-conventions'
+//   }
+// ============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+}
+
+dependencies {
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+        exceptionFormat = 'full'
+    }
+
+    // Fail the build on any test failure
+    ignoreFailures = false
+
+    // JVM args for tests
+    jvmArgs '-XX:+EnableDynamicAgentLoading'
+}
+
+// --- Integration Test Source Set (optional) ---
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+}

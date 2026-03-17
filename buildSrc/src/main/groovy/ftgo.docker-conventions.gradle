@@ -1,0 +1,30 @@
+// ============================================================================
+// ftgo.docker-conventions
+// ============================================================================
+// Docker image build configuration using Spring Boot Buildpacks (default)
+// with optional Jib support.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.docker-conventions'
+//   }
+//
+// Customize image name:
+//   bootBuildImage {
+//       imageName = "ftgo/${project.name}:${project.version}"
+//   }
+// ============================================================================
+
+plugins {
+    id 'ftgo.spring-boot-conventions'
+}
+
+// Spring Boot Buildpacks configuration (enabled only for bootable services)
+bootBuildImage {
+    // Default image name pattern: ftgo/<service-name>:<version>
+    imageName = "ftgo/${project.name}:${project.version}"
+
+    environment = [
+        'BP_JVM_VERSION': '17',
+    ]
+}

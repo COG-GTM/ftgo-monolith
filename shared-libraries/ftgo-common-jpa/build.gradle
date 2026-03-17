@@ -1,4 +1,9 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
 dependencies {
-    compile project(":shared-libraries:ftgo-common")
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    api project(":shared-libraries:ftgo-common")
+    api libs.spring.boot.starter.data.jpa
 }
