@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:ftgo-redis}
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+
+# Kubernetes-specific service URLs
+gateway:
+  jwt:
+    enabled: true
+  health:
+    order-service-url: http://order-service.ftgo.svc.cluster.local:8080
+    consumer-service-url: http://consumer-service.ftgo.svc.cluster.local:8080
+    restaurant-service-url: http://restaurant-service.ftgo.svc.cluster.local:8080
+    courier-service-url: http://courier-service.ftgo.svc.cluster.local:8080
+    timeout-seconds: 3
+
+logging:
+  level:
+    root: INFO
+    net.chrisrichardson.ftgo.gateway: INFO

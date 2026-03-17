@@ -1,0 +1,24 @@
+server:
+  port: 0
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+
+gateway:
+  jwt:
+    enabled: false
+    secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
+  health:
+    order-service-url: http://localhost:9999
+    consumer-service-url: http://localhost:9999
+    restaurant-service-url: http://localhost:9999
+    courier-service-url: http://localhost:9999
+    timeout-seconds: 1
+
+logging:
+  level:
+    root: WARN
+    net.chrisrichardson.ftgo.gateway: DEBUG
