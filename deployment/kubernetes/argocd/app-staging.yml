@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ftgo-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo
+    environment: staging
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: deployment/kubernetes/overlays/staging
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: ftgo-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: ftgo-deployments
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ftgo
+  source:
+    repoURL: https://github.com/COG-GTM/ftgo-monolith.git
+    targetRevision: main
+    path: deployment/kubernetes/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ftgo-staging
+  syncPolicy:
+    # Manual sync required - promotion needs approval
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10

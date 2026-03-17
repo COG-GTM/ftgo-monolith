@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restaurant-service-config
+  labels:
+    app.kubernetes.io/name: restaurant-service
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: ftgo
+data:
+  spring-profiles: kubernetes
+  datasource-url: jdbc:mysql://ftgo-mysql:3306/ftgo?useSSL=false&allowPublicKeyRetrieval=true
+  java-opts: "-Xms256m -Xmx512m"
+  server-port: "8080"
+  management-port: "8081"
