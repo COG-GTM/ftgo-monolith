@@ -1,0 +1,97 @@
+# =============================================================================
+# CI Pipeline - Restaurant Service
+# =============================================================================
+# Builds and tests the Restaurant bounded context (service + API module).
+# Triggers on changes to the service code, shared libraries, or build config.
+# =============================================================================
+
+name: "CI: Restaurant Service"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/restaurant-service/**'
+      - 'services/restaurant-service-api/**'
+      - 'ftgo-restaurant-service/**'
+      - 'ftgo-restaurant-service-api/**'
+      - 'shared-libraries/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/restaurant-service/**'
+      - 'services/restaurant-service-api/**'
+      - 'ftgo-restaurant-service/**'
+      - 'ftgo-restaurant-service-api/**'
+      - 'shared-libraries/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-restaurant-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-restaurant-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Restaurant Service API
+        run: ./gradlew :services:restaurant-service-api:build
+
+      - name: Build Restaurant Service
+        run: ./gradlew :services:restaurant-service:build
+
+      - name: Run Restaurant Service unit tests
+        run: ./gradlew :services:restaurant-service:test :services:restaurant-service-api:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restaurant-service-test-reports
+          path: |
+            services/restaurant-service/build/reports/tests/
+            services/restaurant-service-api/build/reports/tests/
+          retention-days: 14
