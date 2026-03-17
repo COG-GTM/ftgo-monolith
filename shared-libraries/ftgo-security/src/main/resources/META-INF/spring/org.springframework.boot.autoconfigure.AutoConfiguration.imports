@@ -1,1 +1,1 @@
-net.chrisrichardson.ftgo.security.FtgoSecurityAutoConfiguration
+net.chrisrichardson.ftgo.security.config.FtgoBaseSecurityConfiguration

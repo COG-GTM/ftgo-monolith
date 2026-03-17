@@ -1,46 +1,29 @@
-package net.chrisrichardson.ftgo.security;
+package net.chrisrichardson.ftgo.security.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configurable security properties for FTGO microservices.
+ * Configuration properties for FTGO security settings.
  *
- * <p>Properties are bound from {@code ftgo.security.*} in application configuration.
+ * <p>Properties are bound under the {@code ftgo.security} prefix.
  */
 @ConfigurationProperties(prefix = "ftgo.security")
 public class FtgoSecurityProperties {
 
-    /**
-     * Whether security is enabled. Defaults to true.
-     */
-    private boolean enabled = true;
-
-    /**
-     * CORS configuration.
-     */
-    private Cors cors = new Cors();
-
-    /**
-     * Paths that should be publicly accessible without authentication.
-     */
-    private List<String> publicPaths = List.of();
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
+    private final Cors cors = new Cors();
+    private List<String> publicPaths = new ArrayList<>(List.of(
+            "/actuator/health",
+            "/actuator/info",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs/**"
+    ));
 
     public Cors getCors() {
         return cors;
-    }
-
-    public void setCors(Cors cors) {
-        this.cors = cors;
     }
 
     public List<String> getPublicPaths() {
@@ -51,31 +34,18 @@ public class FtgoSecurityProperties {
         this.publicPaths = publicPaths;
     }
 
+    /**
+     * CORS configuration properties.
+     */
     public static class Cors {
 
-        /**
-         * Allowed origins for CORS requests.
-         */
-        private List<String> allowedOrigins = List.of();
-
-        /**
-         * Allowed HTTP methods for CORS requests.
-         */
-        private List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS");
-
-        /**
-         * Allowed headers for CORS requests.
-         */
-        private List<String> allowedHeaders = List.of("Authorization", "Content-Type", "X-Requested-With");
-
-        /**
-         * Whether credentials (cookies, authorization headers) are allowed in CORS requests.
-         */
-        private boolean allowCredentials = true;
-
-        /**
-         * Max age (in seconds) for the CORS preflight cache.
-         */
+        private List<String> allowedOrigins = new ArrayList<>(List.of("*"));
+        private List<String> allowedMethods = new ArrayList<>(List.of(
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+        private List<String> allowedHeaders = new ArrayList<>(List.of("*"));
+        private List<String> exposedHeaders = new ArrayList<>();
+        private boolean allowCredentials = false;
         private long maxAge = 3600;
 
         public List<String> getAllowedOrigins() {
@@ -100,6 +70,14 @@ public class FtgoSecurityProperties {
 
         public void setAllowedHeaders(List<String> allowedHeaders) {
             this.allowedHeaders = allowedHeaders;
+        }
+
+        public List<String> getExposedHeaders() {
+            return exposedHeaders;
+        }
+
+        public void setExposedHeaders(List<String> exposedHeaders) {
+            this.exposedHeaders = exposedHeaders;
         }
 
         public boolean isAllowCredentials() {

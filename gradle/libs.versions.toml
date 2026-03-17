@@ -99,6 +99,7 @@ jakarta-el-api                      = { module = "jakarta.el:jakarta.el-api", ve
 ftgo-common-lib                     = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-lib", version.ref = "ftgo-common" }
 ftgo-common-jpa-lib                 = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-jpa-lib", version.ref = "ftgo-common-jpa" }
 ftgo-domain-lib                     = { group = "net.chrisrichardson.ftgo", name = "ftgo-domain-lib", version.ref = "ftgo-domain" }
+ftgo-security-lib                   = { group = "net.chrisrichardson.ftgo", name = "ftgo-security-lib", version.ref = "ftgo-common" }
 
 [bundles]
 # Common Spring Boot service dependencies
@@ -106,6 +107,7 @@ spring-boot-service = [
     "spring-boot-starter-web",
     "spring-boot-starter-data-jpa",
     "spring-boot-starter-actuator",
+    "spring-boot-starter-security",
 ]
 
 # Testing dependencies
@@ -114,6 +116,7 @@ testing = [
     "junit-jupiter",
     "mockito-core",
     "mockito-junit-jupiter",
+    "spring-security-test",
 ]
 
 # REST-Assured testing

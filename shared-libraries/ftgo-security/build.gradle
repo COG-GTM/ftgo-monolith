@@ -1,5 +1,6 @@
 plugins {
     id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
     id 'ftgo.publishing-conventions'
 }
 
@@ -11,13 +12,10 @@ dependencies {
     api libs.spring.boot.starter.web
     api libs.spring.boot.starter.actuator
 
+    implementation libs.jackson.databind
+
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.spring.security.test
-    testImplementation libs.junit.jupiter
-}
-
-tasks.withType(Test).configureEach {
-    useJUnitPlatform()
 }
 
 publishing {
@@ -27,7 +25,7 @@ publishing {
 
             pom {
                 name = 'FTGO Security Library'
-                description = 'Shared Spring Security configuration for the FTGO microservices platform'
+                description = 'Shared security configuration, CORS, exception handlers, and utilities for the FTGO microservices platform'
             }
         }
     }
