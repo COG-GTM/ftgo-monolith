@@ -17,6 +17,9 @@ java                        = "17"
 spring-boot                 = "3.2.2"
 spring-dependency-management = "1.1.4"
 
+# --- Shared Libraries ---
+ftgo-common                 = "1.0.0"
+
 # --- Database ---
 mysql-connector             = "8.2.0"
 flyway                      = "9.22.3"
@@ -84,6 +87,9 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 commons-lang3                       = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
 jakarta-el-api                      = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el" }
+
+# --- Shared Libraries ---
+ftgo-common-lib                     = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-lib", version.ref = "ftgo-common" }
 
 [bundles]
 # Common Spring Boot service dependencies

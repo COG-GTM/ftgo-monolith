@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ftgo-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo
+    environment: prod
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: deployment/kubernetes/overlays/prod
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: ftgo-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: ftgo-deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: ftgo-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ftgo
+  source:
+    repoURL: https://github.com/COG-GTM/ftgo-monolith.git
+    targetRevision: main
+    path: deployment/kubernetes/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ftgo-prod
+  syncPolicy:
+    # Manual sync required - production promotion needs explicit approval
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 20
