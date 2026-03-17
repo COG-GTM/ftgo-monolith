@@ -1,0 +1,4 @@
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-test"
+    compile "io.rest-assured:rest-assured:${restAssuredVersion}"
+}

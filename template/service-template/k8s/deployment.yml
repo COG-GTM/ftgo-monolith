@@ -1,0 +1,58 @@
+# Replace all occurrences of <service-name> with the actual service name
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <service-name>
+  labels:
+    app: <service-name>
+    version: "1.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: <service-name>
+  template:
+    metadata:
+      labels:
+        app: <service-name>
+    spec:
+      containers:
+        - name: <service-name>
+          image: ftgo/<service-name>:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          envFrom:
+            - configMapRef:
+                name: <service-name>-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <service-name>
+spec:
+  selector:
+    app: <service-name>
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

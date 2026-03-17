@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":shared-libraries:ftgo-common")
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+}

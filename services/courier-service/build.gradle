@@ -1,0 +1,20 @@
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+// Disable bootJar until a @SpringBootApplication main class is added
+bootJar { enabled = false }
+jar { enabled = true }
+
+dependencies {
+    compile project(":services:courier-service-api")
+    compile project(":shared-libraries:ftgo-common")
+    compile project(":shared-libraries:ftgo-common-jpa")
+    compile project(":shared-libraries:ftgo-domain")
+
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile project(":shared-libraries:ftgo-test-util")
+}
