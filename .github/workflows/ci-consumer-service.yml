@@ -1,7 +1,7 @@
 # =============================================================================
 # CI Pipeline - Consumer Service
 # =============================================================================
-# Builds and tests the Consumer bounded context on PRs and pushes to main.
+# Builds and tests the Consumer bounded context (service + API module).
 # Path-based filtering ensures this workflow only runs when relevant files change.
 # =============================================================================
 
@@ -9,26 +9,38 @@ name: "CI: Consumer Service"
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/consumer-service/**'
       - 'services/consumer-service-api/**'
+      - 'ftgo-consumer-service/**'
+      - 'ftgo-consumer-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-consumer-service.yml'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/consumer-service/**'
       - 'services/consumer-service-api/**'
+      - 'ftgo-consumer-service/**'
+      - 'ftgo-consumer-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-consumer-service.yml'
   workflow_dispatch:
 
@@ -52,8 +64,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
+          distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -72,4 +84,6 @@ jobs:
           path: |
             services/consumer-service/build/reports/tests/
             services/consumer-service/build/test-results/
+            services/consumer-service-api/build/reports/tests/
+            services/consumer-service-api/build/test-results/
           retention-days: 14

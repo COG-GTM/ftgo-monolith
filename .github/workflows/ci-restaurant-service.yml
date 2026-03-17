@@ -1,7 +1,7 @@
 # =============================================================================
 # CI Pipeline - Restaurant Service
 # =============================================================================
-# Builds and tests the Restaurant bounded context on PRs and pushes to main.
+# Builds and tests the Restaurant bounded context (service + API module).
 # Path-based filtering ensures this workflow only runs when relevant files change.
 # =============================================================================
 
@@ -9,26 +9,38 @@ name: "CI: Restaurant Service"
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/restaurant-service/**'
       - 'services/restaurant-service-api/**'
+      - 'ftgo-restaurant-service/**'
+      - 'ftgo-restaurant-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-restaurant-service.yml'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/restaurant-service/**'
       - 'services/restaurant-service-api/**'
+      - 'ftgo-restaurant-service/**'
+      - 'ftgo-restaurant-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-restaurant-service.yml'
   workflow_dispatch:
 
@@ -52,8 +64,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
+          distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -72,4 +84,6 @@ jobs:
           path: |
             services/restaurant-service/build/reports/tests/
             services/restaurant-service/build/test-results/
+            services/restaurant-service-api/build/reports/tests/
+            services/restaurant-service-api/build/test-results/
           retention-days: 14

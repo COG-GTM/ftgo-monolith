@@ -1,7 +1,7 @@
 # =============================================================================
 # CI Pipeline - Order Service
 # =============================================================================
-# Builds and tests the Order bounded context on PRs and pushes to main.
+# Builds and tests the Order bounded context (service + API module).
 # Path-based filtering ensures this workflow only runs when relevant files change.
 #
 # Note: Order Service depends on all other service API modules
@@ -12,32 +12,44 @@ name: "CI: Order Service"
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/order-service/**'
       - 'services/order-service-api/**'
       - 'services/consumer-service-api/**'
       - 'services/restaurant-service-api/**'
       - 'services/courier-service-api/**'
+      - 'ftgo-order-service/**'
+      - 'ftgo-order-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-order-service.yml'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
     paths:
       - 'services/order-service/**'
       - 'services/order-service-api/**'
       - 'services/consumer-service-api/**'
       - 'services/restaurant-service-api/**'
       - 'services/courier-service-api/**'
+      - 'ftgo-order-service/**'
+      - 'ftgo-order-service-api/**'
       - 'shared-libraries/**'
       - 'buildSrc/**'
       - 'gradle/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/ci-order-service.yml'
   workflow_dispatch:
 
@@ -61,8 +73,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
+          distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -81,4 +93,6 @@ jobs:
           path: |
             services/order-service/build/reports/tests/
             services/order-service/build/test-results/
+            services/order-service-api/build/reports/tests/
+            services/order-service-api/build/test-results/
           retention-days: 14
