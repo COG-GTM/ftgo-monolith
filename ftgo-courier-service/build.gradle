@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation project(":ftgo-courier-service-api")
-    implementation project(":common-swagger")
+    implementation project(":shared-libraries:ftgo-openapi-lib")
     implementation project(":ftgo-domain")
 
     implementation libs.bundles.spring.boot.service
