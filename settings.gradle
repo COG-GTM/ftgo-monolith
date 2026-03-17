@@ -20,6 +20,7 @@ include "shared-libraries:ftgo-common-jpa"
 include "shared-libraries:common-swagger"
 include "shared-libraries:ftgo-domain"
 include "shared-libraries:ftgo-test-util"
+include "shared-libraries:ftgo-security"
 
 // ---------------------------------------------------------------------------
 // Microservices (services/)

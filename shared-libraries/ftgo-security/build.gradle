@@ -1,0 +1,39 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
+dependencies {
+    api libs.spring.boot.starter.security
+    api libs.spring.boot.starter.web
+    api libs.spring.boot.starter.actuator
+
+    implementation libs.jackson.databind
+
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.spring.security.test
+}
+
+publishing {
+    publications {
+        mavenJava {
+            artifactId = 'ftgo-security-lib'
+
+            pom {
+                name = 'FTGO Security Library'
+                description = 'Shared security configuration, CORS, exception handlers, and utilities for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
+}
