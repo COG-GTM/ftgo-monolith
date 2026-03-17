@@ -2,7 +2,6 @@ package net.chrisrichardson.ftgo.gateway.config;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -15,22 +14,22 @@ import java.util.Map;
 @RequestMapping("/fallback")
 public class FallbackController {
 
-    @GetMapping("/orders")
+    @RequestMapping("/orders")
     public Mono<Map<String, Object>> ordersFallback(ServerWebExchange exchange) {
         return createFallbackResponse("order-service", exchange);
     }
 
-    @GetMapping("/consumers")
+    @RequestMapping("/consumers")
     public Mono<Map<String, Object>> consumersFallback(ServerWebExchange exchange) {
         return createFallbackResponse("consumer-service", exchange);
     }
 
-    @GetMapping("/restaurants")
+    @RequestMapping("/restaurants")
     public Mono<Map<String, Object>> restaurantsFallback(ServerWebExchange exchange) {
         return createFallbackResponse("restaurant-service", exchange);
     }
 
-    @GetMapping("/couriers")
+    @RequestMapping("/couriers")
     public Mono<Map<String, Object>> couriersFallback(ServerWebExchange exchange) {
         return createFallbackResponse("courier-service", exchange);
     }
