@@ -38,7 +38,7 @@ public class SensitiveDataMaskingConverter extends ClassicConverter {
      * Handles: password, passwd, pwd, secret, credential, apiKey, api_key, token (as key names).
      */
     private static final Pattern PASSWORD_PATTERN =
-            Pattern.compile("((?:password|passwd|pwd|secret|credential|apiKey|api_key)\\s*[=:]\\s*)(\\S+)",
+            Pattern.compile("((?:password|passwd|pwd|secret|credential|apiKey|api_key|token)\\s*[=:]\\s*)(\\S+)",
                     Pattern.CASE_INSENSITIVE);
 
     /**
