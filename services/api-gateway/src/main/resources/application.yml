@@ -1,0 +1,141 @@
+server:
+  port: 8080
+  ssl:
+    enabled: false
+    # SSL/TLS configuration - enable in production
+    # key-store: classpath:keystore.p12
+    # key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    # key-store-type: PKCS12
+    # key-alias: ftgo-gateway
+
+spring:
+  application:
+    name: api-gateway
+
+  # Redis configuration for rate limiting
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000
+
+  cloud:
+    gateway:
+      # Default filters applied to all routes
+      # Note: RequestRateLimiter is configured per-route when Redis is available
+      default-filters:
+        - name: RemoveRequestHeader
+          args:
+            name: Cookie
+      # Global CORS (additional to CorsConfig bean)
+      globalcors:
+        cors-configurations:
+          '[/api/**]':
+            allowedOrigins: "${GATEWAY_CORS_ORIGINS:*}"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            maxAge: 3600
+
+      # Discovery-based routing disabled (using explicit routes)
+      discovery:
+        locator:
+          enabled: false
+
+      # HTTP client settings
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
+
+# Resilience4j Circuit Breaker configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+        minimumNumberOfCalls: 5
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 3s
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+    instances:
+      orderServiceCB:
+        baseConfig: default
+      consumerServiceCB:
+        baseConfig: default
+      restaurantServiceCB:
+        baseConfig: default
+      courierServiceCB:
+        baseConfig: default
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+    instances:
+      orderServiceCB:
+        baseConfig: default
+      consumerServiceCB:
+        baseConfig: default
+      restaurantServiceCB:
+        baseConfig: default
+      courierServiceCB:
+        baseConfig: default
+
+# Actuator / Health configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  server:
+    port: 8081
+
+# Gateway-specific configuration
+gateway:
+  jwt:
+    secret: ${JWT_SECRET:default-secret-key-for-development-only-change-in-production}
+    enabled: ${JWT_ENABLED:true}
+  cors:
+    allowed-origins: ${GATEWAY_CORS_ORIGINS:*}
+    allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+    allowed-headers: "*"
+    max-age: 3600
+  health:
+    order-service-url: ${ORDER_SERVICE_URL:http://order-service:8080}
+    consumer-service-url: ${CONSUMER_SERVICE_URL:http://consumer-service:8080}
+    restaurant-service-url: ${RESTAURANT_SERVICE_URL:http://restaurant-service:8080}
+    courier-service-url: ${COURIER_SERVICE_URL:http://courier-service:8080}
+    timeout-seconds: 3
+
+
+# Logging
+logging:
+  level:
+    root: INFO
+    net.chrisrichardson.ftgo.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
