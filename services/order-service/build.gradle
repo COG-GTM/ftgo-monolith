@@ -1,6 +1,7 @@
 plugins {
     id 'ftgo.spring-boot-conventions'
     id 'ftgo.testing-conventions'
+    id 'ftgo.observability-conventions'
 }
 
 dependencies {
@@ -13,7 +14,7 @@ dependencies {
     implementation project(":shared-libraries:ftgo-domain")
 
     implementation libs.bundles.spring.boot.service
-    implementation libs.micrometer.registry.prometheus
+    implementation project(":shared-libraries:ftgo-observability")
 
     testImplementation project(":shared-libraries:ftgo-test-util")
 }

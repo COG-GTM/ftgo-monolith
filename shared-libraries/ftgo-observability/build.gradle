@@ -1,0 +1,8 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
+}
+
+dependencies {
+    implementation libs.bundles.observability
+}

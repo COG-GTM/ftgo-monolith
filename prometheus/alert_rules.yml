@@ -1,0 +1,86 @@
+# ============================================================================
+# Prometheus Alerting Rules for FTGO Microservices Platform
+# ============================================================================
+# Defines critical threshold alerts for service health monitoring.
+# ============================================================================
+
+groups:
+  - name: ftgo_service_alerts
+    rules:
+      # --- Error Rate Alerts ---
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} has an error rate above 5% (current: {{ $value | humanizePercentage }}) for more than 2 minutes."
+
+      # --- Latency Alerts ---
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, service))
+          > 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High p99 latency on {{ $labels.service }}"
+          description: "{{ $labels.service }} p99 latency is above 2 seconds (current: {{ $value | humanizeDuration }}) for more than 2 minutes."
+
+      # --- JVM Alerts ---
+      - alert: HighHeapUsage
+        expr: |
+          jvm_memory_used_bytes{area="heap"}
+          /
+          jvm_memory_max_bytes{area="heap"}
+          > 0.90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage on {{ $labels.service }}"
+          description: "{{ $labels.service }} heap usage is above 90% for more than 5 minutes."
+
+      - alert: HighGCPause
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m])
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.service }}"
+          description: "{{ $labels.service }} average GC pause time is above 500ms for more than 5 minutes."
+
+      # --- Database Connection Pool Alerts ---
+      - alert: LowDBConnectionPoolAvailable
+        expr: |
+          hikaricp_connections_idle
+          /
+          hikaricp_connections_max
+          < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low DB connection pool availability on {{ $labels.service }}"
+          description: "{{ $labels.service }} has less than 10% idle database connections for more than 5 minutes."
+
+      # --- Service Down ---
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."

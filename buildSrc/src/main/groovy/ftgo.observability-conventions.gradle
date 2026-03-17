@@ -1,0 +1,19 @@
+// ============================================================================
+// ftgo.observability-conventions
+// ============================================================================
+// Adds Micrometer + Prometheus metrics and Spring Boot Actuator to services.
+// Configures standard observability dependencies for all FTGO microservices.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.observability-conventions'
+//   }
+// ============================================================================
+
+plugins {
+    id 'ftgo.spring-boot-conventions'
+}
+
+dependencies {
+    implementation libs.bundles.observability
+}

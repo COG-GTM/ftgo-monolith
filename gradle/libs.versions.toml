@@ -63,6 +63,7 @@ flyway-core                         = { module = "org.flywaydb:flyway-core", ver
 flyway-mysql                        = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 
 # --- Observability ---
+micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 
 # --- Testing ---
@@ -105,6 +106,13 @@ testing = [
     "junit-jupiter",
     "mockito-core",
     "mockito-junit-jupiter",
+]
+
+# Observability bundle
+observability = [
+    "spring-boot-starter-actuator",
+    "micrometer-core",
+    "micrometer-registry-prometheus",
 ]
 
 # REST-Assured testing
