@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ftgo-ingress
+  labels:
+    app.kubernetes.io/name: ftgo-ingress
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: ftgo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ftgo.local
+      http:
+        paths:
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-service
+                port:
+                  name: http
+          - path: /consumers
+            pathType: Prefix
+            backend:
+              service:
+                name: consumer-service
+                port:
+                  name: http
+          - path: /restaurants
+            pathType: Prefix
+            backend:
+              service:
+                name: restaurant-service
+                port:
+                  name: http
+          - path: /couriers
+            pathType: Prefix
+            backend:
+              service:
+                name: courier-service
+                port:
+                  name: http

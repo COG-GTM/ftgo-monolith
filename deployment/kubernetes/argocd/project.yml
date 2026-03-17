@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ftgo
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo
+spec:
+  description: FTGO Food Delivery Microservices Platform
+  sourceRepos:
+    - "https://github.com/COG-GTM/ftgo-monolith.git"
+  destinations:
+    - namespace: ftgo-dev
+      server: https://kubernetes.default.svc
+    - namespace: ftgo-staging
+      server: https://kubernetes.default.svc
+    - namespace: ftgo-prod
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: autoscaling
+      kind: "*"
+    - group: networking.k8s.io
+      kind: "*"
+    - group: policy
+      kind: "*"
+  roles:
+    - name: admin
+      description: Full access to FTGO project
+      policies:
+        - p, proj:ftgo:admin, applications, *, ftgo/*, allow
+    - name: read-only
+      description: Read-only access to FTGO project
+      policies:
+        - p, proj:ftgo:read-only, applications, get, ftgo/*, allow
+  syncWindows:
+    # Allow dev deployments anytime
+    - kind: allow
+      schedule: "* * * * *"
+      duration: 24h
+      applications:
+        - ftgo-dev
+      namespaces:
+        - ftgo-dev
+    # Allow staging deployments during business hours (Mon-Fri 8am-6pm UTC)
+    - kind: allow
+      schedule: "0 8 * * 1-5"
+      duration: 10h
+      applications:
+        - ftgo-staging
+      namespaces:
+        - ftgo-staging
+    # Restrict prod deployments to maintenance windows (Tue/Thu 10am-2pm UTC)
+    - kind: allow
+      schedule: "0 10 * * 2,4"
+      duration: 4h
+      applications:
+        - ftgo-prod
+      namespaces:
+        - ftgo-prod
+    # Deny prod deployments outside maintenance windows
+    - kind: deny
+      schedule: "0 14 * * 2,4"
+      duration: 20h
+      applications:
+        - ftgo-prod
+      namespaces:
+        - ftgo-prod
