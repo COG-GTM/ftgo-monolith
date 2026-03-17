@@ -1,12 +1,15 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+}
+
 dependencies {
-    compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-order-service-api")
-    compile project(":ftgo-courier-service-api")
-    compile "io.eventuate.util:eventuate-util-test:$eventuateUtilVersion"
+    api project(":ftgo-consumer-service-api")
+    api project(":ftgo-restaurant-service-api")
+    api project(":ftgo-order-service-api")
+    api project(":ftgo-courier-service-api")
+    api "io.eventuate.util:eventuate-util-test:$eventuateUtilVersion"
 
-
-    compile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    compile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    compile "com.jayway.jsonpath:json-path:2.3.0"
+    api libs.spring.boot.starter.test
+    api libs.rest.assured
+    api libs.rest.assured.json.path
 }

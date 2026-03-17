@@ -1,3 +1,7 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+}
+
 dependencies {
-    compile project(":ftgo-common")
+    api project(":ftgo-common")
 }

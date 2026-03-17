@@ -1,0 +1,123 @@
+# ============================================================================
+# FTGO Microservices Platform - Gradle Version Catalog
+# ============================================================================
+# Centralizes all dependency versions for consistent management across
+# all microservices and shared libraries.
+#
+# Usage in build.gradle:
+#   implementation libs.spring.boot.starter.web
+#   testImplementation libs.junit.jupiter
+# ============================================================================
+
+[versions]
+# --- Platform & Language ---
+java                        = "17"
+
+# --- Spring Boot & Spring ---
+spring-boot                 = "3.2.2"
+spring-dependency-management = "1.1.4"
+
+# --- Database ---
+mysql-connector             = "8.2.0"
+flyway                      = "9.22.3"
+
+# --- Observability ---
+micrometer                  = "1.12.2"
+
+# --- Testing ---
+junit-jupiter               = "5.10.1"
+rest-assured                = "5.4.0"
+mockito                     = "5.8.0"
+
+# --- Serialization ---
+jackson                     = "2.16.1"
+
+# --- API Documentation ---
+springdoc-openapi           = "2.3.0"
+
+# --- Utilities ---
+commons-lang3               = "3.14.0"
+jakarta-persistence         = "3.1.0"
+jakarta-el                  = "5.0.1"
+
+# --- Docker ---
+jib                         = "3.4.0"
+
+# --- Gradle Plugins ---
+versions-plugin             = "0.50.0"
+
+[libraries]
+# --- Spring Boot Starters ---
+spring-boot-starter-web             = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-data-jpa        = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-actuator        = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-test            = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-validation      = { module = "org.springframework.boot:spring-boot-starter-validation" }
+
+# --- Database ---
+mysql-connector                     = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
+flyway-core                         = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-mysql                        = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+
+# --- Observability ---
+micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+
+# --- Testing ---
+junit-jupiter                       = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-jupiter-api                   = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine                = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+rest-assured                        = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-spring-mock-mvc        = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
+rest-assured-json-path              = { module = "io.rest-assured:json-path", version.ref = "rest-assured" }
+mockito-core                        = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter               = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+
+# --- Serialization ---
+jackson-core                        = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind                    = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310             = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+
+# --- API Documentation ---
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
+
+# --- Utilities ---
+commons-lang3                       = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+jakarta-persistence-api             = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
+jakarta-el-api                      = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el" }
+
+[bundles]
+# Common Spring Boot service dependencies
+spring-boot-service = [
+    "spring-boot-starter-web",
+    "spring-boot-starter-data-jpa",
+    "spring-boot-starter-actuator",
+]
+
+# Testing dependencies
+testing = [
+    "spring-boot-starter-test",
+    "junit-jupiter",
+    "mockito-core",
+    "mockito-junit-jupiter",
+]
+
+# REST-Assured testing
+rest-assured-testing = [
+    "rest-assured",
+    "rest-assured-spring-mock-mvc",
+    "rest-assured-json-path",
+]
+
+# Jackson serialization
+jackson = [
+    "jackson-core",
+    "jackson-databind",
+    "jackson-datatype-jsr310",
+]
+
+[plugins]
+spring-boot                 = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+flyway                      = { id = "org.flywaydb.flyway", version.ref = "flyway" }
+jib                         = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
+versions                    = { id = "com.github.ben-manes.versions", version.ref = "versions-plugin" }

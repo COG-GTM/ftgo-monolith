@@ -1,0 +1,24 @@
+// ============================================================================
+// ftgo.spring-boot-conventions
+// ============================================================================
+// Spring Boot application configuration with dependency management.
+// Applies: Spring Boot plugin, dependency management, standard Spring config.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.spring-boot-conventions'
+//   }
+// ============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+// By default, libraries should produce a plain JAR (not a fat Boot JAR).
+// Executable services should override this in their own build.gradle:
+//   bootJar { enabled = true }
+//   jar { enabled = false }
+bootJar { enabled = false }
+jar { enabled = true }
