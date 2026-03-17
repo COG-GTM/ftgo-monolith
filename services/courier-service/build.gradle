@@ -8,6 +8,7 @@ dependencies {
     implementation project(":shared-libraries:ftgo-common")
     implementation project(":shared-libraries:ftgo-common-jpa")
     implementation project(":shared-libraries:ftgo-domain")
+    implementation project(":shared-libraries:ftgo-security")
 
     implementation libs.bundles.spring.boot.service
     implementation libs.micrometer.registry.prometheus
