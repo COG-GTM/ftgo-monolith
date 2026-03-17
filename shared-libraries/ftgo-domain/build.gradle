@@ -1,0 +1,6 @@
+dependencies {
+    compile project(":shared-libraries:ftgo-common")
+    compile project(":shared-libraries:ftgo-common-jpa")
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    compile "javax.persistence:javax.persistence-api:2.2"
+}

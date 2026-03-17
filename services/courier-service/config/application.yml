@@ -1,0 +1,23 @@
+# Application configuration for the service
+# Override with environment-specific profiles: application-{profile}.yml
+spring:
+  application:
+    name: courier-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/courier-service
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
