@@ -1,4 +1,9 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
 dependencies {
-    compile "org.springframework.boot:spring-boot-starter-test"
-    compile "io.rest-assured:rest-assured:${restAssuredVersion}"
+    api libs.spring.boot.starter.test
+    api libs.rest.assured
 }

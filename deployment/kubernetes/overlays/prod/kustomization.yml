@@ -1,0 +1,124 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-prod
+
+namePrefix: prod-
+
+commonLabels:
+  environment: prod
+
+commonAnnotations:
+  environment: prod
+  team: ftgo
+
+resources:
+  - namespace.yml
+  - ../../base
+  - pod-disruption-budgets.yml
+
+patches:
+  # Prod uses 3 replicas for higher availability
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+  # Prod resource limits (higher)
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 2Gi
+
+  # Prod HPA settings (higher capacity)
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 3
+      - op: replace
+        path: /spec/maxReplicas
+        value: 10
+
+  # Prod MySQL storage and resources
+  - target:
+      kind: StatefulSet
+      name: ftgo-mysql
+    patch: |
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 20Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 2Gi
+
+  # Prod ingress host with TLS
+  - target:
+      kind: Ingress
+      name: ftgo-ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: ftgo.example.com
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts:
+              - ftgo.example.com
+            secretName: ftgo-tls-cert
+      - op: replace
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1ssl-redirect
+        value: "true"
+
+  # Prod-specific Java opts (optimized for throughput)
+  - target:
+      kind: ConfigMap
+      name: order-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -Dspring.profiles.active=prod"
+  - target:
+      kind: ConfigMap
+      name: consumer-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -Dspring.profiles.active=prod"
+  - target:
+      kind: ConfigMap
+      name: restaurant-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -Dspring.profiles.active=prod"
+  - target:
+      kind: ConfigMap
+      name: courier-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -Dspring.profiles.active=prod"

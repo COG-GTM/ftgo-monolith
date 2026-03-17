@@ -1,0 +1,53 @@
+###############################################################################
+# Environment Promotion Workflow
+#
+# This file documents the promotion strategy for FTGO microservices across
+# environments: dev -> staging -> prod.
+#
+# ArgoCD Application resources define the deployment model:
+#   - app-dev.yml:     Auto-synced on merge to main (continuous deployment)
+#   - app-staging.yml: Manual sync required (promotion gate)
+#   - app-prod.yml:    Manual sync required (promotion gate with approval)
+#
+# Sync windows are configured in project.yml to restrict deployment timing.
+#
+# Promotion Process:
+#   1. Developer merges PR to main branch
+#   2. ArgoCD auto-deploys to ftgo-dev namespace (automated sync policy)
+#   3. Team verifies in dev environment
+#   4. Team lead triggers staging sync in ArgoCD UI or CLI:
+#        argocd app sync ftgo-staging
+#   5. QA validates in staging environment
+#   6. Release manager triggers prod sync with approval:
+#        argocd app sync ftgo-prod
+#
+# Rollback:
+#   ArgoCD maintains revision history for instant rollback:
+#     argocd app rollback ftgo-<env> <revision>
+#
+# Sync Windows (configured in project.yml):
+#   - Dev:     24/7 (always allowed)
+#   - Staging: Mon-Fri 8am-6pm UTC
+#   - Prod:    Tue/Thu 10am-2pm UTC maintenance windows only
+#
+###############################################################################
+
+# This ConfigMap stores promotion metadata for reference.
+# It is not required for ArgoCD operation but provides discoverability.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-promotion-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ftgo
+    app.kubernetes.io/component: promotion
+data:
+  promotion-order: "dev -> staging -> prod"
+  dev-trigger: "automatic on merge to main"
+  staging-trigger: "manual ArgoCD sync (team lead approval)"
+  prod-trigger: "manual ArgoCD sync (release manager approval)"
+  rollback-strategy: "argocd app rollback ftgo-<env> <revision>"
+  dev-namespace: "ftgo-dev"
+  staging-namespace: "ftgo-staging"
+  prod-namespace: "ftgo-prod"

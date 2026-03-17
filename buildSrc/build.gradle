@@ -1,10 +1,15 @@
-test.enabled=false
+plugins {
+    id 'groovy-gradle-plugin'
+}
 
 repositories {
+    gradlePluginPortal()
     mavenCentral()
 }
 
 dependencies {
-    compile 'mysql:mysql-connector-java:5.1.39'
-    compile 'commons-lang:commons-lang:2.6'
+    implementation 'org.springframework.boot:spring-boot-gradle-plugin:3.2.2'
+    implementation 'io.spring.gradle:dependency-management-plugin:1.1.4'
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
 }
