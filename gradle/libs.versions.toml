@@ -1,0 +1,30 @@
+# ============================================================================
+# FTGO Microservices Platform - Version Catalog
+# ============================================================================
+# Central version management for all shared libraries and dependencies.
+# Microservices should reference these versions to ensure consistency.
+# ============================================================================
+
+[versions]
+# Shared Libraries
+ftgo-common = "1.0.0"
+
+# Spring
+spring-boot = "2.0.3.RELEASE"
+spring-dependency-management = "1.0.3.RELEASE"
+
+# Jackson
+jackson = "2.9.7"
+
+# Persistence
+javax-persistence-api = "2.2"
+
+# Utilities
+commons-lang = "2.6"
+
+# Testing
+junit = "4.12"
+rest-assured = "2.9.0"
+
+[libraries]
+ftgo-common-lib = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-lib", version.ref = "ftgo-common" }

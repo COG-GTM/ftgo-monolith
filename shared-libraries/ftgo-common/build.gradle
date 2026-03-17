@@ -1,5 +1,44 @@
+plugins {
+    id 'maven-publish'
+}
+
+version = '1.0.0'
+
 dependencies {
-    compile "com.fasterxml.jackson.core:jackson-databind"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    compile "org.apache.commons:commons-lang3:3.7"
+    compile "javax.persistence:javax.persistence-api:2.2"
+
+    compile "com.fasterxml.jackson.core:jackson-core:2.9.7"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    compile "commons-lang:commons-lang:2.6"
+
+    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "junit:junit:4.12"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and exceptions for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
