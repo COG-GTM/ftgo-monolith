@@ -4,6 +4,15 @@
 # Build context: repository root (use -f services/consumer-service/docker/Dockerfile)
 # Stage 1: Gradle build with dependency caching
 # Stage 2: Minimal JRE 17 runtime
+#
+# NOTE: This Dockerfile is a template for when consumer-service is extracted
+# as a standalone microservice. Prerequisites before this Dockerfile can
+# be built:
+#   1. Add a @SpringBootApplication main class to consumer-service
+#   2. Set bootJar { enabled = true } in consumer-service/build.gradle
+#   3. Resolve shared-libraries:ftgo-common compilation issues
+#   4. Uncomment the consumer-service entry in the CI workflow matrix
+#      (.github/workflows/docker-build-push.yml)
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -58,6 +67,7 @@ RUN ./gradlew dependencies --no-daemon 2>/dev/null || true
 COPY . .
 
 # Build the service JAR (skip tests - they run in CI separately)
+# NOTE: Update the Gradle task path when the service module is finalized
 RUN ./gradlew :services:consumer-service:bootJar --no-daemon -x test
 
 # ---------------------------------------------------------------------------
