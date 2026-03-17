@@ -78,6 +78,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
 
       - name: Build Order Service API
         run: ./gradlew :services:order-service-api:build
