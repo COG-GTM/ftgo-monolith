@@ -1,0 +1,11 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
+dependencies {
+    api libs.springdoc.openapi.starter.webmvc.ui
+    implementation libs.spring.boot.starter.web
+    implementation libs.spring.boot.starter.validation
+    implementation libs.jackson.datatype.jsr310
+}

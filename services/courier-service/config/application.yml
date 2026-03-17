@@ -21,3 +21,17 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
+# --- OpenAPI / Swagger UI ---
+ftgo:
+  openapi:
+    title: Courier Service API
+    description: FTGO Courier Management Service
+    version: 1.0.0
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
