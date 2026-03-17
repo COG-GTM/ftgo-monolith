@@ -1,0 +1,269 @@
+# =============================================================================
+# Docker Build, Scan & Push to GitHub Container Registry (GHCR)
+# =============================================================================
+# Triggers:
+#   - Push to main: builds, scans, and pushes all service images
+#   - Pull request: builds and scans only (no push)
+#
+# Image tagging strategy:
+#   - <service>:<version>-<git-sha>   (immutable release tag)
+#   - <service>:<branch>              (mutable branch tag)
+#   - <service>:latest                (mutable, main branch only)
+#
+# Registry: ghcr.io/cog-gtm/ftgo-monolith/<service>
+# =============================================================================
+
+name: Docker Build & Push
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**/docker/Dockerfile'
+      - 'services/**/src/**'
+      - 'services/**/build.gradle'
+      - 'ftgo-application/Dockerfile'
+      - 'ftgo-application/src/**'
+      - 'ftgo-application/build.gradle'
+      - 'shared-libraries/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - 'buildSrc/**'
+      - '.github/workflows/docker-build-push.yml'
+
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**/docker/Dockerfile'
+      - 'services/**/src/**'
+      - 'services/**/build.gradle'
+      - 'ftgo-application/Dockerfile'
+      - 'ftgo-application/src/**'
+      - 'ftgo-application/build.gradle'
+      - 'shared-libraries/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - 'buildSrc/**'
+      - '.github/workflows/docker-build-push.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build all service JARs in a single Gradle invocation (shared cache)
+  # ---------------------------------------------------------------------------
+  build-jars:
+    name: Build Service JARs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Build all bootJars
+        run: |
+          ./gradlew \
+            :services:consumer-service:bootJar \
+            :services:order-service:bootJar \
+            :services:restaurant-service:bootJar \
+            :services:courier-service:bootJar \
+            :ftgo-application:bootJar \
+            --no-daemon -x test
+
+      - name: Upload JARs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-jars
+          retention-days: 1
+          path: |
+            services/consumer-service/build/libs/*.jar
+            services/order-service/build/libs/*.jar
+            services/restaurant-service/build/libs/*.jar
+            services/courier-service/build/libs/*.jar
+            ftgo-application/build/libs/*.jar
+
+  # ---------------------------------------------------------------------------
+  # Build, scan, and push Docker images (matrix strategy)
+  # ---------------------------------------------------------------------------
+  docker-build-push:
+    name: "Docker: ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    needs: build-jars
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: consumer-service
+            dockerfile: services/consumer-service/docker/Dockerfile
+            context: .
+          - service: order-service
+            dockerfile: services/order-service/docker/Dockerfile
+            context: .
+          - service: restaurant-service
+            dockerfile: services/restaurant-service/docker/Dockerfile
+            context: .
+          - service: courier-service
+            dockerfile: services/courier-service/docker/Dockerfile
+            context: .
+          - service: ftgo-application
+            dockerfile: ftgo-application/Dockerfile
+            context: .
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: service-jars
+          path: .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # -----------------------------------------------------------------------
+      # Image tagging: <service>:<version>-<sha>, <service>:<branch>, <service>:latest
+      # -----------------------------------------------------------------------
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            # version-sha tag (e.g., 0.1.0-abc1234)
+            type=raw,value=0.1.0-{{sha}}
+            # branch tag
+            type=ref,event=branch
+            # latest on default branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # PR tag
+            type=ref,event=pr
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      # -----------------------------------------------------------------------
+      # Vulnerability scanning with Trivy
+      # -----------------------------------------------------------------------
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        if: github.event_name == 'push'
+
+      - name: Run Trivy scanner (PR - build only)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'config'
+          scan-ref: ${{ matrix.dockerfile }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        if: github.event_name == 'pull_request'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+        if: github.event_name == 'push' && always()
+
+      # -----------------------------------------------------------------------
+      # Image size verification (< 200MB)
+      # -----------------------------------------------------------------------
+      - name: Verify image size
+        if: github.event_name == 'push'
+        run: |
+          IMAGE="${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ github.sha }}"
+          SIZE_BYTES=$(docker inspect "$IMAGE" --format='{{.Size}}')
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "Image size: ${SIZE_MB}MB"
+          if [ "$SIZE_MB" -gt 200 ]; then
+            echo "::warning::Image ${{ matrix.service }} exceeds 200MB target: ${SIZE_MB}MB"
+          else
+            echo "Image size is within the 200MB target"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Image cleanup / retention policy
+  # ---------------------------------------------------------------------------
+  cleanup-images:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    if: github.event_name == 'push'
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        service:
+          - consumer-service
+          - order-service
+          - restaurant-service
+          - courier-service
+          - ftgo-application
+    steps:
+      - name: Delete old container image versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ftgo-monolith/${{ matrix.service }}
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true

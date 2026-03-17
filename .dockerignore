@@ -1,0 +1,44 @@
+# =============================================================================
+# Docker Build Context Exclusions
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+
+# Build outputs
+**/build/
+**/out/
+**/.gradle/
+
+# Docker (avoid recursive context)
+**/docker-compose*.yml
+**/.dockerignore
+
+# Documentation
+*.md
+*.adoc
+docs/
+LICENSE*
+
+# CI/CD
+.github/
+
+# Kubernetes
+deployment/
+k8s/
+**/k8s/
+
+# Scripts
+*.sh
+
+# OS files
+.DS_Store
+Thumbs.db
