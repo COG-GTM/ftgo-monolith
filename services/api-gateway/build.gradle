@@ -12,11 +12,8 @@ dependencies {
     implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 
-    // Security - JWT validation
+    // Security - JWT validation (uses Spring's built-in Nimbus JOSE for JWT handling)
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
     // Rate Limiting - Redis backed
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'

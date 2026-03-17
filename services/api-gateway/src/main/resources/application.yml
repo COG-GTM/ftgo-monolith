@@ -31,20 +31,7 @@ spring:
               maxBackoff: 500ms
               factor: 2
 
-      # Global CORS is also handled by CorsConfig bean
-      globalcors:
-        corsConfigurations:
-          '[/api/**]':
-            allowedOrigins: "${ftgo.gateway.cors.allowed-origins:*}"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - PATCH
-              - OPTIONS
-            allowedHeaders: "*"
-            maxAge: 3600
+      # CORS is handled by the CorsConfig bean (CorsWebFilter) for full programmatic control
 
   # JWT validation configuration
   security:

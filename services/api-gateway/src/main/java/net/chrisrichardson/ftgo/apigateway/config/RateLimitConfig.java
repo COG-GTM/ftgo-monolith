@@ -5,15 +5,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
+import java.net.InetSocketAddress;
 
 @Configuration
 public class RateLimitConfig {
+
+    private static final String ANONYMOUS_KEY = "anonymous";
 
     /**
      * Resolves the rate limit key based on the API key header or client IP address.
      * If an X-API-Key header is present, it is used as the key.
      * Otherwise, the client's remote IP address is used.
+     * Falls back to "anonymous" if the remote address cannot be determined (e.g., behind certain proxies).
      */
     @Bean
     public KeyResolver apiKeyResolver() {
@@ -22,10 +25,11 @@ public class RateLimitConfig {
             if (apiKey != null && !apiKey.isBlank()) {
                 return Mono.just(apiKey);
             }
-            return Mono.just(
-                    Objects.requireNonNull(exchange.getRequest().getRemoteAddress(),
-                            "Remote address must not be null").getAddress().getHostAddress()
-            );
+            InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
+            if (remoteAddress != null && remoteAddress.getAddress() != null) {
+                return Mono.just(remoteAddress.getAddress().getHostAddress());
+            }
+            return Mono.just(ANONYMOUS_KEY);
         };
     }
 }
