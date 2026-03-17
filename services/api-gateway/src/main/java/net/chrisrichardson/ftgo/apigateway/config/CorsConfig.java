@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.gateway.config;
+package net.chrisrichardson.ftgo.apigateway.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,17 +12,20 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("${gateway.cors.allowed-origins:*}")
+    @Value("${ftgo.gateway.cors.allowed-origins:*}")
     private String allowedOrigins;
 
-    @Value("${gateway.cors.allowed-methods:GET,POST,PUT,DELETE,PATCH,OPTIONS}")
+    @Value("${ftgo.gateway.cors.allowed-methods:GET,POST,PUT,DELETE,PATCH,OPTIONS}")
     private String allowedMethods;
 
-    @Value("${gateway.cors.allowed-headers:*}")
+    @Value("${ftgo.gateway.cors.allowed-headers:*}")
     private String allowedHeaders;
 
-    @Value("${gateway.cors.max-age:3600}")
+    @Value("${ftgo.gateway.cors.max-age:3600}")
     private long maxAge;
+
+    @Value("${ftgo.gateway.cors.allow-credentials:false}")
+    private boolean allowCredentials;
 
     @Bean
     public CorsWebFilter corsWebFilter() {
@@ -31,7 +34,7 @@ public class CorsConfig {
         corsConfig.setAllowedMethods(List.of(allowedMethods.split(",")));
         corsConfig.setAllowedHeaders(List.of(allowedHeaders.split(",")));
         corsConfig.setMaxAge(maxAge);
-        corsConfig.setAllowCredentials(false);
+        corsConfig.setAllowCredentials(allowCredentials);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", corsConfig);

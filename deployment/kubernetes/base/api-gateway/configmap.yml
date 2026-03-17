@@ -9,11 +9,14 @@ metadata:
 data:
   spring-profiles: kubernetes
   redis-host: ftgo-redis
+  redis-port: "6379"
+  jwt-jwk-set-uri: http://auth-service:9000/.well-known/jwks.json
   jwt-enabled: "true"
   order-service-url: http://order-service.ftgo.svc.cluster.local:8080
   consumer-service-url: http://consumer-service.ftgo.svc.cluster.local:8080
   restaurant-service-url: http://restaurant-service.ftgo.svc.cluster.local:8080
   courier-service-url: http://courier-service.ftgo.svc.cluster.local:8080
+  cors-allowed-origins: "https://ftgo.example.com"
   java-opts: "-Xms256m -Xmx512m"
   server-port: "8080"
   management-port: "8081"

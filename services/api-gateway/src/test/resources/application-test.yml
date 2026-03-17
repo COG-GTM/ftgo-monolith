@@ -2,23 +2,35 @@ server:
   port: 0
 
 spring:
+  application:
+    name: ftgo-api-gateway-test
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+  cloud:
+    gateway:
+      default-filters: []
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9999/.well-known/jwks.json
 
-gateway:
-  jwt:
-    enabled: false
-    secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
-  health:
-    order-service-url: http://localhost:9999
-    consumer-service-url: http://localhost:9999
-    restaurant-service-url: http://localhost:9999
-    courier-service-url: http://localhost:9999
-    timeout-seconds: 1
+ftgo:
+  gateway:
+    services:
+      order-service-url: http://localhost:9091
+      consumer-service-url: http://localhost:9092
+      restaurant-service-url: http://localhost:9093
+      courier-service-url: http://localhost:9094
+    ssl:
+      enabled: false
+
+management:
+  server:
+    port: 0
 
 logging:
   level:
-    root: WARN
-    net.chrisrichardson.ftgo.gateway: DEBUG
+    net.chrisrichardson.ftgo.apigateway: DEBUG
