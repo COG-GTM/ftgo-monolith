@@ -1,5 +1,11 @@
 # FTGO Microservices Platform
 
+[![CI: Consumer Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-consumer-service.yml)
+[![CI: Restaurant Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-restaurant-service.yml)
+[![CI: Order Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-order-service.yml)
+[![CI: Courier Service](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-courier-service.yml)
+[![CI: Shared Libraries](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml/badge.svg)](https://github.com/COG-GTM/ftgo-monolith/actions/workflows/ci-shared-libraries.yml)
+
 This repository contains the FTGO (Food To Go) application, transitioning from a monolithic architecture to microservices. It is based on the [FTGO application](https://github.com/microservices-patterns/ftgo-application) from the book [Microservices Patterns](https://microservices.io/book).
 
 ## Repository Structure
