@@ -1,78 +1,102 @@
 # =============================================================================
-# FTGO Restaurant Service - Multi-Stage Docker Build
+# Restaurant Service - Multi-stage Docker Build
 # =============================================================================
-# Stage 1: Build the application with Gradle
-# Stage 2: Create minimal runtime image with JRE 17
+# Build context: repository root (use -f services/restaurant-service/docker/Dockerfile)
+# Stage 1: Gradle build with dependency caching
+# Stage 2: Minimal JRE 17 runtime
+#
+# NOTE: This Dockerfile is a template for when restaurant-service is extracted
+# as a standalone microservice. Prerequisites before this Dockerfile can
+# be built:
+#   1. Add a @SpringBootApplication main class to restaurant-service
+#   2. Set bootJar { enabled = true } in restaurant-service/build.gradle
+#   3. Resolve shared-libraries:ftgo-common compilation issues
+#   4. Uncomment the restaurant-service entry in the CI workflow matrix
+#      (.github/workflows/docker-build-push.yml)
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# Stage 1: Builder - Compile and package the application
+# Stage 1: Builder
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:17-jdk-jammy AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-# Copy Gradle wrapper and build configuration first (for dependency caching)
+# Copy Gradle wrapper and build config first for dependency caching
 COPY gradlew gradlew.bat ./
 COPY gradle/ gradle/
 COPY build.gradle settings.gradle gradle.properties ./
 COPY buildSrc/ buildSrc/
 
-# Copy shared library sources needed for compilation
-COPY shared-libraries/ shared-libraries/
-COPY services/restaurant-service-api/ services/restaurant-service-api/
+# Copy all module build files for dependency resolution
+COPY shared-libraries/ftgo-common/build.gradle shared-libraries/ftgo-common/
+COPY shared-libraries/ftgo-common-jpa/build.gradle shared-libraries/ftgo-common-jpa/
+COPY shared-libraries/common-swagger/build.gradle shared-libraries/common-swagger/
+COPY shared-libraries/ftgo-domain/build.gradle shared-libraries/ftgo-domain/
+COPY shared-libraries/ftgo-test-util/build.gradle shared-libraries/ftgo-test-util/
+COPY services/consumer-service/build.gradle services/consumer-service/
+COPY services/consumer-service-api/build.gradle services/consumer-service-api/
+COPY services/order-service/build.gradle services/order-service/
+COPY services/order-service-api/build.gradle services/order-service-api/
+COPY services/restaurant-service/build.gradle services/restaurant-service/
+COPY services/restaurant-service-api/build.gradle services/restaurant-service-api/
+COPY services/courier-service/build.gradle services/courier-service/
+COPY services/courier-service-api/build.gradle services/courier-service-api/
+COPY ftgo-common/build.gradle ftgo-common/
+COPY ftgo-common-jpa/build.gradle ftgo-common-jpa/
+COPY ftgo-domain/build.gradle ftgo-domain/
+COPY ftgo-test-util/build.gradle ftgo-test-util/
+COPY common-swagger/build.gradle common-swagger/
+COPY ftgo-flyway/build.gradle ftgo-flyway/
+COPY ftgo-order-service/build.gradle ftgo-order-service/
+COPY ftgo-order-service-api/build.gradle ftgo-order-service-api/
+COPY ftgo-consumer-service/build.gradle ftgo-consumer-service/
+COPY ftgo-consumer-service-api/build.gradle ftgo-consumer-service-api/
+COPY ftgo-restaurant-service/build.gradle ftgo-restaurant-service/
+COPY ftgo-restaurant-service-api/build.gradle ftgo-restaurant-service-api/
+COPY ftgo-courier-service/build.gradle ftgo-courier-service/
+COPY ftgo-courier-service-api/build.gradle ftgo-courier-service-api/
+COPY ftgo-application/build.gradle ftgo-application/
+COPY ftgo-end-to-end-tests-common/build.gradle ftgo-end-to-end-tests-common/
+COPY ftgo-end-to-end-tests/build.gradle ftgo-end-to-end-tests/
 
-# Copy service source
-COPY services/restaurant-service/ services/restaurant-service/
+# Download dependencies (cached layer)
+RUN ./gradlew dependencies --no-daemon 2>/dev/null || true
 
-# Build the service JAR (skip tests for Docker build - tests run in CI)
-RUN chmod +x gradlew && \
-    ./gradlew :services:restaurant-service:bootJar --no-daemon -x test
+# Copy full source
+COPY . .
+
+# Build the service JAR (skip tests - they run in CI separately)
+# NOTE: Update the Gradle task path when the service module is finalized
+RUN ./gradlew :services:restaurant-service:bootJar --no-daemon -x test
 
 # ---------------------------------------------------------------------------
-# Stage 2: Runtime - Minimal JRE image
+# Stage 2: Runtime
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-jammy AS runtime
+FROM eclipse-temurin:17-jre-jammy
 
-# Add metadata labels
-LABEL org.opencontainers.image.source="https://github.com/COG-GTM/ftgo-monolith"
-LABEL org.opencontainers.image.description="FTGO Restaurant Service"
-LABEL org.opencontainers.image.title="restaurant-service"
+# Add non-root user
+RUN groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
+
+WORKDIR /app
 
 # Install curl for health checks and dumb-init for proper signal handling
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl dumb-init && \
     rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN groupadd --gid 1001 ftgo && \
-    useradd --uid 1001 --gid ftgo --shell /bin/bash --create-home ftgo
+# Copy built JAR from builder
+COPY --from=builder /build/services/restaurant-service/build/libs/restaurant-service-*.jar app.jar
 
-WORKDIR /app
+RUN chown -R appuser:appuser /app
 
-# Copy the built JAR from builder stage
-COPY --from=builder /app/services/restaurant-service/build/libs/restaurant-service-*.jar app.jar
+USER appuser
 
-# Set ownership to non-root user
-RUN chown -R ftgo:ftgo /app
-
-# Switch to non-root user
-USER ftgo
-
-# Expose application port
 EXPOSE 8080
 
-# Health check using Spring Boot Actuator
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+HEALTHCHECK --start-period=30s --interval=30s --timeout=3s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Use dumb-init for proper PID 1 signal handling
 ENTRYPOINT ["dumb-init", "--"]
-
-# JVM tuning for containers
-CMD ["java", \
-     "-XX:+UseContainerSupport", \
-     "-XX:MaxRAMPercentage=75.0", \
-     "-XX:+UseG1GC", \
-     "-Djava.security.egd=file:/dev/./urandom", \
-     "-jar", "app.jar"]
+CMD ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

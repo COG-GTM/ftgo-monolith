@@ -1,116 +1,124 @@
 # =============================================================================
-# FTGO Microservices - Local Development Docker Compose (Local Build)
+# FTGO Platform - Local Development with Local Builds
 # =============================================================================
-# Builds Docker images locally for development and testing.
+# Build images locally from multi-stage Dockerfiles.
 #
 # Usage:
-#   # Build and start all services:
-#   docker compose -f docker/docker-compose.build.yml up -d --build
+#   cp docker/.env.example docker/.env   # then edit .env with your credentials
+#   docker compose -f docker/docker-compose.build.yml --env-file docker/.env build
+#   docker compose -f docker/docker-compose.build.yml --env-file docker/.env up
 #
-#   # Rebuild a specific service:
-#   docker compose -f docker/docker-compose.build.yml build order-service
-#
-#   # Stop all services:
-#   docker compose -f docker/docker-compose.build.yml down
+# Required environment variables (set in docker/.env):
+#   MYSQL_ROOT_PASSWORD, MYSQL_USER, MYSQL_PASSWORD
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Infrastructure Services
+  # Infrastructure
   # ---------------------------------------------------------------------------
   mysql:
-    build:
-      context: ../mysql
+    build: ../mysql
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: mysqluser
-      MYSQL_PASSWORD: mysqlpw
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   # ---------------------------------------------------------------------------
-  # Microservices (local build)
+  # Microservices (local multi-stage builds)
   # ---------------------------------------------------------------------------
   consumer-service:
     build:
       context: ..
       dockerfile: services/consumer-service/docker/Dockerfile
-    image: ftgo-consumer-service:local
     ports:
       - "8081:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   order-service:
     build:
       context: ..
       dockerfile: services/order-service/docker/Dockerfile
-    image: ftgo-order-service:local
     ports:
       - "8082:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   restaurant-service:
     build:
       context: ..
       dockerfile: services/restaurant-service/docker/Dockerfile
-    image: ftgo-restaurant-service:local
     ports:
       - "8083:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   courier-service:
     build:
       context: ..
       dockerfile: services/courier-service/docker/Dockerfile
-    image: ftgo-courier-service:local
     ports:
       - "8084:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
+    restart: unless-stopped
+
+  ftgo-application:
+    build:
+      context: ..
+      dockerfile: ftgo-application/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
 volumes:
   mysql-data:
-    driver: local

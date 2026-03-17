@@ -1,16 +1,19 @@
 # =============================================================================
-# FTGO Microservices - Docker Build and Push to GHCR
+# Docker Build, Scan & Push to GitHub Container Registry (GHCR)
 # =============================================================================
-# Builds and pushes Docker images for each microservice on merge to main.
-# Uses GitHub Container Registry (ghcr.io) with semantic versioning + git SHA.
+# Triggers:
+#   - Push to main: builds, scans, and pushes all service images
+#   - Pull request: builds and scans only (no push)
 #
 # Image tagging strategy:
-#   - <service>:latest                    (latest from default branch)
-#   - <service>:<version>-<git-sha>       (immutable, traceable tag)
-#   - <service>:<branch>                  (branch-based tag)
+#   - <service>:<version>-<git-sha>   (immutable release tag)
+#   - <service>:<branch>              (mutable branch tag)
+#   - <service>:latest                (mutable, main branch only)
+#
+# Registry: ghcr.io/cog-gtm/ftgo-monolith/<service>
 # =============================================================================
 
-name: Docker Build and Push
+name: Docker Build & Push
 
 on:
   push:
@@ -19,181 +22,215 @@ on:
       - master
       - 'feat/microservices-migration-*'
     paths:
-      - 'services/*-service/**'
+      - 'services/**/docker/Dockerfile'
+      - 'services/**/src/**'
+      - 'services/**/build.gradle'
+      - 'ftgo-application/Dockerfile'
+      - 'ftgo-application/src/**'
+      - 'ftgo-application/build.gradle'
       - 'shared-libraries/**'
-      - 'buildSrc/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle/**'
-  workflow_dispatch:
-    inputs:
-      services:
-        description: 'Comma-separated list of services to build (e.g., consumer-service,order-service). Leave empty for all.'
-        required: false
-        default: ''
+      - 'buildSrc/**'
+      - '.github/workflows/docker-build-push.yml'
+
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'feat/microservices-migration-*'
+    paths:
+      - 'services/**/docker/Dockerfile'
+      - 'services/**/src/**'
+      - 'services/**/build.gradle'
+      - 'ftgo-application/Dockerfile'
+      - 'ftgo-application/src/**'
+      - 'ftgo-application/build.gradle'
+      - 'shared-libraries/**'
+      - 'ftgo-common/**'
+      - 'ftgo-common-jpa/**'
+      - 'ftgo-domain/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - 'buildSrc/**'
+      - '.github/workflows/docker-build-push.yml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ftgo
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
-# Prevent concurrent builds on the same branch
+# Cancel in-progress runs for the same branch
 concurrency:
-  group: docker-build-${{ github.ref }}
+  group: docker-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Detect which services changed (for selective builds)
+  # Build, scan, and push Docker images (matrix strategy)
+  # Each Dockerfile uses multi-stage builds: Gradle builder + JRE runtime
   # ---------------------------------------------------------------------------
-  detect-changes:
-    name: Detect Changed Services
+  docker-build-push:
+    name: "Docker: ${{ matrix.service }}"
     runs-on: ubuntu-latest
-    outputs:
-      consumer-service: ${{ steps.changes.outputs.consumer-service }}
-      order-service: ${{ steps.changes.outputs.order-service }}
-      restaurant-service: ${{ steps.changes.outputs.restaurant-service }}
-      courier-service: ${{ steps.changes.outputs.courier-service }}
-      shared-changed: ${{ steps.changes.outputs.shared }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Detect changed paths
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            consumer-service:
-              - 'services/consumer-service/**'
-              - 'services/consumer-service-api/**'
-            order-service:
-              - 'services/order-service/**'
-              - 'services/order-service-api/**'
-              - 'services/consumer-service-api/**'
-              - 'services/restaurant-service-api/**'
-              - 'services/courier-service-api/**'
-            restaurant-service:
-              - 'services/restaurant-service/**'
-              - 'services/restaurant-service-api/**'
-            courier-service:
-              - 'services/courier-service/**'
-              - 'services/courier-service-api/**'
-            shared:
-              - 'shared-libraries/**'
-              - 'buildSrc/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-              - 'gradle/**'
-
-  # ---------------------------------------------------------------------------
-  # Build and push Docker images (matrix strategy for parallel builds)
-  # ---------------------------------------------------------------------------
-  build-and-push:
-    name: Build ${{ matrix.service }}
-    runs-on: ubuntu-latest
-    needs: detect-changes
     permissions:
       contents: read
       packages: write
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - service: consumer-service
+          # ---------------------------------------------------------------
+          # Currently, only ftgo-application produces a standalone bootJar.
+          # Individual service entries will be enabled once each service is
+          # extracted with its own @SpringBootApplication main class and
+          # bootJar { enabled = true } in its build.gradle.
+          # ---------------------------------------------------------------
+          # - service: consumer-service
+          #   dockerfile: services/consumer-service/docker/Dockerfile
+          #   context: .
+          # - service: order-service
+          #   dockerfile: services/order-service/docker/Dockerfile
+          #   context: .
+          # - service: restaurant-service
+          #   dockerfile: services/restaurant-service/docker/Dockerfile
+          #   context: .
+          # - service: courier-service
+          #   dockerfile: services/courier-service/docker/Dockerfile
+          #   context: .
+          - service: ftgo-application
+            dockerfile: ftgo-application/Dockerfile
             context: .
-            dockerfile: services/consumer-service/docker/Dockerfile
-            changed: ${{ needs.detect-changes.outputs.consumer-service }}
-          - service: order-service
-            context: .
-            dockerfile: services/order-service/docker/Dockerfile
-            changed: ${{ needs.detect-changes.outputs.order-service }}
-          - service: restaurant-service
-            context: .
-            dockerfile: services/restaurant-service/docker/Dockerfile
-            changed: ${{ needs.detect-changes.outputs.restaurant-service }}
-          - service: courier-service
-            context: .
-            dockerfile: services/courier-service/docker/Dockerfile
-            changed: ${{ needs.detect-changes.outputs.courier-service }}
-
-    # Build if: service changed, shared libs changed, manual dispatch, or workflow_dispatch with specific service
-    if: |
-      always() &&
-      needs.detect-changes.result == 'success'
 
     steps:
-      - name: Check if build is needed
-        id: should-build
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            INPUT_SERVICES="${{ github.event.inputs.services }}"
-            if [[ -z "$INPUT_SERVICES" ]] || echo "$INPUT_SERVICES" | grep -q "${{ matrix.service }}"; then
-              echo "build=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "build=false" >> "$GITHUB_OUTPUT"
-            fi
-          elif [[ "${{ matrix.changed }}" == "true" ]] || [[ "${{ needs.detect-changes.outputs.shared-changed }}" == "true" ]]; then
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "build=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Checkout repository
-        if: steps.should-build.outputs.build == 'true'
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        if: steps.should-build.outputs.build == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        if: steps.should-build.outputs.build == 'true'
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # -----------------------------------------------------------------------
+      # Compute short SHA for consistent tagging
+      # -----------------------------------------------------------------------
+      - name: Compute short SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # Image tagging: <service>:<version>-<sha>, <service>:<branch>, <service>:latest
+      # -----------------------------------------------------------------------
       - name: Extract metadata (tags, labels)
-        if: steps.should-build.outputs.build == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
           tags: |
-            # Tag with version + git SHA (immutable)
-            type=raw,value=0.1.0-{{sha}}
-            # Tag with branch name
+            # version-sha tag (e.g., 0.1.0-abc1234)
+            type=raw,value=0.1.0-${{ steps.vars.outputs.short_sha }}
+            # branch tag
             type=ref,event=branch
-            # Tag latest on default branch
+            # latest on default branch
             type=raw,value=latest,enable={{is_default_branch}}
+            # PR tag
+            type=ref,event=pr
 
-      - name: Build and push Docker image
-        if: steps.should-build.outputs.build == 'true'
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          push: true
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: Generate build summary
-        if: steps.should-build.outputs.build == 'true'
-        run: |
-          echo "### Docker Image Built :whale:" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Property | Value |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|----------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Service** | \`${{ matrix.service }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Tags** | \`${{ steps.meta.outputs.tags }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Digest** | \`${{ steps.meta.outputs.digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
+      # -----------------------------------------------------------------------
+      # Vulnerability scanning with Trivy
+      # -----------------------------------------------------------------------
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ steps.vars.outputs.short_sha }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        if: github.event_name == 'push'
 
-      - name: Skip notification
-        if: steps.should-build.outputs.build == 'false'
+      - name: Run Trivy scanner (PR - build only)
+        uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true
+        with:
+          scan-type: 'config'
+          scan-ref: ${{ matrix.dockerfile }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+        if: github.event_name == 'pull_request'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+        if: github.event_name == 'push' && always()
+
+      # -----------------------------------------------------------------------
+      # Image size verification (< 200MB)
+      # -----------------------------------------------------------------------
+      - name: Verify image size
+        if: github.event_name == 'push'
         run: |
-          echo "### Skipped :fast_forward:" >> "$GITHUB_STEP_SUMMARY"
-          echo "No changes detected for **${{ matrix.service }}**" >> "$GITHUB_STEP_SUMMARY"
+          IMAGE="${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ steps.vars.outputs.short_sha }}"
+          SIZE_BYTES=$(docker inspect "$IMAGE" --format='{{.Size}}')
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "Image size: ${SIZE_MB}MB"
+          if [ "$SIZE_MB" -gt 200 ]; then
+            echo "::warning::Image ${{ matrix.service }} exceeds 200MB target: ${SIZE_MB}MB"
+          else
+            echo "Image size is within the 200MB target"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Image cleanup / retention policy
+  # ---------------------------------------------------------------------------
+  cleanup-images:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    if: github.event_name == 'push'
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        service:
+          # Service entries will be enabled once individual microservices
+          # are extracted as standalone bootable applications.
+          # - consumer-service
+          # - order-service
+          # - restaurant-service
+          # - courier-service
+          - ftgo-application
+    steps:
+      - name: Delete old container image versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ftgo-monolith/${{ matrix.service }}
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true

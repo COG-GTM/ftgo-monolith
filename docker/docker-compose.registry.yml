@@ -1,110 +1,118 @@
 # =============================================================================
-# FTGO Microservices - Local Development Docker Compose (Registry Images)
+# FTGO Platform - Local Development with Registry Images
 # =============================================================================
-# Uses pre-built images from GitHub Container Registry for local development.
+# Pull pre-built images from GitHub Container Registry (GHCR) for local
+# development and testing. Use this when you want to run services without
+# building them locally.
 #
 # Usage:
-#   # Pull latest images and start all services:
-#   docker compose -f docker/docker-compose.registry.yml up -d
+#   cp docker/.env.example docker/.env   # then edit .env with your credentials
+#   docker compose -f docker/docker-compose.registry.yml --env-file docker/.env up
 #
-#   # Start specific services:
-#   docker compose -f docker/docker-compose.registry.yml up -d consumer-service order-service
+# Override the image tag:
+#   IMAGE_TAG=1.0.0-abc1234 docker compose -f docker/docker-compose.registry.yml --env-file docker/.env up
 #
-#   # View logs:
-#   docker compose -f docker/docker-compose.registry.yml logs -f order-service
-#
-#   # Stop all services:
-#   docker compose -f docker/docker-compose.registry.yml down
-#
-# Prerequisites:
-#   docker login ghcr.io -u <github-username> --password-stdin < <(echo <PAT>)
+# Required environment variables (set in docker/.env):
+#   MYSQL_ROOT_PASSWORD, MYSQL_USER, MYSQL_PASSWORD
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Infrastructure Services
+  # Infrastructure
   # ---------------------------------------------------------------------------
   mysql:
-    build:
-      context: ../mysql
+    build: ../mysql
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: mysqluser
-      MYSQL_PASSWORD: mysqlpw
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   # ---------------------------------------------------------------------------
-  # Microservices (from GHCR registry)
+  # Microservices (from GHCR)
   # ---------------------------------------------------------------------------
   consumer-service:
-    image: ghcr.io/cog-gtm/ftgo-consumer-service:latest
+    image: ghcr.io/cog-gtm/ftgo-monolith/consumer-service:${IMAGE_TAG:-latest}
     ports:
       - "8081:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   order-service:
-    image: ghcr.io/cog-gtm/ftgo-order-service:latest
+    image: ghcr.io/cog-gtm/ftgo-monolith/order-service:${IMAGE_TAG:-latest}
     ports:
       - "8082:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   restaurant-service:
-    image: ghcr.io/cog-gtm/ftgo-restaurant-service:latest
+    image: ghcr.io/cog-gtm/ftgo-monolith/restaurant-service:${IMAGE_TAG:-latest}
     ports:
       - "8083:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
   courier-service:
-    image: ghcr.io/cog-gtm/ftgo-courier-service:latest
+    image: ghcr.io/cog-gtm/ftgo-monolith/courier-service:${IMAGE_TAG:-latest}
     ports:
       - "8084:8080"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      JAVA_OPTS: "-Xmx256m"
+      JAVA_OPTS: -Xmx192m
+    restart: unless-stopped
+
+  ftgo-application:
+    image: ghcr.io/cog-gtm/ftgo-monolith/ftgo-application:${IMAGE_TAG:-latest}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      JAVA_OPTS: -Xmx192m
     restart: unless-stopped
 
 volumes:
   mysql-data:
-    driver: local

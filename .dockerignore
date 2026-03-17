@@ -1,25 +1,26 @@
 # =============================================================================
-# FTGO Monorepo - Docker Build Ignore
-# =============================================================================
-# Excludes unnecessary files from Docker build context to reduce build time
-# and image size.
+# Docker Build Context Exclusions
 # =============================================================================
 
-# Version control
+# Git
 .git
 .gitignore
 
-# IDE files
+# IDE
 .idea
 .vscode
 *.iml
 *.ipr
 *.iws
 
-# Build outputs (each service builds inside Docker)
+# Build outputs
 **/build/
 **/out/
 **/.gradle/
+
+# Docker (avoid recursive context)
+**/docker-compose*.yml
+**/.dockerignore
 
 # Documentation
 *.md
@@ -29,29 +30,15 @@ LICENSE*
 
 # CI/CD
 .github/
-.circleci/
 
-# Kubernetes deployment
+# Kubernetes
 deployment/
 k8s/
 **/k8s/
 
-# Docker files (avoid recursive context)
-docker-compose*.yml
-.dockerignore
-
-# Shell scripts
+# Scripts (exclude all except Gradle wrapper)
 *.sh
-
-# Test data and configs not needed in image
-**/src/test/
-**/src/integrationTest/
-
-# Legacy monolith modules (not needed for microservice builds)
-ftgo-application/
-ftgo-end-to-end-tests/
-ftgo-end-to-end-tests-common/
-ftgo-flyway/
+!gradlew
 
 # OS files
 .DS_Store
