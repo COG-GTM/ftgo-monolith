@@ -1,0 +1,13 @@
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+    compile project(":services:{{service-name}}:{{service-name}}-api")
+    compile project(":ftgo-common")
+    compile project(":ftgo-common-jpa")
+
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}

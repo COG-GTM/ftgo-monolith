@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: courier-service
+  labels:
+    app: courier-service
+    context: courier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: courier-service
+  template:
+    metadata:
+      labels:
+        app: courier-service
+        context: courier
+    spec:
+      containers:
+        - name: courier-service
+          image: ftgo/courier-service:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/ftgo_courier_service
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-credentials
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-credentials
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: courier-service
+spec:
+  selector:
+    app: courier-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+  type: ClusterIP

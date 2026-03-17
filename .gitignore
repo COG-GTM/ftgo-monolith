@@ -15,3 +15,12 @@ bin
 node_modules
 dist
 ftgo-api-gateway-graphql/jest_0
+
+# IDE
+*.swp
+*.swo
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
