@@ -77,14 +77,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Restaurant Service API
-        run: ./gradlew :services:restaurant-service-api:build
-
-      - name: Build Restaurant Service
-        run: ./gradlew :services:restaurant-service:build
-
-      - name: Run Restaurant Service unit tests
-        run: ./gradlew :services:restaurant-service:test :services:restaurant-service-api:test
+      - name: Build and test Restaurant Service
+        run: ./gradlew :services:restaurant-service-api:build :services:restaurant-service:build
 
       - name: Upload test reports
         if: always()

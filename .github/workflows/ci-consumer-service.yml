@@ -77,14 +77,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Consumer Service API
-        run: ./gradlew :services:consumer-service-api:build
-
-      - name: Build Consumer Service
-        run: ./gradlew :services:consumer-service:build
-
-      - name: Run Consumer Service unit tests
-        run: ./gradlew :services:consumer-service:test :services:consumer-service-api:test
+      - name: Build and test Consumer Service
+        run: ./gradlew :services:consumer-service-api:build :services:consumer-service:build
 
       - name: Upload test reports
         if: always()

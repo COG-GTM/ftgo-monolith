@@ -77,14 +77,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Order Service API
-        run: ./gradlew :services:order-service-api:build
-
-      - name: Build Order Service
-        run: ./gradlew :services:order-service:build
-
-      - name: Run Order Service unit tests
-        run: ./gradlew :services:order-service:test :services:order-service-api:test
+      - name: Build and test Order Service
+        run: ./gradlew :services:order-service-api:build :services:order-service:build
 
       - name: Upload test reports
         if: always()

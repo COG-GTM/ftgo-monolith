@@ -77,14 +77,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Courier Service API
-        run: ./gradlew :services:courier-service-api:build
-
-      - name: Build Courier Service
-        run: ./gradlew :services:courier-service:build
-
-      - name: Run Courier Service unit tests
-        run: ./gradlew :services:courier-service:test :services:courier-service-api:test
+      - name: Build and test Courier Service
+        run: ./gradlew :services:courier-service-api:build :services:courier-service:build
 
       - name: Upload test reports
         if: always()

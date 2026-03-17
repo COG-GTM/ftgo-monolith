@@ -80,28 +80,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build ftgo-common
-        run: ./gradlew :shared-libraries:ftgo-common:build
-
-      - name: Build ftgo-common-jpa
-        run: ./gradlew :shared-libraries:ftgo-common-jpa:build
-
-      - name: Build ftgo-domain
-        run: ./gradlew :shared-libraries:ftgo-domain:build
-
-      - name: Build common-swagger
-        run: ./gradlew :shared-libraries:common-swagger:build
-
-      - name: Build ftgo-test-util
-        run: ./gradlew :shared-libraries:ftgo-test-util:build
-
-      - name: Run shared library tests
+      - name: Build and test shared libraries
         run: |
-          ./gradlew :shared-libraries:ftgo-common:test \
-                    :shared-libraries:ftgo-common-jpa:test \
-                    :shared-libraries:ftgo-domain:test \
-                    :shared-libraries:common-swagger:test \
-                    :shared-libraries:ftgo-test-util:test
+          ./gradlew :shared-libraries:ftgo-common:build \
+                    :shared-libraries:ftgo-common-jpa:build \
+                    :shared-libraries:ftgo-domain:build \
+                    :shared-libraries:common-swagger:build \
+                    :shared-libraries:ftgo-test-util:build
 
       - name: Upload test reports
         if: always()
