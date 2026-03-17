@@ -10,9 +10,9 @@
 | Batch | Jira Key | Summary | Phase | Session Status | PR Link | Squash Status | Conflicts Resolved |
 |-------|----------|---------|-------|----------------|---------|---------------|-------------------|
 | 1 | EM-30 | Define Microservices Repository Structure and Naming Conventions | Phase 1 | Completed | [PR #156](https://github.com/COG-GTM/ftgo-monolith/pull/156) | Success | None |
-| 2 | EM-28 | Create Shared Parent Gradle Configuration | Phase 1 | Pending | — | — | — |
-| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Pending | — | — | — |
-| 2 | EM-35 | Configure Kubernetes Deployment Automation | Phase 2 | Pending | — | — | — |
+| 2 | EM-28 | Create Shared Parent Gradle Configuration | Phase 1 | Completed | [PR #159](https://github.com/COG-GTM/ftgo-monolith/pull/159) | Success | None |
+| 2 | EM-32 | Extract and Version ftgo-common Shared Library | Phase 1 | Completed | [PR #157](https://github.com/COG-GTM/ftgo-monolith/pull/157) | Success (conflicts resolved) | gradle/libs.versions.toml, shared-libraries/ftgo-common/build.gradle |
+| 2 | EM-35 | Configure Kubernetes Deployment Automation | Phase 2 | Completed | [PR #158](https://github.com/COG-GTM/ftgo-monolith/pull/158) | Success | None |
 | 3 | EM-31 | Extract ftgo-common-jpa and ftgo-domain as Shared Libraries | Phase 1 | Pending | — | — | — |
 | 3 | EM-33 | Set Up Automated Gradle Build Pipeline with GitHub Actions | Phase 2 | Pending | — | — | — |
 | 3 | EM-34 | Set Up Container Registry and Docker Image Build Automation | Phase 2 | Pending | — | — | — |
@@ -34,7 +34,9 @@
 
 ## Conflict Resolution History
 
-_No conflicts resolved yet._
+### Batch 2: EM-32 Conflict Resolution
+- **gradle/libs.versions.toml**: EM-28 created comprehensive version catalog; EM-32 created minimal catalog with ftgo-common entry. Resolution: kept EM-28's full catalog, added ftgo-common version and ftgo-common-lib library entry from EM-32.
+- **shared-libraries/ftgo-common/build.gradle**: EM-28 applied convention plugins; EM-32 added maven-publish and source files. Resolution: combined EM-28's convention plugins with EM-32's publishing config. Fixed duplicate `mavenJava` publication from convention plugin overlap.
 
 ## Deferred Tasks
 
