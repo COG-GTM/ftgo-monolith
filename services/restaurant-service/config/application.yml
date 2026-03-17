@@ -45,3 +45,15 @@ ftgo:
     cors:
       allowed-origins:
         - ${API_GATEWAY_ORIGIN:http://localhost:8080}
+  openapi:
+    title: Restaurant Service API
+    description: FTGO Restaurant Management Service
+    version: 1.0.0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

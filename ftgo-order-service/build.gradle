@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(":common-swagger")
+    implementation project(":shared-libraries:ftgo-openapi-lib")
     implementation project(":ftgo-domain")
     implementation project(":ftgo-consumer-service-api")
     implementation project(":ftgo-restaurant-service-api")
