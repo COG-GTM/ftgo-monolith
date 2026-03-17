@@ -28,3 +28,21 @@ include "ftgo-application"
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
+// ============================================================
+// Microservices - New service modules under services/ directory
+// Each service has an API module and an implementation module.
+// Gradle path convention: :services:<service-name>:<submodule>
+// ============================================================
+
+include "services:consumer-service:consumer-service-api"
+include "services:consumer-service:consumer-service-impl"
+
+include "services:restaurant-service:restaurant-service-api"
+include "services:restaurant-service:restaurant-service-impl"
+
+include "services:order-service:order-service-api"
+include "services:order-service:order-service-impl"
+
+include "services:courier-service:courier-service-api"
+include "services:courier-service:courier-service-impl"
+

@@ -1,0 +1,7 @@
+// Services parent build configuration
+// This file provides shared configuration for all microservice modules under services/
+
+subprojects {
+    // All microservice modules inherit from root project configuration
+    // Additional microservice-specific configuration can be added here
+}

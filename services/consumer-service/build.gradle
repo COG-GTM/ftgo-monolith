@@ -1,0 +1,2 @@
+// Consumer Service - parent build file
+// Aggregates consumer-service-api and consumer-service-impl submodules
