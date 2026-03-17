@@ -130,13 +130,6 @@ rest-assured-testing = [
     "rest-assured-json-path",
 ]
 
-# Observability
-observability = [
-    "spring-boot-starter-actuator",
-    "micrometer-core",
-    "micrometer-registry-prometheus",
-]
-
 # Jackson serialization
 jackson = [
     "jackson-core",
