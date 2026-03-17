@@ -36,8 +36,9 @@ deployment/
 k8s/
 **/k8s/
 
-# Scripts
+# Scripts (exclude all except Gradle wrapper)
 *.sh
+!gradlew
 
 # OS files
 .DS_Store

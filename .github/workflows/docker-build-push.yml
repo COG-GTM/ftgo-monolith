@@ -71,55 +71,12 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Build all service JARs in a single Gradle invocation (shared cache)
-  # ---------------------------------------------------------------------------
-  build-jars:
-    name: Build Service JARs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
-
-      - name: Build all bootJars
-        run: |
-          ./gradlew \
-            :services:consumer-service:bootJar \
-            :services:order-service:bootJar \
-            :services:restaurant-service:bootJar \
-            :services:courier-service:bootJar \
-            :ftgo-application:bootJar \
-            --no-daemon -x test
-
-      - name: Upload JARs as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: service-jars
-          retention-days: 1
-          path: |
-            services/consumer-service/build/libs/*.jar
-            services/order-service/build/libs/*.jar
-            services/restaurant-service/build/libs/*.jar
-            services/courier-service/build/libs/*.jar
-            ftgo-application/build/libs/*.jar
-
-  # ---------------------------------------------------------------------------
   # Build, scan, and push Docker images (matrix strategy)
+  # Each Dockerfile uses multi-stage builds: Gradle builder + JRE runtime
   # ---------------------------------------------------------------------------
   docker-build-push:
     name: "Docker: ${{ matrix.service }}"
     runs-on: ubuntu-latest
-    needs: build-jars
     permissions:
       contents: read
       packages: write
@@ -148,12 +105,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download JARs
-        uses: actions/download-artifact@v4
-        with:
-          name: service-jars
-          path: .
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -166,6 +117,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # -----------------------------------------------------------------------
+      # Compute short SHA for consistent tagging
+      # -----------------------------------------------------------------------
+      - name: Compute short SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
       # Image tagging: <service>:<version>-<sha>, <service>:<branch>, <service>:latest
       # -----------------------------------------------------------------------
       - name: Extract metadata (tags, labels)
@@ -175,7 +133,7 @@ jobs:
           images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
           tags: |
             # version-sha tag (e.g., 0.1.0-abc1234)
-            type=raw,value=0.1.0-{{sha}}
+            type=raw,value=0.1.0-${{ steps.vars.outputs.short_sha }}
             # branch tag
             type=ref,event=branch
             # latest on default branch
@@ -201,7 +159,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ github.sha }}
+          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ steps.vars.outputs.short_sha }}
           format: 'sarif'
           output: 'trivy-results-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
@@ -231,7 +189,7 @@ jobs:
       - name: Verify image size
         if: github.event_name == 'push'
         run: |
-          IMAGE="${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ github.sha }}"
+          IMAGE="${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:0.1.0-${{ steps.vars.outputs.short_sha }}"
           SIZE_BYTES=$(docker inspect "$IMAGE" --format='{{.Size}}')
           SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
           echo "Image size: ${SIZE_MB}MB"
