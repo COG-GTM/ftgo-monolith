@@ -2,13 +2,16 @@ package net.chrisrichardson.ftgo.observability.metrics;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
  * Custom business metrics for the Restaurant Service.
  * Tracks restaurant creation and menu update events.
+ * Only activated when spring.application.name is set to restaurant-service.
  */
 @Component
+@ConditionalOnProperty(name = "spring.application.name", havingValue = "restaurant-service")
 public class RestaurantMetrics {
 
     private final Counter restaurantsCreated;

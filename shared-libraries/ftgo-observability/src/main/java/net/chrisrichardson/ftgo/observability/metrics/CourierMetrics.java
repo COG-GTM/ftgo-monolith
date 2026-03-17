@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.observability.metrics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -10,8 +11,10 @@ import java.time.Duration;
 /**
  * Custom business metrics for the Courier Service.
  * Tracks delivery assignment, completion, and average delivery time.
+ * Only activated when spring.application.name is set to courier-service.
  */
 @Component
+@ConditionalOnProperty(name = "spring.application.name", havingValue = "courier-service")
 public class CourierMetrics {
 
     private final Counter deliveriesAssigned;

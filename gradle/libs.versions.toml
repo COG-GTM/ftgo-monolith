@@ -26,7 +26,6 @@ flyway                      = "9.22.3"
 
 # --- Observability ---
 micrometer                  = "1.12.2"
-micrometer-tracing          = "1.2.2"
 
 # --- Testing ---
 junit-jupiter               = "5.10.1"

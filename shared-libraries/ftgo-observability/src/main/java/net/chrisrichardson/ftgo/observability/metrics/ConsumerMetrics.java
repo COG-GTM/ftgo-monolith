@@ -2,13 +2,16 @@ package net.chrisrichardson.ftgo.observability.metrics;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
  * Custom business metrics for the Consumer Service.
  * Tracks consumer registration and validation events.
+ * Only activated when spring.application.name is set to consumer-service.
  */
 @Component
+@ConditionalOnProperty(name = "spring.application.name", havingValue = "consumer-service")
 public class ConsumerMetrics {
 
     private final Counter consumersRegistered;
