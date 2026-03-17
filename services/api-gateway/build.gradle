@@ -11,15 +11,14 @@ dependencies {
     // Spring Cloud Gateway (WebFlux-based)
     implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
 
     // Security - JWT validation (uses Spring's built-in Nimbus JOSE for JWT handling)
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Rate Limiting - Redis backed
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-
-    // Circuit Breaker - Resilience4j
-    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
 
     // Actuator for health checks
     implementation libs.spring.boot.starter.actuator
@@ -30,4 +29,13 @@ dependencies {
     // Testing
     testImplementation libs.spring.boot.starter.test
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
+}
+
+// Exclude spring-boot-starter-web since Gateway uses WebFlux
+configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+    exclude group: 'org.springframework', module: 'spring-webmvc'
 }

@@ -52,11 +52,23 @@ spec:
                 configMapKeyRef:
                   name: api-gateway-config
                   key: redis-port
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-redis-credentials
+                  key: password
+                  optional: true
             - name: JWT_JWK_SET_URI
               valueFrom:
                 configMapKeyRef:
                   name: api-gateway-config
                   key: jwt-jwk-set-uri
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-jwt-secret
+                  key: secret
+                  optional: true
             - name: ORDER_SERVICE_URL
               valueFrom:
                 configMapKeyRef:
@@ -98,7 +110,7 @@ spec:
             httpGet:
               path: /actuator/health/readiness
               port: management
-            initialDelaySeconds: 30
+            initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
@@ -107,7 +119,7 @@ spec:
             httpGet:
               path: /actuator/health/liveness
               port: management
-            initialDelaySeconds: 60
+            initialDelaySeconds: 45
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 5

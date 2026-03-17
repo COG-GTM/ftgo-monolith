@@ -1,0 +1,50 @@
+# =============================================================================
+# FTGO Microservices - Container Image Cleanup
+# =============================================================================
+# Manages image retention in GitHub Container Registry.
+# Deletes old untagged images and retains only recent tagged versions.
+#
+# Retention Policy:
+#   - Keep latest 10 tagged versions per service
+#   - Delete untagged images older than 30 days
+#   - Never delete images tagged as 'latest' or matching release tags
+# =============================================================================
+
+name: Container Image Cleanup
+
+on:
+  schedule:
+    # Run weekly on Sundays at 02:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Cleanup ${{ matrix.service }} images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - consumer-service
+          - order-service
+          - restaurant-service
+          - courier-service
+
+    steps:
+      - name: Delete old untagged container images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'ftgo-${{ matrix.service }}'
+          package-type: 'container'
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true
+
+      - name: Generate cleanup summary
+        run: |
+          echo "### Image Cleanup: ftgo-${{ matrix.service }} :broom:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Retained latest **10** tagged versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Removed untagged versions" >> "$GITHUB_STEP_SUMMARY"

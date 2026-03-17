@@ -10,6 +10,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000
 
   cloud:
     gateway:
@@ -32,6 +34,16 @@ spring:
               factor: 2
 
       # CORS is handled by the CorsConfig bean (CorsWebFilter) for full programmatic control
+
+      # Discovery-based routing disabled (using explicit routes)
+      discovery:
+        locator:
+          enabled: false
+
+      # HTTP client settings
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
 
   # JWT validation configuration
   security:
@@ -65,25 +77,6 @@ ftgo:
       # key-store-type: PKCS12
       # key-alias: ftgo-gateway
 
-# Actuator configuration
-management:
-  server:
-    port: 8081
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,gateway
-  endpoint:
-    health:
-      show-details: always
-      probes:
-        enabled: true
-    gateway:
-      enabled: true
-  health:
-    circuitbreakers:
-      enabled: true
-
 # Resilience4j circuit breaker configuration
 resilience4j:
   circuitbreaker:
@@ -95,7 +88,13 @@ resilience4j:
         waitDurationInOpenState: 30s
         permittedNumberOfCallsInHalfOpenState: 5
         minimumNumberOfCalls: 5
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 3s
         registerHealthIndicator: true
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
     instances:
       orderServiceCircuitBreaker:
         baseConfig: default
@@ -110,6 +109,27 @@ resilience4j:
       default:
         timeoutDuration: 5s
 
+# Actuator configuration
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+
 # Logging
 logging:
   level:
@@ -117,4 +137,4 @@ logging:
     org.springframework.cloud.gateway: INFO
     io.github.resilience4j: INFO
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"

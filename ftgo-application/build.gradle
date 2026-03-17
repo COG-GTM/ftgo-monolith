@@ -13,6 +13,8 @@ dependencies {
     implementation project(":ftgo-restaurant-service")
     implementation project(":ftgo-courier-service")
 
+    implementation project(":shared-libraries:ftgo-openapi-lib")
+
     implementation libs.spring.boot.starter.actuator
     implementation libs.spring.boot.starter.web
 
