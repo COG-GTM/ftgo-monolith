@@ -20,7 +20,7 @@ publishing {
 
             pom {
                 name = 'FTGO Domain Library'
-                description = 'Shared JPA entities, repositories, and domain objects for the FTGO microservices platform'
+                description = 'Shared JPA entities, repositories, and domain model for the FTGO microservices platform'
             }
         }
     }

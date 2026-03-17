@@ -1,0 +1,125 @@
+# ============================================================================
+# Prometheus Alerting Rules for FTGO Microservices Platform
+# ============================================================================
+# Defines alerting thresholds for critical service health indicators.
+# ============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # Service Health Alerts (RED Metrics)
+  # ---------------------------------------------------------------------------
+  - name: ftgo_service_health
+    rules:
+      # Alert when error rate exceeds 5% over a 5-minute window
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%) on {{ $labels.job }} for the last 5 minutes."
+          runbook_url: "https://docs.ftgo.dev/runbooks/high-error-rate"
+
+      # Alert when p99 latency exceeds 2 seconds
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)
+          ) > 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High p99 latency on {{ $labels.job }}"
+          description: "P99 latency is {{ $value }}s (threshold: 2s) on {{ $labels.job }} for the last 5 minutes."
+          runbook_url: "https://docs.ftgo.dev/runbooks/high-latency"
+
+      # Alert when a service is down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+          runbook_url: "https://docs.ftgo.dev/runbooks/service-down"
+
+  # ---------------------------------------------------------------------------
+  # JVM Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_jvm_health
+    rules:
+      # Alert when JVM heap usage exceeds 90%
+      - alert: HighJvmHeapUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"}
+            /
+            jvm_memory_max_bytes{area="heap"}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage on {{ $labels.job }}"
+          description: "JVM heap usage is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+      # Alert when GC pause time is excessive
+      - alert: HighGcPauseTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.job }}"
+          description: "Average GC pause time is {{ $value }}s on {{ $labels.job }}."
+
+  # ---------------------------------------------------------------------------
+  # Database Connection Pool Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_database_health
+    rules:
+      # Alert when connection pool is nearly exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            hikaricp_connections_active
+            /
+            hikaricp_connections_max
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly exhausted on {{ $labels.job }}"
+          description: "Connection pool usage is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+  # ---------------------------------------------------------------------------
+  # Business Metrics Alerts
+  # ---------------------------------------------------------------------------
+  - name: ftgo_business_metrics
+    rules:
+      # Alert when order cancellation rate is unusually high
+      - alert: HighOrderCancellationRate
+        expr: |
+          (
+            rate(orders_cancelled_total[15m])
+            /
+            rate(orders_created_total[15m])
+          ) > 0.3
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High order cancellation rate"
+          description: "Order cancellation rate is {{ $value | humanizePercentage }} over the last 15 minutes."

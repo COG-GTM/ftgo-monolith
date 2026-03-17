@@ -1,0 +1,17 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
+dependencies {
+    api libs.spring.boot.starter.test
+    api libs.rest.assured
+    api libs.rest.assured.spring.mock.mvc
+    api libs.rest.assured.json.path
+    api libs.junit.jupiter
+    api libs.mockito.core
+
+    implementation project(":shared-libraries:ftgo-openapi-lib")
+    implementation libs.spring.boot.starter.web
+    implementation libs.jackson.databind
+}

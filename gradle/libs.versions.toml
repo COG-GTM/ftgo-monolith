@@ -56,8 +56,12 @@ versions-plugin             = "0.50.0"
 spring-boot-starter-web             = { module = "org.springframework.boot:spring-boot-starter-web" }
 spring-boot-starter-data-jpa        = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-boot-starter-actuator        = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-security        = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-starter-test            = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-validation      = { module = "org.springframework.boot:spring-boot-starter-validation" }
+
+# --- Security Testing ---
+spring-security-test                = { module = "org.springframework.security:spring-security-test" }
 
 # --- Database ---
 mysql-connector                     = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
@@ -65,6 +69,7 @@ flyway-core                         = { module = "org.flywaydb:flyway-core", ver
 flyway-mysql                        = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 
 # --- Observability ---
+micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 
 # --- Testing ---
@@ -116,6 +121,13 @@ rest-assured-testing = [
     "rest-assured",
     "rest-assured-spring-mock-mvc",
     "rest-assured-json-path",
+]
+
+# Observability
+observability = [
+    "spring-boot-starter-actuator",
+    "micrometer-core",
+    "micrometer-registry-prometheus",
 ]
 
 # Jackson serialization

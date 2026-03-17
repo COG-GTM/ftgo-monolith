@@ -18,7 +18,7 @@ publishing {
 
             pom {
                 name = 'FTGO Common JPA Library'
-                description = 'JPA utility classes and ORM mappings for the FTGO microservices platform'
+                description = 'JPA utility classes, ORM mappings, and persistence configuration for the FTGO microservices platform'
             }
         }
     }
