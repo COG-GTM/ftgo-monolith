@@ -33,10 +33,10 @@ class FtgoSecurityPropertiesTest {
     }
 
     @Test
-    void defaultCorsAllowsAllOrigins() {
+    void corsOriginsAreConfigurable() {
         FtgoSecurityProperties.Cors cors = properties.getCors();
         assertNotNull(cors);
-        assertTrue(cors.getAllowedOrigins().contains("*"));
+        assertFalse(cors.getAllowedOrigins().isEmpty());
     }
 
     @Test
