@@ -12,3 +12,4 @@ resources:
   - restaurant-service
   - courier-service
   - ingress
+  - api-gateway
