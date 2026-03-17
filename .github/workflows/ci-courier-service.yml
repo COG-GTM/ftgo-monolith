@@ -2,7 +2,7 @@
 # CI Pipeline - Courier Service
 # =============================================================================
 # Builds and tests the Courier bounded context (service + API module).
-# Triggers on changes to the service code, shared libraries, or build config.
+# Path-based filtering ensures this workflow only runs when relevant files change.
 # =============================================================================
 
 name: "CI: Courier Service"
@@ -24,6 +24,7 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle.properties'
+      - '.github/workflows/ci-courier-service.yml'
   pull_request:
     branches:
       - main
@@ -40,18 +41,21 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle.properties'
+      - '.github/workflows/ci-courier-service.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -63,22 +67,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-courier-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-courier-
-            ${{ runner.os }}-gradle-
+          validate-wrappers: false
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Build Courier Service API
+        run: ./gradlew :services:courier-service-api:build
 
-      - name: Build and test Courier Service
-        run: ./gradlew :services:courier-service-api:build :services:courier-service:build
+      - name: Build & Test Courier Service
+        run: ./gradlew :services:courier-service:build
 
       - name: Upload test reports
         if: always()
@@ -87,5 +85,7 @@ jobs:
           name: courier-service-test-reports
           path: |
             services/courier-service/build/reports/tests/
+            services/courier-service/build/test-results/
             services/courier-service-api/build/reports/tests/
+            services/courier-service-api/build/test-results/
           retention-days: 14

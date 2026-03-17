@@ -2,7 +2,7 @@
 # CI Pipeline - Restaurant Service
 # =============================================================================
 # Builds and tests the Restaurant bounded context (service + API module).
-# Triggers on changes to the service code, shared libraries, or build config.
+# Path-based filtering ensures this workflow only runs when relevant files change.
 # =============================================================================
 
 name: "CI: Restaurant Service"
@@ -24,6 +24,7 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle.properties'
+      - '.github/workflows/ci-restaurant-service.yml'
   pull_request:
     branches:
       - main
@@ -40,18 +41,21 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle.properties'
+      - '.github/workflows/ci-restaurant-service.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -63,22 +67,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-restaurant-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-restaurant-
-            ${{ runner.os }}-gradle-
+          validate-wrappers: false
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Build Restaurant Service API
+        run: ./gradlew :services:restaurant-service-api:build
 
-      - name: Build and test Restaurant Service
-        run: ./gradlew :services:restaurant-service-api:build :services:restaurant-service:build
+      - name: Build & Test Restaurant Service
+        run: ./gradlew :services:restaurant-service:build
 
       - name: Upload test reports
         if: always()
@@ -87,5 +85,7 @@ jobs:
           name: restaurant-service-test-reports
           path: |
             services/restaurant-service/build/reports/tests/
+            services/restaurant-service/build/test-results/
             services/restaurant-service-api/build/reports/tests/
+            services/restaurant-service-api/build/test-results/
           retention-days: 14
