@@ -12,12 +12,13 @@ import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.Courier;
+import net.chrisrichardson.ftgo.openapi.model.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Tag(name = "Couriers", description = "Courier management API - register, retrieve, and manage courier availability")
+@Tag(name = "Couriers", description = "Courier management operations")
 public class CourierController {
 
   private CourierService courierService;
@@ -26,13 +27,14 @@ public class CourierController {
     this.courierService = courierService;
   }
 
-  @Operation(summary = "Register a new courier", description = "Creates a new courier in the system")
+  @Operation(summary = "Create a new courier", description = "Registers a new courier in the system")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Courier created successfully",
-          content = @Content(schema = @Schema(implementation = CreateCourierResponse.class))),
-      @ApiResponse(responseCode = "400", description = "Invalid courier data")
+          @ApiResponse(responseCode = "200", description = "Courier created successfully",
+                  content = @Content(schema = @Schema(implementation = CreateCourierResponse.class))),
+          @ApiResponse(responseCode = "400", description = "Invalid request",
+                  content = @Content(schema = @Schema(implementation = ApiError.class)))
   })
-  @RequestMapping(path="/couriers", method= RequestMethod.POST)
+  @PostMapping("/couriers")
   public ResponseEntity<CreateCourierResponse> create(@RequestBody CreateCourierRequest request) {
     Courier courier = courierService.createCourier(request.getName(), request.getAddress());
     return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
@@ -40,25 +42,28 @@ public class CourierController {
 
   @Operation(summary = "Update courier availability", description = "Updates the availability status of a courier")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Availability updated successfully"),
-      @ApiResponse(responseCode = "404", description = "Courier not found")
+          @ApiResponse(responseCode = "200", description = "Availability updated"),
+          @ApiResponse(responseCode = "404", description = "Courier not found",
+                  content = @Content(schema = @Schema(implementation = ApiError.class)))
   })
-  @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
+  @PostMapping("/couriers/{courierId}/availability")
   public ResponseEntity<String> updateCourierLocation(
-      @Parameter(description = "Unique courier identifier", required = true) @PathVariable long courierId,
-      @RequestBody CourierAvailability availability) {
+          @Parameter(description = "Courier ID", required = true) @PathVariable long courierId,
+          @RequestBody CourierAvailability availability) {
     courierService.updateAvailability(courierId, availability.isAvailable());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @Operation(summary = "Get courier by ID", description = "Retrieves a specific courier by their unique identifier")
+  @Operation(summary = "Get courier by ID", description = "Retrieves a courier by their unique identifier")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Courier found"),
-      @ApiResponse(responseCode = "404", description = "Courier not found")
+          @ApiResponse(responseCode = "200", description = "Courier found",
+                  content = @Content(schema = @Schema(implementation = Courier.class))),
+          @ApiResponse(responseCode = "404", description = "Courier not found",
+                  content = @Content(schema = @Schema(implementation = ApiError.class)))
   })
-  @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
+  @GetMapping("/couriers/{courierId}")
   public ResponseEntity<Courier> get(
-      @Parameter(description = "Unique courier identifier", required = true) @PathVariable long courierId) {
+          @Parameter(description = "Courier ID", required = true) @PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
     return new ResponseEntity<>(courier, HttpStatus.OK);
   }

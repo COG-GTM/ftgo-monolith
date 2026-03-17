@@ -1,182 +1,186 @@
 # FTGO API Documentation Portal
 
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-03-17
-
-## Overview
-
-The FTGO API Documentation Portal provides centralized access to all microservice API documentation, generated OpenAPI specifications, and developer guides.
+> Central hub for all FTGO microservice API documentation.
 
 ## Service API Documentation
 
-Each FTGO microservice exposes interactive Swagger UI documentation and machine-readable OpenAPI 3.0 specifications.
+Each FTGO microservice exposes interactive API documentation via Swagger UI and machine-readable OpenAPI 3.0 specifications.
 
 ### Service Endpoints
 
-| Service | Swagger UI | OpenAPI Spec | Description |
-|---------|-----------|--------------|-------------|
-| **Order Service** | `/swagger-ui.html` | `/v3/api-docs` | Order lifecycle management |
-| **Consumer Service** | `/swagger-ui.html` | `/v3/api-docs` | Consumer registration and management |
-| **Restaurant Service** | `/swagger-ui.html` | `/v3/api-docs` | Restaurant and menu management |
-| **Courier Service** | `/swagger-ui.html` | `/v3/api-docs` | Courier management and delivery tracking |
-| **FTGO Application** (monolith) | `/swagger-ui.html` | `/v3/api-docs` | All services combined |
+| Service | Swagger UI | OpenAPI Spec (JSON) | OpenAPI Spec (YAML) |
+|---------|------------|---------------------|---------------------|
+| **Order Service** | [/swagger-ui.html](http://localhost:8082/swagger-ui.html) | [/v3/api-docs](http://localhost:8082/v3/api-docs) | [/v3/api-docs.yaml](http://localhost:8082/v3/api-docs.yaml) |
+| **Consumer Service** | [/swagger-ui.html](http://localhost:8081/swagger-ui.html) | [/v3/api-docs](http://localhost:8081/v3/api-docs) | [/v3/api-docs.yaml](http://localhost:8081/v3/api-docs.yaml) |
+| **Restaurant Service** | [/swagger-ui.html](http://localhost:8083/swagger-ui.html) | [/v3/api-docs](http://localhost:8083/v3/api-docs) | [/v3/api-docs.yaml](http://localhost:8083/v3/api-docs.yaml) |
+| **Courier Service** | [/swagger-ui.html](http://localhost:8084/swagger-ui.html) | [/v3/api-docs](http://localhost:8084/v3/api-docs) | [/v3/api-docs.yaml](http://localhost:8084/v3/api-docs.yaml) |
+| **FTGO Application** (monolith) | [/swagger-ui.html](http://localhost:8080/swagger-ui.html) | [/v3/api-docs](http://localhost:8080/v3/api-docs) | [/v3/api-docs.yaml](http://localhost:8080/v3/api-docs.yaml) |
 
-### Accessing Swagger UI
-
-When running locally, access any service's Swagger UI at:
-
-```
-http://localhost:{port}/swagger-ui.html
-```
-
-Default ports:
-
-| Service | Port |
-|---------|------|
-| FTGO Application (monolith) | 8080 |
-| Order Service | 8081 |
-| Consumer Service | 8082 |
-| Restaurant Service | 8083 |
-| Courier Service | 8084 |
-
-### Accessing OpenAPI Specs
-
-JSON specifications are available at:
-
-```
-http://localhost:{port}/v3/api-docs
-```
-
-YAML format:
-
-```
-http://localhost:{port}/v3/api-docs.yaml
-```
+> **Note:** Port numbers above are defaults for local development. In Kubernetes deployments, access services via their ingress URLs.
 
 ## API Standards
 
-All FTGO APIs follow the standards defined in [REST API Standards](rest-api-standards.md).
+All FTGO services follow the [REST API Standards](api-standards.md) document, which covers:
 
-Key highlights:
+- URL naming conventions
+- HTTP method usage
+- Status code standards
+- Request/response envelope format
+- Pagination format
+- Filtering and sorting conventions
+- Date/time format (ISO 8601)
+- API versioning strategy
+- Error handling standards
 
-- **URL Path Versioning**: All endpoints prefixed with `/api/v1/`
-- **OpenAPI 3.0**: All endpoints documented with SpringDoc annotations
-- **Standard Error Format**: Consistent `ApiErrorResponse` envelope
-- **Pagination**: Standard `PagedResponse` wrapper for collections
-- **ISO 8601**: All date/time values in UTC
+## API Versioning
 
-## Architecture
+FTGO uses **URL path versioning** (`/api/v1/...`). See the [API Standards - Versioning](api-standards.md#8-api-versioning) section for details.
 
-### Technology Stack
+### Current API Versions
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| API Documentation | SpringDoc OpenAPI | 2.3.0 |
-| Interactive UI | Swagger UI | (bundled with SpringDoc) |
-| Specification | OpenAPI 3.0 | 3.0.1 |
-| Framework | Spring Boot | 3.2.2 |
+| Version | Status | Sunset Date |
+|---------|--------|-------------|
+| v1 | **Active** | N/A |
 
-### Shared Library: ftgo-openapi-lib
+## Architecture Overview
 
-The `ftgo-openapi-lib` shared library (`shared-libraries/ftgo-openapi-lib/`) provides:
-
-1. **FtgoOpenApiConfiguration** - Shared OpenAPI metadata (title, version, contact, license)
-2. **ApiVersioningConfiguration** - URL path versioning (`/api/v1/` prefix)
-3. **GlobalExceptionHandler** - Standardized error responses
-4. **ApiErrorResponse** - Error response model
-5. **PagedResponse** - Pagination response wrapper
-6. **PaginationConstants** - Standard pagination defaults
-7. **ApiContractTestBase** - Base class for contract testing
-
-### Configuration
-
-Services customize their API documentation via `application.properties`:
-
-```properties
-# Service-specific OpenAPI metadata
-ftgo.openapi.title=Order Service API
-ftgo.openapi.description=FTGO Order Management Microservice
-ftgo.openapi.version=1.0.0
-ftgo.openapi.contact.name=Order Team
-ftgo.openapi.contact.email=order-team@ftgo.io
 ```
+                    ┌─────────────────────────────────┐
+                    │        API Gateway / LB          │
+                    └──────────┬──────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────────┐
+            │                  │                       │
+   ┌────────▼─────┐  ┌────────▼─────┐  ┌─────────────▼──┐
+   │ Order Service │  │  Consumer    │  │  Restaurant    │
+   │              │  │  Service     │  │  Service       │
+   │ /orders      │  │ /consumers   │  │ /restaurants   │
+   │ /swagger-ui  │  │ /swagger-ui  │  │ /swagger-ui    │
+   └──────────────┘  └──────────────┘  └────────────────┘
+                               │
+                    ┌──────────▼─────────┐
+                    │  Courier Service   │
+                    │ /couriers          │
+                    │ /swagger-ui        │
+                    └────────────────────┘
+```
+
+## Shared Libraries
+
+### ftgo-openapi-lib
+
+Provides shared OpenAPI 3.0 configuration for all services:
+
+- **`FtgoOpenApiAutoConfiguration`** - Auto-configures OpenAPI metadata (title, version, description, contact)
+- **`ApiVersioning`** - API version constants and URL path helpers
+- **`ApiResponse<T>`** - Standard success response envelope
+- **`PagedResponse<T>`** - Standardized paginated response format
+- **`ApiError`** - Standard error response format
+
+#### Configuration Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `ftgo.openapi.title` | `FTGO API` | API title shown in Swagger UI |
+| `ftgo.openapi.description` | `Food To Go Microservices Platform API` | API description |
+| `ftgo.openapi.version` | `1.0.0` | API version |
+| `springdoc.swagger-ui.path` | `/swagger-ui.html` | Swagger UI URL path |
+| `springdoc.api-docs.path` | `/v3/api-docs` | OpenAPI spec URL path |
+
+### ftgo-api-contract-testing
+
+Provides base classes for consumer-driven contract testing between services:
+
+- **`ContractTestBase`** - Base class for REST-Assured MockMvc contract tests
+- **`ContractVerifier`** - Utility for loading and verifying JSON contracts
 
 ## Generated Artifacts
 
-OpenAPI specifications are generated during the build process and published as artifacts:
-
-```
-build/
-  generated/
-    openapi/
-      order-service-api.json
-      consumer-service-api.json
-      restaurant-service-api.json
-      courier-service-api.json
-```
-
-These artifacts can be used for:
-
-- **API Gateway Configuration**: Route definitions from spec
-- **Client SDK Generation**: Auto-generate client libraries using OpenAPI Generator
-- **Contract Testing**: Validate API compatibility between versions
-- **External Documentation**: Publish to documentation platforms
-
-## Client SDK Generation
-
-Generate client SDKs from the OpenAPI spec:
+OpenAPI specs are available at runtime from each running service:
 
 ```bash
-# Generate a Java client for the Order Service
-openapi-generator generate \
-  -i http://localhost:8081/v3/api-docs \
-  -g java \
-  -o generated/order-service-client
-
-# Generate a TypeScript client
-openapi-generator generate \
-  -i http://localhost:8081/v3/api-docs \
-  -g typescript-axios \
-  -o generated/order-service-ts-client
+# Retrieve the OpenAPI spec from a running service
+curl http://localhost:8080/v3/api-docs        # JSON format
+curl http://localhost:8080/v3/api-docs.yaml   # YAML format
 ```
 
-## Contract Testing
+> **Tip:** Save these specs as static artifacts in CI by curling the endpoints during integration tests.
 
-API contract tests verify that service APIs maintain backward compatibility. See `ApiContractTestBase` in `ftgo-openapi-lib` for the base test class.
+## Getting Started
 
-### Writing Contract Tests
+### Adding OpenAPI to a New Service
+
+1. Add the `ftgo-openapi-lib` dependency to your service's `build.gradle`:
+
+```groovy
+dependencies {
+    implementation project(":shared-libraries:ftgo-openapi-lib")
+}
+```
+
+2. Configure service-specific metadata in `application.properties`:
+
+```properties
+ftgo.openapi.title=Order Service API
+ftgo.openapi.description=FTGO Order Management Service
+ftgo.openapi.version=1.0.0
+```
+
+3. Annotate your controllers:
 
 ```java
-@SpringBootTest
-@AutoConfigureMockMvc
-public class OrderApiContractTest extends ApiContractTestBase {
+@Tag(name = "Orders", description = "Order management operations")
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Test
-    void shouldReturnOrderWhenExists() throws Exception {
-        verifyGetEndpoint(mockMvc, "/api/v1/orders/1", 200);
-    }
-
-    @Test
-    void shouldReturn404WhenOrderNotFound() throws Exception {
-        verifyNotFoundResponse(mockMvc, "/api/v1/orders/999");
+    @Operation(summary = "Create order")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Created"),
+        @ApiResponse(responseCode = "400", description = "Bad request")
+    })
+    @PostMapping
+    public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+        // ...
     }
 }
 ```
 
-## Migration from Springfox
+4. Access Swagger UI at `http://localhost:{port}/swagger-ui.html`
 
-This documentation portal replaces the previous Springfox-based Swagger 2.0 setup. Key changes:
+### Adding Contract Tests
 
-| Aspect | Before (Springfox) | After (SpringDoc) |
-|--------|--------------------|--------------------|
-| Library | `springfox-swagger2` 2.8.0 | `springdoc-openapi-starter-webmvc-ui` 2.3.0 |
-| Spec Format | Swagger 2.0 | OpenAPI 3.0.1 |
-| Annotations | `@Api`, `@ApiOperation` | `@Tag`, `@Operation` |
-| UI Path | `/swagger-ui.html` | `/swagger-ui.html` (same) |
-| Spec Path | `/v2/api-docs` | `/v3/api-docs` |
-| Status | Deprecated (last release 2020) | Actively maintained |
-| Spring Boot | 2.x only | 3.x native support |
-| Module | `common-swagger` | `ftgo-openapi-lib` |
+1. Add the contract testing dependency:
+
+```groovy
+dependencies {
+    testImplementation project(":shared-libraries:ftgo-api-contract-testing")
+}
+```
+
+2. Create a contract test:
+
+```java
+@SpringBootTest
+class OrderContractTest extends ContractTestBase {
+
+    @MockBean
+    private OrderService orderService;
+
+    @Override
+    protected void setup() {
+        super.setup();
+        when(orderService.findById(1L)).thenReturn(Optional.of(testOrder));
+    }
+
+    @Test
+    void shouldReturnOrderById() {
+        given()
+            .when()
+            .get("/orders/1")
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(1));
+    }
+}
+```
