@@ -1,0 +1,17 @@
+# SSL/TLS profile - activate for external-facing endpoints
+# Usage: SPRING_PROFILES_ACTIVE=ssl or SPRING_PROFILES_ACTIVE=kubernetes,ssl
+server:
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH:classpath:keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:ftgo-gateway}
+    protocol: TLS
+    enabled-protocols: TLSv1.3,TLSv1.2
+    ciphers:
+      - TLS_AES_256_GCM_SHA384
+      - TLS_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  port: 8443
