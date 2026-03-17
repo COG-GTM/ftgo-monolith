@@ -1,0 +1,2 @@
+// Restaurant Service - parent build file
+// Aggregates restaurant-service-api and restaurant-service-impl submodules
