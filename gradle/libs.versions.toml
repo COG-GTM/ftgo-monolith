@@ -19,6 +19,8 @@ spring-dependency-management = "1.1.4"
 
 # --- Shared Libraries ---
 ftgo-common                 = "1.0.0"
+ftgo-common-jpa             = "1.0.0"
+ftgo-domain                 = "1.0.0"
 
 # --- Database ---
 mysql-connector             = "8.2.0"
@@ -90,6 +92,8 @@ jakarta-el-api                      = { module = "jakarta.el:jakarta.el-api", ve
 
 # --- Shared Libraries ---
 ftgo-common-lib                     = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-lib", version.ref = "ftgo-common" }
+ftgo-common-jpa-lib                 = { group = "net.chrisrichardson.ftgo", name = "ftgo-common-jpa-lib", version.ref = "ftgo-common-jpa" }
+ftgo-domain-lib                     = { group = "net.chrisrichardson.ftgo", name = "ftgo-domain-lib", version.ref = "ftgo-domain" }
 
 [bundles]
 # Common Spring Boot service dependencies
