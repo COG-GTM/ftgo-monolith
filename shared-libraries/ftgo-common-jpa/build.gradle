@@ -3,7 +3,30 @@ plugins {
     id 'ftgo.publishing-conventions'
 }
 
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
 dependencies {
     api project(":shared-libraries:ftgo-common")
     api libs.spring.boot.starter.data.jpa
+}
+
+publishing {
+    publications {
+        mavenJava {
+            artifactId = 'ftgo-common-jpa-lib'
+
+            pom {
+                name = 'FTGO Common JPA Library'
+                description = 'JPA utility classes and ORM mappings for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
