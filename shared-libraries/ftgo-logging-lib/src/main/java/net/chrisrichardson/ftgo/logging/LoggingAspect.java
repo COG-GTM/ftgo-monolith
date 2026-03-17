@@ -82,7 +82,8 @@ public class LoggingAspect {
                     signature.getDeclaringType().getSimpleName(),
                     methodName,
                     duration,
-                    ex.getMessage());
+                    ex.getMessage(),
+                    ex);
             throw ex;
         }
     }

@@ -25,6 +25,7 @@
          =================================================================== -->
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <provider class="net.chrisrichardson.ftgo.logging.SensitiveDataMaskingJsonProvider"/>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>serviceName</includeMdcKeyName>
             <includeMdcKeyName>requestMethod</includeMdcKeyName>
@@ -81,6 +82,7 @@
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <provider class="net.chrisrichardson.ftgo.logging.SensitiveDataMaskingJsonProvider"/>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>serviceName</includeMdcKeyName>
             <includeMdcKeyName>requestMethod</includeMdcKeyName>
