@@ -1,4 +1,3 @@
-
 // ============================================================================
 // FTGO Microservices Platform - Gradle Multi-Project Configuration
 // ============================================================================
@@ -6,6 +5,11 @@
 //   1. Shared Libraries  - Common code used across services
 //   2. Microservices      - Independent service modules (new structure)
 //   3. Legacy Modules     - Original monolith modules (to be migrated)
+//
+// Convention plugins are provided by buildSrc/ (included build):
+//   - ftgo.java-conventions, ftgo.spring-boot-conventions, etc.
+//
+// Dependency versions are centralized in gradle/libs.versions.toml
 // ============================================================================
 
 // ---------------------------------------------------------------------------
@@ -14,8 +18,12 @@
 include "shared-libraries:ftgo-common"
 include "shared-libraries:ftgo-common-jpa"
 include "shared-libraries:common-swagger"
+include "shared-libraries:ftgo-openapi-lib"
+include "shared-libraries:ftgo-api-contract-testing"
 include "shared-libraries:ftgo-domain"
+include "shared-libraries:ftgo-security"
 include "shared-libraries:ftgo-test-util"
+include "shared-libraries:ftgo-observability"
 
 // ---------------------------------------------------------------------------
 // Microservices (services/)
@@ -36,6 +44,9 @@ include "services:order-service-api"
 // Courier bounded context
 include "services:courier-service"
 include "services:courier-service-api"
+
+// API Gateway
+include "services:api-gateway"
 
 // ---------------------------------------------------------------------------
 // Legacy Modules (flat structure - to be migrated in future phases)

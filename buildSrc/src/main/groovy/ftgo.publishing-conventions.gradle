@@ -1,0 +1,54 @@
+// ============================================================================
+// ftgo.publishing-conventions
+// ============================================================================
+// Maven/Gradle publishing configuration for shared libraries.
+// Publishes JARs with POM metadata to a configurable repository.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.publishing-conventions'
+//   }
+// ============================================================================
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'maven-publish'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Handle duplicate files in archive tasks (e.g., .gitkeep files)
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = project.name
+                description = "FTGO Microservices Platform - ${project.name}"
+                url = 'https://github.com/COG-GTM/ftgo-monolith'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}

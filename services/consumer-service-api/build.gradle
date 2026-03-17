@@ -1,3 +1,7 @@
+plugins {
+    id 'ftgo.java-conventions'
+}
+
 dependencies {
-    compile project(":shared-libraries:ftgo-common")
+    api project(":shared-libraries:ftgo-common")
 }

@@ -1,6 +1,34 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
 dependencies {
-    compile project(":shared-libraries:ftgo-common")
-    compile project(":shared-libraries:ftgo-common-jpa")
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    compile "javax.persistence:javax.persistence-api:2.2"
+    api project(":shared-libraries:ftgo-common")
+    api project(":shared-libraries:ftgo-common-jpa")
+    api libs.spring.boot.starter.data.jpa
+    api libs.jakarta.persistence.api
+}
+
+publishing {
+    publications {
+        mavenJava {
+            artifactId = 'ftgo-domain-lib'
+
+            pom {
+                name = 'FTGO Domain Library'
+                description = 'Shared JPA entities, repositories, and domain model for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }

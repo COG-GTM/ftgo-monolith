@@ -1,5 +1,8 @@
-dependencies {
+plugins {
+    id 'ftgo.spring-boot-conventions'
+}
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile project(":ftgo-common")
+dependencies {
+    api libs.spring.boot.starter.data.jpa
+    api project(":ftgo-common")
 }

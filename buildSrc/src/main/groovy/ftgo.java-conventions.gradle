@@ -1,0 +1,41 @@
+// ============================================================================
+// ftgo.java-conventions
+// ============================================================================
+// Standard Java compilation settings for all FTGO modules.
+// Applies: Java 17, UTF-8 encoding, compiler warnings, reproducible builds.
+//
+// Usage in build.gradle:
+//   plugins {
+//       id 'ftgo.java-conventions'
+//   }
+// ============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+group = 'net.chrisrichardson.ftgo'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll([
+        '-parameters',        // Preserve parameter names for reflection
+        '-Xlint:deprecation', // Warn on deprecated API usage
+        '-Xlint:unchecked',   // Warn on unchecked operations
+    ])
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Reproducible builds
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
