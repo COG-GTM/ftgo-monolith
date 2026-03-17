@@ -25,9 +25,35 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
 
 ftgo:
   security:
     cors:
       allowed-origins:
         - ${API_GATEWAY_ORIGIN:http://localhost:8080}
+  openapi:
+    title: Consumer Service API
+    description: FTGO Consumer Management Service
+    version: 1.0.0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

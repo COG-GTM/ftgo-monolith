@@ -18,9 +18,12 @@
 include "shared-libraries:ftgo-common"
 include "shared-libraries:ftgo-common-jpa"
 include "shared-libraries:common-swagger"
+include "shared-libraries:ftgo-openapi-lib"
+include "shared-libraries:ftgo-api-contract-testing"
 include "shared-libraries:ftgo-domain"
 include "shared-libraries:ftgo-security"
 include "shared-libraries:ftgo-test-util"
+include "shared-libraries:ftgo-observability"
 
 // ---------------------------------------------------------------------------
 // Microservices (services/)
@@ -41,6 +44,9 @@ include "services:order-service-api"
 // Courier bounded context
 include "services:courier-service"
 include "services:courier-service-api"
+
+// API Gateway
+include "services:api-gateway"
 
 // ---------------------------------------------------------------------------
 // Legacy Modules (flat structure - to be migrated in future phases)
