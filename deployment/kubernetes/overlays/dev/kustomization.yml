@@ -1,0 +1,114 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ftgo-dev
+
+namePrefix: dev-
+
+commonLabels:
+  environment: dev
+
+commonAnnotations:
+  environment: dev
+  team: ftgo
+
+resources:
+  - namespace.yml
+  - ../../base
+
+patches:
+  # Scale down replicas for dev environment
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+  # Lower resource limits for dev
+  - target:
+      kind: Deployment
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 256Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 512Mi
+
+  # Lower HPA min/max replicas for dev
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3
+
+  # Dev MySQL uses smaller storage
+  - target:
+      kind: StatefulSet
+      name: ftgo-mysql
+    patch: |
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 256Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 512Mi
+
+  # Dev ingress host
+  - target:
+      kind: Ingress
+      name: ftgo-ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: ftgo-dev.internal
+
+  # Dev-specific Java opts with debug enabled
+  - target:
+      kind: ConfigMap
+      name: order-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms128m -Xmx256m -Dspring.profiles.active=dev"
+  - target:
+      kind: ConfigMap
+      name: consumer-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms128m -Xmx256m -Dspring.profiles.active=dev"
+  - target:
+      kind: ConfigMap
+      name: restaurant-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms128m -Xmx256m -Dspring.profiles.active=dev"
+  - target:
+      kind: ConfigMap
+      name: courier-service-config
+    patch: |
+      - op: replace
+        path: /data/java-opts
+        value: "-Xms128m -Xmx256m -Dspring.profiles.active=dev"

@@ -1,5 +1,33 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+}
+
+version = '1.0.0'
+group = 'net.chrisrichardson.ftgo'
+
 dependencies {
-    compile "com.fasterxml.jackson.core:jackson-databind"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    compile "org.apache.commons:commons-lang3:3.7"
+    api libs.jackson.databind
+    api libs.jackson.datatype.jsr310
+    api libs.commons.lang3
+}
+
+publishing {
+    publications {
+        mavenJava {
+            artifactId = 'ftgo-common-lib'
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and exceptions for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
