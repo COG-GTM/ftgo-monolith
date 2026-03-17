@@ -1,1 +1,1 @@
-net.chrisrichardson.ftgo.observability.config.ObservabilityAutoConfiguration
+net.chrisrichardson.ftgo.observability.metrics.ObservabilityAutoConfiguration

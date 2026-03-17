@@ -1,11 +1,8 @@
 // ============================================================================
 // ftgo.observability-conventions
 // ============================================================================
-// Standardized observability configuration for all FTGO microservices.
-// Applies: Micrometer core, Prometheus registry, Spring Boot Actuator.
-//
-// This plugin ensures all services expose consistent metrics via
-// /actuator/prometheus endpoint for Prometheus scraping.
+// Adds Micrometer + Prometheus metrics and Spring Boot Actuator to services.
+// Configures standard observability dependencies for all FTGO microservices.
 //
 // Usage in build.gradle:
 //   plugins {

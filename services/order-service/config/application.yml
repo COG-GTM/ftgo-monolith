@@ -27,18 +27,27 @@ management:
         include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
-    health:
-      show-details: when_authorized
     prometheus:
       enabled: true
+    health:
+      show-details: when-authorized
   metrics:
     tags:
+      service: order-service
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
         http.server.requests: true
       percentiles:
         http.server.requests: 0.5, 0.95, 0.99
+      service-level-objectives:
+        http.server.requests: 100ms,250ms,500ms,1s,2s
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  server:
+    port: 8081
 
 ftgo:
   security:

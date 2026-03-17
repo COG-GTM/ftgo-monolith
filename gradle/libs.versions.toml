@@ -116,18 +116,18 @@ testing = [
     "mockito-junit-jupiter",
 ]
 
+# Observability bundle
+observability = [
+    "spring-boot-starter-actuator",
+    "micrometer-core",
+    "micrometer-registry-prometheus",
+]
+
 # REST-Assured testing
 rest-assured-testing = [
     "rest-assured",
     "rest-assured-spring-mock-mvc",
     "rest-assured-json-path",
-]
-
-# Observability
-observability = [
-    "spring-boot-starter-actuator",
-    "micrometer-core",
-    "micrometer-registry-prometheus",
 ]
 
 # Jackson serialization
