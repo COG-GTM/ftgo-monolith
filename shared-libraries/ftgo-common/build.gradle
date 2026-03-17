@@ -1,10 +1,37 @@
 plugins {
     id 'ftgo.spring-boot-conventions'
     id 'ftgo.publishing-conventions'
+    id 'maven-publish'
 }
+
+version = '1.0.0'
 
 dependencies {
     api libs.jackson.databind
     api libs.jackson.datatype.jsr310
     api libs.commons.lang3
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'net.chrisrichardson.ftgo'
+            artifactId = 'ftgo-common-lib'
+            version = project.version
+
+            pom {
+                name = 'FTGO Common Library'
+                description = 'Shared value objects, utilities, and exceptions for the FTGO microservices platform'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "${rootProject.buildDir}/repo"
+        }
+    }
 }
