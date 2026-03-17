@@ -1,0 +1,18 @@
+plugins {
+    id 'ftgo.spring-boot-conventions'
+    id 'ftgo.publishing-conventions'
+    id 'ftgo.testing-conventions'
+}
+
+dependencies {
+    api libs.springdoc.openapi.starter.webmvc.ui
+    api libs.spring.boot.starter.web
+    api libs.spring.boot.starter.validation
+    implementation libs.jackson.datatype.jsr310
+}
+
+// Javadoc configuration - don't fail on missing comments from annotation-heavy code
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    failOnError = false
+}

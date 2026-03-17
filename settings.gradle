@@ -18,6 +18,7 @@
 include "shared-libraries:ftgo-common"
 include "shared-libraries:ftgo-common-jpa"
 include "shared-libraries:common-swagger"
+include "shared-libraries:ftgo-openapi-lib"
 include "shared-libraries:ftgo-domain"
 include "shared-libraries:ftgo-test-util"
 

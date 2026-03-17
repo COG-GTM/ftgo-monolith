@@ -8,6 +8,7 @@ dependencies {
     implementation project(":shared-libraries:ftgo-common")
     implementation project(":shared-libraries:ftgo-common-jpa")
     implementation project(":shared-libraries:ftgo-domain")
+    implementation project(":shared-libraries:ftgo-openapi-lib")
 
     implementation libs.bundles.spring.boot.service
 
