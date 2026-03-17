@@ -1,5 +1,6 @@
 plugins {
     id 'ftgo.spring-boot-conventions'
+    id 'ftgo.testing-conventions'
     id 'ftgo.publishing-conventions'
 }
 
@@ -10,6 +11,11 @@ dependencies {
     api libs.jackson.databind
     api libs.jackson.datatype.jsr310
     api libs.commons.lang3
+    api libs.jakarta.persistence.api
+    api 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+    api 'org.springframework:spring-context'
+    api 'org.springframework:spring-beans'
 }
 
 publishing {

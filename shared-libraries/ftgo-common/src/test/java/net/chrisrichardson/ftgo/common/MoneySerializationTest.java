@@ -2,24 +2,24 @@ package net.chrisrichardson.ftgo.common;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class MoneySerializationTest {
 
   private static ObjectMapper objectMapper = new ObjectMapper();
 
-  @BeforeClass
-  public static void initialize() {
+  @BeforeAll
+  static void initialize() {
     objectMapper.registerModule(new MoneyModule());
   }
 
@@ -83,7 +83,7 @@ public class MoneySerializationTest {
     } catch (JsonMappingException e) {
       jsonMappingException = e;
     }
-    Assert.notNull(jsonMappingException);
+    assertNotNull(jsonMappingException);
   }
 
 
