@@ -64,7 +64,7 @@ public class PagedResponse<T> {
         this.page = page;
         this.size = size;
         this.totalElements = totalElements;
-        this.totalPages = (int) Math.ceil((double) totalElements / size);
+        this.totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
         this.sort = sort;
         this.timestamp = Instant.now();
     }

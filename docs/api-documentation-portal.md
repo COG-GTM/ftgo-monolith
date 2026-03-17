@@ -96,16 +96,15 @@ Provides base classes for consumer-driven contract testing between services:
 
 ## Generated Artifacts
 
-OpenAPI specs are generated as build artifacts during the Gradle build:
+OpenAPI specs are available at runtime from each running service:
 
 ```bash
-# Generate OpenAPI specs for all services
-./gradlew generateOpenApiSpec
-
-# Specs are output to:
-# build/openapi/openapi-spec.json
-# build/openapi/openapi-spec.yaml
+# Retrieve the OpenAPI spec from a running service
+curl http://localhost:8080/v3/api-docs        # JSON format
+curl http://localhost:8080/v3/api-docs.yaml   # YAML format
 ```
+
+> **Tip:** Save these specs as static artifacts in CI by curling the endpoints during integration tests.
 
 ## Getting Started
 
