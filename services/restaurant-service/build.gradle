@@ -11,6 +11,7 @@ dependencies {
     implementation project(":shared-libraries:ftgo-security")
 
     implementation libs.bundles.spring.boot.service
+    implementation project(":shared-libraries:ftgo-observability")
 
     testImplementation project(":shared-libraries:ftgo-test-util")
 }

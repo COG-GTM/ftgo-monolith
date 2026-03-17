@@ -69,6 +69,7 @@ flyway-core                         = { module = "org.flywaydb:flyway-core", ver
 flyway-mysql                        = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 
 # --- Observability ---
+micrometer-core                     = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus      = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 
 # --- Testing ---
@@ -120,6 +121,13 @@ rest-assured-testing = [
     "rest-assured",
     "rest-assured-spring-mock-mvc",
     "rest-assured-json-path",
+]
+
+# Observability
+observability = [
+    "spring-boot-starter-actuator",
+    "micrometer-core",
+    "micrometer-registry-prometheus",
 ]
 
 # Jackson serialization
