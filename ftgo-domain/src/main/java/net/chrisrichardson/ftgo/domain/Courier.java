@@ -44,8 +44,8 @@ public class Courier {
     plan.add(action);
   }
 
-  public void cancelDelivery(Order order) {
-    plan.removeDelivery(order);
+  public void cancelDelivery(long orderId) {
+    plan.removeDelivery(orderId);
   }
 
   public boolean isAvailable() {
@@ -64,7 +64,7 @@ public class Courier {
     this.available = false;
   }
 
-  public List<Action> actionsForDelivery(Order order) {
-    return plan.actionsForDelivery(order);
+  public List<Action> actionsForDelivery(long orderId) {
+    return plan.actionsForDelivery(orderId);
   }
 }

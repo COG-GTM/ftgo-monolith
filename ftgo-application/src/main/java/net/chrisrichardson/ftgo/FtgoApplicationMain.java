@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.consumerservice.main.ConsumerServiceConfiguration;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierServiceConfiguration;
 import net.chrisrichardson.ftgo.orderservice.main.OrderServiceConfiguration;
 import net.chrisrichardson.ftgo.restaurantservice.RestaurantServiceConfiguration;
 import org.springframework.boot.SpringApplication;
@@ -14,7 +15,8 @@ import org.springframework.context.annotation.Import;
 @ComponentScan
 @Import({ConsumerServiceConfiguration.class,
         OrderServiceConfiguration.class,
-        RestaurantServiceConfiguration.class})
+        RestaurantServiceConfiguration.class,
+        CourierServiceConfiguration.class})
 public class FtgoApplicationMain {
 
   public static void main(String[] args) {

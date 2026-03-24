@@ -39,13 +39,16 @@ dependencies {
 
     compile project(":ftgo-consumer-service-api")
     compile project(":ftgo-restaurant-service-api")
+    compile project(":ftgo-courier-service-api")
     compile project(":ftgo-order-service-api")
-    compile project(":ftgo-consumer-service")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+
+    compile "org.flywaydb:flyway-core:5.1.4"
+
     compile 'javax.el:javax.el-api:2.2.5'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
