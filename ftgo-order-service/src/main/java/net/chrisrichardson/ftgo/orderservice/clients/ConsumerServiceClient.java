@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 public class ConsumerServiceClient {
@@ -30,8 +30,9 @@ public class ConsumerServiceClient {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     HttpEntity<ValidateOrderForConsumerRequest> entity = new HttpEntity<>(request, headers);
-    ResponseEntity<Void> response = restTemplate.postForEntity(url, entity, Void.class);
-    if (!response.getStatusCode().is2xxSuccessful()) {
+    try {
+      restTemplate.postForEntity(url, entity, Void.class);
+    } catch (HttpClientErrorException e) {
       throw new ConsumerValidationFailedException("Consumer validation failed for consumerId: " + consumerId);
     }
   }

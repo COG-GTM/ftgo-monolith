@@ -48,7 +48,7 @@ public class Courier {
   }
 
   public boolean isAvailable() {
-    return available;
+    return Boolean.TRUE.equals(available);
   }
 
   public Plan getPlan() {
