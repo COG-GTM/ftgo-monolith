@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: ftgo-order-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}:3306/ftgo_order_service?useSSL=false
+    username: root
+    password: ${SPRING_DATASOURCE_PASSWORD:rootpassword}
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    generate-ddl: false
+  flyway:
+    enabled: true
+
+server:
+  port: 8085
+
+services:
+  consumer:
+    url: ${CONSUMER_SERVICE_URL:http://localhost:8082}
+  restaurant:
+    url: ${RESTAURANT_SERVICE_URL:http://localhost:8083}
+  courier:
+    url: ${COURIER_SERVICE_URL:http://localhost:8084}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      consumerService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+      restaurantService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+      courierService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+  retry:
+    instances:
+      consumerService:
+        maxRetryAttempts: 3
+        waitDuration: 1s
+      restaurantService:
+        maxRetryAttempts: 3
+        waitDuration: 1s
+      courierService:
+        maxRetryAttempts: 3
+        waitDuration: 1s

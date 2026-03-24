@@ -3,8 +3,10 @@ package net.chrisrichardson.ftgo.courierservice.web;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryRequest;
+import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryResponse;
+import net.chrisrichardson.ftgo.courierservice.domain.Courier;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +36,17 @@ public class CourierController {
   public ResponseEntity<Courier> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
     return new ResponseEntity<>(courier, HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/deliveries/schedule", method= RequestMethod.POST)
+  public ResponseEntity<ScheduleDeliveryResponse> scheduleDelivery(@RequestBody ScheduleDeliveryRequest request) {
+    long courierId = courierService.scheduleDelivery(
+            request.getOrderId(),
+            request.getPickupAddress(),
+            request.getDeliveryAddress(),
+            request.getReadyBy()
+    );
+    return new ResponseEntity<>(new ScheduleDeliveryResponse(courierId), HttpStatus.OK);
   }
 
 }
