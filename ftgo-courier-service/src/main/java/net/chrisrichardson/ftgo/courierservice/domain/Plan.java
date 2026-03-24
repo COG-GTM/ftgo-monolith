@@ -1,10 +1,12 @@
 package net.chrisrichardson.ftgo.courierservice.domain;
 
+import javax.persistence.Embeddable;
 import javax.persistence.ElementCollection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Embeddable
 public class Plan {
 
   @ElementCollection

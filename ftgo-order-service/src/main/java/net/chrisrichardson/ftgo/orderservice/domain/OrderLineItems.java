@@ -47,7 +47,9 @@ public class OrderLineItems {
   void updateLineItems(OrderRevision orderRevision) {
     getLineItems().stream().forEach(li -> {
       Integer revised = orderRevision.getRevisedLineItemQuantities().get(li.getMenuItemId());
-      li.setQuantity(revised);
+      if (revised != null) {
+        li.setQuantity(revised);
+      }
     });
   }
 

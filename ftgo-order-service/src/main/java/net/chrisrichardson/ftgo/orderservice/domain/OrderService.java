@@ -48,7 +48,7 @@ public class OrderService {
     RestaurantServiceClient.RestaurantDetails restaurant = restaurantServiceClient.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
-    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems);
+    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
 
     Order order = new Order(consumerId, restaurantId, orderLineItems);
 
@@ -63,9 +63,12 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems,
+                                                    RestaurantServiceClient.RestaurantDetails restaurant) {
     return lineItems.stream().map(li -> {
-      return new OrderLineItem(li.getMenuItemId(), li.getMenuItemId(), null, li.getQuantity());
+      net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO menuItem = restaurant.findMenuItem(li.getMenuItemId())
+              .orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      return new OrderLineItem(li.getMenuItemId(), menuItem.getName(), menuItem.getPrice(), li.getQuantity());
     }).collect(toList());
   }
 

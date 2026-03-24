@@ -23,7 +23,7 @@ public class Courier {
   private Address address;
 
   @Embedded
-  private Plan plan;
+  private Plan plan = new Plan();
 
   private Boolean available;
 

@@ -54,13 +54,15 @@ public class RestaurantServiceClient {
   public static class RestaurantDetails {
     private long id;
     private String name;
+    private List<MenuItemDTO> menuItems;
 
     public RestaurantDetails() {
     }
 
-    public RestaurantDetails(long id, String name) {
+    public RestaurantDetails(long id, String name, List<MenuItemDTO> menuItems) {
       this.id = id;
       this.name = name;
+      this.menuItems = menuItems;
     }
 
     public long getId() {
@@ -77,6 +79,19 @@ public class RestaurantServiceClient {
 
     public void setName(String name) {
       this.name = name;
+    }
+
+    public List<MenuItemDTO> getMenuItems() {
+      return menuItems;
+    }
+
+    public void setMenuItems(List<MenuItemDTO> menuItems) {
+      this.menuItems = menuItems;
+    }
+
+    public Optional<MenuItemDTO> findMenuItem(String menuItemId) {
+      if (menuItems == null) return Optional.empty();
+      return menuItems.stream().filter(mi -> mi.getId().equals(menuItemId)).findFirst();
     }
   }
 }

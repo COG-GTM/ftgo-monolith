@@ -85,7 +85,7 @@ public class Order {
   public void revise(OrderRevision orderRevision) {
     if (orderState == APPROVED) {
       LineItemQuantityChange change = orderLineItems.lineItemQuantityChange(orderRevision);
-      if (change.newOrderTotal.isGreaterThanOrEqual(orderMinimum)) {
+      if (!change.newOrderTotal.isGreaterThanOrEqual(orderMinimum)) {
         throw new OrderMinimumNotMetException();
       }
     } else {
@@ -94,11 +94,6 @@ public class Order {
 
     orderRevision.getDeliveryInformation().ifPresent(newDi -> this.deliveryInformation = newDi);
 
-    if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
-      orderLineItems.updateLineItems(orderRevision);
-    }
-
-    orderRevision.getDeliveryInformation().ifPresent(newDi -> this.deliveryInformation = newDi);
     if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
       orderLineItems.updateLineItems(orderRevision);
     }
