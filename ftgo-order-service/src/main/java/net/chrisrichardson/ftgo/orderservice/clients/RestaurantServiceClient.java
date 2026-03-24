@@ -1,10 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.clients;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
-import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +23,6 @@ public class RestaurantServiceClient {
     this.restaurantServiceUrl = restaurantServiceUrl;
   }
 
-  @CircuitBreaker(name = "restaurantService", fallbackMethod = "findByIdFallback")
-  @Retry(name = "restaurantService")
   public Optional<RestaurantDetails> findById(long restaurantId) {
     String url = restaurantServiceUrl + "/restaurants/" + restaurantId;
     try {
@@ -43,12 +37,6 @@ public class RestaurantServiceClient {
       }
       throw e;
     }
-  }
-
-  @SuppressWarnings("unused")
-  private Optional<RestaurantDetails> findByIdFallback(long restaurantId, Exception e) {
-    logger.error("Circuit breaker fallback: Restaurant service unavailable for restaurantId: {}", restaurantId, e);
-    throw new RuntimeException("Restaurant service unavailable", e);
   }
 
   public static class RestaurantDetails {

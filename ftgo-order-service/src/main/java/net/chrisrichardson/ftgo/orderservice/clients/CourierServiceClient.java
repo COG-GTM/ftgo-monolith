@@ -1,7 +1,5 @@
 package net.chrisrichardson.ftgo.orderservice.clients;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryRequest;
 import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryResponse;
@@ -29,8 +27,6 @@ public class CourierServiceClient {
     this.courierServiceUrl = courierServiceUrl;
   }
 
-  @CircuitBreaker(name = "courierService", fallbackMethod = "scheduleDeliveryFallback")
-  @Retry(name = "courierService")
   public long scheduleDelivery(long orderId, Address pickupAddress, Address deliveryAddress, LocalDateTime readyBy) {
     String url = courierServiceUrl + "/deliveries/schedule";
     ScheduleDeliveryRequest request = new ScheduleDeliveryRequest(orderId, pickupAddress, deliveryAddress, readyBy);
@@ -44,9 +40,4 @@ public class CourierServiceClient {
     return response.getBody().getCourierId();
   }
 
-  @SuppressWarnings("unused")
-  private long scheduleDeliveryFallback(long orderId, Address pickupAddress, Address deliveryAddress, LocalDateTime readyBy, Exception e) {
-    logger.error("Circuit breaker fallback: Courier service unavailable for orderId: {}", orderId, e);
-    throw new RuntimeException("Courier service unavailable", e);
-  }
 }

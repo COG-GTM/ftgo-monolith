@@ -50,9 +50,6 @@ dependencies {
     compile "org.flywaydb:flyway-core:5.2.4"
     compile "mysql:mysql-connector-java:5.1.47"
 
-    compile "io.github.resilience4j:resilience4j-spring-boot2:0.17.0"
-    compile "io.github.resilience4j:resilience4j-circuitbreaker:0.17.0"
-    compile "io.github.resilience4j:resilience4j-retry:0.17.0"
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
