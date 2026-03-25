@@ -1,10 +1,150 @@
 = FTGO Monolith
 
-This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
-It's used to illustrate how to refactor a monolithic application to services.
+This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from the book https://microservices.io/book[Microservices Patterns].
+It is used to illustrate how to refactor a monolithic application into microservices.
 
-## Learn more
+== Prerequisites
 
-You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
+Before you begin, make sure the following tools are installed:
+
+[cols="1,1,2"]
+|===
+| Tool | Version | Notes
+
+| JDK
+| 8
+| Required — the project targets Java 8
+
+| Docker
+| 18.06+
+| Used for MySQL and infrastructure services
+
+| Docker Compose
+| 1.22+
+| Orchestrates local infrastructure containers
+
+| Gradle
+| 4.10+ (wrapper included)
+| No global install needed — use `./gradlew`
+|===
+
+== Getting Started
+
+=== 1. Clone the repository
+
+[source,bash]
+----
+git clone https://github.com/microservices-patterns/ftgo-monolith.git
+cd ftgo-monolith
+----
+
+=== 2. Build the project
+
+The project includes a Gradle wrapper, so no global Gradle installation is needed:
+
+[source,bash]
+----
+./gradlew build
+----
+
+To compile without running tests:
+
+[source,bash]
+----
+./gradlew compileJava
+----
+
+=== 3. Start infrastructure services
+
+Start the MySQL database and other infrastructure:
+
+[source,bash]
+----
+./start-infrastructure-services.sh
+----
+
+=== 4. Run the application
+
+[source,bash]
+----
+./build-and-run.sh
+----
+
+The application will be available at http://localhost:8081.
+
+Alternatively, you can use Docker Compose directly:
+
+[source,bash]
+----
+docker-compose up --build
+----
+
+Once the application is running, API documentation is available via Swagger UI at http://localhost:8081/swagger-ui.html.
+
+== Project Structure
+
+The system is organized as a modular monolith with four primary business domains:
+
+[source]
+----
+ftgo-monolith/
+├── ftgo-application/               # Main Spring Boot application (assembles all services)
+├── ftgo-order-service/             # Order lifecycle management
+├── ftgo-order-service-api/         # Order service public API (DTOs, interfaces)
+├── ftgo-consumer-service/          # Customer management
+├── ftgo-consumer-service-api/      # Consumer service public API
+├── ftgo-restaurant-service/        # Restaurant and menu operations
+├── ftgo-restaurant-service-api/    # Restaurant service public API
+├── ftgo-courier-service/           # Courier and delivery management
+├── ftgo-courier-service-api/       # Courier service public API
+├── ftgo-domain/                    # Core domain entities (Order, Consumer, Restaurant, Courier)
+├── ftgo-common/                    # Shared utilities and value objects (Money, Address, etc.)
+├── ftgo-common-jpa/                # Shared JPA configuration
+├── common-swagger/                 # Swagger/OpenAPI documentation configuration
+├── ftgo-flyway/                    # Database schema migrations
+├── ftgo-test-util/                 # Shared testing utilities
+├── ftgo-end-to-end-tests-common/   # Shared end-to-end test base classes
+├── ftgo-end-to-end-tests/          # End-to-end tests
+├── buildSrc/                       # Custom Gradle plugins and tasks
+├── mysql/                          # MySQL Docker container setup
+└── deployment/kubernetes/          # Kubernetes deployment configurations
+----
+
+== Running Tests
+
+=== Unit tests
+
+[source,bash]
+----
+./gradlew test
+----
+
+=== Integration tests
+
+Integration tests require a running MySQL instance. Start the infrastructure first, then run:
+
+[source,bash]
+----
+./gradlew integrationTest
+----
+
+=== End-to-end tests
+
+End-to-end tests run against a fully deployed application:
+
+[source,bash]
+----
+./gradlew :ftgo-end-to-end-tests:test
+----
+
+NOTE: End-to-end tests may require additional dependencies that are not available in public repositories.
+
+== Contributing
+
+Contributions are welcome! Please see link:CONTRIBUTING.md[CONTRIBUTING.md] for guidelines on how to get started, submit changes, and follow coding conventions.
+
+== Learn More
+
+You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of the https://microservices.io/book[book].
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
