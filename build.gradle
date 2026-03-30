@@ -18,10 +18,36 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    apply plugin: 'jacoco'
+
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
     group = "net.chrisrichardson.ftgo"
+
+    jacoco {
+        toolVersion = "0.8.11"
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            html.enabled = true
+            xml.enabled = true
+            csv.enabled = false
+        }
+    }
+
+    test {
+        finalizedBy jacocoTestReport
+    }
+
+    // If the integrationTest task exists, also finalize it with jacocoTestReport
+    tasks.whenTaskAdded { task ->
+        if (task.name == 'integrationTest' && task instanceof Test) {
+            task.finalizedBy jacocoTestReport
+        }
+    }
 
     repositories {
         mavenCentral()
@@ -40,4 +66,37 @@ subprojects {
 
     }
 
+}
+
+// Modules to exclude from aggregated coverage (test-only, API-only, or end-to-end test modules)
+def coverageExcludes = [
+    'ftgo-test-util',
+    'ftgo-end-to-end-tests-common',
+    'ftgo-end-to-end-tests',
+    'ftgo-order-service-api',
+    'ftgo-consumer-service-api',
+    'ftgo-restaurant-service-api',
+    'ftgo-courier-service-api',
+]
+
+def coverageProjects = subprojects.findAll { !coverageExcludes.contains(it.name) }
+
+task jacocoAggregatedReport(type: JacocoReport) {
+    dependsOn coverageProjects*.test
+
+    additionalSourceDirs = files(coverageProjects.collect { it.sourceSets.main.allSource })
+    sourceDirectories = files(coverageProjects.collect { it.sourceSets.main.allSource })
+    classDirectories = files(coverageProjects.collect { it.sourceSets.main.output })
+    executionData = files(coverageProjects.collect { project ->
+        project.tasks.withType(Test).collect { task ->
+            task.extensions.findByType(JacocoTaskExtension)?.destinationFile
+        }
+    }.flatten().findAll { it != null })
+
+    reports {
+        html.enabled = true
+        html.destination = file("${buildDir}/reports/jacoco/aggregated/html")
+        xml.enabled = true
+        xml.destination = file("${buildDir}/reports/jacoco/aggregated/jacocoAggregatedReport.xml")
+    }
 }
