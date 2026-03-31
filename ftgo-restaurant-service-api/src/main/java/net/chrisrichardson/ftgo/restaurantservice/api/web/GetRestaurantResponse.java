@@ -5,25 +5,25 @@ import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import java.util.List;
 
 public class GetRestaurantResponse {
-  private long restaurantId;
+  private long id;
   private String name;
   private List<MenuItemDTO> menuItems;
 
   private GetRestaurantResponse() {
   }
 
-  public GetRestaurantResponse(long restaurantId, String name, List<MenuItemDTO> menuItems) {
-    this.restaurantId = restaurantId;
+  public GetRestaurantResponse(long id, String name, List<MenuItemDTO> menuItems) {
+    this.id = id;
     this.name = name;
     this.menuItems = menuItems;
   }
 
-  public long getRestaurantId() {
-    return restaurantId;
+  public long getId() {
+    return id;
   }
 
-  public void setRestaurantId(long restaurantId) {
-    this.restaurantId = restaurantId;
+  public void setId(long id) {
+    this.id = id;
   }
 
   public String getName() {

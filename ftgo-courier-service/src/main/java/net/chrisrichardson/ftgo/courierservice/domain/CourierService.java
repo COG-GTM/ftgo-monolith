@@ -39,6 +39,9 @@ public class CourierService {
   @Transactional
   public long assignDelivery(long orderId, LocalDateTime readyBy) {
     List<Courier> couriers = courierRepository.findAllAvailable();
+    if (couriers.isEmpty()) {
+      throw new RuntimeException("No available couriers for delivery of order " + orderId);
+    }
     Courier courier = couriers.get(random.nextInt(couriers.size()));
     courier.addAction(Action.makePickup(orderId));
     courier.addAction(Action.makeDropoff(orderId, readyBy.plusMinutes(30)));
