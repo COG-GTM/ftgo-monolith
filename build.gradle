@@ -11,21 +11,24 @@ buildscript {
 }
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.42.0"
 }
 
 
 subprojects {
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    apply plugin: "java-library"
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+
+    tasks.withType(JavaCompile) {
+        options.release.set(11)
+    }
 
     group = "net.chrisrichardson.ftgo"
 
     repositories {
         mavenCentral()
-        jcenter()
 
         // Commenting out problematic repositories that require authentication or are no longer available
         // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
