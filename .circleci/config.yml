@@ -3,8 +3,17 @@ jobs:
   build:
     machine:           true
     working_directory: ~/ftgo-monolith
+    environment:
+      JAVA_HOME:       /usr/lib/jvm/java-11-openjdk-amd64
     steps:
       - checkout
+      - run:
+          name:        Install and configure JDK 11
+          command:     |
+            sudo apt-get update -qq && sudo apt-get install -y -qq openjdk-11-jdk
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+            export PATH=$JAVA_HOME/bin:$PATH
+            java -version
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
