@@ -733,6 +733,40 @@ h1, h2, h3, h4, h5, h6 {
 .pipeline-segment[data-state="DELIVERED"]       { background: var(--state-delivered); }
 .pipeline-segment[data-state="CANCELLED"]       { background: var(--state-cancelled); }
 
+/* -----------------------------------------------------------------------
+ * Order Pipeline — Legend (inline chip-style, GitHub language bar pattern)
+ * ----------------------------------------------------------------------- */
+
+.pipeline-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 16px;
+  padding: 0;
+}
+
+.pipeline-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.pipeline-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pipeline-label strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 /* ============================================================
    10. Tables
    ============================================================ */
@@ -2059,6 +2093,10 @@ h1, h2, h3, h4, h5, h6 {
 
   .menu-item-row .form-input:nth-child(3) {
     flex: 1 1 100%;
+  }
+
+  .pipeline-labels {
+    gap: 8px 16px;
   }
 }
 

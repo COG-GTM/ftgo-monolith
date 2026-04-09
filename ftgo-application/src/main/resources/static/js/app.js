@@ -308,7 +308,7 @@ function formatDate(dateStr) {
  */
 function formatState(s) {
   if (!s) return 'Unknown';
-  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/\bFor\b/g, 'for');
+  return s.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/\bFor\b/g, 'for');
 }
 
 /**
@@ -751,10 +751,11 @@ function renderDashboard(container) {
   const pipelineTotal = totalOrders || 1; // avoid division by zero
   const pipelineSegments = STATE_ORDER.map(s => {
     const count = stateCounts[s];
-    const pct = totalOrders > 0 ? Math.max((count / pipelineTotal) * 100, count > 0 ? 4 : 0) : 0;
+    if (count === 0) return '';
+    const pct = Math.max((count / pipelineTotal) * 100, 4);
     return `
       <div class="pipeline-segment" data-state="${s}" style="width:${pct}%;background-color:${getStateColor(s)}" title="${formatState(s)}: ${count}">
-        ${count > 0 ? `<span class="pipeline-count">${count}</span>` : ''}
+        <span class="pipeline-count">${count}</span>
       </div>
     `;
   }).join('');
