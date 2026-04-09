@@ -240,23 +240,23 @@ function getDemoOrders() {
   ];
 
   const demoData = [
-    { orderId: 1001, orderState: 'APPROVED',          restaurantName: restaurants[0], orderTotal: '24.50', assignedCourierId: null },
-    { orderId: 1002, orderState: 'APPROVED',          restaurantName: restaurants[1], orderTotal: '38.00', assignedCourierId: null },
-    { orderId: 1003, orderState: 'ACCEPTED',          restaurantName: restaurants[2], orderTotal: '15.75', assignedCourierId: null },
-    { orderId: 1004, orderState: 'ACCEPTED',          restaurantName: restaurants[3], orderTotal: '22.30', assignedCourierId: null },
-    { orderId: 1005, orderState: 'ACCEPTED',          restaurantName: restaurants[4], orderTotal: '45.00', assignedCourierId: null },
-    { orderId: 1006, orderState: 'PREPARING',         restaurantName: restaurants[5], orderTotal: '31.50', assignedCourierId: 201 },
-    { orderId: 1007, orderState: 'PREPARING',         restaurantName: restaurants[6], orderTotal: '18.90', assignedCourierId: 202 },
-    { orderId: 1008, orderState: 'READY_FOR_PICKUP',  restaurantName: restaurants[7], orderTotal: '27.80', assignedCourierId: 203 },
-    { orderId: 1009, orderState: 'READY_FOR_PICKUP',  restaurantName: restaurants[8], orderTotal: '42.15', assignedCourierId: 204 },
-    { orderId: 1010, orderState: 'PICKED_UP',         restaurantName: restaurants[9], orderTotal: '19.00', assignedCourierId: 205 },
-    { orderId: 1011, orderState: 'PICKED_UP',         restaurantName: restaurants[0], orderTotal: '33.60', assignedCourierId: 206 },
-    { orderId: 1012, orderState: 'PICKED_UP',         restaurantName: restaurants[1], orderTotal: '16.25', assignedCourierId: 207 },
-    { orderId: 1013, orderState: 'DELIVERED',          restaurantName: restaurants[2], orderTotal: '29.90', assignedCourierId: 208 },
-    { orderId: 1014, orderState: 'DELIVERED',          restaurantName: restaurants[3], orderTotal: '55.00', assignedCourierId: 209 },
-    { orderId: 1015, orderState: 'DELIVERED',          restaurantName: restaurants[4], orderTotal: '12.50', assignedCourierId: 210 },
-    { orderId: 1016, orderState: 'DELIVERED',          restaurantName: restaurants[5], orderTotal: '41.75', assignedCourierId: 211 },
-    { orderId: 1017, orderState: 'CANCELLED',          restaurantName: restaurants[6], orderTotal: '23.00', assignedCourierId: null },
+    { orderId: 1001, state: 'APPROVED',          restaurantName: restaurants[0], orderTotal: '24.50', assignedCourier: null },
+    { orderId: 1002, state: 'APPROVED',          restaurantName: restaurants[1], orderTotal: '38.00', assignedCourier: null },
+    { orderId: 1003, state: 'ACCEPTED',          restaurantName: restaurants[2], orderTotal: '15.75', assignedCourier: null },
+    { orderId: 1004, state: 'ACCEPTED',          restaurantName: restaurants[3], orderTotal: '22.30', assignedCourier: null },
+    { orderId: 1005, state: 'ACCEPTED',          restaurantName: restaurants[4], orderTotal: '45.00', assignedCourier: null },
+    { orderId: 1006, state: 'PREPARING',         restaurantName: restaurants[5], orderTotal: '31.50', assignedCourier: 201 },
+    { orderId: 1007, state: 'PREPARING',         restaurantName: restaurants[6], orderTotal: '18.90', assignedCourier: 202 },
+    { orderId: 1008, state: 'READY_FOR_PICKUP',  restaurantName: restaurants[7], orderTotal: '27.80', assignedCourier: 203 },
+    { orderId: 1009, state: 'READY_FOR_PICKUP',  restaurantName: restaurants[8], orderTotal: '42.15', assignedCourier: 204 },
+    { orderId: 1010, state: 'PICKED_UP',         restaurantName: restaurants[9], orderTotal: '19.00', assignedCourier: 205 },
+    { orderId: 1011, state: 'PICKED_UP',         restaurantName: restaurants[0], orderTotal: '33.60', assignedCourier: 206 },
+    { orderId: 1012, state: 'PICKED_UP',         restaurantName: restaurants[1], orderTotal: '16.25', assignedCourier: 207 },
+    { orderId: 1013, state: 'DELIVERED',          restaurantName: restaurants[2], orderTotal: '29.90', assignedCourier: 208 },
+    { orderId: 1014, state: 'DELIVERED',          restaurantName: restaurants[3], orderTotal: '55.00', assignedCourier: 209 },
+    { orderId: 1015, state: 'DELIVERED',          restaurantName: restaurants[4], orderTotal: '12.50', assignedCourier: 210 },
+    { orderId: 1016, state: 'DELIVERED',          restaurantName: restaurants[5], orderTotal: '41.75', assignedCourier: 211 },
+    { orderId: 1017, state: 'CANCELLED',          restaurantName: restaurants[6], orderTotal: '23.00', assignedCourier: null },
   ];
 
   return demoData;
@@ -278,10 +278,10 @@ function renderStats(orderList) {
 
   const total = orderList.length;
   const active = orderList.filter(o =>
-    o.orderState !== 'DELIVERED' && o.orderState !== 'CANCELLED'
+    o.state !== 'DELIVERED' && o.state !== 'CANCELLED'
   ).length;
-  const delivered = orderList.filter(o => o.orderState === 'DELIVERED').length;
-  const cancelled = orderList.filter(o => o.orderState === 'CANCELLED').length;
+  const delivered = orderList.filter(o => o.state === 'DELIVERED').length;
+  const cancelled = orderList.filter(o => o.state === 'CANCELLED').length;
 
   container.innerHTML = [
     { label: 'Total Orders',    value: total,     color: '#6366F1' },
@@ -311,8 +311,8 @@ function computeStateCounts(orderList) {
   const counts = {};
   STATE_ORDER.forEach(s => { counts[s] = 0; });
   orderList.forEach(o => {
-    if (counts[o.orderState] !== undefined) {
-      counts[o.orderState]++;
+    if (counts[o.state] !== undefined) {
+      counts[o.state]++;
     }
   });
   return counts;
@@ -396,7 +396,7 @@ function renderPipeline(orderList) {
  * button to show on each kanban card.
  */
 const STATE_ACTIONS = {
-  APPROVED:         { label: 'Accept',   action: 'accept',    body: { readyBy: new Date(Date.now() + 1800000).toISOString() } },
+  APPROVED:         { label: 'Accept',   action: 'accept',    body: () => ({ readyBy: new Date(Date.now() + 1800000).toISOString().replace('Z', '') }) },
   ACCEPTED:         { label: 'Prepare',  action: 'preparing', body: null },
   PREPARING:        { label: 'Ready',    action: 'ready',     body: null },
   READY_FOR_PICKUP: { label: 'Pick Up',  action: 'pickedup',  body: null },
@@ -418,7 +418,7 @@ function renderKanban(orderList) {
   const kanbanStates = STATE_ORDER.filter(s => s !== 'DELIVERED' && s !== 'CANCELLED');
 
   board.innerHTML = kanbanStates.map(state => {
-    const stateOrders = orderList.filter(o => o.orderState === state);
+    const stateOrders = orderList.filter(o => o.state === state);
     const actionInfo = STATE_ACTIONS[state];
     const cards = stateOrders.map(order => `
       <div class="kanban-card" data-order-id="${order.orderId}" onclick="selectOrder(${order.orderId})">
@@ -432,7 +432,7 @@ function renderKanban(orderList) {
         </div>
         ${actionInfo ? `
           <div class="kanban-card-footer">
-            <button class="btn btn-sm btn-action" onclick="event.stopPropagation();advanceOrder(${order.orderId},'${actionInfo.action}',${actionInfo.body ? "'" + JSON.stringify(actionInfo.body).replace(/'/g, "\\'") + "'" : 'null'})">${actionInfo.label}</button>
+            <button class="btn btn-sm btn-action" onclick="event.stopPropagation();advanceOrder(${order.orderId},'${actionInfo.action}',${typeof actionInfo.body === 'function' ? "'" + JSON.stringify(actionInfo.body()).replace(/'/g, "\\'") + "'" : 'null'})">${actionInfo.label}</button>
           </div>
         ` : ''}
       </div>
@@ -472,7 +472,7 @@ function renderDetail(order) {
     return;
   }
 
-  const state = order.orderState;
+  const state = order.state;
   const color = stateColor(state);
   const actionInfo = STATE_ACTIONS[state];
   const cancelable = state === 'APPROVED';
@@ -493,7 +493,7 @@ function renderDetail(order) {
       </div>
       <div class="detail-field">
         <span class="detail-field-label">Courier</span>
-        <span class="detail-field-value">${order.assignedCourierId ? '#' + order.assignedCourierId : 'Unassigned'}</span>
+        <span class="detail-field-value">${order.assignedCourier ? '#' + order.assignedCourier : 'Unassigned'}</span>
       </div>
       <div class="detail-field">
         <span class="detail-field-label">State</span>
@@ -501,7 +501,7 @@ function renderDetail(order) {
       </div>
     </div>
     <div class="detail-actions">
-      ${actionInfo ? `<button class="btn btn-primary" onclick="advanceOrder(${order.orderId},'${actionInfo.action}',${actionInfo.body ? "'" + JSON.stringify(actionInfo.body).replace(/'/g, "\\'") + "'" : 'null'})">${actionInfo.label}</button>` : ''}
+      ${actionInfo ? `<button class="btn btn-primary" onclick="advanceOrder(${order.orderId},'${actionInfo.action}',${typeof actionInfo.body === 'function' ? "'" + JSON.stringify(actionInfo.body()).replace(/'/g, "\\'") + "'" : 'null'})">${actionInfo.label}</button>` : ''}
       ${cancelable ? `<button class="btn btn-danger" onclick="cancelOrder(${order.orderId})">Cancel</button>` : ''}
     </div>
   `;
@@ -522,7 +522,7 @@ function renderTable(orderList) {
   if (!tbody) return;
 
   tbody.innerHTML = orderList.map(order => {
-    const state = order.orderState;
+    const state = order.state;
     const color = stateColor(state);
     return `
       <tr class="${selectedOrderId === order.orderId ? 'row-selected' : ''}" onclick="selectOrder(${order.orderId})">
@@ -532,7 +532,7 @@ function renderTable(orderList) {
           <span class="order-badge" style="background:${color}15;color:${color}">${formatState(state)}</span>
         </td>
         <td>${formatMoney(order.orderTotal)}</td>
-        <td>${order.assignedCourierId ? '#' + order.assignedCourierId : '<span class="text-muted">Unassigned</span>'}</td>
+        <td>${order.assignedCourier ? '#' + order.assignedCourier : '<span class="text-muted">Unassigned</span>'}</td>
         <td>
           <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();selectOrder(${order.orderId})">View</button>
         </td>
@@ -574,9 +574,9 @@ async function advanceOrder(orderId, action, bodyStr) {
     // Optimistic update for demo mode
     const order = orders.find(o => o.orderId === orderId);
     if (order) {
-      const stateIndex = STATE_ORDER.indexOf(order.orderState);
+      const stateIndex = STATE_ORDER.indexOf(order.state);
       if (stateIndex >= 0 && stateIndex < STATE_ORDER.length - 2) {
-        order.orderState = STATE_ORDER[stateIndex + 1];
+        order.state = STATE_ORDER[stateIndex + 1];
       }
       renderAll();
     }
@@ -595,8 +595,8 @@ async function cancelOrder(orderId) {
   } else {
     // Optimistic update for demo mode
     const order = orders.find(o => o.orderId === orderId);
-    if (order && order.orderState === 'APPROVED') {
-      order.orderState = 'CANCELLED';
+    if (order && order.state === 'APPROVED') {
+      order.state = 'CANCELLED';
       renderAll();
     }
   }
