@@ -42,4 +42,10 @@ public class CourierService {
     return courierRepository.findById(courierId).get();
   }
 
+  @Transactional
+  public void updateLocation(long courierId, double latitude, double longitude) {
+    Courier courier = courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId));
+    courier.updateLocation(latitude, longitude);
+  }
 }

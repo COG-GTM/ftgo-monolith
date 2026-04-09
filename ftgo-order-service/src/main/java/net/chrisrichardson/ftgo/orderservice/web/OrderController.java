@@ -1,8 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
-import net.chrisrichardson.ftgo.domain.Order;
-import net.chrisrichardson.ftgo.domain.OrderRepository;
-import net.chrisrichardson.ftgo.domain.OrderRevision;
+import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
@@ -13,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -60,12 +59,26 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
+    List<Action> courierActions = order.getAssignedCourier() == null
+            ? null
+            : order.getAssignedCourier().actionsForDelivery(order);
+
+    LocalDateTime estimatedDelivery = null;
+    if (courierActions != null) {
+      estimatedDelivery = courierActions.stream()
+              .filter(a -> a.getType() == ActionType.DROPOFF)
+              .map(Action::getTime)
+              .findFirst()
+              .orElse(null);
+    }
+
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
             order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().actionsForDelivery(order)
+            courierActions,
+            estimatedDelivery
     );
   }
 

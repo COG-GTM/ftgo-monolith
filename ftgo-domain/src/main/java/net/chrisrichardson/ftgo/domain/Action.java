@@ -42,4 +42,8 @@ public class Action {
     return type;
   }
 
+  public LocalDateTime getTime() {
+    return time;
+  }
+
 }

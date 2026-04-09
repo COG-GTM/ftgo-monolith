@@ -13,6 +13,8 @@ public class Address {
   private String city;
   private String state;
   private String zip;
+  private Double latitude;
+  private Double longitude;
 
   public Address() {
   }
@@ -23,6 +25,12 @@ public class Address {
     this.city = city;
     this.state = state;
     this.zip = zip;
+  }
+
+  public Address(String street1, String street2, String city, String state, String zip, Double latitude, Double longitude) {
+    this(street1, street2, city, state, zip);
+    this.latitude = latitude;
+    this.longitude = longitude;
   }
 
   public String getStreet1() {
@@ -63,5 +71,21 @@ public class Address {
 
   public void setZip(String zip) {
     this.zip = zip;
+  }
+
+  public Double getLatitude() {
+    return latitude;
+  }
+
+  public void setLatitude(Double latitude) {
+    this.latitude = latitude;
+  }
+
+  public Double getLongitude() {
+    return longitude;
+  }
+
+  public void setLongitude(Double longitude) {
+    this.longitude = longitude;
   }
 }

@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
@@ -29,18 +28,21 @@ public class OrderService {
 
   private ConsumerService consumerService;
   private CourierRepository courierRepository;
-  private Random random = new Random();
+  private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerService consumerService,
+                      CourierRepository courierRepository,
+                      CourierAssignmentStrategy courierAssignmentStrategy) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
     this.courierRepository = courierRepository;
+    this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
   @Transactional
@@ -97,16 +99,40 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-
-    // Stupid implementation
-
     List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = couriers.get(random.nextInt(couriers.size()));
+    Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
+
     courier.addAction(Action.makePickup(order));
-    courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));
+
+    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, order, readyBy);
+    courier.addAction(Action.makeDropoff(order, estimatedDeliveryTime));
 
     order.schedule(courier);
 
+    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
+            order.getId(), courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
+
+    meterRegistry.ifPresent(mr -> mr.counter("courier_assignments").increment());
+  }
+
+  private LocalDateTime estimateDeliveryTime(Courier courier, Order order, LocalDateTime readyBy) {
+    if (courier.hasLocation() && order.getRestaurant() != null
+            && order.getRestaurant().getAddress() != null
+            && order.getRestaurant().getAddress().getLatitude() != null) {
+
+      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
+              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
+              order.getRestaurant().getAddress().getLatitude(),
+              order.getRestaurant().getAddress().getLongitude());
+
+      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
+      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
+      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
+
+      return effectiveReadyTime.plusMinutes(15);
+    }
+
+    return readyBy.plusMinutes(30);
   }
 
 
