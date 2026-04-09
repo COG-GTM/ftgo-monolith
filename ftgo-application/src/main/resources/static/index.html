@@ -3,117 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FTGO - Food To Go</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <title>FTGO - Order Management Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
-  <!-- Sidebar Navigation -->
-  <nav class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="8" fill="#E85D04"/>
-          <path d="M8 12c0-1 .5-2 1.5-2.5C11 9 13 8 16 8s5 1 6.5 1.5c1 .5 1.5 1.5 1.5 2.5v1H8v-1z" fill="#fff"/>
-          <rect x="7" y="14" width="18" height="2" rx="1" fill="#fff"/>
-          <path d="M9 17h14l-1 7H10l-1-7z" fill="#fff" opacity=".85"/>
-          <rect x="12" y="19" width="2" height="3" rx=".5" fill="#E85D04"/>
-          <rect x="15" y="19" width="2" height="3" rx=".5" fill="#E85D04"/>
-          <circle cx="18.5" cy="20.5" r="1" fill="#E85D04"/>
-        </svg>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">FTGO</h1>
+        <span class="app-subtitle">Order Management</span>
       </div>
-      <div class="brand-text">
-        <span class="brand-name">FTGO</span>
-        <span class="brand-tagline">Food To Go</span>
-      </div>
-    </div>
-
-    <div class="nav-section">
-      <span class="nav-section-title">Overview</span>
-      <a href="#/" class="nav-link active" data-view="dashboard">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-        </svg>
-        <span>Dashboard</span>
-      </a>
-      <a href="#/orders" class="nav-link" data-view="orders">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm2 3h8a1 1 0 110 2H6a1 1 0 110-2zm0 4h8a1 1 0 110 2H6a1 1 0 110-2zm0 4h4a1 1 0 110 2H6a1 1 0 110-2z"/>
-        </svg>
-        <span>Orders</span>
-        <span class="nav-badge" id="orders-badge" style="display:none">0</span>
-      </a>
-    </div>
-
-    <div class="nav-section">
-      <span class="nav-section-title">Management</span>
-      <a href="#/restaurants" class="nav-link" data-view="restaurants">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M7 2a1 1 0 00-1 1v1H5a1 1 0 000 2h1v10a2 2 0 002 2h.5a1 1 0 001-1V6h1v11a1 1 0 001 1H12a2 2 0 002-2V6h1a1 1 0 100-2h-1V3a1 1 0 10-2 0v1H8V3a1 1 0 00-1-1z"/>
-        </svg>
-        <span>Restaurants</span>
-      </a>
-      <a href="#/consumers" class="nav-link" data-view="consumers">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm8 0a3 3 0 11-6 0 3 3 0 016 0zm-4.07 11c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-        </svg>
-        <span>Consumers</span>
-      </a>
-      <a href="#/couriers" class="nav-link" data-view="couriers">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.97 5.97 0 00-.75-2.9A3.005 3.005 0 0119 15v3h-3zM4.75 12.1A5.97 5.97 0 004 15v3H1v-3a3 3 0 013.75-2.9z"/>
-        </svg>
-        <span>Couriers</span>
-      </a>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="sidebar-footer-info">
-        <span class="status-dot"></span>
-        <span>API Connected</span>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Main Content Area -->
-  <div class="main-wrapper" id="main-wrapper">
-    <header class="top-bar">
-      <div class="top-bar-left">
-        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
-            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+      <div class="header-right">
+        <button class="btn btn-icon" id="refresh-btn" title="Refresh data">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.65 2.35A7.958 7.958 0 008 0C3.58 0 .01 3.58.01 8S3.58 16 8 16c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 018 14 6 6 0 012 8a6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
           </svg>
         </button>
-        <div class="breadcrumb" id="breadcrumb">
-          <h1 class="page-title" id="page-title">Dashboard</h1>
-        </div>
+        <span class="header-timestamp" id="last-updated"></span>
       </div>
-      <div class="top-bar-right" id="top-bar-actions"></div>
     </header>
 
-    <main class="content" id="content">
-      <!-- Dynamic content rendered by JS -->
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Stats Row -->
+      <section class="stats-row" id="stats-row">
+        <!-- Populated by JS -->
+      </section>
+
+      <!-- Order Pipeline -->
+      <section class="card pipeline-card">
+        <div class="card-header">
+          <h2 class="card-title">Order Pipeline</h2>
+          <span class="card-badge" id="pipeline-total-badge"></span>
+        </div>
+        <div class="pipeline-bar" id="pipeline-bar">
+          <!-- Populated by JS -->
+        </div>
+        <div class="pipeline-labels" id="pipeline-labels">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Two-Column Layout: Kanban + Order Detail -->
+      <div class="grid-two-col">
+
+        <!-- Kanban Board -->
+        <section class="card kanban-card">
+          <div class="card-header">
+            <h2 class="card-title">Kanban Board</h2>
+          </div>
+          <div class="kanban-board" id="kanban-board">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+        <!-- Order Detail Panel -->
+        <section class="card detail-card">
+          <div class="card-header">
+            <h2 class="card-title">Order Detail</h2>
+          </div>
+          <div class="detail-panel" id="detail-panel">
+            <div class="detail-empty">
+              <p>Select an order from the kanban board to view details.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Recent Orders Table -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recent Orders</h2>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Restaurant</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Courier</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <!-- Modal -->
-  <div class="modal-backdrop" id="modal-backdrop">
-    <div class="modal" id="modal">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-title"></h2>
-        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer" id="modal-footer"></div>
-    </div>
-  </div>
-
-  <!-- Toast Notifications -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
