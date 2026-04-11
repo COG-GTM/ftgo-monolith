@@ -1,0 +1,3 @@
+ftgo:
+  delivery:
+    deliveryWindow: PT30M  # ISO-8601 duration format for 30 minutes

@@ -35,11 +35,20 @@ spec:
               - containerPort: 3306
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: rootpassword
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: root-password
             - name: MYSQL_USER
-              value: mysqluser
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: username
             - name: MYSQL_PASSWORD
-              value: mysqlpw
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-mysql-secret
+                  key: password
           volumeMounts:
             - name: ftgo-mysql-persistent-storage
               mountPath: /var/lib/mysql
