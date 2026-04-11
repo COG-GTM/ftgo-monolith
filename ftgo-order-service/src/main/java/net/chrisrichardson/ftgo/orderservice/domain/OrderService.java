@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.client.CourierDTO;
+import net.chrisrichardson.ftgo.orderservice.client.CourierServiceProxy;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -28,19 +29,20 @@ public class OrderService {
   private Optional<MeterRegistry> meterRegistry;
 
   private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private CourierServiceProxy courierServiceProxy;
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerService consumerService,
+                      CourierServiceProxy courierServiceProxy) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.courierServiceProxy = courierServiceProxy;
   }
 
   @Transactional
@@ -98,14 +100,16 @@ public class OrderService {
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
 
-    // Stupid implementation
+    // Get available couriers via HTTP from Courier Service
+    List<CourierDTO> couriers = courierServiceProxy.findAllAvailable();
+    CourierDTO selectedCourier = couriers.get(random.nextInt(couriers.size()));
 
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = couriers.get(random.nextInt(couriers.size()));
-    courier.addAction(Action.makePickup(order));
-    courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));
+    // Add pickup and dropoff actions via HTTP
+    courierServiceProxy.addPickupAction(selectedCourier.getId(), order.getId());
+    courierServiceProxy.addDropoffAction(selectedCourier.getId(), order.getId(), readyBy.plusMinutes(30));
 
-    order.schedule(courier);
+    // Schedule the order with the assigned courier ID
+    order.scheduleWithCourierId(selectedCourier.getId());
 
   }
 
