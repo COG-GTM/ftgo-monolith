@@ -1,8 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceClient;
+import net.chrisrichardson.ftgo.orderservice.client.CourierServiceClient;
+import net.chrisrichardson.ftgo.orderservice.client.RestaurantServiceClient;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -23,38 +24,40 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantServiceClient restaurantServiceClient;
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private ConsumerServiceClient consumerServiceClient;
+  private CourierServiceClient courierServiceClient;
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantServiceClient restaurantServiceClient,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerServiceClient consumerServiceClient, 
+                      CourierServiceClient courierServiceClient) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantServiceClient = restaurantServiceClient;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.consumerServiceClient = consumerServiceClient;
+    this.courierServiceClient = courierServiceClient;
   }
 
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
+    RestaurantServiceClient.RestaurantInfo restaurantInfo = restaurantServiceClient.getRestaurant(restaurantId);
+    if (restaurantInfo == null) {
+      throw new RestaurantNotFoundException(restaurantId);
+    }
 
+    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurantInfo);
 
-    List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
+    Order order = new Order(consumerId, restaurantId, orderLineItems);
 
-    Order order = new Order(consumerId, restaurant, orderLineItems);
-
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerServiceClient.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
@@ -67,9 +70,12 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, RestaurantServiceClient.RestaurantInfo restaurantInfo) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      MenuItem om = restaurantInfo.findMenuItem(li.getMenuItemId());
+      if (om == null) {
+        throw new InvalidMenuItemIdException(li.getMenuItemId());
+      }
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
@@ -100,7 +106,10 @@ public class OrderService {
 
     // Stupid implementation
 
-    List<Courier> couriers = courierRepository.findAllAvailable();
+    List<Courier> couriers = courierServiceClient.findAllAvailableCouriers();
+    if (couriers == null || couriers.isEmpty()) {
+      throw new RuntimeException("No available couriers");
+    }
     Courier courier = couriers.get(random.nextInt(couriers.size()));
     courier.addAction(Action.makePickup(order));
     courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));

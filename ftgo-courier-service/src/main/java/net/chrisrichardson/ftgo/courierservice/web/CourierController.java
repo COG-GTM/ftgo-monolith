@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 public class CourierController {
 
@@ -34,6 +36,12 @@ public class CourierController {
   public ResponseEntity<Courier> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
     return new ResponseEntity<>(courier, HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/couriers/available", method= RequestMethod.GET)
+  public ResponseEntity<List<Courier>> getAvailableCouriers() {
+    List<Courier> couriers = courierService.findAllAvailableCouriers();
+    return new ResponseEntity<>(couriers, HttpStatus.OK);
   }
 
 }
