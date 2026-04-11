@@ -42,7 +42,7 @@ public class OrderControllerTest {
     given().
             standaloneSetup(configureControllers(orderController)).
     when().
-            get("/orders/1").
+            get("/api/v1/orders/1").
     then().
             statusCode(200).
             body("orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue())).
@@ -58,7 +58,7 @@ public class OrderControllerTest {
     given().
             standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
     when().
-            get("/orders/1").
+            get("/api/v1/orders/1").
     then().
             statusCode(404)
     ;
