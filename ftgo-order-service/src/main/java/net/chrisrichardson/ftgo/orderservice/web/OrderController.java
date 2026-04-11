@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.courierservice.api.CourierActionDTO;
 import net.chrisrichardson.ftgo.domain.Order;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.domain.OrderRevision;
@@ -9,10 +10,15 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,10 +33,18 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private RestTemplate restTemplate;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  private String courierServiceUrl;
+
+  public OrderController(OrderService orderService,
+                         OrderRepository orderRepository,
+                         RestTemplate restTemplate,
+                         @Value("${courier.service.url:http://localhost:8081}") String courierServiceUrl) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.restTemplate = restTemplate;
+    this.courierServiceUrl = courierServiceUrl;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -60,12 +74,28 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
+    Long courierId = order.getAssignedCourierId();
+    List<CourierActionDTO> courierActions = null;
+
+    if (courierId != null) {
+      try {
+        ResponseEntity<List<CourierActionDTO>> response = restTemplate.exchange(
+            courierServiceUrl + "/couriers/" + courierId + "/actions/" + order.getId(),
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<CourierActionDTO>>() {});
+        courierActions = response.getBody();
+      } catch (Exception e) {
+        courierActions = Collections.emptyList();
+      }
+    }
+
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().actionsForDelivery(order)
+            courierId,
+            courierActions
     );
   }
 

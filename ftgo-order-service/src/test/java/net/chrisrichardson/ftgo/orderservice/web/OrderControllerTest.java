@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -24,13 +25,15 @@ public class OrderControllerTest {
 
   private OrderService orderService;
   private OrderRepository orderRepository;
+  private RestTemplate restTemplate;
   private OrderController orderController;
 
   @Before
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    orderController = new OrderController(orderService, orderRepository);
+    restTemplate = mock(RestTemplate.class);
+    orderController = new OrderController(orderService, orderRepository, restTemplate, "http://localhost:8081");
   }
 
 
@@ -56,7 +59,7 @@ public class OrderControllerTest {
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
     given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
+            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository, restTemplate, "http://localhost:8081"))).
     when().
             get("/orders/1").
     then().

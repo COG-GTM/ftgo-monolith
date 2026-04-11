@@ -2,17 +2,23 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.courierservice.api.AssignCourierRequest;
+import net.chrisrichardson.ftgo.courierservice.api.AssignCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.api.AvailableCourierDTO;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -28,19 +34,23 @@ public class OrderService {
   private Optional<MeterRegistry> meterRegistry;
 
   private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private RestTemplate restTemplate;
+  private String courierServiceUrl;
   private Random random = new Random();
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService, CourierRepository courierRepository) {
+                      ConsumerService consumerService,
+                      RestTemplate restTemplate,
+                      String courierServiceUrl) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.restTemplate = restTemplate;
+    this.courierServiceUrl = courierServiceUrl;
   }
 
   @Transactional
@@ -97,16 +107,30 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
+    ResponseEntity<List<AvailableCourierDTO>> response = restTemplate.exchange(
+        courierServiceUrl + "/couriers/available",
+        HttpMethod.GET,
+        null,
+        new ParameterizedTypeReference<List<AvailableCourierDTO>>() {});
 
-    // Stupid implementation
+    List<AvailableCourierDTO> couriers = response.getBody();
+    if (couriers == null || couriers.isEmpty()) {
+      throw new RuntimeException("No available couriers");
+    }
 
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = couriers.get(random.nextInt(couriers.size()));
-    courier.addAction(Action.makePickup(order));
-    courier.addAction(Action.makeDropoff(order, readyBy.plusMinutes(30)));
+    AvailableCourierDTO selectedCourier = couriers.get(random.nextInt(couriers.size()));
 
-    order.schedule(courier);
+    AssignCourierRequest assignRequest = new AssignCourierRequest(
+        order.getId(),
+        null,
+        readyBy.plusMinutes(30));
 
+    restTemplate.postForEntity(
+        courierServiceUrl + "/couriers/" + selectedCourier.getId() + "/assign",
+        assignRequest,
+        AssignCourierResponse.class);
+
+    order.schedule(selectedCourier.getId());
   }
 
 

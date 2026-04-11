@@ -14,15 +14,15 @@ public class Plan {
     actions.add(action);
   }
 
-  public void removeDelivery(Order order) {
-    actions = actions.stream().filter(action -> !action.actionFor(order)).collect(Collectors.toList());
+  public void removeDeliveryByOrderId(Long orderId) {
+    actions = actions.stream().filter(action -> !action.actionForOrderId(orderId)).collect(Collectors.toList());
   }
 
   public List<Action> getActions() {
     return actions;
   }
 
-  public List<Action> actionsForDelivery(Order order) {
-    return actions.stream().filter(action -> action.actionFor(order)).collect(Collectors.toList());
+  public List<Action> actionsForOrderId(Long orderId) {
+    return actions.stream().filter(action -> action.actionForOrderId(orderId)).collect(Collectors.toList());
   }
 }
