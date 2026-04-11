@@ -9,6 +9,9 @@ dependencies {
 
     compile 'javax.el:javax.el-api:2.2.5'
 
+    // Flyway for database migrations (used when running as standalone microservice)
+    compile "org.flywaydb:flyway-core:5.2.4"
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
     testCompile "com.jayway.jsonpath:json-path:2.3.0"
