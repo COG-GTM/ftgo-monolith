@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: courier-service
+spec:
+  ports:
+  - port: 8083
+    targetPort: 8083
+  selector:
+    app: courier-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: courier-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: courier-service
+  template:
+    metadata:
+      labels:
+        app: courier-service
+    spec:
+      containers:
+      - name: courier-service
+        image: ftgo-courier-service:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://courier-mysql:3306/ftgo_courier
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: courier-mysql-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: courier-mysql-secret
+              key: password
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: com.mysql.jdbc.Driver
+        - name: JAVA_OPTS
+          value: -Xmx192m

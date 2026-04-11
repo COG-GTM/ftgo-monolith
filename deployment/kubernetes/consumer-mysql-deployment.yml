@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer-mysql
+  labels:
+    name: consumer-mysql
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    role: consumer-mysql
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: consumer-mysql
+spec:
+  serviceName: "consumer-mysql"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: consumer-mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: consumer-mysql
+          image: mysql:5.7
+          ports:
+              - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: ftgo_consumer
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-mysql-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-mysql-secret
+                  key: password
+          volumeMounts:
+            - name: consumer-mysql-storage
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: consumer-mysql-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
