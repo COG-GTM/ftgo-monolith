@@ -1,0 +1,68 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.0.3.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.3.RELEASE'
+    id 'org.flywaydb.flyway' version '6.0.0'
+}
+
+apply plugin: IntegrationTestsPlugin
+
+group = 'net.chrisrichardson.ftgo'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+
+    compile 'mysql:mysql-connector-java:5.1.39'
+    compile 'javax.el:javax.el-api:2.2.5'
+
+    runtime "javax.xml.bind:jaxb-api:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
+    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
+    runtime "javax.activation:activation:1.1.1"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile 'io.rest-assured:rest-assured:3.0.6'
+    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
+    testCompile "io.rest-assured:json-path:3.0.6"
+    testCompile "junit:junit:4.12"
+    testCompile 'com.jayway.restassured:rest-assured:2.9.0'
+    testCompile 'com.jayway.jsonpath:json-path:2.3.0'
+    testCompile 'org.assertj:assertj-core:3.11.1'
+}
+
+flyway {
+    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo_courier_service?useSSL=false"
+    user = System.getenv('FLYWAY_USER') ?: 'root'
+    password = System.getenv('MYSQL_ROOT_PASSWORD') ?: ''
+    schemas = ['ftgo_courier_service']
+}
+
+bootJar {
+    mainClassName = 'net.chrisrichardson.ftgo.courierservice.CourierServiceApplication'
+}
