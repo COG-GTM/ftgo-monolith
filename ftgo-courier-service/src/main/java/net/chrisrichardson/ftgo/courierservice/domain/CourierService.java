@@ -7,6 +7,9 @@ import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CourierService {
 
   private CourierRepository courierRepository;
@@ -40,6 +43,16 @@ public class CourierService {
 
   public Courier findCourierById(long courierId) {
     return courierRepository.findById(courierId).get();
+  }
+
+  public List<Courier> findAllAvailable() {
+    return courierRepository.findAllAvailable();
+  }
+
+  public List<Courier> findAll() {
+    List<Courier> couriers = new ArrayList<>();
+    courierRepository.findAll().forEach(couriers::add);
+    return couriers;
   }
 
 }

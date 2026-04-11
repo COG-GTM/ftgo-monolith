@@ -31,22 +31,26 @@ apply plugin: IntegrationTestsPlugin
 //
 // integrationTest.dependsOn(integrationTestsComposeUp)
 
+apply plugin: 'org.springframework.boot'
+
 dependencies {
 
 
     compile project(":common-swagger")
     compile project(":ftgo-domain")
+    compile project(":ftgo-order-service-api")
 
     compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-order-service-api")
     compile project(":ftgo-consumer-service")
+    compile project(":ftgo-restaurant-service-api")
+    compile project(":ftgo-courier-service-api")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile 'javax.el:javax.el-api:2.2.5'
+    compile "org.flywaydb:flyway-core:5.2.4"
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 

@@ -1,16 +1,17 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.CourierRepository;
 import net.chrisrichardson.ftgo.domain.DomainConfiguration;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
-import net.chrisrichardson.ftgo.domain.RestaurantRepository;
+import net.chrisrichardson.ftgo.orderservice.clients.ConsumerClient;
+import net.chrisrichardson.ftgo.orderservice.clients.CourierClient;
+import net.chrisrichardson.ftgo.orderservice.clients.RestaurantClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -19,14 +20,21 @@ import java.util.Optional;
 public class OrderConfiguration {
   // TODO move to framework
   @Bean
-  public OrderService orderService(RestaurantRepository restaurantRepository,
-                                   OrderRepository orderRepository,
+  public RestTemplate restTemplate() {
+    return new RestTemplate();
+  }
+
+  @Bean
+  public OrderService orderService(OrderRepository orderRepository,
+                                   RestaurantClient restaurantClient,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerService consumerService, CourierRepository courierRepository) {
+                                   ConsumerClient consumerClient,
+                                   CourierClient courierClient) {
     return new OrderService(orderRepository,
-            restaurantRepository,
+            restaurantClient,
             meterRegistry,
-            consumerService, courierRepository);
+            consumerClient,
+            courierClient);
   }
 
   @Bean
