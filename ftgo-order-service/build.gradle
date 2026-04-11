@@ -11,7 +11,7 @@
 // }
 
 // apply plugin: 'docker-compose'
-apply plugin:'io.spring.dependency-management'
+apply plugin: FtgoServicePlugin
 
 apply plugin: IntegrationTestsPlugin
 
@@ -33,20 +33,23 @@ apply plugin: IntegrationTestsPlugin
 
 dependencies {
 
-
     compile project(":common-swagger")
-    compile project(":ftgo-domain")
+    compile project(":ftgo-common")
+    compile project(":ftgo-common-jpa")
 
     compile project(":ftgo-consumer-service-api")
     compile project(":ftgo-restaurant-service-api")
+    compile project(":ftgo-courier-service-api")
     compile project(":ftgo-order-service-api")
-    compile project(":ftgo-consumer-service")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile 'javax.el:javax.el-api:2.2.5'
+    compile "org.flywaydb:flyway-core:5.2.4"
+    compile "mysql:mysql-connector-java:5.1.47"
+
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 

@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: ftgo-restaurant-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}:3306/ftgo_restaurant_service?useSSL=false
+    username: root
+    password: ${SPRING_DATASOURCE_PASSWORD:rootpassword}
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    generate-ddl: false
+  flyway:
+    enabled: true
+
+server:
+  port: 8083
