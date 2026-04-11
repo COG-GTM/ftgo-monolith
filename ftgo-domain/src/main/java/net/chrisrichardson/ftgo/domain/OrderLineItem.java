@@ -1,11 +1,9 @@
 package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Embeddable
 public class OrderLineItem {
@@ -23,17 +21,24 @@ public class OrderLineItem {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this);
+    return "OrderLineItem{menuItemId='" + menuItemId + "', name='" + name +
+            "', price=" + price + ", quantity=" + quantity + "}";
   }
 
   @Override
   public boolean equals(Object o) {
-    return EqualsBuilder.reflectionEquals(this, o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    OrderLineItem that = (OrderLineItem) o;
+    return quantity == that.quantity &&
+            Objects.equals(menuItemId, that.menuItemId) &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(price, that.price);
   }
 
   @Override
   public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
+    return Objects.hash(quantity, menuItemId, name, price);
   }
 
   public OrderLineItem(String menuItemId, String name, Money price, int quantity) {

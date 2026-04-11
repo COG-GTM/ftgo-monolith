@@ -1,19 +1,16 @@
 package net.chrisrichardson.ftgo.common;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class Money {
 
-  public static Money ZERO = new Money(0);
+  public static final Money ZERO = new Money(0);
 
   private BigDecimal amount;
 
@@ -35,28 +32,19 @@ public class Money {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-
     if (o == null || getClass() != o.getClass()) return false;
-
     Money money = (Money) o;
-
-    return new EqualsBuilder()
-            .append(amount, money.amount)
-            .isEquals();
+    return Objects.equals(amount, money.amount);
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37)
-            .append(amount)
-            .toHashCode();
+    return Objects.hash(amount);
   }
 
   @Override
   public String toString() {
-    return new ToStringBuilder(this)
-            .append("amount", amount)
-            .toString();
+    return "Money{amount=" + amount + "}";
   }
 
 

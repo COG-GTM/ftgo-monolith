@@ -2,14 +2,12 @@ package net.chrisrichardson.ftgo.common;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -29,17 +27,20 @@ public class MoneySerializationTest {
 
     @Override
     public boolean equals(Object o) {
-      return EqualsBuilder.reflectionEquals(this, o);
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MoneyContainer that = (MoneyContainer) o;
+      return Objects.equals(price, that.price);
     }
 
     @Override
     public int hashCode() {
-      return HashCodeBuilder.reflectionHashCode(this);
+      return Objects.hash(price);
     }
 
     @Override
     public String toString() {
-      return ToStringBuilder.reflectionToString(this);
+      return "MoneyContainer{price=" + price + "}";
     }
 
     public Money getPrice() {

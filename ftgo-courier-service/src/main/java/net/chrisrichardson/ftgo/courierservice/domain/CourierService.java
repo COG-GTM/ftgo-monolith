@@ -7,6 +7,8 @@ import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.NoSuchElementException;
+
 public class CourierService {
 
   private CourierRepository courierRepository;
@@ -31,15 +33,20 @@ public class CourierService {
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new NoSuchElementException("Courier not found: " + courierId))
+            .noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new NoSuchElementException("Courier not found: " + courierId))
+            .noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
-    return courierRepository.findById(courierId).get();
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new NoSuchElementException("Courier not found: " + courierId));
   }
 
 }
