@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: FTGO Restaurant Service API
+  description: |
+    Microservice responsible for restaurant management in the FTGO food delivery system.
+    Handles restaurant registration, menu management, and restaurant information retrieval.
+    This service owns the Restaurant aggregate including its embedded menu items. The Order
+    Service queries this service to validate menu items and calculate order totals during
+    order creation.
+  version: 1.0.0
+  contact:
+    name: FTGO Platform Team
+    email: platform@ftgo.com
+
+servers:
+  - url: http://localhost:8083
+    description: Local development server
+  - url: https://api.ftgo.com/restaurant-service
+    description: Production server
+
+tags:
+  - name: Restaurants
+    description: Restaurant registration and management
+  - name: Menus
+    description: Restaurant menu management
+
+security:
+  - bearerAuth: []
+
+paths:
+  /restaurants:
+    post:
+      tags:
+        - Restaurants
+      summary: Register a new restaurant
+      description: |
+        Creates a new restaurant with its name, address, and initial menu.
+        The menu consists of a list of menu items, each with an ID, name, and price.
+      operationId: createRestaurant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRestaurantRequest'
+      responses:
+        '200':
+          description: Restaurant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRestaurantResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /restaurants/{restaurantId}:
+    get:
+      tags:
+        - Restaurants
+      summary: Get restaurant by ID
+      description: Retrieves the details of a specific restaurant including its name and identifier.
+      operationId: getRestaurant
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      responses:
+        '200':
+          description: Restaurant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRestaurantResponse'
+        '404':
+          description: Restaurant not found
+        '401':
+          description: Unauthorized
+
+  /restaurants/{restaurantId}/menu:
+    get:
+      tags:
+        - Menus
+      summary: Get restaurant menu
+      description: Retrieves the full menu for a specific restaurant, including all menu items with prices.
+      operationId: getRestaurantMenu
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      responses:
+        '200':
+          description: Restaurant menu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantMenu'
+        '404':
+          description: Restaurant not found
+        '401':
+          description: Unauthorized
+    put:
+      tags:
+        - Menus
+      summary: Revise restaurant menu
+      description: |
+        Replaces the entire menu for a restaurant. This is used when the restaurant
+        wants to update its offerings, prices, or available items.
+      operationId: reviseRestaurantMenu
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestaurantMenu'
+      responses:
+        '200':
+          description: Menu updated successfully
+        '404':
+          description: Restaurant not found
+        '400':
+          description: Invalid menu data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /restaurants/{restaurantId}/menu/validate:
+    post:
+      tags:
+        - Menus
+      summary: Validate menu items for an order
+      description: |
+        Internal endpoint called by the Order Service to validate that the requested
+        menu items exist and to retrieve their prices for order total calculation.
+        This is an inter-service communication endpoint.
+      operationId: validateMenuItems
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateMenuItemsRequest'
+      responses:
+        '200':
+          description: Menu items are valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateMenuItemsResponse'
+        '404':
+          description: Restaurant not found
+        '422':
+          description: One or more menu items are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the authentication service
+
+  parameters:
+    RestaurantId:
+      name: restaurantId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Unique identifier of the restaurant
+
+  schemas:
+    CreateRestaurantRequest:
+      type: object
+      required:
+        - name
+        - menu
+      properties:
+        name:
+          type: string
+          description: Restaurant name
+          example: "Ajanta"
+        address:
+          $ref: '#/components/schemas/Address'
+        menu:
+          $ref: '#/components/schemas/RestaurantMenu'
+
+    CreateRestaurantResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID of the newly created restaurant
+          example: 1
+
+    GetRestaurantResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Restaurant identifier
+        name:
+          type: string
+          description: Restaurant name
+          example: "Ajanta"
+
+    RestaurantMenu:
+      type: object
+      required:
+        - menuItemDTOs
+      properties:
+        menuItemDTOs:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItem'
+          description: List of menu items offered by the restaurant
+
+    MenuItem:
+      type: object
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the menu item within this restaurant
+          example: "MI-001"
+        name:
+          type: string
+          description: Display name of the menu item
+          example: "Chicken Tikka Masala"
+        price:
+          $ref: '#/components/schemas/Money'
+
+    ValidateMenuItemsRequest:
+      type: object
+      required:
+        - menuItemIds
+      properties:
+        menuItemIds:
+          type: array
+          items:
+            type: string
+          description: List of menu item IDs to validate
+          example: ["MI-001", "MI-002"]
+
+    ValidateMenuItemsResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Whether all menu items are valid
+        menuItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItem'
+          description: The validated menu items with their current prices
+
+    Address:
+      type: object
+      properties:
+        street1:
+          type: string
+          description: Primary street address
+          example: "1 Main Street"
+        street2:
+          type: string
+          nullable: true
+          description: Secondary address line (apt, suite, etc.)
+          example: "Suite 100"
+        city:
+          type: string
+          description: City name
+          example: "Oakland"
+        state:
+          type: string
+          description: State abbreviation
+          example: "CA"
+        zip:
+          type: string
+          description: ZIP/postal code
+          example: "94611"
+        latitude:
+          type: number
+          format: double
+          nullable: true
+          description: Geographic latitude
+          example: 37.8044
+        longitude:
+          type: number
+          format: double
+          nullable: true
+          description: Geographic longitude
+          example: -122.2712
+
+    Money:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: Monetary amount as a decimal string
+          example: "12.99"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    # --- Async Event Schemas (for inter-service communication) ---
+
+    RestaurantCreatedEvent:
+      type: object
+      description: Published when a new restaurant is registered
+      properties:
+        restaurantId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        menu:
+          $ref: '#/components/schemas/RestaurantMenu'
+        timestamp:
+          type: string
+          format: date-time
+
+    RestaurantMenuRevisedEvent:
+      type: object
+      description: |
+        Published when a restaurant's menu is updated. The Order Service may subscribe
+        to this event to update its local cache of restaurant menus.
+      properties:
+        restaurantId:
+          type: integer
+          format: int64
+        revisedMenu:
+          $ref: '#/components/schemas/RestaurantMenu'
+        timestamp:
+          type: string
+          format: date-time
