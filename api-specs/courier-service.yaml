@@ -1,0 +1,567 @@
+openapi: 3.0.3
+info:
+  title: FTGO Courier Service API
+  description: |
+    Microservice responsible for courier (delivery driver) management in the FTGO food delivery
+    system. Handles courier registration, availability tracking, real-time location updates,
+    workload monitoring, and delivery plan management. This service owns the Courier aggregate
+    including the delivery plan (actions). The Order Service queries this service to find
+    available couriers and assign deliveries when orders are accepted.
+  version: 1.0.0
+  contact:
+    name: FTGO Platform Team
+    email: platform@ftgo.com
+
+servers:
+  - url: http://localhost:8084
+    description: Local development server
+  - url: https://api.ftgo.com/courier-service
+    description: Production server
+
+tags:
+  - name: Couriers
+    description: Courier registration and profile management
+  - name: Availability
+    description: Courier availability status management
+  - name: Location
+    description: Real-time courier location tracking
+  - name: Workload
+    description: Courier workload and delivery assignment monitoring
+  - name: Delivery Assignment
+    description: Internal endpoints for delivery assignment by Order Service
+
+security:
+  - bearerAuth: []
+
+paths:
+  /couriers:
+    post:
+      tags:
+        - Couriers
+      summary: Register a new courier
+      description: |
+        Creates a new courier with their name and home address. The courier's initial
+        location is set from the provided address coordinates (if available). The courier
+        starts in an unavailable state.
+      operationId: createCourier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourierRequest'
+      responses:
+        '200':
+          description: Courier created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCourierResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}:
+    get:
+      tags:
+        - Couriers
+      summary: Get courier by ID
+      description: Retrieves the full profile of a specific courier including name, address, availability, location, and delivery plan.
+      operationId: getCourier
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      responses:
+        '200':
+          description: Courier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourierResponse'
+        '404':
+          description: Courier not found
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}/availability:
+    post:
+      tags:
+        - Availability
+      summary: Update courier availability
+      description: |
+        Sets whether a courier is available to accept new delivery assignments.
+        An available courier can be assigned to new orders; an unavailable courier
+        will not receive new assignments but will continue existing deliveries.
+      operationId: updateCourierAvailability
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourierAvailability'
+      responses:
+        '200':
+          description: Availability updated successfully
+        '404':
+          description: Courier not found
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}/location:
+    post:
+      tags:
+        - Location
+      summary: Update courier location
+      description: |
+        Updates the courier's current GPS coordinates. This is typically called
+        periodically by the courier's mobile app to enable real-time delivery tracking
+        and optimal courier assignment.
+      operationId: updateCourierLocation
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourierLocationUpdate'
+      responses:
+        '200':
+          description: Location updated successfully
+        '404':
+          description: Courier not found
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}/workload:
+    get:
+      tags:
+        - Workload
+      summary: Get courier workload
+      description: |
+        Retrieves the courier's current workload information including active delivery count,
+        availability status, and current location. Used for monitoring and load balancing.
+      operationId: getCourierWorkload
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      responses:
+        '200':
+          description: Courier workload details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourierWorkloadResponse'
+        '404':
+          description: Courier not found
+        '401':
+          description: Unauthorized
+
+  /couriers/available:
+    get:
+      tags:
+        - Delivery Assignment
+      summary: List available couriers
+      description: |
+        Internal endpoint used by the Order Service to retrieve all couriers currently
+        marked as available. Used during order acceptance to find and assign a courier
+        for delivery.
+      operationId: getAvailableCouriers
+      responses:
+        '200':
+          description: List of available couriers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourierSummary'
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}/actions:
+    post:
+      tags:
+        - Delivery Assignment
+      summary: Add delivery action to courier's plan
+      description: |
+        Internal endpoint called by the Order Service to add a pickup or dropoff action
+        to a courier's delivery plan when a delivery is assigned.
+      operationId: addCourierAction
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddActionRequest'
+      responses:
+        '200':
+          description: Action added successfully
+        '404':
+          description: Courier not found
+        '401':
+          description: Unauthorized
+
+  /couriers/{courierId}/actions/{orderId}:
+    delete:
+      tags:
+        - Delivery Assignment
+      summary: Cancel delivery actions for an order
+      description: |
+        Internal endpoint called by the Order Service to remove all actions (pickup + dropoff)
+        associated with a specific order from a courier's plan when an order is cancelled.
+      operationId: cancelDeliveryActions
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: The order ID whose delivery actions should be removed
+      responses:
+        '200':
+          description: Delivery actions removed successfully
+        '404':
+          description: Courier or order not found
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the authentication service
+
+  parameters:
+    CourierId:
+      name: courierId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Unique identifier of the courier
+
+  schemas:
+    CreateCourierRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          $ref: '#/components/schemas/PersonName'
+        address:
+          $ref: '#/components/schemas/Address'
+
+    CreateCourierResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID of the newly created courier
+          example: 1
+
+    CourierResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Courier identifier
+        name:
+          $ref: '#/components/schemas/PersonName'
+        address:
+          $ref: '#/components/schemas/Address'
+        available:
+          type: boolean
+          description: Whether the courier is available for deliveries
+        currentLatitude:
+          type: number
+          format: double
+          nullable: true
+          description: Current GPS latitude
+        currentLongitude:
+          type: number
+          format: double
+          nullable: true
+          description: Current GPS longitude
+        lastLocationUpdate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the last location update
+        plan:
+          $ref: '#/components/schemas/DeliveryPlan'
+
+    CourierAvailability:
+      type: object
+      required:
+        - available
+      properties:
+        available:
+          type: boolean
+          description: Whether the courier is available for deliveries
+          example: true
+
+    CourierLocationUpdate:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          description: Current GPS latitude
+          example: 37.7749
+        longitude:
+          type: number
+          format: double
+          description: Current GPS longitude
+          example: -122.4194
+
+    CourierWorkloadResponse:
+      type: object
+      properties:
+        courierId:
+          type: integer
+          format: int64
+          description: Courier identifier
+        activeDeliveries:
+          type: integer
+          description: Number of active deliveries (pending pickups)
+          example: 2
+        available:
+          type: boolean
+          description: Whether the courier is available for new deliveries
+        currentLatitude:
+          type: number
+          format: double
+          nullable: true
+          description: Current GPS latitude
+        currentLongitude:
+          type: number
+          format: double
+          nullable: true
+          description: Current GPS longitude
+        lastLocationUpdate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the last location update
+
+    CourierSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          $ref: '#/components/schemas/PersonName'
+        currentLatitude:
+          type: number
+          format: double
+          nullable: true
+        currentLongitude:
+          type: number
+          format: double
+          nullable: true
+        activeDeliveries:
+          type: integer
+          description: Number of active deliveries
+
+    AddActionRequest:
+      type: object
+      required:
+        - type
+        - orderId
+      properties:
+        type:
+          type: string
+          enum:
+            - PICKUP
+            - DROPOFF
+          description: Type of delivery action
+        orderId:
+          type: integer
+          format: int64
+          description: The order this action is for
+        time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled time for this action (required for DROPOFF)
+
+    DeliveryPlan:
+      type: object
+      properties:
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryAction'
+
+    DeliveryAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - PICKUP
+            - DROPOFF
+          description: Type of courier action
+        orderId:
+          type: integer
+          format: int64
+          description: The order this action is associated with
+        time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled time for this action
+
+    PersonName:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          description: First name
+          example: "Jane"
+        lastName:
+          type: string
+          description: Last name
+          example: "Smith"
+
+    Address:
+      type: object
+      properties:
+        street1:
+          type: string
+          description: Primary street address
+          example: "1 Main Street"
+        street2:
+          type: string
+          nullable: true
+          description: Secondary address line
+          example: "Suite 100"
+        city:
+          type: string
+          description: City name
+          example: "Oakland"
+        state:
+          type: string
+          description: State abbreviation
+          example: "CA"
+        zip:
+          type: string
+          description: ZIP/postal code
+          example: "94611"
+        latitude:
+          type: number
+          format: double
+          nullable: true
+          description: Geographic latitude
+          example: 37.8044
+        longitude:
+          type: number
+          format: double
+          nullable: true
+          description: Geographic longitude
+          example: -122.2712
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    # --- Async Event Schemas (for inter-service communication) ---
+
+    CourierCreatedEvent:
+      type: object
+      description: Published when a new courier is registered
+      properties:
+        courierId:
+          type: integer
+          format: int64
+        name:
+          $ref: '#/components/schemas/PersonName'
+        address:
+          $ref: '#/components/schemas/Address'
+        timestamp:
+          type: string
+          format: date-time
+
+    CourierAvailabilityChangedEvent:
+      type: object
+      description: Published when a courier's availability status changes
+      properties:
+        courierId:
+          type: integer
+          format: int64
+        available:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+
+    CourierLocationUpdatedEvent:
+      type: object
+      description: Published when a courier's location is updated
+      properties:
+        courierId:
+          type: integer
+          format: int64
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+
+    CourierDeliveryAssignedEvent:
+      type: object
+      description: Published when a delivery is assigned to a courier
+      properties:
+        courierId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        pickupAddress:
+          $ref: '#/components/schemas/Address'
+        deliveryAddress:
+          $ref: '#/components/schemas/Address'
+        estimatedDeliveryTime:
+          type: string
+          format: date-time
+        timestamp:
+          type: string
+          format: date-time

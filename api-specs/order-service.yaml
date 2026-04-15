@@ -1,0 +1,562 @@
+openapi: 3.0.3
+info:
+  title: FTGO Order Service API
+  description: |
+    Microservice responsible for the complete order lifecycle in the FTGO food delivery system.
+    Handles order creation, state transitions (accept, prepare, pickup, deliver), cancellation,
+    and revision. This service owns the Order aggregate and coordinates with Consumer Service,
+    Restaurant Service, and Courier Service via synchronous REST calls and asynchronous events.
+  version: 1.0.0
+  contact:
+    name: FTGO Platform Team
+    email: platform@ftgo.com
+
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+  - url: https://api.ftgo.com/order-service
+    description: Production server
+
+tags:
+  - name: Orders
+    description: Order lifecycle management
+  - name: Order State Transitions
+    description: Endpoints for progressing order through its lifecycle
+
+security:
+  - bearerAuth: []
+
+paths:
+  /orders:
+    post:
+      tags:
+        - Orders
+      summary: Create a new order
+      description: |
+        Creates a new order for a consumer at a specific restaurant. Validates the consumer
+        exists and can place the order (via Consumer Service), verifies the restaurant and
+        menu items exist (via Restaurant Service), calculates the order total, and persists
+        the order in APPROVED state.
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '200':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '400':
+          description: Invalid request (e.g., invalid menu item ID, minimum not met)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consumer or restaurant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+    get:
+      tags:
+        - Orders
+      summary: Get orders for a consumer
+      description: Retrieves all orders placed by a specific consumer.
+      operationId: getOrders
+      parameters:
+        - name: consumerId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: The ID of the consumer whose orders to retrieve
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetOrderResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get order by ID
+      description: Retrieves the details of a specific order including state, total, restaurant info, and delivery tracking.
+      operationId: getOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderResponse'
+        '404':
+          description: Order not found
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/cancel:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Cancel an order
+      description: |
+        Cancels an order. Only orders in APPROVED state can be cancelled.
+        Attempting to cancel an order in any other state will result in a 409 Conflict.
+      operationId: cancelOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderResponse'
+        '404':
+          description: Order not found
+        '409':
+          description: Order cannot be cancelled in its current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/revise:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Revise an order
+      description: |
+        Revises line item quantities on an existing order. Only orders in APPROVED state
+        can be revised. The new order total must meet the order minimum.
+      operationId: reviseOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviseOrderRequest'
+      responses:
+        '200':
+          description: Order revised successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderResponse'
+        '404':
+          description: Order not found
+        '409':
+          description: Order cannot be revised in its current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/accept:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Accept an order (restaurant acknowledges)
+      description: |
+        Restaurant accepts the order and provides an estimated ready-by time.
+        Transitions the order from APPROVED to ACCEPTED state and triggers
+        courier assignment and delivery scheduling.
+      operationId: acceptOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderAcceptance'
+      responses:
+        '200':
+          description: Order accepted successfully
+        '404':
+          description: Order not found
+        '409':
+          description: Order cannot be accepted in its current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/preparing:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Mark order as being prepared
+      description: |
+        Restaurant signals that food preparation has started.
+        Transitions from ACCEPTED to PREPARING state.
+      operationId: noteOrderPreparing
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order marked as preparing
+        '404':
+          description: Order not found
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/ready:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Mark order as ready for pickup
+      description: |
+        Restaurant signals that the order is ready for courier pickup.
+        Transitions from PREPARING to READY_FOR_PICKUP state.
+      operationId: noteOrderReady
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order marked as ready for pickup
+        '404':
+          description: Order not found
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/pickedup:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Mark order as picked up by courier
+      description: |
+        Courier signals that the order has been picked up from the restaurant.
+        Transitions from READY_FOR_PICKUP to PICKED_UP state.
+      operationId: noteOrderPickedUp
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order marked as picked up
+        '404':
+          description: Order not found
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}/delivered:
+    post:
+      tags:
+        - Order State Transitions
+      summary: Mark order as delivered
+      description: |
+        Courier signals that the order has been delivered to the consumer.
+        Transitions from PICKED_UP to DELIVERED state. This is the terminal happy-path state.
+      operationId: noteOrderDelivered
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order marked as delivered
+        '404':
+          description: Order not found
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the authentication service
+
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Unique identifier of the order
+
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required:
+        - consumerId
+        - restaurantId
+        - lineItems
+      properties:
+        consumerId:
+          type: integer
+          format: int64
+          description: ID of the consumer placing the order
+          example: 1
+        restaurantId:
+          type: integer
+          format: int64
+          description: ID of the restaurant to order from
+          example: 1
+        lineItems:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/LineItem'
+          description: List of menu items and quantities
+
+    LineItem:
+      type: object
+      required:
+        - menuItemId
+        - quantity
+      properties:
+        menuItemId:
+          type: string
+          description: Identifier of the menu item
+          example: "MI-001"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Number of this item to order
+          example: 2
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: ID of the newly created order
+          example: 1
+
+    GetOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: Unique order identifier
+        orderState:
+          $ref: '#/components/schemas/OrderState'
+        orderTotal:
+          $ref: '#/components/schemas/Money'
+        restaurantName:
+          type: string
+          description: Name of the restaurant
+          example: "Ajanta"
+        assignedCourierId:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID of the assigned courier (null if not yet assigned)
+        courierActions:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CourierAction'
+          description: Scheduled courier actions for this delivery
+        estimatedDeliveryTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Estimated delivery time (null if not yet scheduled)
+
+    ReviseOrderRequest:
+      type: object
+      required:
+        - revisedLineItemQuantities
+      properties:
+        revisedLineItemQuantities:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Map of menuItemId to new quantity
+          example:
+            "MI-001": 3
+            "MI-002": 1
+
+    OrderAcceptance:
+      type: object
+      required:
+        - readyBy
+      properties:
+        readyBy:
+          type: string
+          format: date-time
+          description: Estimated time when the order will be ready for pickup
+          example: "2026-04-15T15:30:00"
+
+    OrderState:
+      type: string
+      enum:
+        - APPROVED
+        - ACCEPTED
+        - PREPARING
+        - READY_FOR_PICKUP
+        - PICKED_UP
+        - DELIVERED
+        - CANCELLED
+      description: |
+        Order lifecycle states:
+        - APPROVED: Order created and validated, awaiting restaurant acceptance
+        - ACCEPTED: Restaurant accepted, courier assigned
+        - PREPARING: Restaurant is preparing the food
+        - READY_FOR_PICKUP: Food is ready, awaiting courier
+        - PICKED_UP: Courier has collected the order
+        - DELIVERED: Order delivered to consumer (terminal state)
+        - CANCELLED: Order was cancelled (terminal state)
+
+    CourierAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - PICKUP
+            - DROPOFF
+          description: Type of courier action
+        time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled time for this action
+
+    Money:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: Monetary amount as a decimal string
+          example: "29.97"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    # --- Async Event Schemas (for inter-service communication) ---
+
+    OrderCreatedEvent:
+      type: object
+      description: Published when a new order is created (APPROVED state)
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        consumerId:
+          type: integer
+          format: int64
+        restaurantId:
+          type: integer
+          format: int64
+        orderTotal:
+          $ref: '#/components/schemas/Money'
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineItemDTO'
+        timestamp:
+          type: string
+          format: date-time
+
+    OrderStateChangedEvent:
+      type: object
+      description: Published whenever an order transitions state
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        previousState:
+          $ref: '#/components/schemas/OrderState'
+        newState:
+          $ref: '#/components/schemas/OrderState'
+        timestamp:
+          type: string
+          format: date-time
+
+    OrderCancelledEvent:
+      type: object
+      description: Published when an order is cancelled
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        consumerId:
+          type: integer
+          format: int64
+        restaurantId:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+
+    OrderLineItemDTO:
+      type: object
+      properties:
+        menuItemId:
+          type: string
+        name:
+          type: string
+        price:
+          $ref: '#/components/schemas/Money'
+        quantity:
+          type: integer

@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: FTGO Consumer Service API
+  description: |
+    Microservice responsible for consumer (customer) management in the FTGO food delivery system.
+    Handles consumer registration, retrieval, and order validation. This service owns the Consumer
+    aggregate and is called by the Order Service during order creation to validate that a consumer
+    exists and is permitted to place an order.
+  version: 1.0.0
+  contact:
+    name: FTGO Platform Team
+    email: platform@ftgo.com
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+  - url: https://api.ftgo.com/consumer-service
+    description: Production server
+
+tags:
+  - name: Consumers
+    description: Consumer registration and management
+  - name: Consumer Validation
+    description: Internal endpoints for inter-service order validation
+
+security:
+  - bearerAuth: []
+
+paths:
+  /consumers:
+    post:
+      tags:
+        - Consumers
+      summary: Register a new consumer
+      description: |
+        Creates a new consumer account with the provided name. Returns the newly
+        created consumer's ID.
+      operationId: createConsumer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConsumerRequest'
+      responses:
+        '200':
+          description: Consumer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateConsumerResponse'
+        '400':
+          description: Invalid request (e.g., missing name fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+  /consumers/{consumerId}:
+    get:
+      tags:
+        - Consumers
+      summary: Get consumer by ID
+      description: Retrieves the details of a specific consumer by their unique identifier.
+      operationId: getConsumer
+      parameters:
+        - $ref: '#/components/parameters/ConsumerId'
+      responses:
+        '200':
+          description: Consumer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConsumerResponse'
+        '404':
+          description: Consumer not found
+        '401':
+          description: Unauthorized
+
+  /consumers/{consumerId}/validate-order:
+    post:
+      tags:
+        - Consumer Validation
+      summary: Validate a consumer can place an order
+      description: |
+        Internal endpoint called by the Order Service to validate that a consumer
+        exists and is authorized to place an order with the given total. This is an
+        inter-service communication endpoint that would be invoked synchronously
+        during order creation.
+      operationId: validateOrderForConsumer
+      parameters:
+        - $ref: '#/components/parameters/ConsumerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateOrderRequest'
+      responses:
+        '200':
+          description: Consumer is valid and authorized to place the order
+        '404':
+          description: Consumer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Consumer validation failed (e.g., credit limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the authentication service
+
+  parameters:
+    ConsumerId:
+      name: consumerId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Unique identifier of the consumer
+
+  schemas:
+    CreateConsumerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          $ref: '#/components/schemas/PersonName'
+
+    CreateConsumerResponse:
+      type: object
+      properties:
+        consumerId:
+          type: integer
+          format: int64
+          description: ID of the newly created consumer
+          example: 1
+
+    GetConsumerResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PersonName'
+
+    ValidateOrderRequest:
+      type: object
+      required:
+        - orderTotal
+      properties:
+        orderTotal:
+          $ref: '#/components/schemas/Money'
+      description: Request to validate whether the consumer can place an order with the given total
+
+    PersonName:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          description: Consumer's first name
+          example: "John"
+        lastName:
+          type: string
+          description: Consumer's last name
+          example: "Doe"
+
+    Money:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: Monetary amount as a decimal string
+          example: "29.97"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    # --- Async Event Schemas (for inter-service communication) ---
+
+    ConsumerCreatedEvent:
+      type: object
+      description: Published when a new consumer is registered
+      properties:
+        consumerId:
+          type: integer
+          format: int64
+        name:
+          $ref: '#/components/schemas/PersonName'
+        timestamp:
+          type: string
+          format: date-time
+
+    ConsumerValidationFailedEvent:
+      type: object
+      description: Published when consumer validation fails during order creation
+      properties:
+        consumerId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        reason:
+          type: string
+          description: Reason for validation failure
+        timestamp:
+          type: string
+          format: date-time
