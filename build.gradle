@@ -91,7 +91,7 @@ task jacocoAggregatedReport(type: JacocoReport) {
         project.tasks.withType(Test).collect { task ->
             task.extensions.findByType(JacocoTaskExtension)?.destinationFile
         }
-    }.flatten().findAll { it != null })
+    }.flatten().findAll { it != null }).filter { it.exists() }
 
     reports {
         html.enabled = true
