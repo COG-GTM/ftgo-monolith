@@ -1,8 +1,10 @@
+apply plugin: FtgoServicePlugin
+
 dependencies {
-    compile project(":common-swagger")
-    compile project(":ftgo-consumer-service-api")
     compile project(":ftgo-common")
     compile project(":ftgo-common-jpa")
+    compile project(":ftgo-consumer-service-api")
+    compile project(":common-swagger")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
@@ -10,7 +12,9 @@ dependencies {
 
     compile 'javax.el:javax.el-api:2.2.5'
 
+    runtime 'mysql:mysql-connector-java:8.0.33'
+
+    compile "org.flywaydb:flyway-core:5.2.4"
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
 }

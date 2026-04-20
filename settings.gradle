@@ -17,6 +17,8 @@ include "ftgo-order-service-api"
 include "ftgo-consumer-service-api"
 include "ftgo-consumer-service"
 
+include "ftgo-consumer-service-standalone"
+
 include "ftgo-restaurant-service-api"
 include "ftgo-restaurant-service"
 

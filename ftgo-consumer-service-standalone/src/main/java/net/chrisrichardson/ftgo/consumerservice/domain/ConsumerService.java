@@ -3,10 +3,12 @@ package net.chrisrichardson.ftgo.consumerservice.domain;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+@Service
 @Transactional
 public class ConsumerService {
 
