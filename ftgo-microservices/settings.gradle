@@ -1,0 +1,13 @@
+rootProject.name = 'ftgo-microservices'
+
+include 'shared-libraries:ftgo-common-lib'
+include 'shared-libraries:ftgo-security-lib'
+include 'shared-libraries:ftgo-observability-lib'
+include 'shared-libraries:ftgo-messaging-lib'
+
+include 'services:consumer-service'
+include 'services:restaurant-service'
+include 'services:order-service'
+include 'services:courier-service'
+
+include 'infrastructure:api-gateway'
