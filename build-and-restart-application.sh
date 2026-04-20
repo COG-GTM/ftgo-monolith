@@ -1,6 +1,6 @@
 #! /bin/bash -e
 
-for SN in ftgo-application ; do
+for SN in ftgo-application ftgo-restaurant-service-standalone ; do
 
     ./gradlew :${SN?}:assemble
     docker-compose build ${SN?}

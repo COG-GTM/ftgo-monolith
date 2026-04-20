@@ -33,7 +33,7 @@ public class OrderDetailsMother {
   public static final OrderState CHICKEN_VINDALOO_ORDER_STATE = OrderState.APPROVED;
 
   private static Order makeAjantaOrder() {
-    Order order = new Order(CONSUMER_ID, new Restaurant(AJANTA_ID, "", new RestaurantMenu(Collections.emptyList())), chickenVindalooLineItems());
+    Order order = new Order(CONSUMER_ID, AJANTA_ID, AJANTA_RESTAURANT_NAME, chickenVindalooLineItems());
     order.setId(ORDER_ID);
     return order;
   }

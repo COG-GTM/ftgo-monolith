@@ -69,7 +69,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private String restaurantBaseUrl(String... pathElements) {
-    return baseUrl(getApplicationPort(), "restaurants", pathElements);
+    return baseUrl(getRestaurantServicePort(), "restaurants", pathElements);
   }
 
   private String orderBaseUrl(String... pathElements) {
@@ -384,4 +384,6 @@ public abstract class AbstractEndToEndTests {
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  public abstract int getRestaurantServicePort();
 }

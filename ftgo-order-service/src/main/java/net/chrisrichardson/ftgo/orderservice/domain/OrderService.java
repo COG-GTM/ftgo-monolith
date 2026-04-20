@@ -3,6 +3,9 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.domain.client.MenuItemDTO;
+import net.chrisrichardson.ftgo.orderservice.domain.client.RestaurantDTO;
+import net.chrisrichardson.ftgo.orderservice.domain.client.RestaurantServiceClient;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -22,7 +24,7 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantServiceClient restaurantServiceClient;
 
   private Optional<MeterRegistry> meterRegistry;
 
@@ -31,14 +33,14 @@ public class OrderService {
   private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantServiceClient restaurantServiceClient,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
                       CourierRepository courierRepository,
                       CourierAssignmentStrategy courierAssignmentStrategy) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantServiceClient = restaurantServiceClient;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
     this.courierRepository = courierRepository;
@@ -48,17 +50,13 @@ public class OrderService {
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-
+    RestaurantDTO restaurant = restaurantServiceClient.findById(restaurantId);
 
     List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
 
-    Order order = new Order(consumerId, restaurant, orderLineItems);
+    Order order = new Order(consumerId, restaurantId, restaurant.getName(), orderLineItems);
 
     consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
-
-    // TODO - charge a credit card too
 
     orderRepository.save(order);
 
@@ -69,9 +67,12 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, RestaurantDTO restaurant) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      MenuItemDTO om = restaurant.getMenuItems().stream()
+              .filter(mi -> mi.getId().equals(li.getMenuItemId()))
+              .findFirst()
+              .orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
@@ -116,20 +117,21 @@ public class OrderService {
   }
 
   private LocalDateTime estimateDeliveryTime(Courier courier, Order order, LocalDateTime readyBy) {
-    if (courier.hasLocation() && order.getRestaurant() != null
-            && order.getRestaurant().getAddress() != null
-            && order.getRestaurant().getAddress().getLatitude() != null) {
+    if (courier.hasLocation() && order.getRestaurantId() != null) {
+      RestaurantDTO restaurant = restaurantServiceClient.findById(order.getRestaurantId());
+      if (restaurant.getAddress() != null && restaurant.getAddress().getLatitude() != null) {
 
-      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
-              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-              order.getRestaurant().getAddress().getLatitude(),
-              order.getRestaurant().getAddress().getLongitude());
+        double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
+                courier.getCurrentLatitude(), courier.getCurrentLongitude(),
+                restaurant.getAddress().getLatitude(),
+                restaurant.getAddress().getLongitude());
 
-      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
-      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
-      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
+        long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
+        LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
+        LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
 
-      return effectiveReadyTime.plusMinutes(15);
+        return effectiveReadyTime.plusMinutes(15);
+      }
     }
 
     return readyBy.plusMinutes(30);
