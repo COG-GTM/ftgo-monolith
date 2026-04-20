@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.orderservice.domain.proxy.ConsumerServiceProxy;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
@@ -26,21 +26,21 @@ public class OrderService {
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
+  private ConsumerServiceProxy consumerServiceProxy;
   private CourierRepository courierRepository;
   private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService,
+                      ConsumerServiceProxy consumerServiceProxy,
                       CourierRepository courierRepository,
                       CourierAssignmentStrategy courierAssignmentStrategy) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
+    this.consumerServiceProxy = consumerServiceProxy;
     this.courierRepository = courierRepository;
     this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
@@ -56,7 +56,7 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerServiceProxy.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
