@@ -7,6 +7,7 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import net.chrisrichardson.ftgo.orderservice.domain.client.RestaurantServiceClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class OrderController {
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
-            order.getRestaurant().getName(),
+            order.getRestaurantName(),
             order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
             courierActions,
             estimatedDelivery
