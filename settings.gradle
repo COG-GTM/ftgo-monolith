@@ -28,3 +28,10 @@ include "ftgo-application"
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
+include "ftgo-event-infrastructure"
+include "ftgo-security"
+include "ftgo-observability"
+include "ftgo-resilience"
+include "ftgo-service-discovery"
+include "ftgo-api-gateway"
+
