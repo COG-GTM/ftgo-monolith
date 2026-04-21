@@ -8,6 +8,8 @@ create table if not exists orders
   delivery_address_street1 varchar(255),
   delivery_address_street2 varchar(255),
   delivery_address_zip     varchar(255),
+  delivery_address_latitude  double,
+  delivery_address_longitude double,
   delivery_time            datetime,
   order_state              varchar(255),
   order_minimum            decimal(19, 2),

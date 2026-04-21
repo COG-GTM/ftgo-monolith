@@ -7,6 +7,8 @@ create table if not exists restaurants
   city    varchar(255),
   state   varchar(255),
   zip     varchar(255),
+  latitude double,
+  longitude double,
   primary key (id)
 ) engine = InnoDB;
 

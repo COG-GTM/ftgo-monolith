@@ -9,6 +9,11 @@ create table if not exists courier
   city       varchar(255),
   state      varchar(255),
   zip        varchar(255),
+  latitude   double,
+  longitude  double,
+  current_latitude double,
+  current_longitude double,
+  last_location_update datetime,
   primary key (id)
 ) engine = InnoDB;
 
