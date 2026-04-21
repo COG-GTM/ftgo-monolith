@@ -42,4 +42,9 @@ public class Action {
   public Long getOrderId() {
     return orderId;
   }
+
+  public LocalDateTime getTime() {
+    return time;
+  }
+
 }

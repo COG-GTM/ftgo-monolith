@@ -10,4 +10,7 @@ public interface CourierRepository extends CrudRepository<Courier, Long> {
   @Query("SELECT c FROM Courier c WHERE c.available = true")
   List<Courier> findAllAvailable();
 
+  @Query("SELECT c FROM Courier c WHERE c.available = true AND c.currentLatitude IS NOT NULL AND c.currentLongitude IS NOT NULL")
+  List<Courier> findAllAvailableWithLocation();
+
 }

@@ -1,6 +1,8 @@
 package net.chrisrichardson.ftgo.courierservice.web;
 
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
+import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
+import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
 import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryRequest;
@@ -42,6 +44,26 @@ public class CourierController {
   public ResponseEntity<ScheduleDeliveryResponse> scheduleDelivery(@RequestBody ScheduleDeliveryRequest request) {
     long courierId = courierService.assignDelivery(request.getOrderId(), request.getReadyBy());
     return new ResponseEntity<>(new ScheduleDeliveryResponse(courierId), HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
+  public ResponseEntity<String> updateLocation(@PathVariable long courierId, @RequestBody CourierLocationUpdate locationUpdate) {
+    courierService.updateLocation(courierId, locationUpdate.getLatitude(), locationUpdate.getLongitude());
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/couriers/{courierId}/workload", method= RequestMethod.GET)
+  public ResponseEntity<CourierWorkloadResponse> getWorkload(@PathVariable long courierId) {
+    Courier courier = courierService.findCourierById(courierId);
+    CourierWorkloadResponse response = new CourierWorkloadResponse(
+            courier.getId(),
+            courier.getActiveDeliveryCount(),
+            courier.isAvailable(),
+            courier.getCurrentLatitude(),
+            courier.getCurrentLongitude(),
+            courier.getLastLocationUpdate()
+    );
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
 }

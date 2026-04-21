@@ -1,4 +1,6 @@
 dependencies {
     compile project(":ftgo-common")
     compile project(":ftgo-common-jpa")
+
+    testCompile "junit:junit:4.12"
 }

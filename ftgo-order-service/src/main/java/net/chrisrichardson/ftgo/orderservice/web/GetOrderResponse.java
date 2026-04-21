@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.common.Money;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class GetOrderResponse {
@@ -11,6 +12,7 @@ public class GetOrderResponse {
   private String restaurantName;
   private Long assignedCourierId;
   private List<String> courierActions;
+  private LocalDateTime estimatedDeliveryTime;
 
   private GetOrderResponse() {
   }
@@ -23,13 +25,16 @@ public class GetOrderResponse {
     this.assignedCourierId = assignedCourierId;
   }
 
-  public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName, Long assignedCourierId, List<String> courierActions) {
+  public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
+                           Long assignedCourierId, List<String> courierActions,
+                           LocalDateTime estimatedDeliveryTime) {
     this.orderId = orderId;
     this.state = state;
     this.orderTotal = orderTotal;
     this.restaurantName = restaurantName;
     this.assignedCourierId = assignedCourierId;
     this.courierActions = courierActions;
+    this.estimatedDeliveryTime = estimatedDeliveryTime;
   }
 
   public Money getOrderTotal() {
@@ -66,5 +71,13 @@ public class GetOrderResponse {
 
   public void setCourierActions(List<String> courierActions) {
     this.courierActions = courierActions;
+  }
+
+  public LocalDateTime getEstimatedDeliveryTime() {
+    return estimatedDeliveryTime;
+  }
+
+  public void setEstimatedDeliveryTime(LocalDateTime estimatedDeliveryTime) {
+    this.estimatedDeliveryTime = estimatedDeliveryTime;
   }
 }
