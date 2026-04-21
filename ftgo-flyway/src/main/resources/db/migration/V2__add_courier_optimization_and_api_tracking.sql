@@ -17,6 +17,9 @@ ALTER TABLE restaurants ADD COLUMN longitude DOUBLE NULL;
 ALTER TABLE orders ADD COLUMN delivery_address_latitude DOUBLE NULL;
 ALTER TABLE orders ADD COLUMN delivery_address_longitude DOUBLE NULL;
 
+-- Add denormalized restaurant name for microservices decomposition
+ALTER TABLE orders ADD COLUMN restaurant_name VARCHAR(255) NULL;
+
 -- API request tracking table
 CREATE TABLE api_request_log
 (

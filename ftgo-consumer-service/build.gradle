@@ -1,3 +1,14 @@
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+bootJar {
+    enabled = true
+}
+
+jar {
+    enabled = true
+}
+
 dependencies {
     compile project(":common-swagger")
     compile project(":ftgo-consumer-service-api")
@@ -6,6 +17,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    compile "org.flywaydb:flyway-core:5.1.4"
 
     compile 'javax.el:javax.el-api:2.2.5'
 

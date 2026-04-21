@@ -21,55 +21,12 @@ public class DistanceOptimizedCourierAssignmentStrategy implements CourierAssign
       throw new NoCourierAvailableException();
     }
 
-    Double restaurantLat = null;
-    Double restaurantLng = null;
-    if (order.getRestaurant() != null && order.getRestaurant().getAddress() != null) {
-      restaurantLat = order.getRestaurant().getAddress().getLatitude();
-      restaurantLng = order.getRestaurant().getAddress().getLongitude();
-    }
-
-    final Double targetLat = restaurantLat;
-    final Double targetLng = restaurantLng;
-
-    if (targetLat == null || targetLng == null) {
-      logger.info("Restaurant has no location data, using load-balanced assignment");
-      return assignByLoadBalance(availableCouriers);
-    }
-
-    Courier best = null;
-    double bestScore = Double.MAX_VALUE;
-
-    for (Courier courier : availableCouriers) {
-      if (courier.getActiveDeliveryCount() >= MAX_ACTIVE_DELIVERIES) {
-        continue;
-      }
-
-      double score;
-      if (courier.hasLocation()) {
-        double distance = haversineDistance(
-                courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-                targetLat, targetLng);
-        double normalizedDistance = Math.min(distance / 20.0, 1.0);
-        double normalizedLoad = (double) courier.getActiveDeliveryCount() / MAX_ACTIVE_DELIVERIES;
-        score = (DISTANCE_WEIGHT * normalizedDistance) + (LOAD_WEIGHT * normalizedLoad);
-      } else {
-        double normalizedLoad = (double) courier.getActiveDeliveryCount() / MAX_ACTIVE_DELIVERIES;
-        score = 0.5 + (LOAD_WEIGHT * normalizedLoad);
-      }
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = courier;
-      }
-    }
-
-    if (best == null) {
-      logger.warn("All couriers at max capacity, falling back to least-loaded");
-      return assignByLoadBalance(availableCouriers);
-    }
-
-    logger.info("Assigned courier {} with score {}", best.getId(), bestScore);
-    return best;
+    // In the decomposed architecture, Order no longer holds a Restaurant reference.
+    // Fall back to load-balanced assignment since restaurant location is not available
+    // on the Order entity. Distance-based optimization can be added to CourierService
+    // which has access to restaurant data via the RestaurantServiceClient.
+    logger.info("Using load-balanced courier assignment (restaurant location not on Order entity)");
+    return assignByLoadBalance(availableCouriers);
   }
 
   private Courier assignByLoadBalance(List<Courier> couriers) {

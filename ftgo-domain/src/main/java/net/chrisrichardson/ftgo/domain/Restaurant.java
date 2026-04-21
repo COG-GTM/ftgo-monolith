@@ -62,6 +62,10 @@ public class Restaurant {
     return address;
   }
 
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
+  }
+
   public Optional<MenuItem> findMenuItem(String menuItemId) {
     return menuItems.stream().filter(mi -> mi.getId().equals(menuItemId)).findFirst();
   }

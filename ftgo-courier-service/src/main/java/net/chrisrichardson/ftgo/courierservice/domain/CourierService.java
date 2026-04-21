@@ -3,13 +3,19 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.domain.Action;
 import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Random;
+
 public class CourierService {
 
   private CourierRepository courierRepository;
+  private Random random = new Random();
 
   public CourierService(CourierRepository courierRepository) {
     this.courierRepository = courierRepository;
@@ -28,6 +34,18 @@ public class CourierService {
     Courier courier = new Courier(name, address);
     courierRepository.save(courier);
     return courier;
+  }
+
+  @Transactional
+  public long assignDelivery(long orderId, LocalDateTime readyBy) {
+    List<Courier> couriers = courierRepository.findAllAvailable();
+    if (couriers.isEmpty()) {
+      throw new RuntimeException("No available couriers for delivery of order " + orderId);
+    }
+    Courier courier = couriers.get(random.nextInt(couriers.size()));
+    courier.addAction(Action.makePickup(orderId));
+    courier.addAction(Action.makeDropoff(orderId, readyBy.plusMinutes(30)));
+    return courier.getId();
   }
 
   void noteAvailable(long courierId) {

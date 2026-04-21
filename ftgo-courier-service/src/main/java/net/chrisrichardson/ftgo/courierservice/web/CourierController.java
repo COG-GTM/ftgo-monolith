@@ -5,6 +5,8 @@ import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
 import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryRequest;
+import net.chrisrichardson.ftgo.courierservice.api.ScheduleDeliveryResponse;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
@@ -26,8 +28,8 @@ public class CourierController {
     return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
   }
 
-  @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
-  public ResponseEntity<String> updateCourierLocation(@PathVariable long courierId, @RequestBody CourierAvailability availability) {
+  @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.PUT)
+  public ResponseEntity<String> updateCourierAvailability(@PathVariable long courierId, @RequestBody CourierAvailability availability) {
     courierService.updateAvailability(courierId, availability.isAvailable());
     return new ResponseEntity<>(HttpStatus.OK);
   }
@@ -36,6 +38,12 @@ public class CourierController {
   public ResponseEntity<Courier> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
     return new ResponseEntity<>(courier, HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/couriers/schedule-delivery", method= RequestMethod.POST)
+  public ResponseEntity<ScheduleDeliveryResponse> scheduleDelivery(@RequestBody ScheduleDeliveryRequest request) {
+    long courierId = courierService.assignDelivery(request.getOrderId(), request.getReadyBy());
+    return new ResponseEntity<>(new ScheduleDeliveryResponse(courierId), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)

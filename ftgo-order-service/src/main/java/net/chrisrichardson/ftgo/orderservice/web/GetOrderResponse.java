@@ -1,7 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.domain.Action;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,29 +10,29 @@ public class GetOrderResponse {
   private String state;
   private Money orderTotal;
   private String restaurantName;
-  private Long assignedCourier;
-  private List<Action> courierActions;
+  private Long assignedCourierId;
+  private List<String> courierActions;
   private LocalDateTime estimatedDeliveryTime;
 
   private GetOrderResponse() {
   }
 
-  public Long getAssignedCourier() {
-    return assignedCourier;
+  public Long getAssignedCourierId() {
+    return assignedCourierId;
   }
 
-  public void setAssignedCourier(Long assignedCourier) {
-    this.assignedCourier = assignedCourier;
+  public void setAssignedCourierId(Long assignedCourierId) {
+    this.assignedCourierId = assignedCourierId;
   }
 
   public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
-                           Long assignedCourier, List<Action> courierActions,
+                           Long assignedCourierId, List<String> courierActions,
                            LocalDateTime estimatedDeliveryTime) {
     this.orderId = orderId;
     this.state = state;
     this.orderTotal = orderTotal;
     this.restaurantName = restaurantName;
-    this.assignedCourier = assignedCourier;
+    this.assignedCourierId = assignedCourierId;
     this.courierActions = courierActions;
     this.estimatedDeliveryTime = estimatedDeliveryTime;
   }
@@ -66,11 +65,11 @@ public class GetOrderResponse {
     return restaurantName;
   }
 
-  public List<Action> getCourierActions() {
+  public List<String> getCourierActions() {
     return courierActions;
   }
 
-  public void setCourierActions(List<Action> courierActions) {
+  public void setCourierActions(List<String> courierActions) {
     this.courierActions = courierActions;
   }
 
