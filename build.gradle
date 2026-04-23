@@ -41,3 +41,39 @@ subprojects {
     }
 
 }
+
+// Shared Maven publishing configuration for modules that need to be published
+// as standalone artifacts for use by extracted microservices.
+def publishableModules = [
+    'ftgo-common',
+    'ftgo-common-jpa',
+    'ftgo-consumer-service-api',
+    'ftgo-restaurant-service-api',
+]
+
+configure(subprojects.findAll { publishableModules.contains(it.name) }) {
+    apply plugin: 'maven-publish'
+
+    version = '1.0.0'
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                groupId = 'net.chrisrichardson.ftgo'
+                artifactId = project.name
+                version = '1.0.0'
+            }
+        }
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/COG-GTM/ftgo-monolith")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") ?: ""
+                    password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") ?: ""
+                }
+            }
+        }
+    }
+}
