@@ -2,8 +2,8 @@ package net.chrisrichardson.ftgo.consumerservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.domain.Consumer;
-import net.chrisrichardson.ftgo.domain.ConsumerRepository;
+import net.chrisrichardson.ftgo.consumerservice.domain.model.Consumer;
+import net.chrisrichardson.ftgo.consumerservice.domain.model.ConsumerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
