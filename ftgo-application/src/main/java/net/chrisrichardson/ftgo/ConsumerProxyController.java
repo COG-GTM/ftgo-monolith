@@ -14,8 +14,9 @@ public class ConsumerProxyController {
   private final String consumerServiceUrl;
 
   public ConsumerProxyController(
+          RestTemplate consumerServiceRestTemplate,
           @Value("${consumer.service.url:http://localhost:8082}") String consumerServiceUrl) {
-    this.restTemplate = new RestTemplate();
+    this.restTemplate = consumerServiceRestTemplate;
     this.consumerServiceUrl = consumerServiceUrl;
   }
 

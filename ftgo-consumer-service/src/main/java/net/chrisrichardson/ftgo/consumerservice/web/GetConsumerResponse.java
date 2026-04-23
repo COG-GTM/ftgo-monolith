@@ -21,8 +21,4 @@ public class GetConsumerResponse {
     this.consumerId = consumerId;
     this.name = name;
   }
-
-  public GetConsumerResponse(PersonName name) {
-    this.name = name;
-  }
 }
