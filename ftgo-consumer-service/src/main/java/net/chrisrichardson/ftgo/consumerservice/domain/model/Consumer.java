@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.consumerservice.domain.model;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
@@ -25,7 +25,6 @@ public class Consumer {
   public Consumer(PersonName name) {
     this.name = name;
   }
-
 
   public void validateOrderByConsumer(Money orderTotal) {
     // implement some business logic
