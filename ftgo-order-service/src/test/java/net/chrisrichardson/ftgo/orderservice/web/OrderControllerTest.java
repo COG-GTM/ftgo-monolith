@@ -89,6 +89,7 @@ public class OrderControllerTest {
   public void shouldCancelOrder() {
     Order order = new Order(1L, new Restaurant(1L, "Ajanta", new RestaurantMenu(Collections.emptyList())), Collections.emptyList());
     order.setId(1L);
+    order.cancel();
     when(orderService.cancel(1L)).thenReturn(order);
 
     given().
@@ -97,7 +98,7 @@ public class OrderControllerTest {
             post("/orders/1/cancel").
     then().
             statusCode(200).
-            body("state", equalTo("APPROVED"));
+            body("state", equalTo("CANCELLED"));
   }
 
   @Test
