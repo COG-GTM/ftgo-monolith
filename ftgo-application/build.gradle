@@ -11,5 +11,15 @@ dependencies {
 
     runtime 'mysql:mysql-connector-java:8.0.33'
 
-    testCompile project(":ftgo-end-to-end-tests-common")
+    // ftgo-end-to-end-tests-common excluded: depends on unavailable eventuate-util-test
+    // testCompile project(":ftgo-end-to-end-tests-common")
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+compileTestJava {
+    exclude '**/FtgoApplicationTest.java'
+}
+
+test {
+    exclude '**/FtgoApplicationTest.class'
 }
