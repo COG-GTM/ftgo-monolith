@@ -28,6 +28,13 @@ public class RestaurantController {
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
+  @RequestMapping(method = RequestMethod.GET, path = "/{restaurantId}/menu")
+  public ResponseEntity<RestaurantMenuResponse> getMenu(@PathVariable long restaurantId) {
+    return restaurantService.getRestaurantMenu(restaurantId)
+            .map(menu -> new ResponseEntity<>(menu, HttpStatus.OK))
+            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
   private GetRestaurantResponse makeGetRestaurantResponse(Restaurant r) {
     return new GetRestaurantResponse(r.getId(), r.getName());
   }
