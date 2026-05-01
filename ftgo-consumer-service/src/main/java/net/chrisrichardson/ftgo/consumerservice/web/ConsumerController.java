@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping(path="/consumers")
 public class ConsumerController {
@@ -16,7 +18,7 @@ public class ConsumerController {
   private ConsumerService consumerService;
 
   @RequestMapping(method= RequestMethod.POST)
-  public CreateConsumerResponse create(@RequestBody CreateConsumerRequest request) {
+  public CreateConsumerResponse create(@Valid @RequestBody CreateConsumerRequest request) {
     return new CreateConsumerResponse(consumerService.create(request.getName()).getId());
   }
 

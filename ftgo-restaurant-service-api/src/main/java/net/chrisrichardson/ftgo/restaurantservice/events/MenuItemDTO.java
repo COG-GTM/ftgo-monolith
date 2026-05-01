@@ -8,13 +8,18 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class MenuItemDTO {
 
+  @NotBlank
   private String id;
+  @NotBlank
   private String name;
+  @NotNull
   private Money price;
 
   private MenuItemDTO() {

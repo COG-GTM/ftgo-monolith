@@ -1,8 +1,15 @@
 package net.chrisrichardson.ftgo.courierservice.api;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
 public class CourierLocationUpdate {
 
+  @DecimalMin("-90.0")
+  @DecimalMax("90.0")
   private double latitude;
+  @DecimalMin("-180.0")
+  @DecimalMax("180.0")
   private double longitude;
 
   public CourierLocationUpdate() {

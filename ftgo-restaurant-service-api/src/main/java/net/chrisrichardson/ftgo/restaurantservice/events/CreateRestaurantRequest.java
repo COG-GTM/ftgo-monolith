@@ -3,10 +3,19 @@ package net.chrisrichardson.ftgo.restaurantservice.events;
 
 import net.chrisrichardson.ftgo.common.Address;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 public class CreateRestaurantRequest {
 
+  @NotBlank
   private String name;
+  @NotNull
+  @Valid
   private RestaurantMenuDTO menu;
+  @NotNull
+  @Valid
   private Address address;
 
   public CreateRestaurantRequest(String name, Address address, RestaurantMenuDTO menu) {
