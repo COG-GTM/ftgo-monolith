@@ -6,7 +6,14 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.List;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 public class RestaurantMenuDTO {
+  @NotNull
+  @NotEmpty
+  @Valid
   private List<MenuItemDTO> menuItems;
 
   private RestaurantMenuDTO() {

@@ -2,7 +2,12 @@ package net.chrisrichardson.ftgo.orderservice.api.web;
 
 import java.util.Map;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 public class ReviseOrderRequest {
+  @NotNull
+  @NotEmpty
   private Map<String, Integer> revisedLineItemQuantities;
 
   private ReviseOrderRequest() {
