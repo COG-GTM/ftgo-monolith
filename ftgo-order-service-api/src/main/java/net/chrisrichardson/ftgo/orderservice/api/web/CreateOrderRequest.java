@@ -2,10 +2,21 @@ package net.chrisrichardson.ftgo.orderservice.api.web;
 
 import java.util.List;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+
 public class CreateOrderRequest {
 
+  @Positive
   private long restaurantId;
+  @Positive
   private long consumerId;
+  @NotNull
+  @NotEmpty
+  @Valid
   private List<LineItem> lineItems;
 
   public CreateOrderRequest(long consumerId, long restaurantId, List<LineItem> lineItems) {
@@ -44,7 +55,9 @@ public class CreateOrderRequest {
 
   public static class LineItem {
 
+    @NotBlank
     private String menuItemId;
+    @Positive
     private int quantity;
 
     private LineItem() {
