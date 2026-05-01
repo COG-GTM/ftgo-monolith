@@ -7,15 +7,13 @@ dependencies {
 
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
-    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    compile 'org.apache.commons:commons-lang3:3.14.0'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
 
     compile 'mysql:mysql-connector-java:8.0.33'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
-    runtime "javax.xml.bind:jaxb-api:2.2.11"
-    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
-    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
-    runtime "javax.activation:activation:1.1.1"
+    runtime "javax.xml.bind:jaxb-api:2.3.1"
+    runtime "org.glassfish.jaxb:jaxb-runtime:2.3.9"
 }
