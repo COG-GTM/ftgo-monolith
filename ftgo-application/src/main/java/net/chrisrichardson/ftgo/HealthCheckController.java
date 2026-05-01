@@ -27,8 +27,14 @@ public class HealthCheckController {
 
     Map<String, String> dbStatus = new LinkedHashMap<>();
     try (Connection conn = dataSource.getConnection()) {
-      dbStatus.put("status", conn.isValid(2) ? "UP" : "DOWN");
+      boolean valid = conn.isValid(2);
+      dbStatus.put("status", valid ? "UP" : "DOWN");
       dbStatus.put("database", conn.getMetaData().getDatabaseProductName());
+      if (!valid) {
+        health.put("status", "DOWN");
+        health.put("db", dbStatus);
+        return ResponseEntity.status(503).body(health);
+      }
     } catch (Exception e) {
       dbStatus.put("status", "DOWN");
       dbStatus.put("error", e.getMessage());
