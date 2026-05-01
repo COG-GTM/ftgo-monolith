@@ -57,4 +57,21 @@ public class HealthCheckControllerTest {
     assertEquals("DOWN", dbStatus.get("status"));
     assertEquals("Connection refused", dbStatus.get("error"));
   }
+
+  @Test
+  public void shouldReturnDownWhenConnectionIsNotValid() throws Exception {
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(connection.isValid(2)).thenReturn(false);
+
+    ResponseEntity<Map<String, Object>> response = controller.health();
+
+    assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+    assertEquals("DOWN", response.getBody().get("status"));
+
+    @SuppressWarnings("unchecked")
+    Map<String, String> dbStatus = (Map<String, String>) response.getBody().get("database");
+    assertEquals("DOWN", dbStatus.get("status"));
+
+    verify(connection).close();
+  }
 }

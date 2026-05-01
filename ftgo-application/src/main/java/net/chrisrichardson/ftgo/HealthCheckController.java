@@ -27,7 +27,9 @@ public class HealthCheckController {
 
     Map<String, String> dbStatus = new HashMap<>();
     try (Connection connection = dataSource.getConnection()) {
-      connection.isValid(2);
+      if (!connection.isValid(2)) {
+        throw new RuntimeException("Database connection is not valid");
+      }
       dbStatus.put("status", "UP");
     } catch (Exception e) {
       dbStatus.put("status", "DOWN");
