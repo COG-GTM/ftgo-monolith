@@ -55,4 +55,5 @@ dependencies {
     testCompile "io.rest-assured:json-path:3.0.6"
 
     testCompile project(":ftgo-test-util")
+    testCompile project(":ftgo-courier-service")
 }
