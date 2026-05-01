@@ -25,7 +25,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
 
         // Commenting out problematic repositories that require authentication or are no longer available
         // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
