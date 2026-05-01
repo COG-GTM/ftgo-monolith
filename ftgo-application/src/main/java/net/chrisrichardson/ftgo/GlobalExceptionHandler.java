@@ -11,10 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -66,6 +68,19 @@ public class GlobalExceptionHandler {
             HttpStatus.SERVICE_UNAVAILABLE.value(), "No Courier Available", ex.getMessage(),
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationErrors(
+          MethodArgumentNotValidException ex, HttpServletRequest request) {
+    String message = ex.getBindingResult().getFieldErrors().stream()
+            .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+            .collect(Collectors.joining("; "));
+    logger.warn("Validation failed: {}", message);
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), "Validation Failed", message,
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)

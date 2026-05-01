@@ -1,8 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.api.web;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Map;
 
 public class ReviseOrderRequest {
+  @NotEmpty
   private Map<String, Integer> revisedLineItemQuantities;
 
   private ReviseOrderRequest() {

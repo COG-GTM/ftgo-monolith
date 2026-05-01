@@ -1,8 +1,12 @@
 package net.chrisrichardson.ftgo.orderservice.api.web;
 
+import javax.validation.constraints.FutureOrPresent;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public class OrderAcceptance {
+  @NotNull
+  @FutureOrPresent
   private LocalDateTime readyBy;
 
   public OrderAcceptance() {
@@ -20,4 +24,3 @@ public class OrderAcceptance {
     this.readyBy = readyBy;
   }
 }
-

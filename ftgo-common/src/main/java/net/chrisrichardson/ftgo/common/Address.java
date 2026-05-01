@@ -3,15 +3,20 @@ package net.chrisrichardson.ftgo.common;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class Address {
 
+  @NotBlank
   private String street1;
   private String street2;
+  @NotBlank
   private String city;
+  @NotBlank
   private String state;
+  @NotBlank
   private String zip;
   private Double latitude;
   private Double longitude;

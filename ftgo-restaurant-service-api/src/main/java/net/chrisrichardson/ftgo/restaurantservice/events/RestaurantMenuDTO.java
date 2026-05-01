@@ -4,9 +4,13 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 public class RestaurantMenuDTO {
+  @NotEmpty
+  @Valid
   private List<MenuItemDTO> menuItems;
 
   private RestaurantMenuDTO() {

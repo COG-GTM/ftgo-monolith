@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 public class CourierController {
 
@@ -21,13 +23,13 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers", method= RequestMethod.POST)
-  public ResponseEntity<CreateCourierResponse> create(@RequestBody CreateCourierRequest request) {
+  public ResponseEntity<CreateCourierResponse> create(@Valid @RequestBody CreateCourierRequest request) {
     Courier courier = courierService.createCourier(request.getName(), request.getAddress());
     return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
-  public ResponseEntity<String> updateCourierLocation(@PathVariable long courierId, @RequestBody CourierAvailability availability) {
+  public ResponseEntity<String> updateCourierLocation(@PathVariable long courierId, @Valid @RequestBody CourierAvailability availability) {
     courierService.updateAvailability(courierId, availability.isAvailable());
     return new ResponseEntity<>(HttpStatus.OK);
   }
@@ -39,7 +41,7 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
-  public ResponseEntity<String> updateLocation(@PathVariable long courierId, @RequestBody CourierLocationUpdate locationUpdate) {
+  public ResponseEntity<String> updateLocation(@PathVariable long courierId, @Valid @RequestBody CourierLocationUpdate locationUpdate) {
     courierService.updateLocation(courierId, locationUpdate.getLatitude(), locationUpdate.getLongitude());
     return new ResponseEntity<>(HttpStatus.OK);
   }
