@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
-public class OrderNotFoundException extends RuntimeException {
+public class OrderNotFoundException extends net.chrisrichardson.ftgo.orderservice.api.OrderNotFoundException {
   public OrderNotFoundException(Long orderId) {
-    super("Order not found" + orderId);
+    super(orderId);
   }
 }
