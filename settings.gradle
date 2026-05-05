@@ -13,6 +13,7 @@ include "ftgo-domain"
 
 include "ftgo-order-service"
 include "ftgo-order-service-api"
+include "ftgo-order-service-application"
 
 include "ftgo-consumer-service-api"
 include "ftgo-consumer-service"

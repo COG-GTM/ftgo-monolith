@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo;
 import net.chrisrichardson.ftgo.consumerservice.main.ConsumerServiceConfiguration;
 import net.chrisrichardson.ftgo.endtoendtests.common.AbstractEndToEndTests;
 import net.chrisrichardson.ftgo.orderservice.main.OrderServiceConfiguration;
+import net.chrisrichardson.ftgo.orderservice.web.OrderWebConfiguration;
 import net.chrisrichardson.ftgo.restaurantservice.RestaurantServiceConfiguration;
 import org.junit.runner.RunWith;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -22,6 +23,7 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @ComponentScan
   @Import({ConsumerServiceConfiguration.class,
           OrderServiceConfiguration.class,
+          OrderWebConfiguration.class,
           RestaurantServiceConfiguration.class})
   public static class Config {
 
