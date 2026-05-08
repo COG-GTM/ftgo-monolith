@@ -1,10 +1,8 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.domain.Action;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class GetOrderResponse {
   private long orderId;
@@ -12,10 +10,19 @@ public class GetOrderResponse {
   private Money orderTotal;
   private String restaurantName;
   private Long assignedCourier;
-  private List<Action> courierActions;
   private LocalDateTime estimatedDeliveryTime;
 
   private GetOrderResponse() {
+  }
+
+  public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
+                           Long assignedCourier, LocalDateTime estimatedDeliveryTime) {
+    this.orderId = orderId;
+    this.state = state;
+    this.orderTotal = orderTotal;
+    this.restaurantName = restaurantName;
+    this.assignedCourier = assignedCourier;
+    this.estimatedDeliveryTime = estimatedDeliveryTime;
   }
 
   public Long getAssignedCourier() {
@@ -24,18 +31,6 @@ public class GetOrderResponse {
 
   public void setAssignedCourier(Long assignedCourier) {
     this.assignedCourier = assignedCourier;
-  }
-
-  public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
-                           Long assignedCourier, List<Action> courierActions,
-                           LocalDateTime estimatedDeliveryTime) {
-    this.orderId = orderId;
-    this.state = state;
-    this.orderTotal = orderTotal;
-    this.restaurantName = restaurantName;
-    this.assignedCourier = assignedCourier;
-    this.courierActions = courierActions;
-    this.estimatedDeliveryTime = estimatedDeliveryTime;
   }
 
   public Money getOrderTotal() {
@@ -64,14 +59,6 @@ public class GetOrderResponse {
 
   public String getRestaurantName() {
     return restaurantName;
-  }
-
-  public List<Action> getCourierActions() {
-    return courierActions;
-  }
-
-  public void setCourierActions(List<Action> courierActions) {
-    this.courierActions = courierActions;
   }
 
   public LocalDateTime getEstimatedDeliveryTime() {
