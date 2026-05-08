@@ -1,20 +1,20 @@
-package net.chrisrichardson.ftgo.restaurantservice.web;
+package net.chrisrichardson.ftgo.restaurantservice.events;
 
 import net.chrisrichardson.ftgo.common.Address;
-import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 
 import java.util.List;
 
-public class GetRestaurantResponse {
+public class RestaurantDTO {
+
   private Long id;
   private String name;
   private Address address;
   private List<MenuItemDTO> menuItems;
 
-  public GetRestaurantResponse() {
+  public RestaurantDTO() {
   }
 
-  public GetRestaurantResponse(Long id, String name, Address address, List<MenuItemDTO> menuItems) {
+  public RestaurantDTO(Long id, String name, Address address, List<MenuItemDTO> menuItems) {
     this.id = id;
     this.name = name;
     this.address = address;

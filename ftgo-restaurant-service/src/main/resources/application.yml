@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: ftgo-restaurant-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}/ftgo_restaurant?useSSL=false&allowPublicKeyRetrieval=true
+    username: mysqluser
+    password: mysqlpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: DEBUG
