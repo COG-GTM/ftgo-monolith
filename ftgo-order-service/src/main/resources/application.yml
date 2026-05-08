@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: ftgo-order-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}/ftgo_order?useSSL=false&allowPublicKeyRetrieval=true
+    username: mysqluser
+    password: mysqlpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+services:
+  consumer-service:
+    url: ${SERVICES_CONSUMER_URL:http://consumer-service:8080}
+  restaurant-service:
+    url: ${SERVICES_RESTAURANT_URL:http://restaurant-service:8080}
+  courier-service:
+    url: ${SERVICES_COURIER_URL:http://courier-service:8080}
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: DEBUG

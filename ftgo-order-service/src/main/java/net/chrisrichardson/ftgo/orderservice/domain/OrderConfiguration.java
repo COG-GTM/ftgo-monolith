@@ -1,38 +1,54 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.common.CommonConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
 @Configuration
-@Import(DomainConfiguration.class)
+@Import(CommonConfiguration.class)
 public class OrderConfiguration {
-  // TODO move to framework
+
   @Bean
-  public CourierAssignmentStrategy courierAssignmentStrategy() {
-    return new DistanceOptimizedCourierAssignmentStrategy();
+  public RestTemplate restTemplate() {
+    return new RestTemplate();
   }
 
   @Bean
-  public OrderService orderService(RestaurantRepository restaurantRepository,
-                                   OrderRepository orderRepository,
+  public ConsumerValidation consumerServiceClient(RestTemplate restTemplate,
+                                                  @Value("${services.consumer-service.url:http://consumer-service:8080}") String consumerServiceUrl) {
+    return new ConsumerServiceClient(restTemplate, consumerServiceUrl);
+  }
+
+  @Bean
+  public RestaurantServiceClient restaurantServiceClient(RestTemplate restTemplate,
+                                                         @Value("${services.restaurant-service.url:http://restaurant-service:8080}") String restaurantServiceUrl) {
+    return new RestaurantServiceClient(restTemplate, restaurantServiceUrl);
+  }
+
+  @Bean
+  public CourierServiceClient courierServiceClient(RestTemplate restTemplate,
+                                                   @Value("${services.courier-service.url:http://courier-service:8080}") String courierServiceUrl) {
+    return new CourierServiceClient(restTemplate, courierServiceUrl);
+  }
+
+  @Bean
+  public OrderService orderService(OrderRepository orderRepository,
+                                   RestaurantServiceClient restaurantServiceClient,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerService consumerService,
-                                   CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   ConsumerValidation consumerValidation,
+                                   CourierServiceClient courierServiceClient) {
     return new OrderService(orderRepository,
-            restaurantRepository,
+            restaurantServiceClient,
             meterRegistry,
-            consumerService,
-            courierRepository,
-            courierAssignmentStrategy);
+            consumerValidation,
+            courierServiceClient);
   }
 
   @Bean
