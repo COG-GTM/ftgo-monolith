@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import net.chrisrichardson.ftgo.common.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,16 +17,16 @@ public class DistanceOptimizedCourierAssignmentStrategy implements CourierAssign
   private static final int MAX_ACTIVE_DELIVERIES = 5;
 
   @Override
-  public Courier assignCourier(List<Courier> availableCouriers, Order order) {
+  public Courier assignCourier(List<Courier> availableCouriers, Order order, Address restaurantAddress) {
     if (availableCouriers.isEmpty()) {
       throw new NoCourierAvailableException();
     }
 
     Double restaurantLat = null;
     Double restaurantLng = null;
-    if (order.getRestaurant() != null && order.getRestaurant().getAddress() != null) {
-      restaurantLat = order.getRestaurant().getAddress().getLatitude();
-      restaurantLng = order.getRestaurant().getAddress().getLongitude();
+    if (restaurantAddress != null) {
+      restaurantLat = restaurantAddress.getLatitude();
+      restaurantLng = restaurantAddress.getLongitude();
     }
 
     final Double targetLat = restaurantLat;

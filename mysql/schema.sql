@@ -1,2 +1,5 @@
-create database ftgo;
+CREATE DATABASE IF NOT EXISTS ftgo;
 GRANT ALL PRIVILEGES ON ftgo.* TO 'mysqluser'@'%' WITH GRANT OPTION;
+
+CREATE DATABASE IF NOT EXISTS ftgo_restaurant;
+GRANT ALL PRIVILEGES ON ftgo_restaurant.* TO 'mysqluser'@'%' WITH GRANT OPTION;

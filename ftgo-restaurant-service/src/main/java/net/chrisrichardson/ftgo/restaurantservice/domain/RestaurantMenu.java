@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantservice.domain;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;

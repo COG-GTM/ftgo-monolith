@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import org.hibernate.annotations.DynamicUpdate;
@@ -60,6 +60,10 @@ public class Restaurant {
 
   public Address getAddress() {
     return address;
+  }
+
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
   }
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {
