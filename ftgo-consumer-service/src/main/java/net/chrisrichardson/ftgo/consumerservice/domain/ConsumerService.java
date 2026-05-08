@@ -2,9 +2,6 @@ package net.chrisrichardson.ftgo.consumerservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.domain.Consumer;
-import net.chrisrichardson.ftgo.domain.ConsumerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -12,8 +9,11 @@ import java.util.Optional;
 @Transactional
 public class ConsumerService {
 
-  @Autowired
-  private ConsumerRepository consumerRepository;
+  private final ConsumerRepository consumerRepository;
+
+  public ConsumerService(ConsumerRepository consumerRepository) {
+    this.consumerRepository = consumerRepository;
+  }
 
   public void validateOrderForConsumer(long consumerId, Money orderTotal) {
     Optional<Consumer> consumer = consumerRepository.findById(consumerId);

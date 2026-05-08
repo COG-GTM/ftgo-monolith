@@ -3,16 +3,24 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.domain.Courier;
-import net.chrisrichardson.ftgo.domain.CourierRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class CourierService {
 
-  private CourierRepository courierRepository;
+  private static final Logger logger = LoggerFactory.getLogger(CourierService.class);
 
-  public CourierService(CourierRepository courierRepository) {
+  private final CourierRepository courierRepository;
+  private final CourierAssignmentStrategy courierAssignmentStrategy;
+
+  public CourierService(CourierRepository courierRepository,
+                        CourierAssignmentStrategy courierAssignmentStrategy) {
     this.courierRepository = courierRepository;
+    this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
   @Transactional
@@ -31,15 +39,20 @@ public class CourierService {
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
-    return courierRepository.findById(courierId).get();
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId));
   }
 
   @Transactional
@@ -47,5 +60,50 @@ public class CourierService {
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);
+  }
+
+  @Transactional
+  public CourierAssignment assignCourier(long orderId, Address restaurantAddress, LocalDateTime readyBy) {
+    Double targetLat = restaurantAddress == null ? null : restaurantAddress.getLatitude();
+    Double targetLon = restaurantAddress == null ? null : restaurantAddress.getLongitude();
+
+    List<Courier> available = courierRepository.findAllByAvailable(true);
+    Courier courier = courierAssignmentStrategy.assignCourier(available, targetLat, targetLon);
+
+    courier.addAction(Action.makePickup(orderId));
+
+    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, restaurantAddress, readyBy);
+    courier.addAction(Action.makeDropoff(orderId, estimatedDeliveryTime));
+
+    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
+            orderId, courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
+
+    return new CourierAssignment(courier.getId(), estimatedDeliveryTime);
+  }
+
+  private LocalDateTime estimateDeliveryTime(Courier courier, Address restaurantAddress, LocalDateTime readyBy) {
+    if (courier.hasLocation() && restaurantAddress != null && restaurantAddress.getLatitude() != null) {
+      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
+              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
+              restaurantAddress.getLatitude(),
+              restaurantAddress.getLongitude());
+
+      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
+      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
+      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
+
+      return effectiveReadyTime.plusMinutes(15);
+    }
+    return readyBy.plusMinutes(30);
+  }
+
+  public static class CourierAssignment {
+    public final Long courierId;
+    public final LocalDateTime estimatedDeliveryTime;
+
+    public CourierAssignment(Long courierId, LocalDateTime estimatedDeliveryTime) {
+      this.courierId = courierId;
+      this.estimatedDeliveryTime = estimatedDeliveryTime;
+    }
   }
 }

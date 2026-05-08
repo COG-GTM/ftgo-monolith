@@ -1,4 +1,11 @@
 dependencies {
     testCompile project(":ftgo-end-to-end-tests-common")
+}
 
+// End-to-end tests require the full docker-compose stack to be running and the
+// DOCKER_HOST_IP environment variable to be set. Skip them during a normal
+// `./gradlew test`; run them explicitly after `docker-compose up` or with
+// `-PrunE2E=true`.
+test {
+    onlyIf { System.getenv("DOCKER_HOST_IP") != null || project.hasProperty("runE2E") }
 }
