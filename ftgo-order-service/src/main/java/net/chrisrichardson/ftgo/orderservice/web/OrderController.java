@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,26 +58,12 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
-    List<Action> courierActions = order.getAssignedCourier() == null
-            ? null
-            : order.getAssignedCourier().actionsForDelivery(order);
-
-    LocalDateTime estimatedDelivery = null;
-    if (courierActions != null) {
-      estimatedDelivery = courierActions.stream()
-              .filter(a -> a.getType() == ActionType.DROPOFF)
-              .map(Action::getTime)
-              .findFirst()
-              .orElse(null);
-    }
-
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
-            courierActions,
-            estimatedDelivery
+            order.getAssignedCourierId(),
+            order.getEstimatedDeliveryTime()
     );
   }
 

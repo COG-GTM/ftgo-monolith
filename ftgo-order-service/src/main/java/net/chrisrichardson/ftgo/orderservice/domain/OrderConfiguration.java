@@ -8,16 +8,17 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCusto
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
 @Configuration
 @Import(DomainConfiguration.class)
 public class OrderConfiguration {
-  // TODO move to framework
+
   @Bean
-  public CourierAssignmentStrategy courierAssignmentStrategy() {
-    return new DistanceOptimizedCourierAssignmentStrategy();
+  public RestTemplate restTemplate() {
+    return new RestTemplate();
   }
 
   @Bean
@@ -25,14 +26,12 @@ public class OrderConfiguration {
                                    OrderRepository orderRepository,
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
-                                   CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierServiceClient courierServiceClient) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerService,
-            courierRepository,
-            courierAssignmentStrategy);
+            courierServiceClient);
   }
 
   @Bean
