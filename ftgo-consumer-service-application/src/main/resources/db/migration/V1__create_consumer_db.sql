@@ -6,9 +6,4 @@ create table consumers
   primary key (id)
 );
 
-create table hibernate_sequence
-(
-  next_val bigint
-);
-
-insert into hibernate_sequence values (1);
+create sequence hibernate_sequence start with 1 increment by 1;
