@@ -1,18 +1,28 @@
 package net.chrisrichardson.ftgo.courierservice.domain;
 
-import net.chrisrichardson.ftgo.domain.CourierRepository;
-import net.chrisrichardson.ftgo.domain.DomainConfiguration;
+import net.chrisrichardson.ftgo.common.CommonConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
-@Import(DomainConfiguration.class)
+@EnableAutoConfiguration
+@EntityScan(basePackages = "net.chrisrichardson.ftgo.courierservice.domain")
+@EnableJpaRepositories(basePackages = "net.chrisrichardson.ftgo.courierservice.domain")
+@Import(CommonConfiguration.class)
 public class CourierServiceConfiguration {
 
   @Bean
-  public CourierService courierService(CourierRepository courierRepository) {
-    return new CourierService(courierRepository);
+  public CourierAssignmentStrategy courierAssignmentStrategy() {
+    return new DistanceOptimizedCourierAssignmentStrategy();
+  }
+
+  @Bean
+  public CourierService courierService(CourierRepository courierRepository, CourierAssignmentStrategy courierAssignmentStrategy) {
+    return new CourierService(courierRepository, courierAssignmentStrategy);
   }
 
 }

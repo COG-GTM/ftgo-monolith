@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignmentRequest;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignmentResponse;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
@@ -11,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -27,22 +28,19 @@ public class OrderService {
   private Optional<MeterRegistry> meterRegistry;
 
   private ConsumerService consumerService;
-  private CourierRepository courierRepository;
-  private CourierAssignmentStrategy courierAssignmentStrategy;
+  private CourierServiceClient courierServiceClient;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
-                      CourierRepository courierRepository,
-                      CourierAssignmentStrategy courierAssignmentStrategy) {
+                      CourierServiceClient courierServiceClient) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
-    this.courierAssignmentStrategy = courierAssignmentStrategy;
+    this.courierServiceClient = courierServiceClient;
   }
 
   @Transactional
@@ -99,42 +97,24 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
+    Double restaurantLat = null;
+    Double restaurantLng = null;
+    if (order.getRestaurant() != null && order.getRestaurant().getAddress() != null) {
+      restaurantLat = order.getRestaurant().getAddress().getLatitude();
+      restaurantLng = order.getRestaurant().getAddress().getLongitude();
+    }
 
-    courier.addAction(Action.makePickup(order));
+    CourierAssignmentRequest request = new CourierAssignmentRequest(
+            order.getId(), readyBy, restaurantLat, restaurantLng);
+    CourierAssignmentResponse response = courierServiceClient.assignCourier(request);
 
-    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, order, readyBy);
-    courier.addAction(Action.makeDropoff(order, estimatedDeliveryTime));
+    order.schedule(response.getCourierId());
 
-    order.schedule(courier);
-
-    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
-            order.getId(), courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
+    logger.info("Order {} assigned to courier {} (ETA: {})",
+            order.getId(), response.getCourierId(), response.getEstimatedDeliveryTime());
 
     meterRegistry.ifPresent(mr -> mr.counter("courier_assignments").increment());
   }
-
-  private LocalDateTime estimateDeliveryTime(Courier courier, Order order, LocalDateTime readyBy) {
-    if (courier.hasLocation() && order.getRestaurant() != null
-            && order.getRestaurant().getAddress() != null
-            && order.getRestaurant().getAddress().getLatitude() != null) {
-
-      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
-              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-              order.getRestaurant().getAddress().getLatitude(),
-              order.getRestaurant().getAddress().getLongitude());
-
-      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
-      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
-      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
-
-      return effectiveReadyTime.plusMinutes(15);
-    }
-
-    return readyBy.plusMinutes(30);
-  }
-
 
   private Order tryToFindOrder(Long orderId) {
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));

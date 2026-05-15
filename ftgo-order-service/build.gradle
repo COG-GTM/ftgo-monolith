@@ -40,6 +40,7 @@ dependencies {
     compile project(":ftgo-consumer-service-api")
     compile project(":ftgo-restaurant-service-api")
     compile project(":ftgo-order-service-api")
+    compile project(":ftgo-courier-service-api")
     compile project(":ftgo-consumer-service")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
@@ -49,10 +50,19 @@ dependencies {
     compile 'javax.el:javax.el-api:2.2.5'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile 'org.mockito:mockito-core:5.14.2'
+    testCompile 'net.bytebuddy:byte-buddy:1.15.10'
+    testCompile 'net.bytebuddy:byte-buddy-agent:1.15.10'
 
     testCompile 'io.rest-assured:rest-assured:3.0.6'
     testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
     testCompile "io.rest-assured:json-path:3.0.6"
 
     testCompile project(":ftgo-test-util")
+}
+
+test {
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED'
 }
