@@ -93,11 +93,15 @@ public class CourierService {
 
       long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
       LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
-      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
+      LocalDateTime effectiveReadyTime = readyBy == null ? pickupArrival
+              : (pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy);
 
       return effectiveReadyTime.plusMinutes(15);
     }
 
+    if (readyBy == null) {
+      return LocalDateTime.now().plusMinutes(30);
+    }
     return readyBy.plusMinutes(30);
   }
 
