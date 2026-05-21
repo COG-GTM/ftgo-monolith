@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
@@ -46,15 +46,14 @@ public class Courier {
 
   public void noteAvailable() {
     this.available = true;
-
   }
 
   public void addAction(Action action) {
     plan.add(action);
   }
 
-  public void cancelDelivery(Order order) {
-    plan.removeDelivery(order);
+  public void cancelDelivery(Long orderId) {
+    plan.removeDelivery(orderId);
   }
 
   public boolean isAvailable() {
@@ -73,8 +72,8 @@ public class Courier {
     this.available = false;
   }
 
-  public List<Action> actionsForDelivery(Order order) {
-    return plan.actionsForDelivery(order);
+  public List<Action> actionsForDelivery(Long orderId) {
+    return plan.actionsForDelivery(orderId);
   }
 
   public PersonName getName() {

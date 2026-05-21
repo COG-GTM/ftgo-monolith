@@ -1,17 +1,22 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.courierservice.api.CourierActionDTO;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
+import net.chrisrichardson.ftgo.orderservice.domain.CourierServiceClient;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,14 +27,19 @@ import static java.util.stream.Collectors.toList;
 @RequestMapping(path = "/orders")
 public class OrderController {
 
+  private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
+
   private OrderService orderService;
 
   private OrderRepository orderRepository;
 
+  private CourierServiceClient courierServiceClient;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository, CourierServiceClient courierServiceClient) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.courierServiceClient = courierServiceClient;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -59,24 +69,28 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
-    List<Action> courierActions = order.getAssignedCourier() == null
-            ? null
-            : order.getAssignedCourier().actionsForDelivery(order);
-
+    List<CourierActionDTO> courierActions = Collections.emptyList();
     LocalDateTime estimatedDelivery = null;
-    if (courierActions != null) {
-      estimatedDelivery = courierActions.stream()
-              .filter(a -> a.getType() == ActionType.DROPOFF)
-              .map(Action::getTime)
-              .findFirst()
-              .orElse(null);
+
+    if (order.getAssignedCourierId() != null) {
+      try {
+        courierActions = courierServiceClient.getActionsForOrder(
+                order.getAssignedCourierId(), order.getId());
+        estimatedDelivery = courierActions.stream()
+                .filter(a -> "DROPOFF".equals(a.getType()))
+                .map(CourierActionDTO::getTime)
+                .findFirst()
+                .orElse(null);
+      } catch (Exception e) {
+        logger.warn("Failed to fetch courier actions for order {}: {}", order.getId(), e.getMessage());
+      }
     }
 
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
+            order.getAssignedCourierId(),
             courierActions,
             estimatedDelivery
     );
