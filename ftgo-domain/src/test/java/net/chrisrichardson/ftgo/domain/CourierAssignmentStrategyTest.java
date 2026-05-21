@@ -2,14 +2,14 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CourierAssignmentStrategyTest {
 
@@ -17,7 +17,7 @@ public class CourierAssignmentStrategyTest {
   private Restaurant restaurant;
   private Order order;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     strategy = new DistanceOptimizedCourierAssignmentStrategy();
 
@@ -29,9 +29,10 @@ public class CourierAssignmentStrategyTest {
     order = new Order(1L, restaurant, Collections.emptyList());
   }
 
-  @Test(expected = NoCourierAvailableException.class)
+  @Test
   public void shouldThrowWhenNoCouriersAvailable() {
-    strategy.assignCourier(Collections.emptyList(), order);
+    assertThrows(NoCourierAvailableException.class, () ->
+      strategy.assignCourier(Collections.emptyList(), order));
   }
 
   @Test
