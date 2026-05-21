@@ -1,5 +1,14 @@
 plugins {
-    id "org.flywaydb.flyway" version "6.0.0"
+    id "org.flywaydb.flyway" version "9.22.3"
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.mysql:mysql-connector-j:8.3.0'
+    }
 }
 
 flyway {
