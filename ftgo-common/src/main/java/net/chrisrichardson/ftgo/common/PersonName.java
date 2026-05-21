@@ -1,6 +1,6 @@
 package net.chrisrichardson.ftgo.common;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class PersonName {
