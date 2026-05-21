@@ -11,7 +11,7 @@ import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
+
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
@@ -65,7 +65,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private String consumerBaseUrl(String... pathElements) {
-    return baseUrl(getApplicationPort(), "consumers", pathElements);
+    return baseUrl(getConsumerServicePort(), "consumers", pathElements);
   }
 
   private String restaurantBaseUrl(String... pathElements) {
@@ -209,7 +209,7 @@ public abstract class AbstractEndToEndTests {
   private Integer createConsumer() {
     Integer consumerId =
             given().
-                    body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
+                    body("{\"name\":{\"firstName\":\"John\",\"lastName\":\"Doe\"}}").
                     contentType("application/json").
                     when().
                     post(consumerBaseUrl()).
@@ -384,4 +384,8 @@ public abstract class AbstractEndToEndTests {
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  public int getConsumerServicePort() {
+    return 8082;
+  }
 }

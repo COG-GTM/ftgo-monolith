@@ -1,7 +1,7 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.consumerservice.domain;
 
-import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.consumerservice.common.Money;
+import net.chrisrichardson.ftgo.consumerservice.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
@@ -25,7 +25,6 @@ public class Consumer {
   public Consumer(PersonName name) {
     this.name = name;
   }
-
 
   public void validateOrderByConsumer(Money orderTotal) {
     // implement some business logic

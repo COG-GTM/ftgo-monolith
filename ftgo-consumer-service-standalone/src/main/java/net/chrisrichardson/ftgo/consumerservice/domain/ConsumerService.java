@@ -1,0 +1,31 @@
+package net.chrisrichardson.ftgo.consumerservice.domain;
+
+import net.chrisrichardson.ftgo.consumerservice.common.Money;
+import net.chrisrichardson.ftgo.consumerservice.common.PersonName;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Service
+@Transactional
+public class ConsumerService {
+
+  @Autowired
+  private ConsumerRepository consumerRepository;
+
+  public void validateOrderForConsumer(long consumerId, Money orderTotal) {
+    Optional<Consumer> consumer = consumerRepository.findById(consumerId);
+    consumer.orElseThrow(ConsumerNotFoundException::new).validateOrderByConsumer(orderTotal);
+  }
+
+  public Consumer create(PersonName name) {
+    Consumer consumer = consumerRepository.save(new Consumer(name));
+    return consumer;
+  }
+
+  public Optional<Consumer> findById(long consumerId) {
+    return consumerRepository.findById(consumerId);
+  }
+}
