@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.consumerservice.web;
 
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerResponse;
+import net.chrisrichardson.ftgo.consumerservice.api.web.ValidateOrderRequest;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,5 +26,12 @@ public class ConsumerController {
     return consumerService.findById(consumerId)
             .map(consumer -> new ResponseEntity<>(new GetConsumerResponse(consumer.getName()), HttpStatus.OK))
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
+  @RequestMapping(method= RequestMethod.POST, path="/{consumerId}/validate")
+  public ResponseEntity<Void> validateOrderForConsumer(@PathVariable long consumerId,
+                                                       @RequestBody ValidateOrderRequest request) {
+    consumerService.validateOrderForConsumer(consumerId, request.getOrderTotal());
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }
