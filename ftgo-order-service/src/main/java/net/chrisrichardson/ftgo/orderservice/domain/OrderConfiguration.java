@@ -8,6 +8,8 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCusto
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -21,16 +23,29 @@ public class OrderConfiguration {
   }
 
   @Bean
+  @Profile("!http-consumer")
+  public ConsumerServiceProxy inProcessConsumerServiceProxy(ConsumerService consumerService) {
+    return new InProcessConsumerServiceProxy(consumerService);
+  }
+
+  @Bean
+  @Profile("http-consumer")
+  public ConsumerServiceProxy httpConsumerServiceProxy(
+          @Value("${consumer.service.url:http://localhost:8082}") String consumerServiceUrl) {
+    return new HttpConsumerServiceProxy(new RestTemplate(), consumerServiceUrl);
+  }
+
+  @Bean
   public OrderService orderService(RestaurantRepository restaurantRepository,
                                    OrderRepository orderRepository,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerService consumerService,
+                                   ConsumerServiceProxy consumerServiceProxy,
                                    CourierRepository courierRepository,
                                    CourierAssignmentStrategy courierAssignmentStrategy) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
-            consumerService,
+            consumerServiceProxy,
             courierRepository,
             courierAssignmentStrategy);
   }

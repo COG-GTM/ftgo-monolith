@@ -1,7 +1,7 @@
 apply plugin: FtgoServicePlugin
 
 dependencies {
-    compile project(":ftgo-consumer-service")
+    // Consumer service is now standalone; accessed via HTTP through ConsumerServiceProxy
     compile project(":ftgo-order-service")
     compile project(":ftgo-restaurant-service")
     compile project(":ftgo-courier-service")
