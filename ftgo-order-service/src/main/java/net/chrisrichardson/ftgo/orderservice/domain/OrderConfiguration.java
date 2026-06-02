@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceProxy;
+import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceClient;
 import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceProxyConfiguration;
 import net.chrisrichardson.ftgo.domain.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +25,7 @@ public class OrderConfiguration {
   public OrderService orderService(RestaurantRepository restaurantRepository,
                                    OrderRepository orderRepository,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerServiceProxy consumerService,
+                                   ConsumerServiceClient consumerService,
                                    CourierRepository courierRepository,
                                    CourierAssignmentStrategy courierAssignmentStrategy) {
     return new OrderService(orderRepository,

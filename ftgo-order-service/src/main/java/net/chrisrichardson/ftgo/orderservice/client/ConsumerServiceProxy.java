@@ -10,35 +10,26 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.function.Supplier;
-
 /**
  * HTTP client proxy that lets the order service validate consumers by calling the
  * extracted consumer service over REST instead of invoking it in-process.
  */
-public class ConsumerServiceProxy {
+public class ConsumerServiceProxy implements ConsumerServiceClient {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final RestTemplate restTemplate;
-  private final Supplier<String> consumerServiceUrlSupplier;
+  private final String consumerServiceUrl;
 
   public ConsumerServiceProxy(RestTemplate restTemplate, String consumerServiceUrl) {
-    this(restTemplate, () -> consumerServiceUrl);
-  }
-
-  /**
-   * Resolves the base URL lazily per call so callers can defer it (e.g. to a server
-   * port that is only known after startup, as with {@code RANDOM_PORT} in tests).
-   */
-  public ConsumerServiceProxy(RestTemplate restTemplate, Supplier<String> consumerServiceUrlSupplier) {
     this.restTemplate = restTemplate;
-    this.consumerServiceUrlSupplier = consumerServiceUrlSupplier;
+    this.consumerServiceUrl = consumerServiceUrl;
   }
 
   private String baseUrl() {
-    String url = consumerServiceUrlSupplier.get();
-    return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    return consumerServiceUrl.endsWith("/")
+            ? consumerServiceUrl.substring(0, consumerServiceUrl.length() - 1)
+            : consumerServiceUrl;
   }
 
   /**
@@ -46,6 +37,7 @@ public class ConsumerServiceProxy {
    * {@code validateOrderForConsumer} returns no data, so existence (HTTP 200) is
    * sufficient to consider the consumer valid.
    */
+  @Override
   public void validateOrderForConsumer(long consumerId, Money orderTotal) {
     String url = baseUrl() + "/consumers/" + consumerId;
     logger.debug("Validating consumer {} (orderTotal={}) via {}", consumerId, orderTotal, url);

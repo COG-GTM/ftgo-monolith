@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceProxy;
+import net.chrisrichardson.ftgo.orderservice.client.ConsumerServiceClient;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
@@ -26,14 +26,14 @@ public class OrderService {
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerServiceProxy consumerService;
+  private ConsumerServiceClient consumerService;
   private CourierRepository courierRepository;
   private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerServiceProxy consumerService,
+                      ConsumerServiceClient consumerService,
                       CourierRepository courierRepository,
                       CourierAssignmentStrategy courierAssignmentStrategy) {
 
