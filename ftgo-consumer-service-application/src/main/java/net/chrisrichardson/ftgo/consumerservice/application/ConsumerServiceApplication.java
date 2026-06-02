@@ -1,7 +1,7 @@
-package net.chrisrichardson.ftgo.consumerservice.main;
+package net.chrisrichardson.ftgo.consumerservice.application;
 
-import net.chrisrichardson.eventstore.examples.customersandorders.commonswagger.CommonSwaggerConfiguration;
 import net.chrisrichardson.ftgo.consumerservice.web.ConsumerWebConfiguration;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
@@ -14,6 +14,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @ComponentScan
 @EntityScan(basePackages = "net.chrisrichardson.ftgo.consumerservice.domain")
 @EnableJpaRepositories(basePackages = "net.chrisrichardson.ftgo.consumerservice.domain")
-@Import({ConsumerWebConfiguration.class, CommonSwaggerConfiguration.class})
-public class ConsumerServiceConfiguration {
+@Import(ConsumerWebConfiguration.class)
+public class ConsumerServiceApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(ConsumerServiceApplication.class, args);
+  }
 }
