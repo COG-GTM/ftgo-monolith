@@ -2,14 +2,8 @@ apply plugin: FtgoServicePlugin
 
 // Pin mysql-connector-java to the same version used elsewhere in the build
 // (ftgo-common). Without this, io.spring.dependency-management forces Spring
-// Boot 2.0.3's managed 5.1.46, whose plain GPL-2.0 license fails the Snyk
-// license check (8.0.33 carries the Universal FOSS exception).
+// Boot 2.0.3's managed 5.1.46 driver, which predates MySQL 8.
 ext['mysql.version'] = '8.0.33'
-
-// Keep the JPA API at the version hibernate-core declares (1.0.0.Final).
-// io.spring.dependency-management otherwise bumps it to 1.0.2.Final, which the
-// Snyk license PR check reports as a new EPL-1.0 license issue for this module.
-ext['hibernate-jpa-2.1-api.version'] = '1.0.0.Final'
 
 dependencies {
     compile project(":common-swagger")

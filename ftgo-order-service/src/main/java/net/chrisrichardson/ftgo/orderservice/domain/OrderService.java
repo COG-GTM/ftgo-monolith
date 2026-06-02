@@ -54,13 +54,21 @@ public class OrderService {
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    // Compute the order total in a short transaction so that no database
-    // connection is held during the remote consumer validation call below.
-    Money orderTotal = transactionTemplate.execute(status -> {
+    // Load the restaurant and price the order line items in a short
+    // transaction, so that no database connection is held during the remote
+    // consumer validation call below.
+    List<OrderLineItem> orderLineItems = transactionTemplate.execute(status -> {
       Restaurant restaurant = restaurantRepository.findById(restaurantId)
               .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-      return new Order(consumerId, restaurant, makeOrderLineItems(lineItems, restaurant)).getOrderTotal();
+      return makeOrderLineItems(lineItems, restaurant);
     });
+
+    // Derive the total from the already-priced line items so the amount that is
+    // validated is exactly the amount that will be persisted below, even if the
+    // restaurant's menu changes between the two transactions.
+    Money orderTotal = orderLineItems.stream()
+            .map(OrderLineItem::getTotal)
+            .reduce(Money.ZERO, Money::add);
 
     // Remote HTTP call to the consumer service, performed outside of any
     // transaction to avoid holding a DB connection during network I/O.
@@ -71,7 +79,7 @@ public class OrderService {
     return transactionTemplate.execute(status -> {
       Restaurant restaurant = restaurantRepository.findById(restaurantId)
               .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-      Order order = new Order(consumerId, restaurant, makeOrderLineItems(lineItems, restaurant));
+      Order order = new Order(consumerId, restaurant, orderLineItems);
       orderRepository.save(order);
       meterRegistry.ifPresent(mr1 -> mr1.counter("approved_orders").increment());
       meterRegistry.ifPresent(mr -> mr.counter("placed_orders").increment());
