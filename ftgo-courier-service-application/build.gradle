@@ -1,7 +1,9 @@
 apply plugin: FtgoServicePlugin
 
 dependencies {
-    compile project(":ftgo-courier-service")
+    // Self-contained extracted service: it owns decoupled copies of the Courier/Action/Plan
+    // entities (see this module's domain package) so it does NOT depend on ftgo-courier-service
+    // or ftgo-domain, keeping the entangled Order/Action coupling out of the standalone service.
     compile project(":ftgo-courier-service-api")
     compile project(":ftgo-common")
 

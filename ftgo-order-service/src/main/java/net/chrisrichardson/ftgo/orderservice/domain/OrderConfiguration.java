@@ -10,6 +10,7 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCusto
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.Optional;
 
@@ -29,14 +30,16 @@ public class OrderConfiguration {
                                    ConsumerService consumerService,
                                    CourierServiceProxy courierServiceProxy,
                                    CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierAssignmentStrategy courierAssignmentStrategy,
+                                   PlatformTransactionManager transactionManager) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerService,
             courierServiceProxy,
             courierRepository,
-            courierAssignmentStrategy);
+            courierAssignmentStrategy,
+            transactionManager);
   }
 
   @Bean
