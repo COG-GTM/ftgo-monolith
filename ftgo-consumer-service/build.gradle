@@ -6,6 +6,11 @@ apply plugin: FtgoServicePlugin
 // license check (8.0.33 carries the Universal FOSS exception).
 ext['mysql.version'] = '8.0.33'
 
+// Keep the JPA API at the version hibernate-core declares (1.0.0.Final).
+// io.spring.dependency-management otherwise bumps it to 1.0.2.Final, which the
+// Snyk license PR check reports as a new EPL-1.0 license issue for this module.
+ext['hibernate-jpa-2.1-api.version'] = '1.0.0.Final'
+
 dependencies {
     compile project(":common-swagger")
     compile project(":ftgo-consumer-service-api")
