@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.courierservice.api.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.client.CourierServiceProxy;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
@@ -29,6 +30,7 @@ public class OrderService {
 
   private ConsumerService consumerService;
   private CourierServiceProxy courierServiceProxy;
+  private CourierRepository courierRepository;
   private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
@@ -36,6 +38,7 @@ public class OrderService {
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
                       CourierServiceProxy courierServiceProxy,
+                      CourierRepository courierRepository,
                       CourierAssignmentStrategy courierAssignmentStrategy) {
 
     this.orderRepository = orderRepository;
@@ -43,6 +46,7 @@ public class OrderService {
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
     this.courierServiceProxy = courierServiceProxy;
+    this.courierRepository = courierRepository;
     this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
@@ -101,7 +105,13 @@ public class OrderService {
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
     List<Courier> couriers = courierServiceProxy.findAllAvailable();
-    Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
+    Courier assignedCourier = courierAssignmentStrategy.assignCourier(couriers, order);
+
+    // The availability read is served by the extracted courier service over HTTP, but the
+    // Order/Action coupling stays in-process: re-load the chosen courier as a JPA-managed entity
+    // so the action additions and the Order->Courier association are persisted by dirty checking.
+    Courier courier = courierRepository.findById(assignedCourier.getId())
+            .orElseThrow(() -> new CourierNotFoundException(assignedCourier.getId()));
 
     courier.addAction(Action.makePickup(order));
 

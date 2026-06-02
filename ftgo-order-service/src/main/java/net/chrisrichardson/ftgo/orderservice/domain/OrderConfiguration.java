@@ -28,12 +28,14 @@ public class OrderConfiguration {
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
                                    CourierServiceProxy courierServiceProxy,
+                                   CourierRepository courierRepository,
                                    CourierAssignmentStrategy courierAssignmentStrategy) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerService,
             courierServiceProxy,
+            courierRepository,
             courierAssignmentStrategy);
   }
 
