@@ -1,5 +1,11 @@
 apply plugin: FtgoServicePlugin
 
+// Honour the declared mysql-connector-java 8.0.33 below. Without this,
+// io.spring.dependency-management silently downgrades it to Spring Boot 2.0.3's
+// managed 5.1.46, whose plain GPL-2.0 license fails the Snyk license check
+// (8.0.33 carries the Universal FOSS exception, matching ftgo-common).
+ext['mysql.version'] = '8.0.33'
+
 dependencies {
     compile project(":ftgo-order-service")
     compile project(":ftgo-restaurant-service")
