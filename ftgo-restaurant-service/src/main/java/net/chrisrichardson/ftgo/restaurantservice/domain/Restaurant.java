@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import org.hibernate.annotations.DynamicUpdate;
@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.util.List;
 import java.util.Optional;
 
-@Entity
+@Entity(name = "RestaurantServiceRestaurant")
 @Table(name = "restaurants")
 @Access(AccessType.FIELD)
 @DynamicUpdate
@@ -42,13 +42,6 @@ public class Restaurant {
     this.menuItems = menu.getMenuItems();
   }
 
-  public Restaurant(Long id, String name, Address address, RestaurantMenu menu) {
-    this.id = id;
-    this.name = name;
-    this.address = address;
-    this.menuItems = menu.getMenuItems();
-  }
-
   public void setId(Long id) {
     this.id = id;
   }
@@ -67,6 +60,10 @@ public class Restaurant {
 
   public Address getAddress() {
     return address;
+  }
+
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
   }
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {
