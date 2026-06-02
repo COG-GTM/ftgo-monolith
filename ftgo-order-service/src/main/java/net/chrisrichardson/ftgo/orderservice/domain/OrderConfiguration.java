@@ -8,6 +8,8 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCusto
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -38,13 +40,15 @@ public class OrderConfiguration {
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerServiceClient consumerServiceClient,
                                    CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierAssignmentStrategy courierAssignmentStrategy,
+                                   PlatformTransactionManager transactionManager) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerServiceClient,
             courierRepository,
-            courierAssignmentStrategy);
+            courierAssignmentStrategy,
+            new TransactionTemplate(transactionManager));
   }
 
   @Bean
