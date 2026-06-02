@@ -4,9 +4,9 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.courierservice.api.CourierNotFoundException;
-import net.chrisrichardson.ftgo.domain.Courier;
-import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 public class CourierService {
 
@@ -32,15 +32,21 @@ public class CourierService {
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    findCourierById(courierId).noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    findCourierById(courierId).noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
-    return courierRepository.findById(courierId).get();
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId));
+  }
+
+  @Transactional(readOnly = true)
+  public List<Courier> findAvailableCouriers() {
+    return courierRepository.findAllAvailable();
   }
 
   @Transactional
