@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.client.CourierServiceProxy;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +28,21 @@ public class OrderService {
   private Optional<MeterRegistry> meterRegistry;
 
   private ConsumerService consumerService;
-  private CourierRepository courierRepository;
+  private CourierServiceProxy courierServiceProxy;
   private CourierAssignmentStrategy courierAssignmentStrategy;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
-                      CourierRepository courierRepository,
+                      CourierServiceProxy courierServiceProxy,
                       CourierAssignmentStrategy courierAssignmentStrategy) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
+    this.courierServiceProxy = courierServiceProxy;
     this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
@@ -99,7 +100,7 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-    List<Courier> couriers = courierRepository.findAllAvailable();
+    List<Courier> couriers = courierServiceProxy.findAllAvailable();
     Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
 
     courier.addAction(Action.makePickup(order));
