@@ -23,6 +23,11 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    // Security remediation: force the patched Jackson 2.9.x line for modules that
+    // import the Spring Boot dependency-management BOM, so the managed (downgraded)
+    // transitive version cannot reintroduce the jackson-databind deserialization CVEs.
+    ext['jackson.version'] = '2.9.10'
+
     repositories {
         mavenCentral()
         jcenter()
