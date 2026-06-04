@@ -1,10 +1,20 @@
-plugins {
-    id "org.flywaydb.flyway" version "6.0.0"
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.flywaydb:flyway-gradle-plugin:$flywayVersion"
+        classpath "org.flywaydb:flyway-mysql:$flywayVersion"
+        classpath "com.mysql:mysql-connector-j:$mysqlConnectorVersion"
+    }
 }
 
+apply plugin: "org.flywaydb.flyway"
+
 flyway {
-    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false"
+    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false&allowPublicKeyRetrieval=true"
     user = 'root'
     password = 'rootpassword'
     schemas = ['ftgo']
+    locations = ['filesystem:src/main/resources/db/migration']
 }
