@@ -23,10 +23,71 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
-    // Security remediation: force the patched Jackson 2.9.x line for modules that
-    // import the Spring Boot dependency-management BOM, so the managed (downgraded)
-    // transitive version cannot reintroduce the jackson-databind deserialization CVEs.
-    ext['jackson.version'] = '2.9.10'
+    // Security remediation (dependency-only, no source changes): pin known-vulnerable
+    // transitive dependencies to the highest patch within the line that stays compatible
+    // with this Java 8 / Spring Boot 2.0.x / Gradle 4.10.2 stack.
+    //
+    // Spring's dependency-management plugin (used by the BOM-managed modules) overrides
+    // Gradle's resolutionStrategy, so for managed artifacts we override the spring-boot
+    // -dependencies BOM properties; for modules that pull these deps transitively WITHOUT
+    // the BOM, we additionally force them via resolutionStrategy.
+    ext['spring.version'] = '5.0.19.RELEASE'   // Spring Framework terminal 5.0.x patch
+    ext['tomcat.version'] = '8.5.100'          // embedded Tomcat terminal 8.5.x patch
+    ext['logback.version'] = '1.2.13'          // Logback terminal 1.2.x patch
+    ext['snakeyaml.version'] = '1.33'          // SnakeYAML DoS fixes
+    ext['jackson.version'] = '2.9.10'          // Jackson 2.9 BOM baseline (databind pinned below)
+    ext['commons-lang3.version'] = '3.18.0'    // commons-lang3 recursion fix
+    ext['groovy.version'] = '2.4.21'           // Groovy terminal 2.4.x patch
+    ext['assertj.version'] = '3.27.7'          // AssertJ recursion fix (test scope, Java 8 compatible)
+
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            def g = details.requested.group
+            def n = details.requested.name
+            if (g == 'org.springframework' && n.startsWith('spring-')) {
+                details.useVersion '5.0.19.RELEASE'
+            }
+            if (g == 'org.apache.tomcat.embed') {
+                details.useVersion '8.5.100'
+            }
+            if (g == 'ch.qos.logback') {
+                details.useVersion '1.2.13'
+            }
+            if (g == 'org.yaml' && n == 'snakeyaml') {
+                details.useVersion '1.33'
+            }
+            // jackson-databind: terminal 2.9.10.x security patch (RCE chain)
+            if (g == 'com.fasterxml.jackson.core' && n == 'jackson-databind') {
+                details.useVersion '2.9.10.8'
+            }
+            if (g == 'org.dom4j' && n == 'dom4j') {
+                details.useVersion '2.1.4'
+            }
+            if (g == 'org.apache.commons' && n == 'commons-lang3') {
+                details.useVersion '3.18.0'
+            }
+            if (g == 'org.codehaus.groovy' && n.startsWith('groovy')) {
+                details.useVersion '2.4.21'
+            }
+            if (g == 'org.assertj' && n == 'assertj-core') {
+                details.useVersion '3.27.7'
+            }
+            // json-smart: patched 2.5.x (transitive via json-path, test scope)
+            if (g == 'net.minidev' && n == 'json-smart') {
+                details.useVersion '2.5.2'
+            }
+        }
+    }
+
+    // For BOM-managed modules, pin jackson-databind to the 2.9.10.8 security patch
+    // (the uniform jackson.version BOM property cannot express the databind-only micro).
+    plugins.withId('io.spring.dependency-management') {
+        dependencyManagement {
+            dependencies {
+                dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.10.8'
+            }
+        }
+    }
 
     repositories {
         mavenCentral()
