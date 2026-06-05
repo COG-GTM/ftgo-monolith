@@ -18,6 +18,8 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    apply plugin: "jacoco"
+
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
@@ -38,6 +40,47 @@ subprojects {
             url "${project.rootDir}/build/repo"
         }
 
+    }
+
+    jacoco {
+        toolVersion = "0.8.8"
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+            html.enabled true
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    minimum = 0.95
+                }
+            }
+            rule {
+                limit {
+                    counter = 'BRANCH'
+                    minimum = 0.85
+                }
+            }
+        }
+    }
+
+    test {
+        finalizedBy jacocoTestReport
+        jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+                 '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED'
+    }
+
+    dependencies {
+        testCompile "junit:junit:4.12"
+        testCompile "org.mockito:mockito-core:4.11.0"
+        testCompile "org.mockito:mockito-inline:4.11.0"
+        testCompile "org.assertj:assertj-core:3.24.2"
     }
 
 }
