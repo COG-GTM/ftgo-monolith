@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantmicroservice.domain;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -10,12 +10,25 @@ import java.util.List;
 @Embeddable
 @Access(AccessType.FIELD)
 public class RestaurantMenu {
+
   @Embedded
   @ElementCollection
   @CollectionTable(name = "restaurant_menu_items")
   private List<MenuItem> menuItems;
 
   private RestaurantMenu() {
+  }
+
+  public RestaurantMenu(List<MenuItem> menuItems) {
+    this.menuItems = menuItems;
+  }
+
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
+  }
+
+  public void setMenuItems(List<MenuItem> menuItems) {
+    this.menuItems = menuItems;
   }
 
   @Override
@@ -28,22 +41,8 @@ public class RestaurantMenu {
     return HashCodeBuilder.reflectionHashCode(this);
   }
 
-  public List<MenuItem> getMenuItems() {
-    return menuItems;
-  }
-
   @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
   }
-
-  public void setMenuItems(List<MenuItem> menuItems) {
-    this.menuItems = menuItems;
-  }
-
-  public RestaurantMenu(List<MenuItem> menuItems) {
-
-    this.menuItems = menuItems;
-  }
-
 }

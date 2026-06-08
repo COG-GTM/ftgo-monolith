@@ -1,9 +1,5 @@
-package net.chrisrichardson.ftgo.restaurantservice.domain;
+package net.chrisrichardson.ftgo.restaurantmicroservice.domain;
 
-import net.chrisrichardson.ftgo.domain.MenuItem;
-import net.chrisrichardson.ftgo.domain.Restaurant;
-import net.chrisrichardson.ftgo.domain.RestaurantMenu;
-import net.chrisrichardson.ftgo.domain.RestaurantRepository;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +20,20 @@ public class RestaurantService {
     return restaurant;
   }
 
-  private RestaurantMenu makeRestaurantMenu(RestaurantMenuDTO menu) {
-    return new RestaurantMenu(menu.getMenuItemDTOs().stream().map(mi -> new MenuItem(mi.getId(), mi.getName(), mi.getPrice())).collect(Collectors.toList()));
-  }
-
   public Optional<Restaurant> findById(long restaurantId) {
     return restaurantRepository.findById(restaurantId);
+  }
+
+  public Restaurant reviseMenu(long restaurantId, RestaurantMenuDTO menu) {
+    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+            .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
+    restaurant.reviseMenu(makeRestaurantMenu(menu));
+    return restaurant;
+  }
+
+  private RestaurantMenu makeRestaurantMenu(RestaurantMenuDTO menu) {
+    return new RestaurantMenu(menu.getMenuItemDTOs().stream()
+            .map(mi -> new MenuItem(mi.getId(), mi.getName(), mi.getPrice()))
+            .collect(Collectors.toList()));
   }
 }

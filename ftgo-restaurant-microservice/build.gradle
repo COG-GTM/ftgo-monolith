@@ -1,15 +1,22 @@
+apply plugin: FtgoServicePlugin
+
 dependencies {
     compile project(":common-swagger")
     compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-domain")
+    compile project(":ftgo-common")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
 
+    // Standalone service: in-memory H2 database with Flyway-managed schema
+    compile "com.h2database:h2"
+    compile "org.flywaydb:flyway-core"
+
     compile 'javax.el:javax.el-api:2.2.5'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    testCompile "io.rest-assured:rest-assured:3.0.6"
+    testCompile "io.rest-assured:spring-mock-mvc:3.0.6"
+    testCompile "io.rest-assured:json-path:3.0.6"
 }
