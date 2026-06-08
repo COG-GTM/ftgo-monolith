@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantmicroservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import org.hibernate.annotations.DynamicUpdate;
@@ -36,10 +36,15 @@ public class Restaurant {
     this.menuItems = menu.getMenuItems();
   }
 
-  public Restaurant(Long id, String name, RestaurantMenu menu) {
+  public Restaurant(Long id, String name, Address address, RestaurantMenu menu) {
     this.id = id;
     this.name = name;
+    this.address = address;
     this.menuItems = menu.getMenuItems();
+  }
+
+  public Long getId() {
+    return id;
   }
 
   public void setId(Long id) {
@@ -54,12 +59,12 @@ public class Restaurant {
     this.name = name;
   }
 
-  public Long getId() {
-    return id;
-  }
-
   public Address getAddress() {
     return address;
+  }
+
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
   }
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {
@@ -67,6 +72,6 @@ public class Restaurant {
   }
 
   public void reviseMenu(RestaurantMenu revisedMenu) {
-    throw new UnsupportedOperationException();
+    this.menuItems = revisedMenu.getMenuItems();
   }
 }

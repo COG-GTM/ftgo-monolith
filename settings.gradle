@@ -17,8 +17,10 @@ include "ftgo-order-service-api"
 include "ftgo-consumer-service-api"
 include "ftgo-consumer-service"
 
+// Shared REST API contract (DTOs) for the extracted Restaurant microservice
 include "ftgo-restaurant-service-api"
-include "ftgo-restaurant-service"
+// Restaurant bounded context extracted into a standalone Spring Boot microservice
+include "ftgo-restaurant-microservice"
 
 include "ftgo-courier-service-api"
 include "ftgo-courier-service"

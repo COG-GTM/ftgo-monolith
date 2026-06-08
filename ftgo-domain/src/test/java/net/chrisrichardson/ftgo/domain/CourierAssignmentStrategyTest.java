@@ -14,19 +14,17 @@ import static org.junit.Assert.*;
 public class CourierAssignmentStrategyTest {
 
   private DistanceOptimizedCourierAssignmentStrategy strategy;
-  private Restaurant restaurant;
+  private Address restaurantAddress;
   private Order order;
 
   @Before
   public void setUp() {
     strategy = new DistanceOptimizedCourierAssignmentStrategy();
 
-    Address restaurantAddress = new Address("1 Main St", null, "Oakland", "CA", "94612",
+    restaurantAddress = new Address("1 Main St", null, "Oakland", "CA", "94612",
             37.8044, -122.2712);
-    restaurant = new Restaurant("Test Restaurant", restaurantAddress,
-            new RestaurantMenu(Collections.emptyList()));
 
-    order = new Order(1L, restaurant, Collections.emptyList());
+    order = new Order(1L, 1L, "Test Restaurant", restaurantAddress, Collections.emptyList());
   }
 
   @Test(expected = NoCourierAvailableException.class)
@@ -59,9 +57,7 @@ public class CourierAssignmentStrategyTest {
   @Test
   public void shouldFallbackToLoadBalancingWhenNoLocations() {
     Address noLocationAddr = new Address("1 Main St", null, "Oakland", "CA", "94612");
-    Restaurant noLocRestaurant = new Restaurant("Test", noLocationAddr,
-            new RestaurantMenu(Collections.emptyList()));
-    Order noLocOrder = new Order(1L, noLocRestaurant, Collections.emptyList());
+    Order noLocOrder = new Order(1L, 2L, "Test", noLocationAddr, Collections.emptyList());
 
     Courier c1 = makeCourierNoLocation("C1");
     Courier c2 = makeCourierNoLocation("C2");
@@ -133,7 +129,7 @@ public class CourierAssignmentStrategyTest {
 
   private void addFakeDeliveries(Courier courier, int count) {
     for (int i = 0; i < count; i++) {
-      Order fakeOrder = new Order(999L, restaurant, Collections.emptyList());
+      Order fakeOrder = new Order(999L, 1L, "Test Restaurant", restaurantAddress, Collections.emptyList());
       fakeOrder.setId((long) (1000 + i));
       courier.addAction(Action.makePickup(fakeOrder));
     }

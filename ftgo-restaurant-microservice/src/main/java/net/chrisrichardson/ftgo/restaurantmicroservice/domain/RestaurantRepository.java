@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantmicroservice.domain;
 
 import org.springframework.data.repository.CrudRepository;
 

@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
 import org.hibernate.annotations.DynamicUpdate;
@@ -29,8 +30,24 @@ public class Order {
 
   private Long consumerId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  private Restaurant restaurant;
+  // Denormalized snapshot of the restaurant owned by the Restaurant microservice.
+  // The Order service fetches this data over HTTP at order-creation time, so it no
+  // longer holds a JPA association to the (now external) Restaurant entity.
+  private Long restaurantId;
+
+  private String restaurantName;
+
+  @Embedded
+  @AttributeOverrides({
+          @AttributeOverride(name = "street1", column = @Column(name = "restaurant_address_street1")),
+          @AttributeOverride(name = "street2", column = @Column(name = "restaurant_address_street2")),
+          @AttributeOverride(name = "city", column = @Column(name = "restaurant_address_city")),
+          @AttributeOverride(name = "state", column = @Column(name = "restaurant_address_state")),
+          @AttributeOverride(name = "zip", column = @Column(name = "restaurant_address_zip")),
+          @AttributeOverride(name = "latitude", column = @Column(name = "restaurant_address_latitude")),
+          @AttributeOverride(name = "longitude", column = @Column(name = "restaurant_address_longitude"))
+  })
+  private Address restaurantAddress;
 
   @Embedded
   private OrderLineItems orderLineItems;
@@ -58,9 +75,11 @@ public class Order {
   private Order() {
   }
 
-  public Order(long consumerId, Restaurant restaurant, List<OrderLineItem> orderLineItems) {
+  public Order(long consumerId, long restaurantId, String restaurantName, Address restaurantAddress, List<OrderLineItem> orderLineItems) {
     this.consumerId = consumerId;
-    this.restaurant = restaurant;
+    this.restaurantId = restaurantId;
+    this.restaurantName = restaurantName;
+    this.restaurantAddress = restaurantAddress;
     this.orderLineItems = new OrderLineItems(orderLineItems);
     this.orderState = APPROVED;
   }
@@ -125,8 +144,16 @@ public class Order {
     return orderState;
   }
 
-  public Restaurant getRestaurant() {
-    return restaurant;
+  public Long getRestaurantId() {
+    return restaurantId;
+  }
+
+  public String getRestaurantName() {
+    return restaurantName;
+  }
+
+  public Address getRestaurantAddress() {
+    return restaurantAddress;
   }
 
   public Long getConsumerId() {

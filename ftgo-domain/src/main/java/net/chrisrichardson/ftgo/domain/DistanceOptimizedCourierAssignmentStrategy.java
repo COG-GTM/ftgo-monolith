@@ -23,9 +23,9 @@ public class DistanceOptimizedCourierAssignmentStrategy implements CourierAssign
 
     Double restaurantLat = null;
     Double restaurantLng = null;
-    if (order.getRestaurant() != null && order.getRestaurant().getAddress() != null) {
-      restaurantLat = order.getRestaurant().getAddress().getLatitude();
-      restaurantLng = order.getRestaurant().getAddress().getLongitude();
+    if (order.getRestaurantAddress() != null) {
+      restaurantLat = order.getRestaurantAddress().getLatitude();
+      restaurantLng = order.getRestaurantAddress().getLongitude();
     }
 
     final Double targetLat = restaurantLat;

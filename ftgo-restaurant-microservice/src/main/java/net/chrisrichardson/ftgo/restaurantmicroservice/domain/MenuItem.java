@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.restaurantmicroservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -14,9 +14,8 @@ public class MenuItem {
   private String id;
   private String name;
 
-
   @Embedded
-  @AttributeOverride(name="amount", column = @Column(name="price"))
+  @AttributeOverride(name = "amount", column = @Column(name = "price"))
   private Money price;
 
   private MenuItem() {
