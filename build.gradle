@@ -118,7 +118,7 @@ task jacocoAggregateReport(type: JacocoReport) {
     classDirectories = files(testProjects.collect { it.sourceSets.main.output }.flatten())
     executionData = files(testProjects.collect {
         it.tasks.withType(Test).collect { t -> t.extensions.getByType(JacocoTaskExtension).destinationFile }
-    }.flatten().findAll { it.exists() })
+    }.flatten())
 
     reports {
         xml.enabled true
