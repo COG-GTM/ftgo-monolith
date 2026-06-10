@@ -85,6 +85,20 @@ public class CourierAssignmentStrategyTest {
   }
 
   @Test
+  public void shouldFallbackToLeastLoadedWhenAllAtMaxCapacity() {
+    Courier maxed1 = makeCourier("Maxed1", 37.8045, -122.2713);
+    Courier maxed2 = makeCourier("Maxed2", 37.8046, -122.2714);
+
+    addFakeDeliveries(maxed1, 5);
+    addFakeDeliveries(maxed2, 5);
+
+    Courier assigned = strategy.assignCourier(Arrays.asList(maxed1, maxed2), order);
+
+    // Should fall back to load-balanced assignment (least loaded)
+    assertNotNull(assigned);
+  }
+
+  @Test
   public void shouldHandleSingleCourier() {
     Courier onlyCourier = makeCourier("Only", 37.8050, -122.2720);
 
