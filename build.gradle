@@ -33,6 +33,17 @@ subprojects {
         imports {
             mavenBom SpringBootPlugin.BOM_COORDINATES
         }
+        dependencies {
+            // Override the BOM-managed commons-lang3 (3.17.0) to pick up the fix
+            // for CVE-2025-48924 (uncontrolled recursion), resolved in 3.18.0.
+            dependency "org.apache.commons:commons-lang3:3.18.0"
+        }
+    }
+
+    dependencies {
+        // Align the JUnit Platform launcher with the BOM-managed engine; Gradle
+        // bundles an older launcher which fails test discovery on newer JUnit.
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     }
 
     tasks.withType(JavaCompile).configureEach {
