@@ -2,7 +2,7 @@ package net.chrisrichardson.ftgo.testutil;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FtgoTestUtil {
 
