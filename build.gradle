@@ -11,15 +11,23 @@ buildscript {
 }
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.42.0"
 }
 
 
 subprojects {
 
     apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    apply plugin: "io.spring.dependency-management"
+
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        }
+    }
 
     group = "net.chrisrichardson.ftgo"
 
