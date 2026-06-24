@@ -46,13 +46,17 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile 'javax.el:javax.el-api:2.2.5'
+    compile 'javax.el:javax.el-api:3.0.0'
+    compile 'org.glassfish:javax.el:3.0.0'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "junit:junit:4.13.2"
+    testCompile "org.junit.vintage:junit-vintage-engine"
 
-    testCompile 'io.rest-assured:rest-assured:3.0.6'
-    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
-    testCompile "io.rest-assured:json-path:3.0.6"
+    testCompile "io.rest-assured:rest-assured:$restAssuredVersion"
+    testCompile "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testCompile "io.rest-assured:json-path:$restAssuredVersion"
 
     testCompile project(":ftgo-test-util")
+    testRuntime "com.h2database:h2"
 }
