@@ -36,6 +36,33 @@ public class MoneyTest {
     assertEquals(new Money(M2_AMOUNT * multiplier), m2.multiply(multiplier));
   }
 
+  @Test
+  public void shouldConstructFromString() {
+    assertEquals(new Money("10"), m1);
+    assertEquals("12.34", new Money("12.34").asString());
+  }
+
+  @Test
+  public void shouldHaveValueEqualityAndHashCode() {
+    assertEquals(new Money(M1_AMOUNT), m1);
+    assertEquals(new Money(M1_AMOUNT).hashCode(), m1.hashCode());
+    assertNotEquals(m1, m2);
+    assertNotEquals(m1, null);
+    assertNotEquals(m1, "not money");
+    assertEquals(m1, m1);
+  }
+
+  @Test
+  public void shouldRenderToString() {
+    assertTrue(m1.toString().contains("10"));
+  }
+
+  @Test
+  public void zeroShouldBeAdditiveIdentity() {
+    assertEquals(m1, Money.ZERO.add(m1));
+    assertTrue(m1.isGreaterThanOrEqual(Money.ZERO));
+  }
+
 
 
 }
