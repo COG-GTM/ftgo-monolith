@@ -18,6 +18,30 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    apply plugin: "jacoco"
+
+    jacoco {
+        toolVersion = "0.8.8"
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+    }
+
+    test.finalizedBy jacocoTestReport
+
+    // Force Mockito/Byte Buddy versions that support modern JVMs (Java 17+)
+    configurations.all {
+        resolutionStrategy {
+            force "org.mockito:mockito-core:4.11.0"
+            force "net.bytebuddy:byte-buddy:1.12.23"
+            force "net.bytebuddy:byte-buddy-agent:1.12.23"
+            force "org.objenesis:objenesis:3.3"
+        }
+    }
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
