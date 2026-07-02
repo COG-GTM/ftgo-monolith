@@ -104,12 +104,6 @@ public class Order {
     if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
       orderLineItems.updateLineItems(orderRevision);
     }
-
-    orderRevision.getDeliveryInformation().ifPresent(newDi -> this.deliveryInformation = newDi);
-    if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
-      orderLineItems.updateLineItems(orderRevision);
-    }
-
   }
 
 

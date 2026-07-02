@@ -56,6 +56,18 @@ public class OrderLineItemsTest {
   }
 
   @Test
+  public void shouldUpdateOnlyRevisedLineItems() {
+    OrderRevision revision =
+            new OrderRevision(Optional.empty(), Collections.singletonMap("item-1", 5));
+
+    lineItems.updateLineItems(revision);
+
+    assertEquals(5, lineItems.findOrderLineItem("item-1").getQuantity());
+    assertEquals(4, lineItems.findOrderLineItem("item-2").getQuantity());
+    assertEquals(new Money(62), lineItems.orderTotal());
+  }
+
+  @Test
   public void shouldUpdateLineItemQuantities() {
     Map<String, Integer> revisedQuantities = new HashMap<>();
     revisedQuantities.put("item-1", 7);

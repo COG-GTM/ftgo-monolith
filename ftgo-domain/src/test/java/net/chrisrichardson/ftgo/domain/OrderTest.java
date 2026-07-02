@@ -96,6 +96,21 @@ public class OrderTest {
   }
 
   @Test
+  public void shouldReviseLineItemQuantities() {
+    OrderRevision revision = new OrderRevision(java.util.Optional.empty(),
+            Collections.singletonMap("item-1", 3));
+    order.revise(revision);
+    assertEquals(new Money("37.02"), order.getOrderTotal());
+  }
+
+  @Test(expected = UnsupportedStateTransitionException.class)
+  public void shouldNotReviseCancelledOrder() {
+    order.cancel();
+    order.revise(new OrderRevision(java.util.Optional.empty(),
+            Collections.singletonMap("item-1", 3)));
+  }
+
+  @Test
   public void shouldScheduleCourier() {
     Courier courier = new Courier(new PersonName("Pat", "Smith"),
             new Address("2 Elm St", null, "Berkeley", "CA", "94704"));
