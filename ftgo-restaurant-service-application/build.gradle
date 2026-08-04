@@ -9,6 +9,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "org.flywaydb:flyway-core:5.0.7"
 
+    runtime 'mysql:mysql-connector-java:8.0.33'
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     testCompile 'io.rest-assured:rest-assured:3.0.6'
     testCompile 'io.rest-assured:json-path:3.0.6'
