@@ -37,8 +37,13 @@ public class Restaurant {
   }
 
   public Restaurant(Long id, String name, RestaurantMenu menu) {
+    this(id, name, null, menu);
+  }
+
+  public Restaurant(Long id, String name, Address address, RestaurantMenu menu) {
     this.id = id;
     this.name = name;
+    this.address = address;
     this.menuItems = menu.getMenuItems();
   }
 

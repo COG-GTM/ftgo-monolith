@@ -3,7 +3,6 @@ package net.chrisrichardson.ftgo.restaurantservice.web;
 import net.chrisrichardson.ftgo.domain.Restaurant;
 import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = "/restaurants")
 public class RestaurantController {
 
-  @Autowired
-  private RestaurantService restaurantService;
+  private final RestaurantService restaurantService;
+
+  public RestaurantController(RestaurantService restaurantService) {
+    this.restaurantService = restaurantService;
+  }
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateRestaurantResponse create(@RequestBody CreateRestaurantRequest request) {
