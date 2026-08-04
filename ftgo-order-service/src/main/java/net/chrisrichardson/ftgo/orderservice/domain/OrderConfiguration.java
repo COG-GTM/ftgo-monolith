@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.restaurant.RestaurantClient;
+import net.chrisrichardson.ftgo.orderservice.restaurant.RestaurantClientConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +14,7 @@ import org.springframework.context.annotation.Import;
 import java.util.Optional;
 
 @Configuration
-@Import(DomainConfiguration.class)
+@Import({DomainConfiguration.class, RestaurantClientConfiguration.class})
 public class OrderConfiguration {
   // TODO move to framework
   @Bean
@@ -21,14 +23,14 @@ public class OrderConfiguration {
   }
 
   @Bean
-  public OrderService orderService(RestaurantRepository restaurantRepository,
+  public OrderService orderService(RestaurantClient restaurantClient,
                                    OrderRepository orderRepository,
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
                                    CourierRepository courierRepository,
                                    CourierAssignmentStrategy courierAssignmentStrategy) {
     return new OrderService(orderRepository,
-            restaurantRepository,
+            restaurantClient,
             meterRegistry,
             consumerService,
             courierRepository,
