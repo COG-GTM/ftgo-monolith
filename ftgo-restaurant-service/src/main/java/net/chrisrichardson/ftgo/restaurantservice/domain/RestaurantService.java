@@ -6,7 +6,6 @@ import net.chrisrichardson.ftgo.domain.RestaurantMenu;
 import net.chrisrichardson.ftgo.domain.RestaurantRepository;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -15,8 +14,11 @@ import java.util.stream.Collectors;
 @Transactional
 public class RestaurantService {
 
-  @Autowired
-  private RestaurantRepository restaurantRepository;
+  private final RestaurantRepository restaurantRepository;
+
+  public RestaurantService(RestaurantRepository restaurantRepository) {
+    this.restaurantRepository = restaurantRepository;
+  }
 
   public Restaurant create(CreateRestaurantRequest request) {
     Restaurant restaurant = new Restaurant(request.getName(), request.getAddress(), makeRestaurantMenu(request.getMenu()));
