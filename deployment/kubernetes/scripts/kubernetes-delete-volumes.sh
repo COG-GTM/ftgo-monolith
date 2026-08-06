@@ -1,3 +1,3 @@
 #! /bin/bash -e
 
-kubectl delete pvc ftgo-mysql-persistent-storage-ftgo-mysql-0
+kubectl delete pvc ftgo-postgres-persistent-storage-ftgo-postgres-0

@@ -7,11 +7,11 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class WaitForMySql extends DefaultTask {
+public class WaitForPostgres extends DefaultTask {
 
   @TaskAction
-  public void waitForMySql() {
-    System.out.println("Waiting for MySql...");
+  public void waitForPostgres() {
+    System.out.println("Waiting for Postgres...");
 
     loadDriver();
 
@@ -29,7 +29,7 @@ public class WaitForMySql extends DefaultTask {
     try {
       System.out.println("Trying to initialize driver");
 
-      String datasourceDriverClassName = getenv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "com.mysql.jdbc.Driver");
+      String datasourceDriverClassName = getenv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.postgresql.Driver");
       Class.forName(datasourceDriverClassName);
 
       System.out.println("Initialization succeed");
@@ -46,9 +46,9 @@ public class WaitForMySql extends DefaultTask {
       try {
         System.out.println("Trying to connect...");
 
-        String datasourceUrl = getenv("SPRING_DATASOURCE_URL", () -> String.format("jdbc:mysql://%s/ftgo", getenv("DOCKER_HOST_IP", "localhost")));
-        String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", "mysqluser");
-        String datasourcePassword = getenv("SPRING_DATASOURCE_PASSWORD", "mysqlpw");
+        String datasourceUrl = getenv("SPRING_DATASOURCE_URL", () -> String.format("jdbc:postgresql://%s:5432/ftgo", getenv("DOCKER_HOST_IP", "localhost")));
+        String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", "ftgouser");
+        String datasourcePassword = getenv("SPRING_DATASOURCE_PASSWORD", "ftgopw");
 
         connection = DriverManager.getConnection(datasourceUrl, datasourceUsername, datasourcePassword);
 

@@ -2,7 +2,7 @@
 
 KEEP_RUNNING=
 ASSEMBLE_ONLY=
-DATABASE_SERVICES="mysql"
+DATABASE_SERVICES="postgres"
 
 if [ -z "$DOCKER_COMPOSE" ] ; then
     DOCKER_COMPOSE=docker-compose
@@ -35,9 +35,9 @@ echo KEEP_RUNNING=$KEEP_RUNNING
 ${DOCKER_COMPOSE?} down --remove-orphans -v
 ${DOCKER_COMPOSE?} up -d --build ${DATABASE_SERVICES?}
 
-./gradlew waitForMySql
+./gradlew waitForPostgres
 
-echo mysql is started
+echo postgres is started
 
 ./gradlew :ftgo-flyway:flywayMigrate
 
@@ -56,9 +56,9 @@ else
 
   ${DOCKER_COMPOSE?} up -d --build ${DATABASE_SERVICES?}
 
-  ./gradlew waitForMySql
+  ./gradlew waitForPostgres
 
-  echo mysql is started
+  echo postgres is started
 
   ${DOCKER_COMPOSE?} up -d --build
 fi

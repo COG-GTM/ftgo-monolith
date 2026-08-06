@@ -3,8 +3,8 @@ plugins {
 }
 
 flyway {
-    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false"
-    user = 'root'
-    password = 'rootpassword'
-    schemas = ['ftgo']
+    url = "jdbc:postgresql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}:5432/ftgo"
+    user = 'ftgouser'
+    password = 'ftgopw'
+    schemas = ['public']
 }
