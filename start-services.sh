@@ -1,8 +1,8 @@
 #! /bin/bash -e
 
-docker-compose up -d --build mysql
+docker-compose up -d --build postgres
 
-./wait-for-mysql.sh
+./wait-for-postgres.sh
 
 docker-compose up -d --build
 

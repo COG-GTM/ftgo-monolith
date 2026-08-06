@@ -9,9 +9,9 @@ docker-compose build
 . ./set-env.sh
 
 docker-compose down -v
-docker-compose up -d --build mysql
+docker-compose up -d --build postgres
 
-./gradlew waitForMySql
+./gradlew waitForPostgres
 
 docker-compose up -d
 

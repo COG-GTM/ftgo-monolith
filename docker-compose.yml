@@ -1,24 +1,29 @@
 version: '3'
 services:
-  mysql:
-    build: ./mysql
+  postgres:
+    image: postgres:13-alpine
     ports:
-      - 3306:3306
+      - 5432:5432
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_USER=mysqluser
-      - MYSQL_PASSWORD=mysqlpw
+      - POSTGRES_USER=ftgouser
+      - POSTGRES_PASSWORD=ftgopw
+      - POSTGRES_DB=ftgo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ftgouser -d ftgo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
   ftgo-application:
     build: ./ftgo-application
     ports:
       - "8081:8080"
     depends_on:
-      - mysql
+      - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ftgo
+      SPRING_DATASOURCE_USERNAME: ftgouser
+      SPRING_DATASOURCE_PASSWORD: ftgopw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
       JAVA_OPTS: -Xmx192m
