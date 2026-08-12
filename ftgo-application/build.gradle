@@ -1,10 +1,5 @@
 apply plugin: FtgoServicePlugin
 
-// Gradle 5.6.4 incremental compilation cannot index duplicate module-info.class entries.
-tasks.withType(JavaCompile) {
-    options.incremental = false
-}
-
 dependencies {
     compile project(":ftgo-consumer-service")
     compile project(":ftgo-order-service")
