@@ -7,11 +7,18 @@ jobs:
       - checkout
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+      # The machine image defaults to Java 8; install and select JDK 10 before
+      # any Gradle invocation. JAVA_HOME/PATH are exported via $BASH_ENV.
+      - run:
+          name:        Install JDK 10
+          command:     ./.circleci/install-jdk10.sh
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
             - ~/.gradle
             - ~/.m2
+            # Cache the extracted JDK so later builds skip the download.
+            - ~/jdk-10.0.2
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:
           command:     |
