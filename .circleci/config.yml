@@ -1,10 +1,24 @@
 version:               2
 jobs:
   build:
-    machine:           true
+    machine:
+      # Machine images default to Java 8/11 depending on the image, so JDK 10 is
+      # installed explicitly below. Docker is required for docker-compose builds,
+      # hence a machine (not Docker) executor.
+      image:           ubuntu-2004:2022.10.1
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
+      - run:
+          name:        Install JDK 10
+          command:     |
+            curl -sSL -o /tmp/jdk10.tar.gz \
+              'https://github.com/AdoptOpenJDK/openjdk10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_linux_hotspot_10.0.2_13.tar.gz'
+            sudo mkdir -p /opt/java
+            sudo tar xzf /tmp/jdk10.tar.gz -C /opt/java
+            echo 'export JAVA_HOME=/opt/java/jdk-10.0.2+13' >> $BASH_ENV
+            echo 'export PATH=/opt/java/jdk-10.0.2+13/bin:$PATH' >> $BASH_ENV
+            /opt/java/jdk-10.0.2+13/bin/java -version
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
