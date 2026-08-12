@@ -23,7 +23,9 @@ class IntegrationTestsPlugin implements Plugin<Project> {
         }
 
         project.task("integrationTest", type: Test) {
-            testClassesDir = project.sourceSets.integrationTest.output.classesDir
+            // Gradle 5 removed Test.testClassesDir / SourceSetOutput.classesDir
+            // in favour of the multi-language plural variants
+            testClassesDirs = project.sourceSets.integrationTest.output.classesDirs
             classpath = project.sourceSets.integrationTest.runtimeClasspath
         }
 
