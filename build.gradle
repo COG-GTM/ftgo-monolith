@@ -18,8 +18,17 @@ plugins {
 subprojects {
 
     apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    // Java 10 migration: bytecode/source level for all modules
+    sourceCompatibility = '10'
+    targetCompatibility = '10'
+
+    // Gradle 5.6.4's incremental-compile class analyser crashes with
+    // "Multiple entries with same key" on jars that contain duplicate class
+    // entries (commons-lang, javassist via springfox). Full recompilation
+    // avoids the analyser; drop this once Gradle is on 6.x+.
+    tasks.withType(JavaCompile) {
+        options.incremental = false
+    }
 
     group = "net.chrisrichardson.ftgo"
 
