@@ -22,6 +22,11 @@ subprojects {
     sourceCompatibility = '10'
     targetCompatibility = '10'
 
+    // Gradle 5.6.4 incremental analysis fails on duplicate classes in Java 10 dependencies.
+    tasks.withType(JavaCompile) {
+        options.incremental = false
+    }
+
     group = "net.chrisrichardson.ftgo"
 
     repositories {

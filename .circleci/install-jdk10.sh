@@ -20,6 +20,11 @@ else
   echo OpenJDK ${JDK_VERSION?} already installed - restored from cache
 fi
 
+# Refresh the EOL JDK's 2018 trust store so Gradle can validate current TLS certificates.
+if [ -f /etc/ssl/certs/java/cacerts ] ; then
+  cp /etc/ssl/certs/java/cacerts "${JDK_DIR?}/lib/security/cacerts"
+fi
+
 # Each CircleCI `run` step is a fresh shell, so JAVA_HOME/PATH have to be
 # appended to $BASH_ENV, which is sourced by every subsequent step.
 if [ ! -z "$BASH_ENV" ] ; then
