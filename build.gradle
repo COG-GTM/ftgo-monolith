@@ -22,11 +22,6 @@ subprojects {
     sourceCompatibility = '10'
     targetCompatibility = '10'
 
-    // Gradle's incremental class analysis reports "Multiple entries with same key" for this Java 10 dependency set.
-    tasks.withType(JavaCompile) {
-        options.incremental = false
-    }
-
     group = "net.chrisrichardson.ftgo"
 
     repositories {
