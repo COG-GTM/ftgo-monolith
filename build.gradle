@@ -22,7 +22,7 @@ subprojects {
     sourceCompatibility = '10'
     targetCompatibility = '10'
 
-    // Gradle 5.6.4 incremental analysis fails on duplicate classes in Java 10 dependencies.
+    // Gradle's incremental class analysis reports "Multiple entries with same key" for this Java 10 dependency set.
     tasks.withType(JavaCompile) {
         options.incremental = false
     }
