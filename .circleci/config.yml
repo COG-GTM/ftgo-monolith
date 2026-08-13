@@ -5,6 +5,17 @@ jobs:
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
+      - run:
+          name: Install and select JDK 10
+          command:     |
+            curl -fL "https://download.java.net/java/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_linux-x64_bin.tar.gz" -o /tmp/openjdk-10.0.2_linux-x64_bin.tar.gz
+            mkdir -p ~/jdk-10.0.2
+            tar -xzf /tmp/openjdk-10.0.2_linux-x64_bin.tar.gz --strip-components=1 -C ~/jdk-10.0.2
+            echo 'export JAVA_HOME=$HOME/jdk-10.0.2' >> "$BASH_ENV"
+            echo 'export PATH=$JAVA_HOME/bin:$PATH' >> "$BASH_ENV"
+            export JAVA_HOME=$HOME/jdk-10.0.2
+            export PATH=$JAVA_HOME/bin:$PATH
+            java -version
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
