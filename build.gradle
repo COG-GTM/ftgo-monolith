@@ -18,8 +18,12 @@ plugins {
 subprojects {
 
     apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    sourceCompatibility = '10'
+    targetCompatibility = '10'
+    // Gradle 5's incremental compiler can hang on duplicate module-info.class entries in dependency jars.
+    tasks.withType(JavaCompile) {
+        options.incremental = false
+    }
 
     group = "net.chrisrichardson.ftgo"
 
