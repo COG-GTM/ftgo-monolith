@@ -1,4 +1,5 @@
-FROM openjdk:10-jre
+# Java 10 runtime image; official openjdk:10 tags were withdrawn.
+FROM adoptopenjdk/openjdk10:jdk-10.0.2.13-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
