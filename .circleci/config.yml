@@ -7,6 +7,19 @@ jobs:
       - checkout
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+      - run:
+          name: Install and select JDK 10
+          command:     |
+            JDK10_HOME="$HOME/jdks/jdk-10.0.2"
+            if [ ! -x "$JDK10_HOME/bin/java" ]; then
+              mkdir -p "$HOME/jdks"
+              curl -fsSL "https://download.java.net/java/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_linux-x64_bin.tar.gz" \
+                -o "$HOME/jdks/openjdk-10.0.2_linux-x64_bin.tar.gz"
+              tar -xzf "$HOME/jdks/openjdk-10.0.2_linux-x64_bin.tar.gz" -C "$HOME/jdks"
+            fi
+            echo "export JAVA_HOME=$JDK10_HOME" >> "$BASH_ENV"
+            echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> "$BASH_ENV"
+            echo 'export GRADLE_OPTS="${GRADLE_OPTS:-} -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS"' >> "$BASH_ENV"
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
