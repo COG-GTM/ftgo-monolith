@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.path.json.JsonPath;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -40,6 +41,7 @@ public abstract class AbstractEndToEndTests {
 
   private final int revisedQuantityOfChickenVindaloo = 10;
   private int consumerId;
+  private String consumerApiKey;
   private int restaurantId;
   private int orderId;
   private final Money priceOfChickenVindaloo = new Money("12.34");
@@ -207,7 +209,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private Integer createConsumer() {
-    Integer consumerId =
+    JsonPath response =
             given().
                     body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
                     contentType("application/json").
@@ -216,9 +218,13 @@ public abstract class AbstractEndToEndTests {
                     then().
                     statusCode(200).
                     extract().
-                    path("consumerId");
+                    jsonPath();
+
+    Integer consumerId = response.getInt("consumerId");
+    consumerApiKey = response.getString("apiKey");
 
     assertNotNull(consumerId);
+    assertNotNull(consumerApiKey);
     return consumerId;
   }
 
@@ -281,6 +287,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
       String state = given().
+              header("Authorization", "Bearer " + consumerApiKey).
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().

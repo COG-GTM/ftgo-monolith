@@ -1,5 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerAccessDeniedException;
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerAuthenticator;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -7,10 +9,13 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,14 +27,20 @@ import static java.util.stream.Collectors.toList;
 @RequestMapping(path = "/orders")
 public class OrderController {
 
+  private static final int MAX_PAGE_SIZE = 100;
+  private static final int DEFAULT_PAGE_SIZE = 20;
+
   private OrderService orderService;
 
   private OrderRepository orderRepository;
 
+  private ConsumerAuthenticator consumerAuthenticator;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository, ConsumerAuthenticator consumerAuthenticator) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.consumerAuthenticator = consumerAuthenticator;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -49,8 +60,23 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(HttpServletRequest request,
+                                                          @RequestParam(required = false) Long consumerId,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
+    long authenticatedConsumerId = consumerAuthenticator.authenticatedConsumerId(request);
+
+    if (consumerId != null && consumerId != authenticatedConsumerId) {
+      throw new ConsumerAccessDeniedException("Cannot read the order history of another consumer");
+    }
+
+    if (page < 0 || size < 1) {
+      throw new IllegalArgumentException("page must not be negative and size must be at least 1");
+    }
+
+    List<GetOrderResponse> orders = orderRepository
+            .findAllByConsumerId(authenticatedConsumerId, PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), Sort.by(Sort.Direction.DESC, "id")))
+            .getContent()
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
