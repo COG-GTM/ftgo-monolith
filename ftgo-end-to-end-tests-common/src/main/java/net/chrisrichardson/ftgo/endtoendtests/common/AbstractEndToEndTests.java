@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.specification.RequestSpecification;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -45,6 +46,21 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+
+  /**
+   * Courier endpoints expose personal data, so they require a dispatcher account.
+   * The credentials match the local development accounts configured in docker-compose.yml.
+   */
+  private RequestSpecification givenDispatcher() {
+    return given().auth().preemptive().basic(
+            envOrDefault("FTGO_DISPATCHER_USERNAME", "dispatcher"),
+            envOrDefault("FTGO_DISPATCHER_PASSWORD", "dispatcher-local-dev"));
+  }
+
+  private static String envOrDefault(String name, String defaultValue) {
+    String value = System.getenv(name);
+    return value == null || value.isEmpty() ? defaultValue : value;
+  }
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -293,7 +309,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    courierId = givenDispatcher().
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
@@ -305,7 +321,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void noteCourierAvailable() {
-    given().
+    givenDispatcher().
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().
@@ -339,7 +355,7 @@ public abstract class AbstractEndToEndTests {
       return assignedCourier;
     });
 
-    given().
+    givenDispatcher().
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().
