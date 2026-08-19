@@ -8,10 +8,13 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/api/tracking")
 public class ApiTrackingController {
+
+  private static final int MAX_MINUTES_BACK = 60 * 24 * 7;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -20,45 +23,46 @@ public class ApiTrackingController {
   }
 
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
+  public ResponseEntity<List<ApiRequestLogSummary>> getRecentLogs(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    LocalDateTime since = since(minutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+    return new ResponseEntity<>(toSummaries(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> getErrors(
+  public ResponseEntity<List<ApiRequestLogSummary>> getErrors(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    LocalDateTime since = since(minutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+    return new ResponseEntity<>(toSummaries(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
+  public ResponseEntity<List<ApiRequestLogSummary>> searchByUri(@RequestParam String uri) {
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+    return new ResponseEntity<>(toSummaries(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/{correlationId}", method = RequestMethod.GET)
-  public ResponseEntity<ApiRequestLog> getByCorrelationId(@PathVariable String correlationId) {
+  public ResponseEntity<ApiRequestLogSummary> getByCorrelationId(@PathVariable String correlationId) {
     ApiRequestLog log = apiRequestLogRepository.findByCorrelationId(correlationId);
     if (log == null) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    return new ResponseEntity<>(log, HttpStatus.OK);
+    return new ResponseEntity<>(ApiRequestLogSummary.of(log), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    int period = clampMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(period);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", minutesBack);
+    stats.put("periodMinutes", period);
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -101,5 +105,20 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  private static LocalDateTime since(int minutesBack) {
+    return LocalDateTime.now().minusMinutes(clampMinutesBack(minutesBack));
+  }
+
+  private static int clampMinutesBack(int minutesBack) {
+    if (minutesBack < 1) {
+      return 1;
+    }
+    return Math.min(minutesBack, MAX_MINUTES_BACK);
+  }
+
+  private static List<ApiRequestLogSummary> toSummaries(List<ApiRequestLog> logs) {
+    return logs.stream().map(ApiRequestLogSummary::of).collect(Collectors.toList());
   }
 }
