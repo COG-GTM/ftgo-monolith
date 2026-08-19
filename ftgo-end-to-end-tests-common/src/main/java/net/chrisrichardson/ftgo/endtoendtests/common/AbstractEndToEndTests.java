@@ -6,11 +6,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.path.json.JsonPath;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.common.security.StaffAuthenticator;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
@@ -40,6 +42,7 @@ public abstract class AbstractEndToEndTests {
 
   private final int revisedQuantityOfChickenVindaloo = 10;
   private int consumerId;
+  private String consumerAccessToken;
   private int restaurantId;
   private int orderId;
   private final Money priceOfChickenVindaloo = new Money("12.34");
@@ -130,6 +133,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderRevised(int orderId) {
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
       String orderTotal = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(baseUrl(getApplicationPort(), "orders", Integer.toString(orderId))).
               then().
@@ -140,6 +144,7 @@ public abstract class AbstractEndToEndTests {
     });
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
       String state = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -152,6 +157,7 @@ public abstract class AbstractEndToEndTests {
 
   private void reviseOrder(int orderId) {
     given().
+            header("Authorization", consumerAuthorization()).
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -184,6 +190,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderCancelled(int orderId) {
     Eventually.eventually(String.format("verifyOrderCancelled %s", orderId), () -> {
       String state = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -197,6 +204,7 @@ public abstract class AbstractEndToEndTests {
 
   private void cancelOrder(int orderId) {
     given().
+            header("Authorization", consumerAuthorization()).
             body("{}").
             contentType("application/json").
             when().
@@ -207,7 +215,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private Integer createConsumer() {
-    Integer consumerId =
+    JsonPath consumer =
             given().
                     body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
                     contentType("application/json").
@@ -216,10 +224,32 @@ public abstract class AbstractEndToEndTests {
                     then().
                     statusCode(200).
                     extract().
-                    path("consumerId");
+                    jsonPath();
+
+    Integer consumerId = consumer.getInt("consumerId");
+    consumerAccessToken = consumer.getString("accessToken");
 
     assertNotNull(consumerId);
+    assertNotNull(consumerAccessToken);
     return consumerId;
+  }
+
+  private String consumerAuthorization() {
+    assertNotNull("consumer access token", consumerAccessToken);
+    return "Bearer " + consumerAccessToken;
+  }
+
+  /**
+   * The shared token that the application is configured with for its staff-only endpoints.
+   */
+  protected String getStaffApiToken() {
+    return System.getenv("FTGO_STAFF_API_TOKEN");
+  }
+
+  private String staffToken() {
+    String token = getStaffApiToken();
+    assertNotNull("FTGO_STAFF_API_TOKEN", token);
+    return token;
   }
 
   private int createRestaurant() {
@@ -252,6 +282,7 @@ public abstract class AbstractEndToEndTests {
   private int createOrder(int consumerId, int restaurantId) {
     Integer orderId =
             given().
+                    header("Authorization", consumerAuthorization()).
                     body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
                     contentType("application/json").
                     when().
@@ -268,6 +299,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderAuthorized(int orderId) {
     Eventually.eventually(String.format("verifyOrderApproved %s", orderId), () -> {
       String state = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -281,6 +313,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
       String state = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().
@@ -316,6 +349,7 @@ public abstract class AbstractEndToEndTests {
 
   private void acceptOrder() {
     given().
+            header(StaffAuthenticator.STAFF_TOKEN_HEADER, staffToken()).
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -327,6 +361,7 @@ public abstract class AbstractEndToEndTests {
   private void assertOrderAssignedToCourier() {
     int courierId = Eventually.eventuallyReturning(() -> {
       int assignedCourier = given().
+              header("Authorization", consumerAuthorization()).
               when().
               get(orderBaseUrl(Long.toString(orderId))).
               then().
@@ -351,6 +386,7 @@ public abstract class AbstractEndToEndTests {
 
   private void startPreparingOrder() {
     given().
+            header(StaffAuthenticator.STAFF_TOKEN_HEADER, staffToken()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -359,6 +395,7 @@ public abstract class AbstractEndToEndTests {
 
   private void orderReadyforPickup() {
     given().
+            header(StaffAuthenticator.STAFF_TOKEN_HEADER, staffToken()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -367,6 +404,7 @@ public abstract class AbstractEndToEndTests {
 
   private void pickupOrder() {
     given().
+            header(StaffAuthenticator.STAFF_TOKEN_HEADER, staffToken()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -375,6 +413,7 @@ public abstract class AbstractEndToEndTests {
 
   private void deliverOrder() {
     given().
+            header(StaffAuthenticator.STAFF_TOKEN_HEADER, staffToken()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().

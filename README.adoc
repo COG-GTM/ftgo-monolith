@@ -3,6 +3,14 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## API authentication
+
+Creating a consumer (`POST /consumers`) returns an `accessToken`.
+Consumer endpoints - creating an order, reading orders, cancelling and revising an order - require it in an `Authorization: Bearer <accessToken>` header, and each request only sees the orders of the consumer that the token identifies.
+
+The order lifecycle endpoints (`accept`, `preparing`, `ready`, `pickedup`, `delivered`) are operated by restaurant/courier staff and require the shared token configured with `ftgo.staff.api-token` (environment variable `FTGO_STAFF_API_TOKEN`) in an `X-Ftgo-Staff-Token` header.
+They reject every request while no token is configured.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.common.security.AccessTokens;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
@@ -19,11 +20,15 @@ public class Consumer {
   @Embedded
   private PersonName name;
 
+  @Column(name = "access_token", unique = true)
+  private String accessToken;
+
   private Consumer() {
   }
 
   public Consumer(PersonName name) {
     this.name = name;
+    this.accessToken = AccessTokens.newToken();
   }
 
 
@@ -37,5 +42,9 @@ public class Consumer {
 
   public PersonName getName() {
     return name;
+  }
+
+  public String getAccessToken() {
+    return accessToken;
   }
 }

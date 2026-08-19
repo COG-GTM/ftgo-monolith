@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.consumerservice.web;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerResponse;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.domain.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,8 @@ public class ConsumerController {
 
   @RequestMapping(method= RequestMethod.POST)
   public CreateConsumerResponse create(@RequestBody CreateConsumerRequest request) {
-    return new CreateConsumerResponse(consumerService.create(request.getName()).getId());
+    Consumer consumer = consumerService.create(request.getName());
+    return new CreateConsumerResponse(consumer.getId(), consumer.getAccessToken());
   }
 
   @RequestMapping(method= RequestMethod.GET,  path="/{consumerId}")

@@ -1,6 +1,9 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedConsumer;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedStaff;
+import net.chrisrichardson.ftgo.common.security.UnauthenticatedException;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
@@ -46,8 +49,10 @@ public class OrderService {
   }
 
   @Transactional
-  public Order createOrder(long consumerId, long restaurantId,
+  public Order createOrder(AuthenticatedConsumer consumer, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    long consumerId = requireConsumer(consumer).getConsumerId();
+
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
@@ -77,8 +82,8 @@ public class OrderService {
   }
 
   @Transactional
-  public Order cancel(Long orderId) {
-    Order order = tryToFindOrder(orderId);
+  public Order cancel(Long orderId, AuthenticatedConsumer consumer) {
+    Order order = tryToFindOrderOfConsumer(orderId, consumer);
 
     order.cancel();
 
@@ -86,14 +91,14 @@ public class OrderService {
   }
 
   @Transactional
-  public Order reviseOrder(long orderId, OrderRevision orderRevision) {
-    Order order = tryToFindOrder(orderId);
+  public Order reviseOrder(long orderId, OrderRevision orderRevision, AuthenticatedConsumer consumer) {
+    Order order = tryToFindOrderOfConsumer(orderId, consumer);
     order.revise(orderRevision);
     return order;
   }
 
-  public void accept(long orderId, LocalDateTime readyBy) {
-    Order order = tryToFindOrder(orderId);
+  public void accept(long orderId, LocalDateTime readyBy, AuthenticatedStaff staff) {
+    Order order = tryToFindOrder(orderId, staff);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
   }
@@ -136,31 +141,62 @@ public class OrderService {
   }
 
 
-  private Order tryToFindOrder(Long orderId) {
+  private Order tryToFindOrder(Long orderId, AuthenticatedStaff staff) {
+    requireStaff(staff);
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
   }
 
+  /**
+   * Looks the order up in the scope of its owner so that a consumer can neither read nor
+   * drive an order that belongs to somebody else.
+   */
+  private Order tryToFindOrderOfConsumer(Long orderId, AuthenticatedConsumer consumer) {
+    return orderRepository.findByIdAndConsumerId(orderId, requireConsumer(consumer).getConsumerId())
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
+  }
+
+  private AuthenticatedConsumer requireConsumer(AuthenticatedConsumer consumer) {
+    if (consumer == null)
+      throw new UnauthenticatedException("An authenticated consumer is required");
+    return consumer;
+  }
+
+  private void requireStaff(AuthenticatedStaff staff) {
+    if (staff == null)
+      throw new UnauthenticatedException("An authenticated staff member is required");
+  }
+
   @Transactional
-  public void notePreparing(long orderId) {
-    Order order = tryToFindOrder(orderId);
+  public void notePreparing(long orderId, AuthenticatedStaff staff) {
+    Order order = tryToFindOrder(orderId, staff);
     order.notePreparing();
   }
 
   @Transactional
-  public void noteReadyForPickup(long orderId) {
-    Order order = tryToFindOrder(orderId);
+  public void noteReadyForPickup(long orderId, AuthenticatedStaff staff) {
+    Order order = tryToFindOrder(orderId, staff);
     order.noteReadyForPickup();
   }
 
   @Transactional
-  public void notePickedUp(long orderId) {
-    Order order = tryToFindOrder(orderId);
+  public void notePickedUp(long orderId, AuthenticatedStaff staff) {
+    Order order = tryToFindOrder(orderId, staff);
     order.notePickedUp();
   }
 
   @Transactional
-  public void noteDelivered(long orderId) {
-    Order order = tryToFindOrder(orderId);
+  public void noteDelivered(long orderId, AuthenticatedStaff staff) {
+    Order order = tryToFindOrder(orderId, staff);
     order.noteDelivered();
+  }
+
+  @Transactional(readOnly = true)
+  public Order findOrderForConsumer(long orderId, AuthenticatedConsumer consumer) {
+    return tryToFindOrderOfConsumer(orderId, consumer);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Order> findOrdersOfConsumer(AuthenticatedConsumer consumer) {
+    return orderRepository.findAllByConsumerId(requireConsumer(consumer).getConsumerId());
   }
 }

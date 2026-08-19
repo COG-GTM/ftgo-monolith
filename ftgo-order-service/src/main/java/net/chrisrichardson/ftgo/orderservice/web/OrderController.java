@@ -1,5 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.common.security.AccessDeniedException;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedConsumer;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedStaff;
+import net.chrisrichardson.ftgo.common.security.StaffAuthenticator;
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerAuthenticator;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -22,19 +27,34 @@ import static java.util.stream.Collectors.toList;
 @RequestMapping(path = "/orders")
 public class OrderController {
 
+  private static final String AUTHORIZATION_HEADER = "Authorization";
+
   private OrderService orderService;
 
   private OrderRepository orderRepository;
 
+  private ConsumerAuthenticator consumerAuthenticator;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  private StaffAuthenticator staffAuthenticator;
+
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository,
+                         ConsumerAuthenticator consumerAuthenticator, StaffAuthenticator staffAuthenticator) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.consumerAuthenticator = consumerAuthenticator;
+    this.staffAuthenticator = staffAuthenticator;
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
-    Order order = orderService.createOrder(request.getConsumerId(),
+  public CreateOrderResponse create(@RequestHeader(name = AUTHORIZATION_HEADER, required = false) String authorization,
+                                    @RequestBody CreateOrderRequest request) {
+    AuthenticatedConsumer consumer = consumerAuthenticator.authenticate(authorization);
+
+    if (request.getConsumerId() != 0 && request.getConsumerId() != consumer.getConsumerId())
+      throw new AccessDeniedException("Cannot create an order on behalf of another consumer");
+
+    Order order = orderService.createOrder(consumer,
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
     );
@@ -43,14 +63,22 @@ public class OrderController {
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
-  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
-    Optional<Order> order = orderRepository.findById(orderId);
+  public ResponseEntity<GetOrderResponse> getOrder(@RequestHeader(name = AUTHORIZATION_HEADER, required = false) String authorization,
+                                                   @PathVariable long orderId) {
+    AuthenticatedConsumer consumer = consumerAuthenticator.authenticate(authorization);
+    Optional<Order> order = orderRepository.findByIdAndConsumerId(orderId, consumer.getConsumerId());
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestHeader(name = AUTHORIZATION_HEADER, required = false) String authorization,
+                                                          @RequestParam(required = false) Long consumerId) {
+    AuthenticatedConsumer consumer = consumerAuthenticator.authenticate(authorization);
+
+    if (consumerId != null && consumerId != consumer.getConsumerId())
+      throw new AccessDeniedException("Cannot read the orders of another consumer");
+
+    List<GetOrderResponse> orders = orderService.findOrdersOfConsumer(consumer)
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
@@ -83,9 +111,10 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> cancel(@RequestHeader(name = AUTHORIZATION_HEADER, required = false) String authorization,
+                                                 @PathVariable long orderId) {
     try {
-      Order order = orderService.cancel(orderId);
+      Order order = orderService.cancel(orderId, consumerAuthenticator.authenticate(authorization));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -93,9 +122,11 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@RequestHeader(name = AUTHORIZATION_HEADER, required = false) String authorization,
+                                                 @PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
     try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()),
+              consumerAuthenticator.authenticate(authorization));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,33 +134,42 @@ public class OrderController {
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
+  public ResponseEntity<String> accept(@RequestHeader(name = StaffAuthenticator.STAFF_TOKEN_HEADER, required = false) String staffToken,
+                                       @PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+    orderService.accept(orderId, orderAcceptance.getReadyBy(), authenticateStaff(staffToken));
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
-    orderService.notePreparing(orderId);
+  public ResponseEntity<String> preparing(@RequestHeader(name = StaffAuthenticator.STAFF_TOKEN_HEADER, required = false) String staffToken,
+                                          @PathVariable long orderId) {
+    orderService.notePreparing(orderId, authenticateStaff(staffToken));
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
-    orderService.noteReadyForPickup(orderId);
+  public ResponseEntity<String> ready(@RequestHeader(name = StaffAuthenticator.STAFF_TOKEN_HEADER, required = false) String staffToken,
+                                      @PathVariable long orderId) {
+    orderService.noteReadyForPickup(orderId, authenticateStaff(staffToken));
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
-    orderService.notePickedUp(orderId);
+  public ResponseEntity<String> pickedup(@RequestHeader(name = StaffAuthenticator.STAFF_TOKEN_HEADER, required = false) String staffToken,
+                                         @PathVariable long orderId) {
+    orderService.notePickedUp(orderId, authenticateStaff(staffToken));
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
-    orderService.noteDelivered(orderId);
+  public ResponseEntity<String> delivered(@RequestHeader(name = StaffAuthenticator.STAFF_TOKEN_HEADER, required = false) String staffToken,
+                                          @PathVariable long orderId) {
+    orderService.noteDelivered(orderId, authenticateStaff(staffToken));
     return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  private AuthenticatedStaff authenticateStaff(String staffToken) {
+    return staffAuthenticator.authenticate(staffToken);
   }
 
 }

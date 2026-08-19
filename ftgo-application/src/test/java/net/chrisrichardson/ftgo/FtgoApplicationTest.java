@@ -14,8 +14,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "ftgo.staff.api-token=" + FtgoApplicationTest.STAFF_API_TOKEN)
 public class FtgoApplicationTest extends AbstractEndToEndTests {
+
+  static final String STAFF_API_TOKEN = "test-staff-api-token";
 
   @Configuration
   @EnableAutoConfiguration
@@ -38,5 +41,10 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @Override
   public int getApplicationPort() {
     return port;
+  }
+
+  @Override
+  protected String getStaffApiToken() {
+    return STAFF_API_TOKEN;
   }
 }
