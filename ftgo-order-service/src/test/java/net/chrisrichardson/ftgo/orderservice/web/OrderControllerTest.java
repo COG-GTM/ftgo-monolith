@@ -2,12 +2,18 @@ package net.chrisrichardson.ftgo.orderservice.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.MoneyModule;
+import net.chrisrichardson.ftgo.common.security.FtgoUserDetails;
+import net.chrisrichardson.ftgo.common.security.UserRole;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderAccessPolicy;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 
@@ -30,12 +36,23 @@ public class OrderControllerTest {
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    orderController = new OrderController(orderService, orderRepository);
+    orderController = new OrderController(orderService, orderRepository, new OrderAccessPolicy());
   }
 
+  @After
+  public void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
+  }
+
+  private void authenticateAs(UserRole role, Long subjectId) {
+    FtgoUserDetails user = new FtgoUserDetails("user", "secret", true, role, subjectId);
+    SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(user, "secret", user.getAuthorities()));
+  }
 
   @Test
   public void shouldFindOrder() {
+    authenticateAs(UserRole.CONSUMER, OrderDetailsMother.CONSUMER_ID);
 
     when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
 
@@ -53,10 +70,27 @@ public class OrderControllerTest {
 
   @Test
   public void shouldFindNotOrder() {
+    authenticateAs(UserRole.CONSUMER, OrderDetailsMother.CONSUMER_ID);
+
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
     given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders/1").
+    then().
+            statusCode(404)
+    ;
+  }
+
+  @Test
+  public void shouldNotFindAnotherConsumersOrder() {
+    authenticateAs(UserRole.CONSUMER, OrderDetailsMother.CONSUMER_ID + 1);
+
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
     when().
             get("/orders/1").
     then().

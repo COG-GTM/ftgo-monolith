@@ -29,13 +29,15 @@ public class OrderService {
   private ConsumerService consumerService;
   private CourierRepository courierRepository;
   private CourierAssignmentStrategy courierAssignmentStrategy;
+  private OrderAccessPolicy orderAccessPolicy;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
                       CourierRepository courierRepository,
-                      CourierAssignmentStrategy courierAssignmentStrategy) {
+                      CourierAssignmentStrategy courierAssignmentStrategy,
+                      OrderAccessPolicy orderAccessPolicy) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
@@ -43,11 +45,14 @@ public class OrderService {
     this.consumerService = consumerService;
     this.courierRepository = courierRepository;
     this.courierAssignmentStrategy = courierAssignmentStrategy;
+    this.orderAccessPolicy = orderAccessPolicy;
   }
 
   @Transactional
-  public Order createOrder(long consumerId, long restaurantId,
+  public Order createOrder(long requestedConsumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    long consumerId = orderAccessPolicy.consumerIdForNewOrder(requestedConsumerId);
+
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
@@ -79,6 +84,7 @@ public class OrderService {
   @Transactional
   public Order cancel(Long orderId) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanChangeOrderContents(order);
 
     order.cancel();
 
@@ -88,12 +94,14 @@ public class OrderService {
   @Transactional
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanChangeOrderContents(order);
     order.revise(orderRevision);
     return order;
   }
 
   public void accept(long orderId, LocalDateTime readyBy) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanPerformRestaurantTransition(order);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
   }
@@ -143,24 +151,28 @@ public class OrderService {
   @Transactional
   public void notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanPerformRestaurantTransition(order);
     order.notePreparing();
   }
 
   @Transactional
   public void noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanPerformRestaurantTransition(order);
     order.noteReadyForPickup();
   }
 
   @Transactional
   public void notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanPerformCourierTransition(order);
     order.notePickedUp();
   }
 
   @Transactional
   public void noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
+    orderAccessPolicy.checkCanPerformCourierTransition(order);
     order.noteDelivered();
   }
 }

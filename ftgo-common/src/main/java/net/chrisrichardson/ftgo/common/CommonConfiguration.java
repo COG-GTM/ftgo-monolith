@@ -11,8 +11,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan
-@EntityScan(basePackages = {"net.chrisrichardson.ftgo.common.tracking"})
-@EnableJpaRepositories(basePackages = {"net.chrisrichardson.ftgo.common.tracking"})
+@EntityScan(basePackages = {"net.chrisrichardson.ftgo.common.tracking", "net.chrisrichardson.ftgo.common.security"})
+@EnableJpaRepositories(basePackages = {"net.chrisrichardson.ftgo.common.tracking", "net.chrisrichardson.ftgo.common.security"})
 public class CommonConfiguration {
 
   @Bean

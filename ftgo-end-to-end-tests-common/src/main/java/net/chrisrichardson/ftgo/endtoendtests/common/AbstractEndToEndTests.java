@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +46,25 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+
+  private static final String ADMIN_USERNAME = valueOrDefault(System.getenv("FTGO_ADMIN_USERNAME"), "ftgo-test-admin");
+  private static final String ADMIN_PASSWORD = valueOrDefault(System.getenv("FTGO_ADMIN_PASSWORD"), UUID.randomUUID().toString());
+
+  private static String valueOrDefault(String value, String defaultValue) {
+    return value == null || value.isEmpty() ? defaultValue : value;
+  }
+
+  /**
+   * The administrator account the tests authenticate with. The application under test
+   * must be started with these as its bootstrap administrator credentials.
+   */
+  public static String adminUsername() {
+    return ADMIN_USERNAME;
+  }
+
+  public static String adminPassword() {
+    return ADMIN_PASSWORD;
+  }
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -85,6 +105,8 @@ public abstract class AbstractEndToEndTests {
     RestAssured.config = RestAssuredConfig.config().objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory(
             (aClass, s) -> objectMapper
     ));
+
+    RestAssured.authentication = RestAssured.preemptive().basic(ADMIN_USERNAME, ADMIN_PASSWORD);
 
   }
 

@@ -21,18 +21,25 @@ public class OrderConfiguration {
   }
 
   @Bean
+  public OrderAccessPolicy orderAccessPolicy() {
+    return new OrderAccessPolicy();
+  }
+
+  @Bean
   public OrderService orderService(RestaurantRepository restaurantRepository,
                                    OrderRepository orderRepository,
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
                                    CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierAssignmentStrategy courierAssignmentStrategy,
+                                   OrderAccessPolicy orderAccessPolicy) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerService,
             courierRepository,
-            courierAssignmentStrategy);
+            courierAssignmentStrategy,
+            orderAccessPolicy);
   }
 
   @Bean

@@ -3,6 +3,23 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Security
+
+The API requires HTTP Basic authentication. Accounts live in the `app_users` table and each
+account has a role - `ADMIN`, `CONSUMER`, `RESTAURANT` or `COURIER` - plus a `subject_id`
+linking it to the consumer, restaurant or courier it acts for. Consumers only see and change
+their own orders, restaurants drive `accept`/`preparing`/`ready` for orders placed with them,
+couriers drive `pickedup`/`delivered` for orders assigned to them and administrators are
+unrestricted.
+
+The initial administrator is created at startup from configuration; without it no account
+exists and every request is rejected:
+
+    FTGO_SECURITY_BOOTSTRAP_ADMIN_USERNAME=... FTGO_SECURITY_BOOTSTRAP_ADMIN_PASSWORD=... ./gradlew :ftgo-application:bootRun
+
+`docker-compose up` passes these through from the `FTGO_ADMIN_USERNAME` and `FTGO_ADMIN_PASSWORD`
+environment variables, which the end-to-end tests also use to authenticate.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

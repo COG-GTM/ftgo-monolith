@@ -5,6 +5,7 @@ import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderAccessPolicy;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
@@ -26,10 +27,13 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private OrderAccessPolicy orderAccessPolicy;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository, OrderAccessPolicy orderAccessPolicy) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.orderAccessPolicy = orderAccessPolicy;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -44,13 +48,14 @@ public class OrderController {
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
   public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
-    Optional<Order> order = orderRepository.findById(orderId);
+    // Orders the caller may not see are reported as missing so that ids cannot be enumerated.
+    Optional<Order> order = orderRepository.findById(orderId).filter(orderAccessPolicy::canView);
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam(required = false) Long consumerId) {
+    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(orderAccessPolicy.consumerIdForOrderHistory(consumerId))
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
