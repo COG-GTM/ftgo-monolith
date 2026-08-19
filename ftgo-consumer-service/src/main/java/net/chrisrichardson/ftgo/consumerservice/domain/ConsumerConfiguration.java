@@ -13,4 +13,9 @@ public class ConsumerConfiguration {
   public ConsumerService consumerService() {
     return new ConsumerService();
   }
+
+  @Bean
+  public ConsumerAuthenticator consumerAuthenticator() {
+    return new ConsumerAuthenticator();
+  }
 }

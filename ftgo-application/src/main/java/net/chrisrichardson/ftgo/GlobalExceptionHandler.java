@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerAccessDeniedException;
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerAuthenticationException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
@@ -66,6 +68,26 @@ public class GlobalExceptionHandler {
             HttpStatus.SERVICE_UNAVAILABLE.value(), "No Courier Available", ex.getMessage(),
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @ExceptionHandler(ConsumerAuthenticationException.class)
+  public ResponseEntity<ErrorResponse> handleConsumerAuthentication(
+          ConsumerAuthenticationException ex, HttpServletRequest request) {
+    logger.warn("Unauthenticated request to {} {}", request.getMethod(), request.getRequestURI());
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(), "Unauthorized", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(ConsumerAccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleConsumerAccessDenied(
+          ConsumerAccessDeniedException ex, HttpServletRequest request) {
+    logger.warn("Forbidden request to {} {}", request.getMethod(), request.getRequestURI());
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
