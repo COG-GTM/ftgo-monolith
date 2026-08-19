@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -93,12 +94,14 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @Valid @RequestBody ReviseOrderRequest request) {
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (InvalidOrderRevisionException | OrderMinimumNotMetException e) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
   }
 

@@ -1,19 +1,21 @@
 package net.chrisrichardson.ftgo.domain;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class OrderRevision {
 
   private Optional<DeliveryInformation> deliveryInformation = Optional.empty();
-  private Map<String, Integer> revisedLineItemQuantities;
+  private Map<String, Integer> revisedLineItemQuantities = Collections.emptyMap();
 
   private OrderRevision() {
   }
 
   public OrderRevision(Optional<DeliveryInformation> deliveryInformation, Map<String, Integer> revisedLineItemQuantities) {
     this.deliveryInformation = deliveryInformation;
-    this.revisedLineItemQuantities = revisedLineItemQuantities;
+    setRevisedLineItemQuantities(revisedLineItemQuantities);
   }
 
   public void setDeliveryInformation(Optional<DeliveryInformation> deliveryInformation) {
@@ -21,7 +23,9 @@ public class OrderRevision {
   }
 
   public void setRevisedLineItemQuantities(Map<String, Integer> revisedLineItemQuantities) {
-    this.revisedLineItemQuantities = revisedLineItemQuantities;
+    this.revisedLineItemQuantities = revisedLineItemQuantities == null
+            ? Collections.emptyMap()
+            : Collections.unmodifiableMap(new HashMap<>(revisedLineItemQuantities));
   }
 
   public Optional<DeliveryInformation> getDeliveryInformation() {
