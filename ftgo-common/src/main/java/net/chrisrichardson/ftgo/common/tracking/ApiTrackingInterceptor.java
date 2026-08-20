@@ -111,12 +111,16 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     if (remoteAddr == null || remoteAddr.isEmpty()) {
       return remoteAddr;
     }
-    if (remoteAddr.indexOf(':') < 0) {
-      return anonymizeIpv4(remoteAddr);
+    if (remoteAddr.indexOf('.') >= 0) {
+      int lastColon = remoteAddr.lastIndexOf(':');
+      String host = lastColon >= 0 && remoteAddr.indexOf('.', lastColon) < 0
+              ? remoteAddr.substring(0, lastColon)
+              : remoteAddr;
+      int prefixEnd = host.lastIndexOf(':');
+      return host.substring(0, prefixEnd + 1) + anonymizeIpv4(host.substring(prefixEnd + 1));
     }
-    int lastColon = remoteAddr.lastIndexOf(':');
-    if (remoteAddr.indexOf('.', lastColon) > 0) {
-      return remoteAddr.substring(0, lastColon + 1) + anonymizeIpv4(remoteAddr.substring(lastColon + 1));
+    if (remoteAddr.indexOf(':') < 0) {
+      return remoteAddr;
     }
     StringBuilder prefix = new StringBuilder();
     int retained = 0;
