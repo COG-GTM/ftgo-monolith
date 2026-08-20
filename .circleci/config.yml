@@ -1,18 +1,19 @@
 version:               2
 jobs:
   build:
-    machine:           true
+    machine:
+      image:         ubuntu-2004:2023.10.1
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
       - restore_cache:
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
             - ~/.gradle
             - ~/.m2
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run:
           command:     |
             ./.circleci/upgrade-docker-compose.sh
