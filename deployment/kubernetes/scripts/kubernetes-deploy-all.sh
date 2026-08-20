@@ -2,6 +2,9 @@
 
 # Create the DB secret from environment credentials before deploying stateful
 # services. Credentials are never committed to git (see create-db-secret.sh).
+# Export both variables first, e.g.:
+#   export MYSQL_ROOT_PASSWORD=... MYSQL_PASSWORD=...
+# The script fails fast if either is unset.
 ./deployment/kubernetes/misc/create-db-secret.sh
 
 kubectl apply -f <(cat deployment/kubernetes/stateful-services/*.yml)
