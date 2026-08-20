@@ -22,9 +22,10 @@ public class ApiRequestLogRetentionJob {
   public void purgeExpiredLogs() {
     LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
     try {
-      apiRequestLogRepository.deleteByRequestTimestampBefore(cutoff);
+      int deleted = apiRequestLogRepository.deleteByRequestTimestampBefore(cutoff);
+      logger.info("Purged {} API request log rows older than {}", deleted, cutoff);
     } catch (Exception e) {
-      logger.warn("Failed to purge API request logs older than {}: {}", cutoff, e.getMessage());
+      logger.warn("Failed to purge API request logs older than {}", cutoff, e);
     }
   }
 }

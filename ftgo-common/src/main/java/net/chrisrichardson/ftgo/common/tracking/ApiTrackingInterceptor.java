@@ -16,6 +16,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final String REDACTED = "REDACTED";
+  private static final int MAX_QUERY_STRING_LENGTH = 2048;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -95,24 +97,38 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
         redacted.append('&');
       }
       int separator = pair.indexOf('=');
-      redacted.append(separator < 0 ? pair : pair.substring(0, separator) + "=REDACTED");
+      redacted.append(separator < 0 ? REDACTED : pair.substring(0, separator + 1) + REDACTED);
     }
-    return redacted.toString();
+    return redacted.length() > MAX_QUERY_STRING_LENGTH
+            ? redacted.substring(0, MAX_QUERY_STRING_LENGTH)
+            : redacted.toString();
   }
 
   static String anonymizeIp(String remoteAddr) {
     if (remoteAddr == null || remoteAddr.isEmpty()) {
       return remoteAddr;
     }
-    if (remoteAddr.indexOf(':') >= 0) {
-      String[] groups = remoteAddr.split(":");
-      StringBuilder prefix = new StringBuilder();
-      for (int i = 0; i < Math.min(4, groups.length); i++) {
-        prefix.append(groups[i]).append(':');
-      }
-      return prefix.append(':').toString();
+    if (remoteAddr.indexOf(':') < 0) {
+      return anonymizeIpv4(remoteAddr);
     }
-    int lastDot = remoteAddr.lastIndexOf('.');
-    return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
+    int lastColon = remoteAddr.lastIndexOf(':');
+    if (remoteAddr.indexOf('.', lastColon) > 0) {
+      return remoteAddr.substring(0, lastColon + 1) + anonymizeIpv4(remoteAddr.substring(lastColon + 1));
+    }
+    StringBuilder prefix = new StringBuilder();
+    int retained = 0;
+    for (String group : remoteAddr.split(":", -1)) {
+      if (group.isEmpty() || retained == 3) {
+        break;
+      }
+      prefix.append(group).append(':');
+      retained++;
+    }
+    return retained == 0 ? "::" : prefix.append(':').toString();
+  }
+
+  private static String anonymizeIpv4(String address) {
+    int lastDot = address.lastIndexOf('.');
+    return lastDot < 0 ? address : address.substring(0, lastDot) + ".0";
   }
 }
