@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            redactQueryStringValues(request.getQueryString()),
+            anonymizeIp(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -83,5 +83,36 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  static String redactQueryStringValues(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder redacted = new StringBuilder(queryString.length());
+    for (String pair : queryString.split("&")) {
+      if (redacted.length() > 0) {
+        redacted.append('&');
+      }
+      int separator = pair.indexOf('=');
+      redacted.append(separator < 0 ? pair : pair.substring(0, separator) + "=REDACTED");
+    }
+    return redacted.toString();
+  }
+
+  static String anonymizeIp(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return remoteAddr;
+    }
+    if (remoteAddr.indexOf(':') >= 0) {
+      String[] groups = remoteAddr.split(":");
+      StringBuilder prefix = new StringBuilder();
+      for (int i = 0; i < Math.min(4, groups.length); i++) {
+        prefix.append(groups[i]).append(':');
+      }
+      return prefix.append(':').toString();
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
   }
 }
