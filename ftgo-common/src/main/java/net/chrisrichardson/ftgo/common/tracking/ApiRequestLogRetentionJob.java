@@ -14,6 +14,9 @@ public class ApiRequestLogRetentionJob {
   private final int retentionDays;
 
   public ApiRequestLogRetentionJob(ApiRequestLogRepository apiRequestLogRepository, int retentionDays) {
+    if (retentionDays < 1) {
+      throw new IllegalArgumentException("ftgo.api-tracking.retention-days must be at least 1, was " + retentionDays);
+    }
     this.apiRequestLogRepository = apiRequestLogRepository;
     this.retentionDays = retentionDays;
   }

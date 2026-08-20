@@ -93,6 +93,9 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
     StringBuilder redacted = new StringBuilder(queryString.length());
     for (String pair : queryString.split("&")) {
+      if (pair.isEmpty()) {
+        continue;
+      }
       if (redacted.length() > 0) {
         redacted.append('&');
       }
