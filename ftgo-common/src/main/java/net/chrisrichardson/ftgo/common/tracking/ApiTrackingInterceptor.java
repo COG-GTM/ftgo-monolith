@@ -117,7 +117,10 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
               ? remoteAddr.substring(0, lastColon)
               : remoteAddr;
       int prefixEnd = host.lastIndexOf(':');
-      return host.substring(0, prefixEnd + 1) + anonymizeIpv4(host.substring(prefixEnd + 1));
+      String ipv4 = host.substring(prefixEnd + 1);
+      return isIpv4Literal(ipv4)
+              ? host.substring(0, prefixEnd + 1) + anonymizeIpv4(ipv4)
+              : REDACTED;
     }
     if (remoteAddr.indexOf(':') < 0) {
       return remoteAddr;
@@ -132,6 +135,27 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
       retained++;
     }
     return retained == 0 ? "::" : prefix.append(':').toString();
+  }
+
+  private static boolean isIpv4Literal(String address) {
+    String[] octets = address.split("\\.", -1);
+    if (octets.length != 4) {
+      return false;
+    }
+    for (String octet : octets) {
+      if (octet.isEmpty() || octet.length() > 3) {
+        return false;
+      }
+      for (int i = 0; i < octet.length(); i++) {
+        if (octet.charAt(i) < '0' || octet.charAt(i) > '9') {
+          return false;
+        }
+      }
+      if (Integer.parseInt(octet) > 255) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static String anonymizeIpv4(String address) {
