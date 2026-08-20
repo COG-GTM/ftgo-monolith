@@ -2,11 +2,13 @@ version: '3'
 services:
   mysql:
     build: ./mysql
-    # Bind to localhost only so the database is not reachable on the host's
-    # external network interfaces. Do not publish 3306 to the host at all in
-    # shared/non-development environments.
+    # Publish 3306 on loopback only by default so the database is not reachable
+    # on the host's external interfaces. MYSQL_HOST also drives the host-side
+    # build tooling (waitForMySql, flywayMigrate, mysql-cli) so the bind address
+    # and the address the tooling connects to always match. Override MYSQL_HOST
+    # for remote-Docker setups; do not publish 3306 at all in shared envs.
     ports:
-      - "127.0.0.1:3306:3306"
+      - "${MYSQL_HOST:-127.0.0.1}:3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
       # Username is fixed to match the account granted in mysql/schema.sql; only
