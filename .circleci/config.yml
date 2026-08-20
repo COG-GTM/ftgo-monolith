@@ -1,18 +1,31 @@
 version:               2
 jobs:
   build:
-    machine:           true
+    machine:
+      image:         ubuntu-2004:2023.10.1
     working_directory: ~/ftgo-monolith
+    environment:
+      JAVA_HOME:     /usr/lib/jvm/java-8-openjdk-amd64
     steps:
       - checkout
       - restore_cache:
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          # Exact-match key only. A branch-prefix fallback would let one branch
+          # restore another branch's cache (prefix collision, e.g. master vs master-x),
+          # reintroducing the cross-branch cache poisoning this change fixes.
+          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - run:
+          name:        Select Java 8 (required by Gradle 4.10.2)
+          command:     |
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            java -version
+            ./gradlew --version
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
             - ~/.gradle
             - ~/.m2
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run:
           command:     |
             ./.circleci/upgrade-docker-compose.sh
