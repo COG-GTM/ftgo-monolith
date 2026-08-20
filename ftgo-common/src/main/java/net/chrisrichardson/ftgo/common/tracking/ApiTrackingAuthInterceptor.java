@@ -4,6 +4,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class ApiTrackingAuthInterceptor implements HandlerInterceptor {
 
@@ -32,12 +35,14 @@ public class ApiTrackingAuthInterceptor implements HandlerInterceptor {
   }
 
   private static boolean constantTimeEquals(String expected, String presented) {
-    byte[] expectedBytes = expected.getBytes();
-    byte[] presentedBytes = presented.getBytes();
-    int result = expectedBytes.length ^ presentedBytes.length;
-    for (int i = 0; i < presentedBytes.length; i++) {
-      result |= presentedBytes[i] ^ expectedBytes[i % expectedBytes.length];
+    return MessageDigest.isEqual(sha256(expected), sha256(presented));
+  }
+
+  private static byte[] sha256(String value) {
+    try {
+      return MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is required to compare API tracking tokens", e);
     }
-    return result == 0;
   }
 }
