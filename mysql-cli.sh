@@ -1,10 +1,12 @@
 #! /bin/bash -e
 
-# Use host networking so the client reaches the DB published on the host loopback
-# (mysql/docker-compose bind ${MYSQL_HOST:-127.0.0.1}:3306); a container's own
-# 127.0.0.1 would otherwise not reach the host.
+# Attach the client to the compose network and connect straight to the "mysql"
+# service container, so this works regardless of how the host port is published
+# (the DB now binds host loopback only) and on Docker Desktop (macOS/Windows),
+# where a container's 127.0.0.1 is not the host. Override MYSQL_CLI_NETWORK /
+# MYSQL_CLI_ADDR for a custom compose project name or a non-compose DB.
 docker run $* \
-   --name mysqlterm --rm --network host \
-   -e MYSQL_PORT_3306_TCP_ADDR=${MYSQL_HOST:-127.0.0.1} -e MYSQL_PORT_3306_TCP_PORT=3306 -e MYSQL_ENV_MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword} \
+   --name mysqlterm --rm --network "${MYSQL_CLI_NETWORK:-ftgo-monolith_default}" \
+   -e MYSQL_PORT_3306_TCP_ADDR=${MYSQL_CLI_ADDR:-mysql} -e MYSQL_PORT_3306_TCP_PORT=3306 -e MYSQL_ENV_MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword} \
    mysql:5.7.13  \
    sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" '
