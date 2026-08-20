@@ -8,6 +8,11 @@ jobs:
       JAVA_HOME:     /usr/lib/jvm/java-8-openjdk-amd64
     steps:
       - checkout
+      - restore_cache:
+          # Exact-match key only. A branch-prefix fallback would let one branch
+          # restore another branch's cache (prefix collision, e.g. master vs master-x),
+          # reintroducing the cross-branch cache poisoning this change fixes.
+          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run:
           name:        Select Java 8 (required by Gradle 4.10.2)
           command:     |
@@ -15,11 +20,6 @@ jobs:
             sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
             java -version
             ./gradlew --version
-      - restore_cache:
-          keys:
-            - ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
-            # Same-branch fallback: preserves branch scoping (no cross-branch poisoning) while restoring cache hits.
-            - ftgo-monolith-{{ .Branch }}-
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
