@@ -4,8 +4,17 @@ jobs:
     machine:
       image:         ubuntu-2004:2023.10.1
     working_directory: ~/ftgo-monolith
+    environment:
+      JAVA_HOME:     /usr/lib/jvm/java-8-openjdk-amd64
     steps:
       - checkout
+      - run:
+          name:        Select Java 8 (required by Gradle 4.10.2)
+          command:     |
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            java -version
+            ./gradlew --version
       - restore_cache:
           key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
