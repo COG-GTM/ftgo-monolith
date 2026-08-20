@@ -1,5 +1,7 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,16 +13,25 @@ import java.security.NoSuchAlgorithmException;
 public class ApiTrackingAuthInterceptor implements HandlerInterceptor {
 
   static final String ADMIN_TOKEN_HEADER = "X-Api-Tracking-Token";
+  static final int MINIMUM_TOKEN_LENGTH = 32;
+
+  private static final Logger logger = LoggerFactory.getLogger(ApiTrackingAuthInterceptor.class);
 
   private final String configuredToken;
 
   public ApiTrackingAuthInterceptor(String configuredToken) {
-    this.configuredToken = configuredToken;
+    String trimmed = configuredToken == null ? "" : configuredToken.trim();
+    if (!trimmed.isEmpty() && trimmed.length() < MINIMUM_TOKEN_LENGTH) {
+      logger.warn("Ignoring ftgo.api-tracking.admin-token shorter than {} characters; /api/tracking/** stays disabled",
+              MINIMUM_TOKEN_LENGTH);
+      trimmed = "";
+    }
+    this.configuredToken = trimmed;
   }
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-    if (configuredToken == null || configuredToken.isEmpty()) {
+    if (configuredToken.isEmpty()) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       return false;
     }
