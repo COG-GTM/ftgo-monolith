@@ -1,5 +1,11 @@
 apply plugin: FtgoServicePlugin
 
+dependencyManagement {
+    dependencies {
+        dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.6.1'
+    }
+}
+
 dependencies {
     compile project(":ftgo-consumer-service")
     compile project(":ftgo-order-service")
