@@ -9,7 +9,9 @@ services:
       - "127.0.0.1:3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
-      - MYSQL_USER=${MYSQL_USER:?set MYSQL_USER in .env}
+      # Username is fixed to match the account granted in mysql/schema.sql; only
+      # the passwords are secrets and come from .env.
+      - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
   ftgo-application:
     build: ./ftgo-application
@@ -19,9 +21,9 @@ services:
       - mysql
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:?set MYSQL_USER in .env}
+      SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
       JAVA_OPTS: -Xmx192m
