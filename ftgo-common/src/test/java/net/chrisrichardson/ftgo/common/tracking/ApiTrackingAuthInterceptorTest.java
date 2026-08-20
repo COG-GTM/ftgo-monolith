@@ -49,6 +49,7 @@ public class ApiTrackingAuthInterceptorTest {
   @Test
   public void shouldAcceptConfiguredTokenSurroundedByWhitespace() {
     assertTrue(preHandle(" " + TOKEN + " ", "\t" + TOKEN + "\n"));
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
   }
 
   private boolean preHandle(String configuredToken, String presentedToken) {
