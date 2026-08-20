@@ -16,7 +16,10 @@ jobs:
             java -version
             ./gradlew --version
       - restore_cache:
-          key:         ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          keys:
+            - ftgo-monolith-{{ .Branch }}-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            # Same-branch fallback: preserves branch scoping (no cross-branch poisoning) while restoring cache hits.
+            - ftgo-monolith-{{ .Branch }}-
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
