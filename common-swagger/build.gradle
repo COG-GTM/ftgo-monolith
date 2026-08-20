@@ -5,6 +5,8 @@ dependencies {
     compile ("io.springfox:springfox-swagger-ui:2.10.5"){
         exclude group: "org.springframework"
     }
+    // springfox 2.10.x pulls classgraph 4.8.83, which is vulnerable to CVE-2021-47621 (XXE)
+    compile "io.github.classgraph:classgraph:4.8.112"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
 }
