@@ -22,8 +22,8 @@ public class ApiTrackingAuthInterceptor implements HandlerInterceptor {
   public ApiTrackingAuthInterceptor(String configuredToken) {
     String trimmed = configuredToken == null ? "" : configuredToken.trim();
     if (!trimmed.isEmpty() && trimmed.length() < MINIMUM_TOKEN_LENGTH) {
-      logger.warn("Ignoring ftgo.api-tracking.admin-token shorter than {} characters; /api/tracking/** stays disabled",
-              MINIMUM_TOKEN_LENGTH);
+      logger.error("ftgo.api-tracking.admin-token is shorter than {} characters and was ignored; "
+              + "/api/tracking/** stays disabled and returns 404", MINIMUM_TOKEN_LENGTH);
       trimmed = "";
     }
     this.configuredToken = trimmed;
@@ -37,7 +37,7 @@ public class ApiTrackingAuthInterceptor implements HandlerInterceptor {
     }
 
     String presentedToken = request.getHeader(ADMIN_TOKEN_HEADER);
-    if (presentedToken == null || !constantTimeEquals(configuredToken, presentedToken)) {
+    if (presentedToken == null || !constantTimeEquals(configuredToken, presentedToken.trim())) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       return false;
     }
