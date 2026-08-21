@@ -30,8 +30,11 @@ public class ApiRequestLogRedaction {
     return Arrays.stream(queryString.split("&"))
             .map(parameter -> {
               int equals = parameter.indexOf('=');
-              String name = equals < 0 ? parameter : parameter.substring(0, equals);
-              return name.isEmpty() ? name : name + "=<redacted>";
+              if (equals < 0) {
+                return parameter.isEmpty() ? parameter : "<redacted>";
+              }
+              String name = parameter.substring(0, equals);
+              return name.isEmpty() ? "<redacted>" : name + "=<redacted>";
             })
             .collect(Collectors.joining("&"));
   }
