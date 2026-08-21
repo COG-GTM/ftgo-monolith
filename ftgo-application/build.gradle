@@ -9,7 +9,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
-    runtime 'mysql:mysql-connector-java:8.0.33'
+    runtime 'com.mysql:mysql-connector-j:8.4.0'
 
     testCompile project(":ftgo-end-to-end-tests-common")
 }
