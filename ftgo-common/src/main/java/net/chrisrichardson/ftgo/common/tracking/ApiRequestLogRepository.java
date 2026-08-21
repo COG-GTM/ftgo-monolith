@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,8 @@ public interface ApiRequestLogRepository extends CrudRepository<ApiRequestLog, L
   @Query("SELECT a FROM ApiRequestLog a WHERE a.responseStatus >= 400 AND a.requestTimestamp >= :since ORDER BY a.requestTimestamp DESC")
   List<ApiRequestLog> findErrorsSince(@Param("since") LocalDateTime since);
 
-  long deleteByRequestTimestampBefore(LocalDateTime cutoff);
+  @Modifying
+  @Query("DELETE FROM ApiRequestLog a WHERE a.requestTimestamp < :cutoff")
+  int deleteOlderThan(@Param("cutoff") LocalDateTime cutoff);
 
 }

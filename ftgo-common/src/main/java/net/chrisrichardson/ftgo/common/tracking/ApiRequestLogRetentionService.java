@@ -27,7 +27,7 @@ public class ApiRequestLogRetentionService {
   @Transactional
   public void purgeExpiredLogs() {
     LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
-    long deleted = apiRequestLogRepository.deleteByRequestTimestampBefore(cutoff);
+    int deleted = apiRequestLogRepository.deleteOlderThan(cutoff);
     if (deleted > 0) {
       logger.info("Purged {} api_request_log rows older than {}", deleted, cutoff);
     }
