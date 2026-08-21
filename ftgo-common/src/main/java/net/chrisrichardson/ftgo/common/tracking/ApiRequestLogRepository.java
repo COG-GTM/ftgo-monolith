@@ -21,4 +21,6 @@ public interface ApiRequestLogRepository extends CrudRepository<ApiRequestLog, L
   @Query("SELECT a FROM ApiRequestLog a WHERE a.responseStatus >= 400 AND a.requestTimestamp >= :since ORDER BY a.requestTimestamp DESC")
   List<ApiRequestLog> findErrorsSince(@Param("since") LocalDateTime since);
 
+  long deleteByRequestTimestampBefore(LocalDateTime cutoff);
+
 }

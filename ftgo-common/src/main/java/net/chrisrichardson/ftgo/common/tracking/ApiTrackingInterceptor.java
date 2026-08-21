@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            ApiRequestLogRedaction.redactQueryString(request.getQueryString()),
+            ApiRequestLogRedaction.anonymizeRemoteAddr(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -65,7 +65,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
       long durationMs = System.currentTimeMillis() - startTime;
 
       if (ex != null) {
-        logEntry.complete(response.getStatus(), durationMs, ex.getMessage());
+        logEntry.complete(response.getStatus(), durationMs, ApiRequestLogRedaction.describeException(ex));
       } else {
         logEntry.complete(response.getStatus(), durationMs);
       }
