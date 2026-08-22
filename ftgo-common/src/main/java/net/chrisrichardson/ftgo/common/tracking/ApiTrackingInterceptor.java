@@ -87,18 +87,25 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
 
   /**
    * Masks the host-identifying portion of a client address: IPv4 addresses
-   * keep the first three octets, IPv6 addresses keep the first three groups.
+   * keep the first three octets, IPv6 addresses keep at most the first three
+   * groups before any {@code ::} compression, with the remainder elided.
    */
   static String maskClientAddress(String remoteAddr) {
     if (remoteAddr == null || remoteAddr.isEmpty()) {
       return remoteAddr;
     }
     if (remoteAddr.contains(":")) {
-      String[] groups = remoteAddr.split(":");
-      if (groups.length <= 3) {
-        return remoteAddr;
+      int doubleColon = remoteAddr.indexOf("::");
+      String head = doubleColon >= 0 ? remoteAddr.substring(0, doubleColon) : remoteAddr;
+      String[] groups = head.isEmpty() ? new String[0] : head.split(":");
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < Math.min(3, groups.length); i++) {
+        if (i > 0) {
+          sb.append(':');
+        }
+        sb.append(groups[i]);
       }
-      return groups[0] + ":" + groups[1] + ":" + groups[2] + "::";
+      return sb.append("::").toString();
     }
     int lastDot = remoteAddr.lastIndexOf('.');
     if (lastDot < 0) {
