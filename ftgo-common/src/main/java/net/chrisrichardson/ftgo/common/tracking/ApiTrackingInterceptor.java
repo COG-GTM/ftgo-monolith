@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            redactQueryString(request.getQueryString()),
+            maskClientAddress(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -83,5 +83,50 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  /**
+   * Masks the host-identifying portion of a client address: IPv4 addresses
+   * keep the first three octets, IPv6 addresses keep the first three groups.
+   */
+  static String maskClientAddress(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return remoteAddr;
+    }
+    if (remoteAddr.contains(":")) {
+      String[] groups = remoteAddr.split(":");
+      if (groups.length <= 3) {
+        return remoteAddr;
+      }
+      return groups[0] + ":" + groups[1] + ":" + groups[2] + "::";
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    if (lastDot < 0) {
+      return remoteAddr;
+    }
+    return remoteAddr.substring(0, lastDot) + ".0";
+  }
+
+  /**
+   * Keeps query parameter names but replaces their values, which can carry
+   * PII such as emails, addresses, or tokens.
+   */
+  static String redactQueryString(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (String param : queryString.split("&")) {
+      if (sb.length() > 0) {
+        sb.append('&');
+      }
+      int eq = param.indexOf('=');
+      if (eq >= 0) {
+        sb.append(param, 0, eq).append("=REDACTED");
+      } else {
+        sb.append(param);
+      }
+    }
+    return sb.toString();
   }
 }
