@@ -23,6 +23,21 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    // Pin Jackson across all configurations, including modules whose Spring Boot
+    // BOM (via io.spring.dependency-management) would otherwise manage it down
+    // to the vulnerable 2.9.x line (CVE-2020-36518).
+    afterEvaluate {
+        configurations.all {
+            resolutionStrategy.eachDependency { details ->
+                if (details.requested.group.startsWith('com.fasterxml.jackson')
+                        && details.requested.name != 'jackson-bom') {
+                    details.useVersion(details.requested.name == 'jackson-databind'
+                            ? jacksonDatabindVersion : jacksonVersion)
+                }
+            }
+        }
+    }
+
     repositories {
         mavenCentral()
         jcenter()
