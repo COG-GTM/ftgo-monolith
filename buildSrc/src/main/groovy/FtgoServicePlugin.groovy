@@ -8,5 +8,6 @@ class FtgoServicePlugin implements Plugin<Project> {
 
         project.apply(plugin: 'org.springframework.boot')
     	project.apply(plugin: "io.spring.dependency-management")
+        project.apply(plugin: JacksonPinPlugin)
     }
 }
