@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/api/tracking")
+@ConditionalOnProperty(name = "ftgo.api-tracking.endpoints-enabled", havingValue = "true")
 public class ApiTrackingController {
 
   private final ApiRequestLogRepository apiRequestLogRepository;

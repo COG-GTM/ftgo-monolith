@@ -40,7 +40,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
+            redactQueryString(request.getQueryString()),
             request.getRemoteAddr(),
             request.getHeader("User-Agent")
     );
@@ -50,6 +50,21 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     logger.info("[{}] {} {} started", correlationId, request.getMethod(), request.getRequestURI());
 
     return true;
+  }
+
+  private static String redactQueryString(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder redacted = new StringBuilder();
+    for (String parameter : queryString.split("&")) {
+      if (redacted.length() > 0) {
+        redacted.append('&');
+      }
+      int separator = parameter.indexOf('=');
+      redacted.append(separator < 0 ? parameter : parameter.substring(0, separator) + "=REDACTED");
+    }
+    return redacted.toString();
   }
 
   @Override
