@@ -2,10 +2,12 @@ package net.chrisrichardson.ftgo.common.tracking;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@EnableScheduling
 public class ApiTrackingConfiguration implements WebMvcConfigurer {
 
   private final ApiRequestLogRepository apiRequestLogRepository;
@@ -24,5 +26,10 @@ public class ApiTrackingConfiguration implements WebMvcConfigurer {
   @Bean
   public ApiTrackingInterceptor apiTrackingInterceptor() {
     return new ApiTrackingInterceptor(apiRequestLogRepository);
+  }
+
+  @Bean
+  public ApiRequestLogRetentionJob apiRequestLogRetentionJob() {
+    return new ApiRequestLogRetentionJob(apiRequestLogRepository);
   }
 }

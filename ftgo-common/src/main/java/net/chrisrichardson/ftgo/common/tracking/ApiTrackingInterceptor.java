@@ -8,6 +8,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.UUID;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
@@ -40,9 +42,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
-            request.getHeader("User-Agent")
+            anonymizeClientAddress(request.getRemoteAddr())
     );
 
     request.setAttribute(LOG_ENTRY_ATTR, logEntry);
@@ -83,5 +83,25 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  /**
+   * Reduces a client address to its network prefix so that individual clients cannot be
+   * identified from the persisted request log.
+   */
+  static String anonymizeClientAddress(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return null;
+    }
+    try {
+      byte[] address = InetAddress.getByName(remoteAddr).getAddress();
+      int retainedBytes = address.length == 4 ? 3 : 8;
+      for (int i = retainedBytes; i < address.length; i++) {
+        address[i] = 0;
+      }
+      return InetAddress.getByAddress(address).getHostAddress();
+    } catch (UnknownHostException e) {
+      return null;
+    }
   }
 }
