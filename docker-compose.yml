@@ -15,7 +15,7 @@ services:
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?useSSL=true&requireSSL=true&verifyServerCertificate=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?useSSL=true&requireSSL=true&verifyServerCertificate=${DB_VERIFY_SERVER_CERTIFICATE:-false}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-mysqluser}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}
       DB_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}

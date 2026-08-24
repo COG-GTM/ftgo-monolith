@@ -9,4 +9,5 @@ set -e
 kubectl create secret generic ftgo-db-secret \
   --from-literal=username="${FTGO_DB_USERNAME}" \
   --from-literal=password="${FTGO_DB_PASSWORD}" \
-  --from-literal=root-password="${FTGO_DB_ROOT_PASSWORD}"
+  --from-literal=root-password="${FTGO_DB_ROOT_PASSWORD}" \
+  --dry-run=client -o yaml | kubectl apply -f -
