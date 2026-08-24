@@ -23,6 +23,10 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    // Overrides the Jackson version managed by the Spring Boot BOM so the
+    // resolved version is not downgraded for modules using dependency management.
+    ext['jackson.version'] = jacksonVersion
+
     repositories {
         mavenCentral()
         jcenter()
