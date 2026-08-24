@@ -18,7 +18,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?useSSL=true&requireSSL=true&verifyServerCertificate=${DB_VERIFY_SERVER_CERTIFICATE:-false}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-mysqluser}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
