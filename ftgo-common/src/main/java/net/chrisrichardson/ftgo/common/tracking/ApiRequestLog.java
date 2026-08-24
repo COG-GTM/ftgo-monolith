@@ -14,11 +14,9 @@ public class ApiRequestLog {
   private String correlationId;
   private String httpMethod;
   private String requestUri;
-  private String queryString;
   private Integer responseStatus;
   private Long durationMs;
   private String remoteAddr;
-  private String userAgent;
 
   @Column(length = 4000)
   private String errorMessage;
@@ -29,13 +27,11 @@ public class ApiRequestLog {
   }
 
   public ApiRequestLog(String correlationId, String httpMethod, String requestUri,
-                       String queryString, String remoteAddr, String userAgent) {
+                       String remoteAddr) {
     this.correlationId = correlationId;
     this.httpMethod = httpMethod;
     this.requestUri = requestUri;
-    this.queryString = queryString;
     this.remoteAddr = remoteAddr;
-    this.userAgent = userAgent;
     this.requestTimestamp = LocalDateTime.now();
   }
 
@@ -66,10 +62,6 @@ public class ApiRequestLog {
     return requestUri;
   }
 
-  public String getQueryString() {
-    return queryString;
-  }
-
   public Integer getResponseStatus() {
     return responseStatus;
   }
@@ -80,10 +72,6 @@ public class ApiRequestLog {
 
   public String getRemoteAddr() {
     return remoteAddr;
-  }
-
-  public String getUserAgent() {
-    return userAgent;
   }
 
   public String getErrorMessage() {

@@ -40,9 +40,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
-            request.getHeader("User-Agent")
+            anonymizeClientAddress(request.getRemoteAddr())
     );
 
     request.setAttribute(LOG_ENTRY_ATTR, logEntry);
@@ -83,5 +81,28 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  /**
+   * Reduces a client address to its network prefix so that individual clients cannot be
+   * identified from the persisted request log.
+   */
+  static String anonymizeClientAddress(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return null;
+    }
+    if (remoteAddr.indexOf(':') >= 0) {
+      String[] groups = remoteAddr.split(":");
+      StringBuilder prefix = new StringBuilder();
+      for (int i = 0; i < 3 && i < groups.length; i++) {
+        prefix.append(groups[i]).append(':');
+      }
+      return prefix.append(':').toString();
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    if (lastDot < 0) {
+      return null;
+    }
+    return remoteAddr.substring(0, lastDot) + ".0";
   }
 }
