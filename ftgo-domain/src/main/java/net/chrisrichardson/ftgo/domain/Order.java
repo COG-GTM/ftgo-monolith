@@ -45,6 +45,7 @@ public class Order {
   @AttributeOverride(name="amount", column = @Column(name="order_minimum"))
   private Money orderMinimum = new Money(Integer.MAX_VALUE);
 
+  private LocalDateTime createdTime;
   private LocalDateTime readyBy;
   private LocalDateTime acceptTime;
   private LocalDateTime preparingTime;
@@ -63,6 +64,7 @@ public class Order {
     this.restaurant = restaurant;
     this.orderLineItems = new OrderLineItems(orderLineItems);
     this.orderState = APPROVED;
+    this.createdTime = LocalDateTime.now();
   }
 
   public Long getId() {
@@ -184,6 +186,52 @@ public class Order {
 
   public Courier getAssignedCourier() {
     return assignedCourier;
+  }
+
+  public LocalDateTime getCreatedTime() {
+    return createdTime;
+  }
+
+  public LocalDateTime getAcceptTime() {
+    return acceptTime;
+  }
+
+  public LocalDateTime getPreparingTime() {
+    return preparingTime;
+  }
+
+  public LocalDateTime getReadyForPickupTime() {
+    return readyForPickupTime;
+  }
+
+  public LocalDateTime getPickedUpTime() {
+    return pickedUpTime;
+  }
+
+  public LocalDateTime getDeliveredTime() {
+    return deliveredTime;
+  }
+
+  /**
+   * The time at which this order entered the state it is currently in, or null when unknown.
+   */
+  public LocalDateTime getStateEnteredTime() {
+    switch (orderState) {
+      case APPROVED:
+        return createdTime;
+      case ACCEPTED:
+        return acceptTime;
+      case PREPARING:
+        return preparingTime;
+      case READY_FOR_PICKUP:
+        return readyForPickupTime;
+      case PICKED_UP:
+        return pickedUpTime;
+      case DELIVERED:
+        return deliveredTime;
+      default:
+        return null;
+    }
   }
 
   public void noteDelivered() {
