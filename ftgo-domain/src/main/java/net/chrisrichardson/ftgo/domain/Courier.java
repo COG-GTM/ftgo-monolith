@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
@@ -81,14 +82,17 @@ public class Courier {
     return name;
   }
 
+  @JsonIgnore
   public Address getAddress() {
     return address;
   }
 
+  @JsonIgnore
   public Double getCurrentLatitude() {
     return currentLatitude;
   }
 
+  @JsonIgnore
   public Double getCurrentLongitude() {
     return currentLongitude;
   }
