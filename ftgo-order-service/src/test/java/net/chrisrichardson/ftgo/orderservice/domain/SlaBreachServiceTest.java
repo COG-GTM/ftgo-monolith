@@ -32,18 +32,20 @@ public class SlaBreachServiceTest {
 
   private OrderRepository orderRepository;
   private SlaProperties slaProperties;
-  private LocalDateTime baseTime;
 
   @Before
   public void setUp() {
     orderRepository = mock(OrderRepository.class);
     slaProperties = new SlaProperties();
     slaProperties.setDefaultThresholdMinutes(30);
-    baseTime = LocalDateTime.now();
   }
 
-  private SlaBreachService serviceAt(long minutesAfterBase) {
-    Clock clock = Clock.fixed(baseTime.plusMinutes(minutesAfterBase).atZone(ZONE).toInstant(), ZONE);
+  /**
+   * A service whose clock reads the given number of minutes from now. Call it after building the
+   * orders under test so that their state-entry timestamps are never later than the clock's origin.
+   */
+  private SlaBreachService serviceAt(long minutesFromNow) {
+    Clock clock = Clock.fixed(LocalDateTime.now().plusMinutes(minutesFromNow).atZone(ZONE).toInstant(), ZONE);
     return new SlaBreachService(orderRepository, slaProperties, clock);
   }
 
@@ -126,8 +128,7 @@ public class SlaBreachServiceTest {
     slaProperties.setStateThresholdMinutes(Collections.singletonMap(OrderState.APPROVED, 1));
     repositoryContains(older, newer);
 
-    Clock clock = Clock.fixed(baseTime.plusMinutes(60).atZone(ZONE).toInstant(), ZONE);
-    SlaBreachReport report = new SlaBreachService(orderRepository, slaProperties, clock).findBreaches();
+    SlaBreachReport report = serviceAt(60).findBreaches();
 
     assertEquals(2, report.getTotalBreaches());
     assertTrue(report.getBreaches().get(0).getAgeMinutes() >= report.getBreaches().get(1).getAgeMinutes());
