@@ -34,9 +34,11 @@ public class SlaProperties {
   }
 
   public void setStateThresholdMinutes(Map<OrderState, Integer> stateThresholdMinutes) {
-    this.stateThresholdMinutes = stateThresholdMinutes == null
-            ? new EnumMap<>(OrderState.class)
-            : new EnumMap<>(stateThresholdMinutes);
+    Map<OrderState, Integer> copy = new EnumMap<>(OrderState.class);
+    if (stateThresholdMinutes != null) {
+      copy.putAll(stateThresholdMinutes);
+    }
+    this.stateThresholdMinutes = copy;
   }
 
   public int thresholdMinutesFor(OrderState orderState) {

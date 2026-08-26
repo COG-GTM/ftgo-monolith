@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Locale;
+
 @RestController
 @RequestMapping(path = "/orders/sla-breaches")
 public class SlaBreachController {
@@ -29,7 +31,7 @@ public class SlaBreachController {
 
     OrderState orderState;
     try {
-      orderState = OrderState.valueOf(state.toUpperCase());
+      orderState = OrderState.valueOf(state.toUpperCase(Locale.ROOT));
     } catch (IllegalArgumentException e) {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
