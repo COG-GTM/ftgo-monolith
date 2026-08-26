@@ -14,10 +14,15 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class CourierController {
 
+  private static final String API_KEY_HEADER = "X-Courier-Api-Key";
+
   private CourierService courierService;
 
-  public CourierController(CourierService courierService) {
+  private CourierApiKeyAuthorizer apiKeyAuthorizer;
+
+  public CourierController(CourierService courierService, CourierApiKeyAuthorizer apiKeyAuthorizer) {
     this.courierService = courierService;
+    this.apiKeyAuthorizer = apiKeyAuthorizer;
   }
 
   @RequestMapping(path="/couriers", method= RequestMethod.POST)
@@ -39,7 +44,12 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
-  public ResponseEntity<String> updateLocation(@PathVariable long courierId, @RequestBody CourierLocationUpdate locationUpdate) {
+  public ResponseEntity<String> updateLocation(@PathVariable long courierId,
+                                               @RequestHeader(value = API_KEY_HEADER, required = false) String apiKey,
+                                               @RequestBody CourierLocationUpdate locationUpdate) {
+    if (!apiKeyAuthorizer.isAuthorized(apiKey)) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
     courierService.updateLocation(courierId, locationUpdate.getLatitude(), locationUpdate.getLongitude());
     return new ResponseEntity<>(HttpStatus.OK);
   }
