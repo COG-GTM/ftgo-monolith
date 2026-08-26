@@ -5,13 +5,16 @@ import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import java.time.Clock;
 import java.util.Optional;
 
 @Configuration
+@EnableConfigurationProperties(SlaProperties.class)
 @Import(DomainConfiguration.class)
 public class OrderConfiguration {
   // TODO move to framework
@@ -33,6 +36,16 @@ public class OrderConfiguration {
             consumerService,
             courierRepository,
             courierAssignmentStrategy);
+  }
+
+  @Bean
+  public Clock slaClock() {
+    return Clock.systemDefaultZone();
+  }
+
+  @Bean
+  public SlaBreachService slaBreachService(OrderRepository orderRepository, SlaProperties slaProperties, Clock slaClock) {
+    return new SlaBreachService(orderRepository, slaProperties, slaClock);
   }
 
   @Bean
