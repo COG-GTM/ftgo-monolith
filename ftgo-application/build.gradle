@@ -1,5 +1,12 @@
 apply plugin: FtgoServicePlugin
 
+dependencyManagement {
+    dependencies {
+        dependency 'org.springframework.plugin:spring-plugin-core:2.0.0.RELEASE'
+        dependency 'org.springframework.plugin:spring-plugin-metadata:2.0.0.RELEASE'
+    }
+}
+
 dependencies {
     compile project(":ftgo-consumer-service")
     compile project(":ftgo-order-service")
