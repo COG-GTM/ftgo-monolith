@@ -76,6 +76,16 @@ public abstract class AbstractEndToEndTests {
     return baseUrl(getApplicationPort(), "orders", pathElements);
   }
 
+  private String operationsUsername() {
+    String username = System.getenv("FTGO_OPERATIONS_USERNAME");
+    return username == null ? "operations" : username;
+  }
+
+  private String operationsPassword() {
+    String password = System.getenv("FTGO_OPERATIONS_PASSWORD");
+    return password == null ? "operations-secret" : password;
+  }
+
   @BeforeClass
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
@@ -281,6 +291,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
       String state = given().
+              auth().preemptive().basic(operationsUsername(), operationsPassword()).
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().
