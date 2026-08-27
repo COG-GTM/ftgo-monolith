@@ -9,6 +9,7 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -49,13 +50,26 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId, Authentication authentication) {
+    if (!canAccessConsumerOrders(authentication, consumerId)) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+
     List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
 
     return new ResponseEntity<>(orders, HttpStatus.OK);
+  }
+
+  private boolean canAccessConsumerOrders(Authentication authentication, long consumerId) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      return false;
+    }
+    boolean isOperations = authentication.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_OPERATIONS".equals(a.getAuthority()));
+    return isOperations || Long.toString(consumerId).equals(authentication.getName());
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
