@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            redactQueryString(request.getQueryString()),
+            anonymizeAddress(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -50,6 +50,39 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     logger.info("[{}] {} {} started", correlationId, request.getMethod(), request.getRequestURI());
 
     return true;
+  }
+
+  /** Keeps parameter names, drops their values. */
+  static String redactQueryString(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder redacted = new StringBuilder();
+    for (String parameter : queryString.split("&")) {
+      if (redacted.length() > 0) {
+        redacted.append('&');
+      }
+      int separator = parameter.indexOf('=');
+      redacted.append(separator < 0 ? parameter : parameter.substring(0, separator + 1) + "REDACTED");
+    }
+    return redacted.toString();
+  }
+
+  /** Zeroes the host part of the client address, keeping only network-level granularity. */
+  static String anonymizeAddress(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return remoteAddr;
+    }
+    if (remoteAddr.indexOf(':') >= 0) {
+      String[] groups = remoteAddr.split(":");
+      StringBuilder prefix = new StringBuilder();
+      for (int i = 0; i < Math.min(4, groups.length); i++) {
+        prefix.append(groups[i]).append(':');
+      }
+      return prefix.append(":0").toString();
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
   }
 
   @Override
