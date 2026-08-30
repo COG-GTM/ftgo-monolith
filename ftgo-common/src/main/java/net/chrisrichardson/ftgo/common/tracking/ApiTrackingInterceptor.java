@@ -74,12 +74,19 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
       return remoteAddr;
     }
     if (remoteAddr.indexOf(':') >= 0) {
-      String[] groups = remoteAddr.split(":");
       StringBuilder prefix = new StringBuilder();
-      for (int i = 0; i < Math.min(4, groups.length); i++) {
-        prefix.append(groups[i]).append(':');
+      int kept = 0;
+      for (String group : remoteAddr.split(":")) {
+        if (group.isEmpty() || kept == 4) {
+          break;
+        }
+        if (kept > 0) {
+          prefix.append(':');
+        }
+        prefix.append(group);
+        kept++;
       }
-      return prefix.append(":0").toString();
+      return prefix.append("::").toString();
     }
     int lastDot = remoteAddr.lastIndexOf('.');
     return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
