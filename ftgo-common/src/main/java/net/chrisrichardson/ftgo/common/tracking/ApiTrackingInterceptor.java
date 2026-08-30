@@ -8,6 +8,10 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
@@ -16,6 +20,9 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final String UNKNOWN_IPV6 = "::";
+  private static final int IPV6_GROUPS = 8;
+  private static final int IPV6_PREFIX_BYTES = 8;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -74,22 +81,139 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
       return remoteAddr;
     }
     if (remoteAddr.indexOf(':') >= 0) {
-      StringBuilder prefix = new StringBuilder();
-      int kept = 0;
-      for (String group : remoteAddr.split(":")) {
-        if (group.isEmpty() || kept == 4) {
-          break;
-        }
-        if (kept > 0) {
-          prefix.append(':');
-        }
-        prefix.append(group);
-        kept++;
-      }
-      return prefix.append("::").toString();
+      return anonymizeIpv6(remoteAddr);
     }
     int lastDot = remoteAddr.lastIndexOf('.');
     return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
+  }
+
+  /** Keeps the /64 network prefix of an IPv6 address and zeroes the interface identifier. */
+  private static String anonymizeIpv6(String address) {
+    byte[] bytes = parseIpv6(address);
+    if (bytes == null) {
+      return UNKNOWN_IPV6;
+    }
+    if (isIpv4Mapped(bytes)) {
+      byte[] ipv4 = new byte[] {bytes[12], bytes[13], bytes[14], 0};
+      try {
+        return InetAddress.getByAddress(ipv4).getHostAddress();
+      } catch (UnknownHostException e) {
+        return UNKNOWN_IPV6;
+      }
+    }
+    for (int i = IPV6_PREFIX_BYTES; i < bytes.length; i++) {
+      bytes[i] = 0;
+    }
+    try {
+      return InetAddress.getByAddress(bytes).getHostAddress();
+    } catch (UnknownHostException e) {
+      return UNKNOWN_IPV6;
+    }
+  }
+
+  private static boolean isIpv4Mapped(byte[] bytes) {
+    for (int i = 0; i < 10; i++) {
+      if (bytes[i] != 0) {
+        return false;
+      }
+    }
+    return bytes[10] == (byte) 0xff && bytes[11] == (byte) 0xff;
+  }
+
+  /** Returns the 16 address bytes of a literal IPv6 address, or null when it cannot be parsed. */
+  private static byte[] parseIpv6(String address) {
+    String literal = address;
+    int zone = literal.indexOf('%');
+    if (zone >= 0) {
+      literal = literal.substring(0, zone);
+    }
+    int lastColon = literal.lastIndexOf(':');
+    if (literal.indexOf('.', lastColon) >= 0) {
+      String embedded = embeddedIpv4AsGroups(literal.substring(lastColon + 1));
+      if (embedded == null) {
+        return null;
+      }
+      literal = literal.substring(0, lastColon + 1) + embedded;
+    }
+
+    String[] halves = literal.split("::", -1);
+    if (halves.length > 2) {
+      return null;
+    }
+    List<String> head = groupsOf(halves[0]);
+    List<String> tail = halves.length == 2 ? groupsOf(halves[1]) : new ArrayList<>();
+    if (head == null || tail == null) {
+      return null;
+    }
+    int total = head.size() + tail.size();
+    if (total > IPV6_GROUPS || (halves.length == 1 && total != IPV6_GROUPS)) {
+      return null;
+    }
+
+    byte[] bytes = new byte[2 * IPV6_GROUPS];
+    int index = 0;
+    for (String group : head) {
+      if (!writeGroup(bytes, index, group)) {
+        return null;
+      }
+      index += 2;
+    }
+    index = 2 * (IPV6_GROUPS - tail.size());
+    for (String group : tail) {
+      if (!writeGroup(bytes, index, group)) {
+        return null;
+      }
+      index += 2;
+    }
+    return bytes;
+  }
+
+  private static String embeddedIpv4AsGroups(String ipv4) {
+    String[] octets = ipv4.split("\\.", -1);
+    if (octets.length != 4) {
+      return null;
+    }
+    int[] values = new int[4];
+    for (int i = 0; i < 4; i++) {
+      try {
+        values[i] = Integer.parseInt(octets[i]);
+      } catch (NumberFormatException e) {
+        return null;
+      }
+      if (values[i] < 0 || values[i] > 255) {
+        return null;
+      }
+    }
+    return String.format("%x:%x", (values[0] << 8) | values[1], (values[2] << 8) | values[3]);
+  }
+
+  private static List<String> groupsOf(String half) {
+    List<String> groups = new ArrayList<>();
+    if (half.isEmpty()) {
+      return groups;
+    }
+    for (String group : half.split(":", -1)) {
+      if (group.isEmpty()) {
+        return null;
+      }
+      groups.add(group);
+    }
+    return groups;
+  }
+
+  private static boolean writeGroup(byte[] bytes, int index, String group) {
+    int value;
+    try {
+      value = Integer.parseInt(group, 16);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+    if (value < 0 || value > 0xffff) {
+      return false;
+    }
+    bytes[index] = (byte) (value >> 8);
+    bytes[index + 1] = (byte) value;
+    return true;
   }
 
   @Override
