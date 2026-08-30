@@ -70,7 +70,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
         redacted.append('&');
       }
       int separator = parameter.indexOf('=');
-      redacted.append(separator < 0 ? parameter : parameter.substring(0, separator + 1) + "REDACTED");
+      redacted.append(separator < 0 ? "REDACTED" : parameter.substring(0, separator + 1) + "REDACTED");
     }
     return redacted.toString();
   }
