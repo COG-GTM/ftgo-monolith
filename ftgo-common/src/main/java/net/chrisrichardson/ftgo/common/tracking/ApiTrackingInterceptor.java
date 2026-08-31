@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            null,
+            anonymize(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -50,6 +50,18 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     logger.info("[{}] {} {} started", correlationId, request.getMethod(), request.getRequestURI());
 
     return true;
+  }
+
+  private static String anonymize(String remoteAddr) {
+    if (remoteAddr == null) {
+      return null;
+    }
+    if (remoteAddr.contains(":")) {
+      String[] groups = remoteAddr.split(":");
+      return groups.length < 4 ? "::" : groups[0] + ":" + groups[1] + ":" + groups[2] + ":" + groups[3] + "::";
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    return lastDot < 0 ? remoteAddr : remoteAddr.substring(0, lastDot) + ".0";
   }
 
   @Override
