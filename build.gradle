@@ -19,6 +19,15 @@ subprojects {
 
     apply plugin: "java"
     ext['jackson.version'] = '2.12.7'
+
+    plugins.withId("io.spring.dependency-management") {
+        dependencyManagement {
+            dependencies {
+                dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.7.1'
+            }
+        }
+    }
+
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
