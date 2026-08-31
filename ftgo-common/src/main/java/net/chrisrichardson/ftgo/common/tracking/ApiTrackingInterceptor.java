@@ -55,7 +55,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     return true;
   }
 
-  private static String anonymize(String remoteAddr) {
+  static String anonymize(String remoteAddr) {
     if (remoteAddr == null) {
       return null;
     }
