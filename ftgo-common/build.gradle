@@ -5,11 +5,11 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.12.7'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.12.7'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.7.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.18.10'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.18.10'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.18.10'
     compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.10"
 
     compile 'mysql:mysql-connector-java:8.0.33'
 
