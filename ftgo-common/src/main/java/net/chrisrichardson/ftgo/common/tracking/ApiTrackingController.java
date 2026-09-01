@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -57,6 +58,7 @@ public class ApiTrackingController {
     return new ResponseEntity<>(log, HttpStatus.OK);
   }
 
+  @Transactional(readOnly = true)
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
           @RequestParam(defaultValue = "60") int minutesBack) {
