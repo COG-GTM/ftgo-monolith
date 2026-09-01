@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ public class ApiTrackingController {
 
   private static final int MAX_MINUTES_BACK = 1440;
   private static final int MAX_RESULTS = 1000;
+  private static final int MAX_TOP_ENDPOINTS = 50;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -60,53 +62,44 @@ public class ApiTrackingController {
           @RequestParam(defaultValue = "60") int minutesBack) {
     int period = clampMinutesBack(minutesBack);
     LocalDateTime since = LocalDateTime.now().minusMinutes(period);
-    List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since, limit());
 
     Map<String, Object> stats = new HashMap<>();
-    stats.put("totalRequests", logs.size());
+    long totalRequests = apiRequestLogRepository.countSince(since);
+    stats.put("totalRequests", totalRequests);
     stats.put("periodMinutes", period);
 
-    long errorCount = logs.stream()
-            .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
-            .count();
+    long errorCount = apiRequestLogRepository.countErrorsSince(since);
     stats.put("errorCount", errorCount);
-    stats.put("errorRate", logs.isEmpty() ? 0.0 : (double) errorCount / logs.size());
+    stats.put("errorRate", totalRequests == 0 ? 0.0 : (double) errorCount / totalRequests);
 
-    double avgDuration = logs.stream()
-            .filter(l -> l.getDurationMs() != null)
-            .mapToLong(ApiRequestLog::getDurationMs)
-            .average()
-            .orElse(0.0);
-    stats.put("avgDurationMs", Math.round(avgDuration * 100.0) / 100.0);
+    Double avgDuration = apiRequestLogRepository.averageDurationSince(since);
+    stats.put("avgDurationMs", avgDuration == null ? 0.0 : Math.round(avgDuration * 100.0) / 100.0);
 
-    long p95Duration = logs.stream()
-            .filter(l -> l.getDurationMs() != null)
-            .mapToLong(ApiRequestLog::getDurationMs)
-            .sorted()
-            .skip((long) (logs.size() * 0.95))
-            .findFirst()
-            .orElse(0);
-    stats.put("p95DurationMs", p95Duration);
+    stats.put("p95DurationMs", p95DurationMs(since));
 
     Map<String, Long> statusCounts = new HashMap<>();
-    for (ApiRequestLog log : logs) {
-      if (log.getResponseStatus() != null) {
-        String key = String.valueOf(log.getResponseStatus());
-        statusCounts.merge(key, 1L, Long::sum);
-      }
+    for (Object[] row : apiRequestLogRepository.countByResponseStatusSince(since)) {
+      statusCounts.put(String.valueOf(row[0]), ((Number) row[1]).longValue());
     }
     stats.put("statusCodeDistribution", statusCounts);
 
-    Map<String, Long> endpointCounts = new HashMap<>();
-    for (ApiRequestLog log : logs) {
-      if (log.getRequestUri() != null) {
-        String key = log.getHttpMethod() + " " + log.getRequestUri();
-        endpointCounts.merge(key, 1L, Long::sum);
-      }
+    Map<String, Long> endpointCounts = new LinkedHashMap<>();
+    for (Object[] row : apiRequestLogRepository.countByEndpointSince(since, PageRequest.of(0, MAX_TOP_ENDPOINTS))) {
+      endpointCounts.put(row[0] + " " + row[1], ((Number) row[2]).longValue());
     }
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  private long p95DurationMs(LocalDateTime since) {
+    long timedRequests = apiRequestLogRepository.countDurationsSince(since);
+    if (timedRequests == 0) {
+      return 0;
+    }
+    int index = (int) Math.min((long) (timedRequests * 0.95), timedRequests - 1);
+    List<Long> durations = apiRequestLogRepository.findDurationsSince(since, PageRequest.of(index, 1));
+    return durations.isEmpty() ? 0 : durations.get(0);
   }
 
   private static int clampMinutesBack(int minutesBack) {
