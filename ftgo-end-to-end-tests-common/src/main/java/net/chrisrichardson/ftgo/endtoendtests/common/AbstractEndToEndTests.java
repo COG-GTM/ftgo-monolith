@@ -76,6 +76,24 @@ public abstract class AbstractEndToEndTests {
     return baseUrl(getApplicationPort(), "orders", pathElements);
   }
 
+  private String bearer(String envVar) {
+    String key = System.getenv(envVar);
+    assertNotNull(envVar, key);
+    return "Bearer " + key;
+  }
+
+  private String restaurantAuthorization() {
+    return bearer("FTGO_RESTAURANT_API_KEY");
+  }
+
+  private String courierAuthorization() {
+    return bearer("FTGO_COURIER_API_KEY");
+  }
+
+  private String operatorAuthorization() {
+    return bearer("FTGO_OPERATOR_API_KEY");
+  }
+
   @BeforeClass
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
@@ -152,6 +170,7 @@ public abstract class AbstractEndToEndTests {
 
   private void reviseOrder(int orderId) {
     given().
+            header("Authorization", operatorAuthorization()).
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -197,6 +216,7 @@ public abstract class AbstractEndToEndTests {
 
   private void cancelOrder(int orderId) {
     given().
+            header("Authorization", operatorAuthorization()).
             body("{}").
             contentType("application/json").
             when().
@@ -316,6 +336,7 @@ public abstract class AbstractEndToEndTests {
 
   private void acceptOrder() {
     given().
+            header("Authorization", restaurantAuthorization()).
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -351,6 +372,7 @@ public abstract class AbstractEndToEndTests {
 
   private void startPreparingOrder() {
     given().
+            header("Authorization", restaurantAuthorization()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -359,6 +381,7 @@ public abstract class AbstractEndToEndTests {
 
   private void orderReadyforPickup() {
     given().
+            header("Authorization", restaurantAuthorization()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -367,6 +390,7 @@ public abstract class AbstractEndToEndTests {
 
   private void pickupOrder() {
     given().
+            header("Authorization", courierAuthorization()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -375,6 +399,7 @@ public abstract class AbstractEndToEndTests {
 
   private void deliverOrder() {
     given().
+            header("Authorization", courierAuthorization()).
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().
