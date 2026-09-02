@@ -1,5 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.common.security.ApiRole;
+import net.chrisrichardson.ftgo.common.security.RoleApiKeyAuthorizer;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,10 +29,12 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private RoleApiKeyAuthorizer authorizer;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  public OrderController(OrderService orderService, OrderRepository orderRepository, RoleApiKeyAuthorizer authorizer) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.authorizer = authorizer;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -83,7 +88,8 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.OPERATOR);
     try {
       Order order = orderService.cancel(orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
@@ -93,7 +99,8 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request, HttpServletRequest httpRequest) {
+    authorizer.requireRole(httpRequest, ApiRole.OPERATOR);
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
@@ -103,31 +110,36 @@ public class OrderController {
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.RESTAURANT, ApiRole.OPERATOR);
     orderService.accept(orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
+  public ResponseEntity<String> preparing(@PathVariable long orderId, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.RESTAURANT, ApiRole.OPERATOR);
     orderService.notePreparing(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
+  public ResponseEntity<String> ready(@PathVariable long orderId, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.RESTAURANT, ApiRole.OPERATOR);
     orderService.noteReadyForPickup(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
+  public ResponseEntity<String> pickedup(@PathVariable long orderId, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.COURIER, ApiRole.OPERATOR);
     orderService.notePickedUp(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
+  public ResponseEntity<String> delivered(@PathVariable long orderId, HttpServletRequest request) {
+    authorizer.requireRole(request, ApiRole.COURIER, ApiRole.OPERATOR);
     orderService.noteDelivered(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
