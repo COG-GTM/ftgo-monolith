@@ -56,6 +56,14 @@ public class RoleApiKeyAuthorizerTest {
     authorizer.requireRole(requestWithAuthorization("Bearer    "), ApiRole.OPERATOR);
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void shouldRejectDuplicateKeysAcrossRoles() {
+    Map<ApiRole, String> keys = new EnumMap<>(ApiRole.class);
+    keys.put(ApiRole.COURIER, "shared-key");
+    keys.put(ApiRole.OPERATOR, "shared-key");
+    new RoleApiKeyAuthorizer(keys);
+  }
+
   @Test(expected = ApiAccessDeniedException.class)
   public void shouldRejectRoleNotPermittedForAction() {
     authorizer.requireRole(requestWithAuthorization("Bearer courier-key"), ApiRole.RESTAURANT);

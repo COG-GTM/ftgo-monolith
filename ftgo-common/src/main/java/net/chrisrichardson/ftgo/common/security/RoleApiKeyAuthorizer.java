@@ -25,7 +25,13 @@ public class RoleApiKeyAuthorizer {
     Map<ApiRole, byte[]> keys = new EnumMap<>(ApiRole.class);
     keysByRole.forEach((role, key) -> {
       if (key != null && !key.trim().isEmpty()) {
-        keys.put(role, key.trim().getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = key.trim().getBytes(StandardCharsets.UTF_8);
+        keys.forEach((otherRole, otherKey) -> {
+          if (MessageDigest.isEqual(otherKey, keyBytes)) {
+            throw new IllegalStateException("API key for role " + role + " must differ from the key for role " + otherRole);
+          }
+        });
+        keys.put(role, keyBytes);
       }
     });
     this.keysByRole = Collections.unmodifiableMap(keys);
