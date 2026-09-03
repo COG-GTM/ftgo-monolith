@@ -7,11 +7,11 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.util.Assert;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class MoneySerializationTest {
@@ -83,7 +83,7 @@ public class MoneySerializationTest {
     } catch (JsonMappingException e) {
       jsonMappingException = e;
     }
-    Assert.notNull(jsonMappingException);
+    assertNotNull(jsonMappingException);
   }
 
 

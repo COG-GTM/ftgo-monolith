@@ -1,10 +1,14 @@
-test.enabled=false
+plugins {
+    id 'groovy'
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile 'mysql:mysql-connector-java:8.0.33'
-    compile 'commons-lang:commons-lang:2.6'
+    implementation 'com.mysql:mysql-connector-j:9.3.0'
+    implementation 'commons-lang:commons-lang:2.6'
 }
+
+test.enabled = false
