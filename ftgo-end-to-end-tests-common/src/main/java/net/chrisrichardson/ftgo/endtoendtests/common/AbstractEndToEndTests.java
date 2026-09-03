@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
 import io.eventuate.util.test.async.Eventually;
@@ -36,6 +37,8 @@ public abstract class AbstractEndToEndTests {
 
   public static final String CHICKED_VINDALOO_MENU_ITEM_ID = "1";
   public static final String RESTAURANT_NAME = "My Restaurant";
+  public static final String DEFAULT_API_USERNAME = "test-api";
+  public static final String DEFAULT_API_PASSWORD = "test-api-pw";
   private static final Address RESTAURANT_ADDRESS = new Address("1 High Street", null, "Oakland", "CA", "94619");
 
   private final int revisedQuantityOfChickenVindaloo = 10;
@@ -45,6 +48,23 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+
+  protected String getApiUsername() {
+    return envOrDefault("FTGO_API_USERNAME", DEFAULT_API_USERNAME);
+  }
+
+  protected String getApiPassword() {
+    return envOrDefault("FTGO_API_PASSWORD", DEFAULT_API_PASSWORD);
+  }
+
+  private static String envOrDefault(String name, String defaultValue) {
+    String value = System.getenv(name);
+    return value == null || value.isEmpty() ? defaultValue : value;
+  }
+
+  protected RequestSpecification givenAuthenticated() {
+    return given().auth().preemptive().basic(getApiUsername(), getApiPassword());
+  }
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -129,7 +149,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderRevised(int orderId) {
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
-      String orderTotal = given().
+      String orderTotal = givenAuthenticated().
               when().
               get(baseUrl(getApplicationPort(), "orders", Integer.toString(orderId))).
               then().
@@ -139,7 +159,7 @@ public abstract class AbstractEndToEndTests {
       assertEquals(priceOfChickenVindaloo.multiply(revisedQuantityOfChickenVindaloo).asString(), orderTotal);
     });
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
-      String state = given().
+      String state = givenAuthenticated().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -151,7 +171,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void reviseOrder(int orderId) {
-    given().
+    givenAuthenticated().
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -183,7 +203,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderCancelled(int orderId) {
     Eventually.eventually(String.format("verifyOrderCancelled %s", orderId), () -> {
-      String state = given().
+      String state = givenAuthenticated().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -196,7 +216,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void cancelOrder(int orderId) {
-    given().
+    givenAuthenticated().
             body("{}").
             contentType("application/json").
             when().
@@ -208,7 +228,7 @@ public abstract class AbstractEndToEndTests {
 
   private Integer createConsumer() {
     Integer consumerId =
-            given().
+            givenAuthenticated().
                     body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
                     contentType("application/json").
                     when().
@@ -224,7 +244,7 @@ public abstract class AbstractEndToEndTests {
 
   private int createRestaurant() {
     Integer restaurantId =
-            given().
+            givenAuthenticated().
                     body(new CreateRestaurantRequest(RESTAURANT_NAME,
                             RESTAURANT_ADDRESS,
                             new RestaurantMenuDTO(Collections.singletonList(new MenuItemDTO(CHICKED_VINDALOO_MENU_ITEM_ID, "Chicken Vindaloo", priceOfChickenVindaloo))))).
@@ -242,7 +262,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyRestaurantCreated(int restaurantId) {
     Eventually.eventually(String.format("verifyRestaurantCreated %s", restaurantId), () ->
-            given().
+            givenAuthenticated().
                     when().
                     get(restaurantBaseUrl(Integer.toString(restaurantId))).
                     then().
@@ -251,7 +271,7 @@ public abstract class AbstractEndToEndTests {
 
   private int createOrder(int consumerId, int restaurantId) {
     Integer orderId =
-            given().
+            givenAuthenticated().
                     body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
                     contentType("application/json").
                     when().
@@ -267,7 +287,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderAuthorized(int orderId) {
     Eventually.eventually(String.format("verifyOrderApproved %s", orderId), () -> {
-      String state = given().
+      String state = givenAuthenticated().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -280,7 +300,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
-      String state = given().
+      String state = givenAuthenticated().
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().
@@ -293,7 +313,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    courierId = givenAuthenticated().
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
@@ -305,7 +325,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void noteCourierAvailable() {
-    given().
+    givenAuthenticated().
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().
@@ -315,7 +335,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void acceptOrder() {
-    given().
+    givenAuthenticated().
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -326,7 +346,7 @@ public abstract class AbstractEndToEndTests {
 
   private void assertOrderAssignedToCourier() {
     int courierId = Eventually.eventuallyReturning(() -> {
-      int assignedCourier = given().
+      int assignedCourier = givenAuthenticated().
               when().
               get(orderBaseUrl(Long.toString(orderId))).
               then().
@@ -339,7 +359,7 @@ public abstract class AbstractEndToEndTests {
       return assignedCourier;
     });
 
-    given().
+    givenAuthenticated().
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().
@@ -350,7 +370,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void startPreparingOrder() {
-    given().
+    givenAuthenticated().
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -358,7 +378,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void orderReadyforPickup() {
-    given().
+    givenAuthenticated().
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -366,7 +386,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void pickupOrder() {
-    given().
+    givenAuthenticated().
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -374,7 +394,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void deliverOrder() {
-    given().
+    givenAuthenticated().
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().

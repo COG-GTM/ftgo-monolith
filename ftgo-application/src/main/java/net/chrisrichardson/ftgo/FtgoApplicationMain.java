@@ -5,6 +5,7 @@ import net.chrisrichardson.ftgo.consumerservice.main.ConsumerServiceConfiguratio
 import net.chrisrichardson.ftgo.courierservice.web.CourierWebConfiguration;
 import net.chrisrichardson.ftgo.orderservice.main.OrderServiceConfiguration;
 import net.chrisrichardson.ftgo.restaurantservice.RestaurantServiceConfiguration;
+import net.chrisrichardson.ftgo.security.FtgoSecurityConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
@@ -18,7 +19,8 @@ import org.springframework.context.annotation.Import;
         OrderServiceConfiguration.class,
         RestaurantServiceConfiguration.class,
         CourierWebConfiguration.class,
-        ApiTrackingConfiguration.class})
+        ApiTrackingConfiguration.class,
+        FtgoSecurityConfiguration.class})
 public class FtgoApplicationMain {
 
   public static void main(String[] args) {
