@@ -34,6 +34,9 @@ public class OrderController {
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+    if (request.getLineItems() == null || request.getLineItems().isEmpty()) {
+      throw new IllegalArgumentException("Order must contain at least one line item");
+    }
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
@@ -94,6 +97,9 @@ public class OrderController {
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+    if (request.getRevisedLineItemQuantities() == null || request.getRevisedLineItemQuantities().isEmpty()) {
+      throw new IllegalArgumentException("revisedLineItemQuantities must not be empty");
+    }
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);

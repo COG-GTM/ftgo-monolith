@@ -36,6 +36,9 @@ public class OrderLineItems {
   }
 
   void validateRevision(OrderRevision orderRevision) {
+    if (orderRevision.getRevisedLineItemQuantities() == null) {
+      throw new IllegalArgumentException("Revision must specify line item quantities");
+    }
     orderRevision.getRevisedLineItemQuantities().forEach((lineItemId, newQuantity) -> {
       findOrderLineItem(lineItemId);
       if (newQuantity == null) {
