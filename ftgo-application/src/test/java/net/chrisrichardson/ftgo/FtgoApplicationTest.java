@@ -14,7 +14,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "ftgo.security.api.username=" + AbstractEndToEndTests.DEFAULT_API_USERNAME,
+                "ftgo.security.api.password=" + AbstractEndToEndTests.DEFAULT_API_PASSWORD,
+                "ftgo.security.operator.username=test-operator",
+                "ftgo.security.operator.password=test-operator-pw"})
 public class FtgoApplicationTest extends AbstractEndToEndTests {
 
   @Configuration

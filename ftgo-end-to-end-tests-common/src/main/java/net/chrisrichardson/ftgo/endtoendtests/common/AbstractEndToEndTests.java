@@ -37,6 +37,8 @@ public abstract class AbstractEndToEndTests {
 
   public static final String CHICKED_VINDALOO_MENU_ITEM_ID = "1";
   public static final String RESTAURANT_NAME = "My Restaurant";
+  public static final String DEFAULT_API_USERNAME = "test-api";
+  public static final String DEFAULT_API_PASSWORD = "test-api-pw";
   private static final Address RESTAURANT_ADDRESS = new Address("1 High Street", null, "Oakland", "CA", "94619");
 
   private final int revisedQuantityOfChickenVindaloo = 10;
@@ -48,11 +50,11 @@ public abstract class AbstractEndToEndTests {
   private int courierId;
 
   protected String getApiUsername() {
-    return envOrDefault("FTGO_API_USERNAME", "ftgo-api");
+    return envOrDefault("FTGO_API_USERNAME", DEFAULT_API_USERNAME);
   }
 
   protected String getApiPassword() {
-    return envOrDefault("FTGO_API_PASSWORD", "ftgo-api-pw");
+    return envOrDefault("FTGO_API_PASSWORD", DEFAULT_API_PASSWORD);
   }
 
   private static String envOrDefault(String name, String defaultValue) {

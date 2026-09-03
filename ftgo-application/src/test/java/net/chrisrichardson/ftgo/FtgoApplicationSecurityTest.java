@@ -11,7 +11,12 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasItem;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = FtgoApplicationMain.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = FtgoApplicationMain.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "ftgo.security.api.username=test-api",
+                "ftgo.security.api.password=test-api-pw",
+                "ftgo.security.operator.username=test-operator",
+                "ftgo.security.operator.password=test-operator-pw"})
 public class FtgoApplicationSecurityTest {
 
   @LocalServerPort

@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,14 +54,22 @@ public class FtgoSecurityConfiguration extends WebSecurityConfigurerAdapter {
   public UserDetailsService userDetailsService() {
     PasswordEncoder encoder = passwordEncoder();
     InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-    manager.createUser(User.withUsername(properties.getApi().getUsername())
-            .password(encoder.encode(properties.getApi().getPassword()))
-            .roles(ROLE_API)
-            .build());
-    manager.createUser(User.withUsername(properties.getOperator().getUsername())
-            .password(encoder.encode(properties.getOperator().getPassword()))
-            .roles(ROLE_OPERATOR)
-            .build());
+    manager.createUser(user(encoder, "ftgo.security.api", properties.getApi(), ROLE_API));
+    manager.createUser(user(encoder, "ftgo.security.operator", properties.getOperator(), ROLE_OPERATOR));
     return manager;
+  }
+
+  private static UserDetails user(PasswordEncoder encoder, String prefix, FtgoSecurityProperties.Account account, String role) {
+    if (isBlank(account.getUsername()) || isBlank(account.getPassword())) {
+      throw new IllegalStateException(prefix + ".username and " + prefix + ".password must be configured");
+    }
+    return User.withUsername(account.getUsername())
+            .password(encoder.encode(account.getPassword()))
+            .roles(role)
+            .build();
+  }
+
+  private static boolean isBlank(String s) {
+    return s == null || s.trim().isEmpty();
   }
 }
