@@ -37,10 +37,17 @@ public class OrderLineItem {
   }
 
   public OrderLineItem(String menuItemId, String name, Money price, int quantity) {
+    requirePositiveQuantity(quantity);
     this.menuItemId = menuItemId;
     this.name = name;
     this.price = price;
     this.quantity = quantity;
+  }
+
+  static void requirePositiveQuantity(int quantity) {
+    if (quantity <= 0) {
+      throw new IllegalArgumentException("Line item quantity must be greater than zero: " + quantity);
+    }
   }
 
   public Money deltaForChangedQuantity(int newQuantity) {
@@ -48,6 +55,7 @@ public class OrderLineItem {
   }
 
   public void setQuantity(int quantity) {
+    requirePositiveQuantity(quantity);
     this.quantity = quantity;
   }
 
