@@ -55,6 +55,12 @@ public class ConsumerControllerTest {
   }
 
   @Test
+  public void shouldAcceptLowercaseBearerScheme() throws Exception {
+    mockMvc.perform(get("/consumers/1").header("Authorization", "bearer " + OPERATOR_KEY))
+            .andExpect(status().isOk());
+  }
+
+  @Test
   public void shouldReturnNotFoundForOperatorWhenConsumerMissing() throws Exception {
     when(consumerService.findById(2L)).thenReturn(Optional.empty());
     mockMvc.perform(get("/consumers/2").header("Authorization", "Bearer " + OPERATOR_KEY))

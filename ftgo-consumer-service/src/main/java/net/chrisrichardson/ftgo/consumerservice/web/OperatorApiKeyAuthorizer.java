@@ -30,7 +30,7 @@ public class OperatorApiKeyAuthorizer {
       return false;
     }
     String header = request.getHeader("Authorization");
-    if (header == null || !header.startsWith(BEARER_PREFIX)) {
+    if (header == null || !header.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
       return false;
     }
     byte[] presented = header.substring(BEARER_PREFIX.length()).trim().getBytes(StandardCharsets.UTF_8);
