@@ -1,5 +1,6 @@
 #! /bin/bash -e
 
+. ./set-env.sh
 for SN in ftgo-application ; do
 
     ./gradlew :${SN?}:assemble
