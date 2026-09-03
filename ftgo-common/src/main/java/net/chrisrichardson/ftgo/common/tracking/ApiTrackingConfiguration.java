@@ -18,7 +18,7 @@ public class ApiTrackingConfiguration implements WebMvcConfigurer {
   public void addInterceptors(InterceptorRegistry registry) {
     registry.addInterceptor(apiTrackingInterceptor())
             .addPathPatterns("/**")
-            .excludePathPatterns("/api/tracking/**", "/actuator/**");
+            .excludePathPatterns("/actuator/**");
   }
 
   @Bean
