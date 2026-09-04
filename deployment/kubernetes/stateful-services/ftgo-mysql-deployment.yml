@@ -36,6 +36,8 @@ spec:
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: rootpassword
+            - name: MYSQL_DATABASE
+              value: ftgo
             - name: MYSQL_USER
               value: mysqluser
             - name: MYSQL_PASSWORD
