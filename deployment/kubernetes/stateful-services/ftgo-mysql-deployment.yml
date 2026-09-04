@@ -27,8 +27,8 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: ftgo-mysql
-          image: msapatterns/mysql:latest
-          imagePullPolicy: Always
+          image: mysql:5.7.44@sha256:4bc6bc963e6d8443453676cae56536f4b8156d78bae03c0145cbe47c2aad73bb
+          imagePullPolicy: IfNotPresent
           args:
               - "--ignore-db-dir=lost+found"
           ports:
@@ -36,6 +36,8 @@ spec:
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: rootpassword
+            - name: MYSQL_DATABASE
+              value: ftgo
             - name: MYSQL_USER
               value: mysqluser
             - name: MYSQL_PASSWORD
