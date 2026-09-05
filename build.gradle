@@ -23,7 +23,7 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
-    ext['jackson.version'] = '2.13.5'
+    ext['jackson.version'] = '2.17.3'
 
     repositories {
         mavenCentral()
