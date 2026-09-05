@@ -23,6 +23,8 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    ext['jackson.version'] = '2.13.5'
+
     repositories {
         mavenCentral()
         jcenter()
