@@ -39,10 +39,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     ApiRequestLog logEntry = new ApiRequestLog(
             correlationId,
             request.getMethod(),
-            request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
-            request.getHeader("User-Agent")
+            request.getRequestURI()
     );
 
     request.setAttribute(LOG_ENTRY_ATTR, logEntry);
