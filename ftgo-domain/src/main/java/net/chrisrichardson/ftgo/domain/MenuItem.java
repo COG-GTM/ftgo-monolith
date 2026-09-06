@@ -23,9 +23,22 @@ public class MenuItem {
   }
 
   public MenuItem(String id, String name, Money price) {
+    if (id == null || id.trim().isEmpty()) {
+      throw new IllegalArgumentException("Menu item id must not be blank");
+    }
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Menu item name must not be blank: " + id);
+    }
+    requirePositivePrice(id, price);
     this.id = id;
     this.name = name;
     this.price = price;
+  }
+
+  static void requirePositivePrice(String id, Money price) {
+    if (price == null || !price.isPositive()) {
+      throw new IllegalArgumentException("Menu item price must be greater than zero: " + id);
+    }
   }
 
   @Override
@@ -64,6 +77,7 @@ public class MenuItem {
   }
 
   public void setPrice(Money price) {
+    requirePositivePrice(id, price);
     this.price = price;
   }
 }
