@@ -25,6 +25,9 @@ public class RestaurantService {
   }
 
   private RestaurantMenu makeRestaurantMenu(RestaurantMenuDTO menu) {
+    if (menu == null || menu.getMenuItemDTOs() == null || menu.getMenuItemDTOs().isEmpty()) {
+      throw new IllegalArgumentException("Restaurant menu must contain at least one item");
+    }
     return new RestaurantMenu(menu.getMenuItemDTOs().stream().map(mi -> new MenuItem(mi.getId(), mi.getName(), mi.getPrice())).collect(Collectors.toList()));
   }
 
