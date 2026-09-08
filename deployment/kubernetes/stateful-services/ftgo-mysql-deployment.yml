@@ -25,10 +25,19 @@ spec:
         role: ftgo-mysql
     spec:
       terminationGracePeriodSeconds: 10
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       containers:
         - name: ftgo-mysql
           image: msapatterns/mysql:latest
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           args:
               - "--ignore-db-dir=lost+found"
           ports:
