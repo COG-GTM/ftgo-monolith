@@ -7,6 +7,10 @@ import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class CourierService {
 
   private CourierRepository courierRepository;
@@ -47,5 +51,13 @@ public class CourierService {
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);
+  }
+
+  @Transactional
+  public int purgeLocationsOlderThan(Duration retention) {
+    LocalDateTime cutoff = LocalDateTime.now().minus(retention);
+    List<Courier> stale = courierRepository.findAllWithLocationUpdatedBefore(cutoff);
+    stale.forEach(Courier::clearLocation);
+    return stale.size();
   }
 }

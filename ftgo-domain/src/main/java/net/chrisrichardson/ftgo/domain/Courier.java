@@ -103,6 +103,12 @@ public class Courier {
     this.lastLocationUpdate = LocalDateTime.now();
   }
 
+  public void clearLocation() {
+    this.currentLatitude = null;
+    this.currentLongitude = null;
+    this.lastLocationUpdate = null;
+  }
+
   public int getActiveDeliveryCount() {
     if (plan == null || plan.getActions() == null) {
       return 0;
