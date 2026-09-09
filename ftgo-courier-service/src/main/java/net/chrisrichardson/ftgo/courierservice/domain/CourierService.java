@@ -7,6 +7,9 @@ import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class CourierService {
 
   private CourierRepository courierRepository;
@@ -47,5 +50,10 @@ public class CourierService {
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);
+  }
+
+  @Transactional
+  public int purgeLocationsOlderThan(Duration retention) {
+    return courierRepository.clearLocationsUpdatedBefore(LocalDateTime.now().minus(retention));
   }
 }

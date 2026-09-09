@@ -41,6 +41,7 @@ public class Courier {
     if (address != null && address.getLatitude() != null) {
       this.currentLatitude = address.getLatitude();
       this.currentLongitude = address.getLongitude();
+      this.lastLocationUpdate = LocalDateTime.now();
     }
   }
 

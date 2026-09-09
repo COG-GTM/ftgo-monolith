@@ -5,6 +5,7 @@ import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
 import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.api.GetCourierResponse;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
@@ -33,9 +34,15 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
-  public ResponseEntity<Courier> get(@PathVariable long courierId) {
+  public ResponseEntity<GetCourierResponse> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
-    return new ResponseEntity<>(courier, HttpStatus.OK);
+    GetCourierResponse response = new GetCourierResponse(
+            courier.getId(),
+            courier.getName(),
+            courier.getAddress(),
+            courier.isAvailable()
+    );
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
@@ -50,10 +57,7 @@ public class CourierController {
     CourierWorkloadResponse response = new CourierWorkloadResponse(
             courier.getId(),
             courier.getActiveDeliveryCount(),
-            courier.isAvailable(),
-            courier.getCurrentLatitude(),
-            courier.getCurrentLongitude(),
-            courier.getLastLocationUpdate()
+            courier.isAvailable()
     );
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
