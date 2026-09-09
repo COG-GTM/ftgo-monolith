@@ -41,6 +41,7 @@ public class Courier {
     if (address != null && address.getLatitude() != null) {
       this.currentLatitude = address.getLatitude();
       this.currentLongitude = address.getLongitude();
+      this.lastLocationUpdate = LocalDateTime.now();
     }
   }
 
@@ -101,12 +102,6 @@ public class Courier {
     this.currentLatitude = latitude;
     this.currentLongitude = longitude;
     this.lastLocationUpdate = LocalDateTime.now();
-  }
-
-  public void clearLocation() {
-    this.currentLatitude = null;
-    this.currentLongitude = null;
-    this.lastLocationUpdate = null;
   }
 
   public int getActiveDeliveryCount() {

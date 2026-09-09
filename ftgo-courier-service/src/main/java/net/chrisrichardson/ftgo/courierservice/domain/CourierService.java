@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class CourierService {
 
@@ -55,9 +54,6 @@ public class CourierService {
 
   @Transactional
   public int purgeLocationsOlderThan(Duration retention) {
-    LocalDateTime cutoff = LocalDateTime.now().minus(retention);
-    List<Courier> stale = courierRepository.findAllWithLocationUpdatedBefore(cutoff);
-    stale.forEach(Courier::clearLocation);
-    return stale.size();
+    return courierRepository.clearLocationsUpdatedBefore(LocalDateTime.now().minus(retention));
   }
 }
