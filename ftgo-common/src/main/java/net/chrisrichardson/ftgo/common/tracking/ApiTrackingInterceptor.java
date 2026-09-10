@@ -16,6 +16,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final int CORRELATION_ID_MAX_LENGTH = 128;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -29,7 +30,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     request.setAttribute(START_TIME_ATTR, startTime);
 
     String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-    if (correlationId == null || correlationId.isEmpty()) {
+    if (!isValidCorrelationId(correlationId)) {
       correlationId = UUID.randomUUID().toString();
     }
 
@@ -73,7 +74,9 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
       try {
         apiRequestLogRepository.save(logEntry);
       } catch (Exception saveEx) {
-        logger.warn("Failed to persist API request log: {}", saveEx.getMessage());
+        logger.error("Failed to persist API request log [{}] {} {} from {} status={} duration={}ms",
+                logEntry.getCorrelationId(), logEntry.getHttpMethod(), logEntry.getRequestUri(),
+                logEntry.getRemoteAddr(), logEntry.getResponseStatus(), logEntry.getDurationMs(), saveEx);
       }
 
       String correlationId = logEntry.getCorrelationId();
@@ -83,5 +86,11 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  static boolean isValidCorrelationId(String correlationId) {
+    return correlationId != null
+            && !correlationId.isEmpty()
+            && correlationId.length() <= CORRELATION_ID_MAX_LENGTH;
   }
 }
