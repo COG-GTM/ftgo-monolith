@@ -104,6 +104,9 @@ public class OrderController {
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
   public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+    if (orderAcceptance == null || orderAcceptance.getReadyBy() == null) {
+      return new ResponseEntity<>("readyBy is required", HttpStatus.BAD_REQUEST);
+    }
     orderService.accept(orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }

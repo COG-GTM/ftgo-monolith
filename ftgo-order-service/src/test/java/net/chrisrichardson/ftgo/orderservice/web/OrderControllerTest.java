@@ -18,7 +18,11 @@ import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_V
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER_TOTAL;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 public class OrderControllerTest {
 
@@ -62,6 +66,21 @@ public class OrderControllerTest {
     then().
             statusCode(404)
     ;
+  }
+
+  @Test
+  public void shouldRejectAcceptWithoutReadyBy() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            contentType("application/json").
+            body("{}").
+    when().
+            post("/orders/1/accept").
+    then().
+            statusCode(400)
+    ;
+
+    verify(orderService, never()).accept(anyLong(), any());
   }
 
   private StandaloneMockMvcBuilder configureControllers(Object... controllers) {

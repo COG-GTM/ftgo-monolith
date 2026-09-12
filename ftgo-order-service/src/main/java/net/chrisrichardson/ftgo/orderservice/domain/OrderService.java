@@ -93,6 +93,9 @@ public class OrderService {
   }
 
   public void accept(long orderId, LocalDateTime readyBy) {
+    if (readyBy == null) {
+      throw new IllegalArgumentException("readyBy is required");
+    }
     Order order = tryToFindOrder(orderId);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
