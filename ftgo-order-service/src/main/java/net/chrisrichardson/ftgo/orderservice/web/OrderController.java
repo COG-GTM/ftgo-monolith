@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.orderservice.web;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
+import net.chrisrichardson.ftgo.orderservice.api.web.CourierActionDTO;
+import net.chrisrichardson.ftgo.orderservice.api.web.GetOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
@@ -59,18 +61,22 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
-    List<Action> courierActions = order.getAssignedCourier() == null
+    List<Action> actions = order.getAssignedCourier() == null
             ? null
             : order.getAssignedCourier().actionsForDelivery(order);
 
     LocalDateTime estimatedDelivery = null;
-    if (courierActions != null) {
-      estimatedDelivery = courierActions.stream()
+    if (actions != null) {
+      estimatedDelivery = actions.stream()
               .filter(a -> a.getType() == ActionType.DROPOFF)
               .map(Action::getTime)
               .findFirst()
               .orElse(null);
     }
+
+    List<CourierActionDTO> courierActions = actions == null ? null : actions.stream()
+            .map(a -> new CourierActionDTO(a.getType().name(), a.getTime()))
+            .collect(toList());
 
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
