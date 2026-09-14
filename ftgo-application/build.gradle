@@ -30,6 +30,7 @@ dependencies {
     runtime 'mysql:mysql-connector-java:8.0.33'
 
     testCompile project(":ftgo-end-to-end-tests-common")
+    testCompile project(":ftgo-order-service")
 
     integrationTestCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
     integrationTestCompile project(":ftgo-order-service")

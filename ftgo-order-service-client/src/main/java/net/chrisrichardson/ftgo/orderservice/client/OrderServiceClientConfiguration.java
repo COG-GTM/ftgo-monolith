@@ -16,8 +16,13 @@ public class OrderServiceClientConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public OrderServiceClient orderServiceClient(RestTemplateBuilder builder,
-                                                @Value("${order.service.url:http://localhost:8082}") String url) {
-    RestTemplate restTemplate = builder.build();
+                                                @Value("${order.service.url:http://localhost:8082}") String url,
+                                                @Value("${order.service.connect-timeout-ms:2000}") int connectTimeoutMs,
+                                                @Value("${order.service.read-timeout-ms:10000}") int readTimeoutMs) {
+    RestTemplate restTemplate = builder
+            .setConnectTimeout(connectTimeoutMs)
+            .setReadTimeout(readTimeoutMs)
+            .build();
     return new OrderServiceClient(restTemplate, url);
   }
 }
