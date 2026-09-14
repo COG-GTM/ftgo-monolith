@@ -11,8 +11,7 @@
 // }
 
 // apply plugin: 'docker-compose'
-apply plugin:'io.spring.dependency-management'
-
+apply plugin: FtgoServicePlugin
 apply plugin: IntegrationTestsPlugin
 
 // Temporarily commenting out docker-compose configuration
@@ -48,6 +47,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile 'javax.el:javax.el-api:2.2.5'
 
+    runtime 'mysql:mysql-connector-java:8.0.33'
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
     testCompile 'io.rest-assured:rest-assured:3.0.6'
@@ -55,4 +56,12 @@ dependencies {
     testCompile "io.rest-assured:json-path:3.0.6"
 
     testCompile project(":ftgo-test-util")
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    classifier = 'boot'
 }

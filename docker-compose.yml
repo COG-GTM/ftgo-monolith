@@ -13,8 +13,28 @@ services:
     ports:
       - "8081:8080"
     depends_on:
+      - ftgo-order-service
       - mysql
     environment:
+      ORDER_SERVICE_URL: http://ftgo-order-service:8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      JAVA_OPTS: -Xmx192m
+      SPRING_SLEUTH_ENABLED: "true"
+      SPRING_SLEUTH_SAMPLER_PROBABILITY: 1
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411/
+  ftgo-order-service:
+    build: ./ftgo-order-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - mysql
+    environment:
+      SERVER_PORT: 8080
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
       SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: mysqlpw
