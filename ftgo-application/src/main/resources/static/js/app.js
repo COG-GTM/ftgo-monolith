@@ -1877,7 +1877,7 @@ function openCreateOrderModal() {
 
   const consumerOptions = consumers.map(([id, c]) => {
     const name = getFullName(c.name);
-    return `<option value="${id}">${name} (#${id})</option>`;
+    return `<option value="${id}">${escapeHtml(name)} (#${id})</option>`;
   }).join('');
 
   const restaurantOptions = restaurants.map(([id, r]) => {
