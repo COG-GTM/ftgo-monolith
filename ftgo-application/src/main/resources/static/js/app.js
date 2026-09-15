@@ -1877,11 +1877,11 @@ function openCreateOrderModal() {
 
   const consumerOptions = consumers.map(([id, c]) => {
     const name = getFullName(c.name);
-    return `<option value="${id}">${escapeHtml(name)} (#${id})</option>`;
+    return `<option value="${escapeHtml(id)}">${escapeHtml(name)} (#${escapeHtml(id)})</option>`;
   }).join('');
 
   const restaurantOptions = restaurants.map(([id, r]) => {
-    return `<option value="${id}">${escapeHtml(r.name || 'Unnamed')} (#${id})</option>`;
+    return `<option value="${escapeHtml(id)}">${escapeHtml(r.name || 'Unnamed')} (#${escapeHtml(id)})</option>`;
   }).join('');
 
   openModal(
