@@ -1,3 +1,12 @@
+// Order service API module: request/response DTOs (api.web) and event payloads (api.events)
+// shared between ftgo-order-service and its clients. Pure POJOs - no Spring/JPA/Jakarta code.
+// Java 21 toolchain, Spring Boot 3.5 BOM and the JUnit Platform are inherited from the root build.
 dependencies {
+    // Money and the Jackson/commons-lang libraries the DTOs use come transitively from ftgo-common.
     api project(":ftgo-common")
+
+    // JUnit 5 (Jupiter) + Jackson for the DTO JSON round-trip tests; versions managed by the Boot BOM.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer injects the JUnit Platform launcher; a BOM-aligned launcher is required.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
