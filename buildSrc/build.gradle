@@ -5,6 +5,7 @@ repositories {
 }
 
 dependencies {
-    compile 'mysql:mysql-connector-java:8.0.33'
-    compile 'commons-lang:commons-lang:2.6'
+    // JDBC driver used by the WaitForMySql task to poll the database until it accepts connections.
+    implementation 'com.mysql:mysql-connector-j:9.7.0'
+    implementation 'commons-lang:commons-lang:2.6'
 }

@@ -1,13 +1,23 @@
 package net.chrisrichardson.ftgo.domain;
 
-import javax.persistence.ElementCollection;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Value object embedded in Courier holding the courier's pickup/dropoff actions.
+@Embeddable
+@Access(AccessType.FIELD)
 public class Plan {
 
+  // Persisted in the courier_actions table (Flyway V1); name it explicitly rather than relying on the
+  // implicit <entity>_<attribute> naming so the mapping does not depend on the naming strategy.
   @ElementCollection
+  @CollectionTable(name = "courier_actions")
   private List<Action> actions = new LinkedList<>();
 
   public void add(Action action) {

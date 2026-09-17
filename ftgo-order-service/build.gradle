@@ -15,6 +15,13 @@ apply plugin:'io.spring.dependency-management'
 
 apply plugin: IntegrationTestsPlugin
 
+// Spring Framework 6.1 dropped bytecode-based parameter name discovery; keep method parameter
+// names in the class files (as the Spring Boot Gradle plugin would do) so Spring MVC and
+// Spring Data can still resolve @PathVariable/@RequestParam/@Param names by reflection.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
+
 // Temporarily commenting out docker-compose configuration
 // dockerCompose {
 //
@@ -34,25 +41,33 @@ apply plugin: IntegrationTestsPlugin
 dependencies {
 
 
-    compile project(":common-swagger")
-    compile project(":ftgo-domain")
+    api project(":common-swagger")
+    api project(":ftgo-domain")
 
-    compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-order-service-api")
-    compile project(":ftgo-consumer-service")
+    api project(":ftgo-consumer-service-api")
+    api project(":ftgo-restaurant-service-api")
+    api project(":ftgo-order-service-api")
+    api project(":ftgo-consumer-service")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile 'javax.el:javax.el-api:2.2.5'
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    api "org.springframework.boot:spring-boot-starter-actuator"
+    // Micrometer version is managed by the Spring Boot BOM.
+    api "io.micrometer:micrometer-registry-prometheus"
+    api "org.springframework.boot:spring-boot-starter-web"
+    // Bean Validation (Hibernate Validator + Jakarta EL) replaces the old javax.el-api dependency.
+    api "org.springframework.boot:spring-boot-starter-validation"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
 
-    testCompile 'io.rest-assured:rest-assured:3.0.6'
-    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
-    testCompile "io.rest-assured:json-path:3.0.6"
+    // REST Assured 5.x (io.rest-assured) replaces the legacy com.jayway.restassured 3.x coordinates;
+    // spring-mock-mvc drives OrderController through a standalone MockMvc in the unit tests.
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
 
-    testCompile project(":ftgo-test-util")
+    testImplementation project(":ftgo-test-util")
+
+    // Gradle 8 no longer adds the JUnit Platform launcher to the test runtime classpath;
+    // without it the Jupiter engine cannot discover tests (unaligned launcher/engine versions).
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

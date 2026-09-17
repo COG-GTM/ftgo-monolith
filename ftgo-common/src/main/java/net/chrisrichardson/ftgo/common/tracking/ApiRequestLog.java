@@ -1,6 +1,6 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity

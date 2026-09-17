@@ -2,22 +2,24 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+// JUnit 5 (Jupiter) unit tests for DistanceOptimizedCourierAssignmentStrategy: distance/load
+// scoring, capacity limits and the load-balancing fallback when location data is missing.
 public class CourierAssignmentStrategyTest {
 
   private DistanceOptimizedCourierAssignmentStrategy strategy;
   private Restaurant restaurant;
   private Order order;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     strategy = new DistanceOptimizedCourierAssignmentStrategy();
 
@@ -29,9 +31,11 @@ public class CourierAssignmentStrategyTest {
     order = new Order(1L, restaurant, Collections.emptyList());
   }
 
-  @Test(expected = NoCourierAvailableException.class)
+  @Test
   public void shouldThrowWhenNoCouriersAvailable() {
-    strategy.assignCourier(Collections.emptyList(), order);
+    // Jupiter has no @Test(expected=...); assert the exception explicitly instead.
+    assertThrows(NoCourierAvailableException.class,
+            () -> strategy.assignCourier(Collections.emptyList(), order));
   }
 
   @Test
@@ -97,13 +101,14 @@ public class CourierAssignmentStrategyTest {
   public void shouldCalculateHaversineDistanceCorrectly() {
     double distance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
             37.7749, -122.4194, 37.8044, -122.2712);
-    assertTrue("Distance should be roughly 13km (SF to Oakland)", distance > 12 && distance < 15);
+    // Jupiter puts the failure message last.
+    assertTrue(distance > 12 && distance < 15, "Distance should be roughly 13km (SF to Oakland)");
   }
 
   @Test
   public void shouldEstimateDeliveryMinutesCorrectly() {
     double minutes = DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(5.0);
-    assertTrue("5km delivery should take roughly 15 minutes", minutes > 14 && minutes < 16);
+    assertTrue(minutes > 14 && minutes < 16, "5km delivery should take roughly 15 minutes");
   }
 
   @Test

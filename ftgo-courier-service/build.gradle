@@ -1,21 +1,33 @@
+// Keep method parameter names in the bytecode. Spring 6 dropped LocalVariableTable based name
+// discovery, so unnamed @PathVariable/@RequestParam only bind when javac runs with -parameters.
+// The Spring Boot Gradle plugin does this automatically, but this library module does not apply it.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
+
 dependencies {
-    compile project(":ftgo-courier-service-api")
+    api project(":ftgo-courier-service-api")
 
-    compile project(":common-swagger")
-    compile project(":ftgo-domain")
+    api project(":common-swagger")
+    api project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    compile "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile 'javax.el:javax.el-api:2.2.5'
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    api "org.springframework.boot:spring-boot-starter-actuator"
+    // Micrometer version is managed by the Spring Boot BOM.
+    api "io.micrometer:micrometer-registry-prometheus"
+    api "org.springframework.boot:spring-boot-starter-web"
+    // Bean Validation (Hibernate Validator + Jakarta EL) replaces the old javax.el-api dependency.
+    api "org.springframework.boot:spring-boot-starter-validation"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer injects the JUnit Platform launcher; declare it (version from the Boot BOM)
+    // so the launcher matches the junit-platform-engine version and Jupiter tests are discovered.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
-    testCompile 'io.rest-assured:rest-assured:3.0.6'
-    testCompile 'io.rest-assured:spring-mock-mvc:3.0.6'
-    testCompile "io.rest-assured:json-path:3.0.6"
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
 
-    testCompile project(":ftgo-test-util")
+    testImplementation project(":ftgo-test-util")
 
 }

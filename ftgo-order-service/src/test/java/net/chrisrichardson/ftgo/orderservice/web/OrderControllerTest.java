@@ -5,8 +5,8 @@ import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
@@ -20,13 +20,18 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * JUnit 5 (Jupiter) unit test for {@link OrderController}, driven through
+ * REST Assured's Spring MockMvc module against a standalone MockMvc setup.
+ */
 public class OrderControllerTest {
 
   private OrderService orderService;
   private OrderRepository orderRepository;
   private OrderController orderController;
 
-  @Before
+  // Jupiter's @BeforeEach replaces JUnit 4's @Before; mocks are recreated before every test.
+  @BeforeEach
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
@@ -45,7 +50,8 @@ public class OrderControllerTest {
             get("/orders/1").
     then().
             statusCode(200).
-            body("orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue())).
+            // JSON numbers are parsed as Integer by REST Assured, so compare against an int.
+            body("orderId", equalTo((int) OrderDetailsMother.ORDER_ID)).
             body("state", equalTo(OrderDetailsMother.CHICKEN_VINDALOO_ORDER_STATE.name())).
             body("orderTotal", equalTo(CHICKEN_VINDALOO_ORDER_TOTAL.asString()))
     ;
@@ -64,6 +70,10 @@ public class OrderControllerTest {
     ;
   }
 
+  /**
+   * Builds a standalone MockMvc for the given controllers using a Jackson ObjectMapper
+   * that knows how to serialize {@code Money} via {@link MoneyModule}.
+   */
   private StandaloneMockMvcBuilder configureControllers(Object... controllers) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new MoneyModule());

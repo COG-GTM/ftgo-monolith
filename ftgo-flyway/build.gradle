@@ -1,10 +1,30 @@
+// Flyway 10 split database support into separate modules; the MySQL one must be on the
+// plugin classpath before the `flyway { }` extension can configure a jdbc:mysql URL.
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.flywaydb:flyway-mysql:$flywayVersion"
+        // JDBC driver used by the flywayMigrate/flywayClean tasks.
+        classpath "com.mysql:mysql-connector-j:9.7.0"
+    }
+}
+
 plugins {
-    id "org.flywaydb.flyway" version "6.0.0"
+    id "org.flywaydb.flyway" version "$flywayVersion"
 }
 
 flyway {
-    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false"
+    // Connect to the server rather than to the `ftgo` database so the tasks also work against a
+    // vanilla MySQL container that has not run mysql/schema.sql yet; `schemas`/`createSchemas`
+    // below make Flyway create the `ftgo` schema itself on first migrate.
+    // Connector/J 8 refuses caching_sha2_password (MySQL 8 default) logins over a non-TLS
+    // connection unless it may fetch the server's RSA key, hence allowPublicKeyRetrieval=true.
+    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/?useSSL=false&allowPublicKeyRetrieval=true"
     user = 'root'
     password = 'rootpassword'
+    // Default schema for the migrations and for the flyway_schema_history table.
     schemas = ['ftgo']
+    createSchemas = true
 }
