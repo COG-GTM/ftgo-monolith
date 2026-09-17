@@ -15,6 +15,13 @@ apply plugin:'io.spring.dependency-management'
 
 apply plugin: IntegrationTestsPlugin
 
+// Spring Framework 6.1 dropped bytecode-based parameter name discovery; keep method parameter
+// names in the class files (as the Spring Boot Gradle plugin would do) so Spring MVC and
+// Spring Data can still resolve @PathVariable/@RequestParam/@Param names by reflection.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
+
 // Temporarily commenting out docker-compose configuration
 // dockerCompose {
 //
@@ -52,9 +59,15 @@ dependencies {
 
     testImplementation "org.springframework.boot:spring-boot-starter-test"
 
+    // REST Assured 5.x (io.rest-assured) replaces the legacy com.jayway.restassured 3.x coordinates;
+    // spring-mock-mvc drives OrderController through a standalone MockMvc in the unit tests.
     testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
     testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
     testImplementation "io.rest-assured:json-path:$restAssuredVersion"
 
     testImplementation project(":ftgo-test-util")
+
+    // Gradle 8 no longer adds the JUnit Platform launcher to the test runtime classpath;
+    // without it the Jupiter engine cannot discover tests (unaligned launcher/engine versions).
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
