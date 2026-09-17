@@ -1,3 +1,10 @@
+// Keep method parameter names in the bytecode. Spring 6 dropped LocalVariableTable based name
+// discovery, so unnamed @PathVariable/@RequestParam only bind when javac runs with -parameters.
+// The Spring Boot Gradle plugin does this automatically, but this library module does not apply it.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
+
 dependencies {
     api project(":ftgo-courier-service-api")
 
@@ -13,6 +20,9 @@ dependencies {
     api "org.springframework.boot:spring-boot-starter-validation"
 
     testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer injects the JUnit Platform launcher; declare it (version from the Boot BOM)
+    // so the launcher matches the junit-platform-engine version and Jupiter tests are discovered.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
     testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
