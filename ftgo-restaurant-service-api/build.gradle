@@ -1,3 +1,11 @@
 dependencies {
+    // DTO/API module: the JPA (jakarta.persistence) and Jackson annotations used by the DTOs
+    // come transitively from ftgo-common's `api` starters.
     api project(":ftgo-common")
+
+    // JUnit 5 (Jupiter) via spring-boot-starter-test; the Boot BOM manages the versions.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer injects its own launcher; a BOM-aligned launcher version is required so it
+    // matches the junit-platform-engine pulled in by spring-boot-starter-test.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
