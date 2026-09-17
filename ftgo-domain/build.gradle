@@ -1,7 +1,15 @@
+// Domain module: shared JPA entities (Order, Restaurant, Courier, Consumer) and the courier
+// assignment business logic. Java 21 toolchain, Spring Boot 3.5 BOM and the JUnit Platform
+// runner are inherited from the root build; jakarta.persistence + Hibernate 6 come via ftgo-common-jpa.
 dependencies {
     api project(":ftgo-common")
     api project(":ftgo-common-jpa")
 
-    // Version managed by the Boot BOM (JUnit 4 until the tests are migrated to Jupiter).
-    testImplementation "junit:junit"
+    // JUnit 5 (Jupiter) + Spring Boot test support for the unit tests and the Hibernate 6
+    // entity-mapping test; versions managed by the Boot BOM.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // In-memory database the entity-mapping test boots Hibernate against.
+    testRuntimeOnly "com.h2database:h2"
+    // Gradle 8 no longer injects the JUnit Platform launcher; a BOM-aligned launcher is required.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
