@@ -21,8 +21,11 @@ public class RestaurantController {
     return new CreateRestaurantResponse(r.getId());
   }
 
+  // The path variable is named explicitly: Spring Framework 6.1+ no longer recovers parameter names
+  // from the bytecode's debug info, so an unnamed @PathVariable fails at request time unless the
+  // module is compiled with -parameters.
   @RequestMapping(method = RequestMethod.GET, path = "/{restaurantId}")
-  public ResponseEntity<GetRestaurantResponse> get(@PathVariable long restaurantId) {
+  public ResponseEntity<GetRestaurantResponse> get(@PathVariable("restaurantId") long restaurantId) {
     return restaurantService.findById(restaurantId)
             .map(r -> new ResponseEntity<>(makeGetRestaurantResponse(r), HttpStatus.OK))
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
