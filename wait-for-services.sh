@@ -7,7 +7,8 @@ ports="8081"
 
 while [[ "$done" = false ]]; do
 	for port in $ports; do
-		curl -q http://${host}:${port}/health >& /dev/null
+		# Spring Boot 3 serves the health endpoint under /actuator/health.
+		curl -q http://${host}:${port}/actuator/health >& /dev/null
 		if [[ "$?" -eq "0" ]]; then
 			done=true
 		else
