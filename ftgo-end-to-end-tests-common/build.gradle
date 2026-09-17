@@ -3,10 +3,18 @@ dependencies {
     api project(":ftgo-restaurant-service-api")
     api project(":ftgo-order-service-api")
     api project(":ftgo-courier-service-api")
-    api "io.eventuate.util:eventuate-util-test:$eventuateUtilVersion"
 
+    // Brings JUnit 5 (Jupiter), AssertJ, Hamcrest, Awaitility and Jackson onto the classpath of
+    // every end-to-end test suite that extends AbstractEndToEndTests. Versions come from the Boot BOM.
     api "org.springframework.boot:spring-boot-starter-test"
+    // Polling helper behind net.chrisrichardson.ftgo.endtoendtests.common.Eventually, which
+    // replaces the Bintray-only io.eventuate.util:eventuate-util-test.
+    api "org.awaitility:awaitility"
     // io.rest-assured 5.x replaces com.jayway.restassured.
     api "io.rest-assured:rest-assured:$restAssuredVersion"
     api "com.jayway.jsonpath:json-path"
+
+    // Gradle 8 no longer adds the JUnit Platform launcher to the test runtime classpath
+    // automatically; needed to run this module's own Jupiter tests (EventuallyTest).
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
