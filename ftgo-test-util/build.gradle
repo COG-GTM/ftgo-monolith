@@ -1,3 +1,5 @@
 dependencies {
-    compile "junit:junit:4.12"
+    // JUnit 4 assertions used by FtgoTestUtil; version managed by the Boot BOM.
+    // Module owners migrate this to JUnit Jupiter.
+    api "junit:junit"
 }

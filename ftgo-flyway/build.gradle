@@ -1,5 +1,18 @@
+// Flyway 10 split database support into separate modules; the MySQL one must be on the
+// plugin classpath before the `flyway { }` extension can configure a jdbc:mysql URL.
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.flywaydb:flyway-mysql:$flywayVersion"
+        // JDBC driver used by the flywayMigrate/flywayClean tasks.
+        classpath "com.mysql:mysql-connector-j:8.4.0"
+    }
+}
+
 plugins {
-    id "org.flywaydb.flyway" version "6.0.0"
+    id "org.flywaydb.flyway" version "$flywayVersion"
 }
 
 flyway {

@@ -1,6 +1,7 @@
 dependencies {
-    compile project(":ftgo-common")
-    compile project(":ftgo-common-jpa")
+    api project(":ftgo-common")
+    api project(":ftgo-common-jpa")
 
-    testCompile "junit:junit:4.12"
+    // Version managed by the Boot BOM (JUnit 4 until the tests are migrated to Jupiter).
+    testImplementation "junit:junit"
 }
