@@ -13,7 +13,8 @@ import java.util.function.Supplier;
  * Replaces {@code io.eventuate.util.test.async.Eventually} (Bintray-only artifact) with an
  * Awaitility-backed implementation that keeps the same call sites and semantics: the body is
  * re-run until it stops throwing (an {@link AssertionError} or any other exception counts as
- * "not yet"), or until the overall timeout expires, in which case the last failure is rethrown.
+ * "not yet"), or until the overall timeout expires, in which case an
+ * {@link org.awaitility.core.ConditionTimeoutException} is thrown with the last failure as its cause.
  * <p>
  * Like the Eventuate original, the polling budget can be tuned via environment variables:
  * {@code EVENTUATE_TEST_ITERATIONS} (default 200) and {@code EVENTUATE_TEST_TIMEOUT_MILLIS}
