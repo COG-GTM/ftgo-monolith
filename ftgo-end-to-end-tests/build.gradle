@@ -1,4 +1,8 @@
 dependencies {
+    // Shared end-to-end scenario (AbstractEndToEndTests) plus JUnit 5 / REST Assured / Awaitility.
     testImplementation project(":ftgo-end-to-end-tests-common")
 
+    // Gradle 8 no longer adds the JUnit Platform launcher to the test runtime classpath
+    // automatically; it is required to execute the Jupiter tests in this module.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
