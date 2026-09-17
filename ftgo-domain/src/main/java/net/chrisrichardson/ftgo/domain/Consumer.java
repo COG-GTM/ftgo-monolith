@@ -4,7 +4,7 @@ import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "consumers")
