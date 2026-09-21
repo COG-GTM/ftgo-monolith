@@ -13,6 +13,8 @@ import java.util.Map;
 @RequestMapping(path = "/api/tracking")
 public class ApiTrackingController {
 
+  private static final String LIKE_ESCAPE = "!";
+
   private final ApiRequestLogRepository apiRequestLogRepository;
 
   public ApiTrackingController(ApiRequestLogRepository apiRequestLogRepository) {
@@ -37,8 +39,15 @@ public class ApiTrackingController {
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
-    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
+    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUriContaining(escapeLikePattern(uri));
     return new ResponseEntity<>(logs, HttpStatus.OK);
+  }
+
+  static String escapeLikePattern(String value) {
+    return value
+            .replace(LIKE_ESCAPE, LIKE_ESCAPE + LIKE_ESCAPE)
+            .replace("%", LIKE_ESCAPE + "%")
+            .replace("_", LIKE_ESCAPE + "_");
   }
 
   @RequestMapping(path = "/logs/{correlationId}", method = RequestMethod.GET)
