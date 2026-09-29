@@ -4,6 +4,7 @@ import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
 import net.chrisrichardson.ftgo.domain.Order;
 import net.chrisrichardson.ftgo.domain.OrderLineItem;
+import net.chrisrichardson.ftgo.domain.OrderRevision;
 import net.chrisrichardson.ftgo.domain.OrderState;
 import net.chrisrichardson.ftgo.domain.Restaurant;
 import net.chrisrichardson.ftgo.domain.RestaurantMenu;
@@ -13,6 +14,7 @@ import org.junit.Test;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -97,6 +99,25 @@ public class OrderDomainEventsTest {
 
     assertTrue(order.releaseDomainEvents().isEmpty());
     assertEquals(OrderState.APPROVED, order.getOrderState());
+  }
+
+  @Test
+  public void shouldRecordOrderRevisedEventWhenQuantitiesChange() {
+    order.releaseDomainEvents();
+
+    order.revise(new OrderRevision(Optional.empty(), Collections.singletonMap("1", 3)));
+
+    OrderRevisedEvent revised = (OrderRevisedEvent) single(order.releaseDomainEvents());
+    assertEquals(new Money("37.02"), revised.getOrderTotal());
+  }
+
+  @Test
+  public void shouldNotRecordEventForEmptyRevision() {
+    order.releaseDomainEvents();
+
+    order.revise(new OrderRevision(Optional.empty(), Collections.emptyMap()));
+
+    assertTrue(order.releaseDomainEvents().isEmpty());
   }
 
   private static OrderDomainEvent single(List<OrderDomainEvent> events) {

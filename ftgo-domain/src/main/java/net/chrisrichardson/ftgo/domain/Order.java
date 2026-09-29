@@ -131,7 +131,10 @@ public class Order {
       orderLineItems.updateLineItems(orderRevision);
     }
 
-    registerEvent(new OrderRevisedEvent(getOrderTotal()));
+    if (orderRevision.getDeliveryInformation().isPresent()
+            || !orderRevision.getRevisedLineItemQuantities().isEmpty()) {
+      registerEvent(new OrderRevisedEvent(getOrderTotal()));
+    }
   }
 
 
