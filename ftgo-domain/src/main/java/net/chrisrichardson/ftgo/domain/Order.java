@@ -133,6 +133,10 @@ public class Order {
     return consumerId;
   }
 
+  public LocalDateTime getReadyBy() {
+    return readyBy;
+  }
+
   public void acceptTicket(LocalDateTime readyBy) {
     if (orderState == APPROVED) {
       this.acceptTime = LocalDateTime.now();
