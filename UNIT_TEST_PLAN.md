@@ -5,7 +5,7 @@
 | Module | Existing Tests | Classes Covered |
 |--------|---------------|-----------------|
 | `ftgo-common` | `MoneyTest`, `MoneySerializationTest` | `Money`, `MoneyModule` |
-| `ftgo-domain` | `CourierAssignmentStrategyTest` | `DistanceOptimizedCourierAssignmentStrategy` |
+| `ftgo-domain` | `CourierAssignmentStrategyTest`, `OrderTest`, `CourierTest`, `PlanTest`, `RestaurantTest` | `DistanceOptimizedCourierAssignmentStrategy`, `Order`, `Courier`, `Plan`, `Restaurant` |
 | `ftgo-order-service` | `OrderControllerTest` | `OrderController` (GET only) |
 | `ftgo-application` | `FtgoApplicationTest` | Integration / E2E (requires DB) |
 
@@ -15,59 +15,60 @@
 
 ## Phase 1 — Domain Model (Pure Logic, No Mocks Needed)
 
-> Module: `ftgo-domain` · Test framework: JUnit 4 (already in `build.gradle`)
+> Module: `ftgo-domain` · Test framework: JUnit 4 (already in `build.gradle`) · **Status: ✅ done**
 
 ### 1.1 `OrderTest`
 **File:** `ftgo-domain/src/test/java/.../domain/OrderTest.java`
 
 | # | Test Case | What It Verifies |
 |---|-----------|-----------------|
-| 1 | `shouldCreateOrderInApprovedState` | Constructor sets state = `APPROVED` |
-| 2 | `shouldCalculateOrderTotal` | Delegates to `OrderLineItems.orderTotal()` |
-| 3 | `shouldCancelApprovedOrder` | `cancel()` transitions APPROVED → CANCELLED |
-| 4 | `shouldRejectCancelWhenNotApproved` | `cancel()` throws `UnsupportedStateTransitionException` for non-APPROVED |
-| 5 | `shouldAcceptTicket` | `acceptTicket()` transitions APPROVED → ACCEPTED, stores readyBy |
-| 6 | `shouldRejectAcceptTicketWhenNotApproved` | Throws for wrong state |
-| 7 | `shouldTransitionPreparingOnlyFromAccepted` | `notePreparing()` happy + sad path |
-| 8 | `shouldTransitionReadyOnlyFromPreparing` | `noteReadyForPickup()` happy + sad |
-| 9 | `shouldTransitionPickedUpOnlyFromReady` | `notePickedUp()` happy + sad |
-| 10 | `shouldTransitionDeliveredOnlyFromPickedUp` | `noteDelivered()` happy + sad |
-| 11 | `shouldScheduleCourier` | `schedule()` sets `assignedCourier` |
-| 12 | `shouldFollowFullHappyPath` | APPROVED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED |
+| 1 | ✅ `shouldCreateOrderInApprovedState` | Constructor sets state = `APPROVED` |
+| 2 | ✅ `shouldCalculateOrderTotal` | Delegates to `OrderLineItems.orderTotal()` |
+| 3 | ✅ `shouldCancelApprovedOrder` | `cancel()` transitions APPROVED → CANCELLED |
+| 4 | ✅ `shouldRejectCancelWhenNotApproved` | `cancel()` throws `UnsupportedStateTransitionException` for non-APPROVED |
+| 5 | ✅ `shouldAcceptTicket` | `acceptTicket()` transitions APPROVED → ACCEPTED, stores readyBy |
+| 6 | ✅ `shouldRejectAcceptTicketWhenNotApproved` | Throws for wrong state |
+| 6a | ✅ `shouldRejectAcceptTicketWhenReadyByNotInFuture` | Throws `IllegalArgumentException` when readyBy is not in the future |
+| 7 | ✅ `shouldTransitionPreparingOnlyFromAccepted` | `notePreparing()` happy + sad path |
+| 8 | ✅ `shouldTransitionReadyOnlyFromPreparing` | `noteReadyForPickup()` happy + sad |
+| 9 | ✅ `shouldTransitionPickedUpOnlyFromReady` | `notePickedUp()` happy + sad |
+| 10 | ✅ `shouldTransitionDeliveredOnlyFromPickedUp` | `noteDelivered()` happy + sad |
+| 11 | ✅ `shouldScheduleCourier` | `schedule()` sets `assignedCourier` |
+| 12 | ✅ `shouldFollowFullHappyPath` | APPROVED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED |
 
 ### 1.2 `CourierTest`
 **File:** `ftgo-domain/src/test/java/.../domain/CourierTest.java`
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldStartUnavailable` |
-| 2 | `shouldToggleAvailability` |
-| 3 | `shouldInitLocationFromAddress` |
-| 4 | `shouldUpdateLocation` |
-| 5 | `shouldTrackActiveDeliveryCount` |
-| 6 | `shouldHaveZeroDeliveriesWhenEmpty` |
-| 7 | `shouldReturnActionsForDelivery` |
-| 8 | `shouldCancelDelivery` |
-| 9 | `hasLocationReturnsFalseWhenNotSet` |
+| 1 | ✅ `shouldStartUnavailable` |
+| 2 | ✅ `shouldToggleAvailability` |
+| 3 | ✅ `shouldInitLocationFromAddress` |
+| 4 | ✅ `shouldUpdateLocation` |
+| 5 | ✅ `shouldTrackActiveDeliveryCount` |
+| 6 | ✅ `shouldHaveZeroDeliveriesWhenEmpty` |
+| 7 | ✅ `shouldReturnActionsForDelivery` |
+| 8 | ✅ `shouldCancelDelivery` |
+| 9 | ✅ `hasLocationReturnsFalseWhenNotSet` |
 
 ### 1.3 `PlanTest`
 **File:** `ftgo-domain/src/test/java/.../domain/PlanTest.java`
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldAddAction` |
-| 2 | `shouldRemoveDeliveryActions` |
-| 3 | `shouldFilterActionsForDelivery` |
-| 4 | `shouldHandleEmptyPlan` |
+| 1 | ✅ `shouldAddAction` |
+| 2 | ✅ `shouldRemoveDeliveryActions` |
+| 3 | ✅ `shouldFilterActionsForDelivery` |
+| 4 | ✅ `shouldHandleEmptyPlan` |
 
 ### 1.4 `RestaurantTest`
 **File:** `ftgo-domain/src/test/java/.../domain/RestaurantTest.java`
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldFindMenuItemById` |
-| 2 | `shouldReturnEmptyForUnknownMenuItem` |
-| 3 | `shouldThrowOnReviseMenu` (documents current behavior) |
+| 1 | ✅ `shouldFindMenuItemById` |
+| 2 | ✅ `shouldReturnEmptyForUnknownMenuItem` |
+| 3 | ✅ `shouldThrowOnReviseMenu` (documents current behavior) |
 
 ---
 
