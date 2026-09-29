@@ -55,4 +55,19 @@ dependencies {
     testCompile "io.rest-assured:json-path:3.0.6"
 
     testCompile project(":ftgo-test-util")
+
+    integrationTestCompile "org.testcontainers:mysql:$testcontainersVersion"
+    integrationTestRuntime "org.flywaydb:flyway-core:5.0.7"
+}
+
+// Integration tests build the schema from the real Flyway migrations
+sourceSets.integrationTest.resources.srcDir "${rootDir}/ftgo-flyway/src/main/resources"
+
+integrationTest {
+    shouldRunAfter test
+    systemProperty "ftgo.it.mysql.image", System.getProperty("ftgo.it.mysql.image", "mysql:5.7")
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 }

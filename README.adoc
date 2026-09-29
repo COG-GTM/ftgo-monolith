@@ -3,6 +3,38 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Running the order flow integration tests
+
+`ftgo-order-service` has Testcontainers-based integration tests (`src/integration-test/java`) that exercise the order flow against a real MySQL database:
+
+* `OrderServiceIntegrationTest` - `OrderService` + JPA repositories: order creation, validation failures, the full accept -> preparing -> ready -> picked up -> delivered lifecycle (including courier assignment), cancellation, revision and optimistic locking.
+* `OrderControllerIntegrationTest` - the same flow over HTTP (`/orders/...`) against an embedded server on a random port, including API request tracking and 404 handling.
+
+Prerequisites:
+
+* JDK 8 (the build uses Gradle 4.10.2, which does not run on newer JDKs)
+* A running Docker daemon that the current user can access - no local MySQL or `docker-compose up` is needed
+
+Run them with:
+
+```
+./gradlew :ftgo-order-service:integrationTest
+```
+
+What happens:
+
+* A single `mysql:5.7` container is started per test JVM by `FtgoMySqlContainer` and removed automatically when the JVM exits (via Testcontainers' Ryuk container).
+* The schema is created by the real Flyway migrations in `ftgo-flyway/src/main/resources/db/migration`, and Hibernate runs with `ddl-auto=validate`, so any drift between the JPA mappings and the migrations fails the tests.
+* Tables are cleared before each test, so tests are independent of execution order.
+
+To use a different MySQL image (e.g. a registry mirror), pass `-Dftgo.it.mysql.image`:
+
+```
+./gradlew :ftgo-order-service:integrationTest -Dftgo.it.mysql.image=mirror.gcr.io/library/mysql:5.7
+```
+
+Test reports are written to `ftgo-order-service/build/reports/tests/integrationTest/index.html`.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
