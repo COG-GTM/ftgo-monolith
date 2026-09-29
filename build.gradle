@@ -41,3 +41,5 @@ subprojects {
     }
 
 }
+
+apply from: "gradle/jacoco.gradle"
