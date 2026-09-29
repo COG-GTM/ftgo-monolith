@@ -32,7 +32,6 @@ subprojects {
     }
 
     jacocoTestReport {
-        executionData = fileTree(buildDir).include("jacoco/*.exec")
         reports {
             xml.enabled = true
             html.enabled = true
@@ -49,7 +48,6 @@ def configureAggregate = { task ->
         task.dependsOn p.tasks.matching { it.name == "test" }
         task.mustRunAfter p.tasks.withType(Test)
     }
-    task.executionData = files(testedProjects.collect { p -> p.fileTree(p.buildDir).include("jacoco/*.exec") })
     task.sourceDirectories = files(coveredProjects.collect { p -> p.sourceSets.main.allSource.srcDirs })
     task.classDirectories = files(coveredProjects.collect { p -> p.sourceSets.main.output.classesDirs })
 }
@@ -90,3 +88,13 @@ task jacocoAggregateCoverageVerification(type: JacocoCoverageVerification) {
 }
 
 check.dependsOn jacocoAggregateCoverageVerification
+
+// Only use execution data from Test tasks scheduled in this build, so leftover .exec files from earlier runs can't inflate coverage.
+gradle.taskGraph.whenReady { graph ->
+    def scheduledTests = graph.allTasks.findAll { it instanceof Test }
+    subprojects.each { p ->
+        p.jacocoTestReport.executionData = files(scheduledTests.findAll { it.project == p }.collect { it.jacoco.destinationFile }).filter { it.exists() }
+    }
+    def aggregateExecutionData = files(scheduledTests.findAll { it.project in testedProjects }.collect { it.jacoco.destinationFile }).filter { it.exists() }
+    [jacocoAggregateReport, jacocoAggregateCoverageVerification].each { it.executionData = aggregateExecutionData }
+}
