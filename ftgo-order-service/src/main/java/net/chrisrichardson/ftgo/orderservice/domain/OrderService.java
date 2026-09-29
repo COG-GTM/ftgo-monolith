@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import net.chrisrichardson.ftgo.common.events.DomainEventPublisher;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
@@ -29,13 +30,15 @@ public class OrderService {
   private ConsumerService consumerService;
   private CourierRepository courierRepository;
   private CourierAssignmentStrategy courierAssignmentStrategy;
+  private DomainEventPublisher domainEventPublisher;
 
   public OrderService(OrderRepository orderRepository,
                       RestaurantRepository restaurantRepository,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
                       CourierRepository courierRepository,
-                      CourierAssignmentStrategy courierAssignmentStrategy) {
+                      CourierAssignmentStrategy courierAssignmentStrategy,
+                      DomainEventPublisher domainEventPublisher) {
 
     this.orderRepository = orderRepository;
     this.restaurantRepository = restaurantRepository;
@@ -43,6 +46,7 @@ public class OrderService {
     this.consumerService = consumerService;
     this.courierRepository = courierRepository;
     this.courierAssignmentStrategy = courierAssignmentStrategy;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   @Transactional
@@ -61,6 +65,7 @@ public class OrderService {
     // TODO - charge a credit card too
 
     orderRepository.save(order);
+    publishEvents(order);
 
     meterRegistry.ifPresent(mr1 -> mr1.counter("approved_orders").increment());
 
@@ -81,6 +86,7 @@ public class OrderService {
     Order order = tryToFindOrder(orderId);
 
     order.cancel();
+    publishEvents(order);
 
     return order;
   }
@@ -89,6 +95,7 @@ public class OrderService {
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
     Order order = tryToFindOrder(orderId);
     order.revise(orderRevision);
+    publishEvents(order);
     return order;
   }
 
@@ -96,6 +103,7 @@ public class OrderService {
     Order order = tryToFindOrder(orderId);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
+    publishEvents(order);
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
@@ -136,6 +144,10 @@ public class OrderService {
   }
 
 
+  private void publishEvents(Order order) {
+    domainEventPublisher.publish(Order.class, order.getId(), order.releaseDomainEvents());
+  }
+
   private Order tryToFindOrder(Long orderId) {
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
   }
@@ -144,23 +156,27 @@ public class OrderService {
   public void notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePreparing();
+    publishEvents(order);
   }
 
   @Transactional
   public void noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteReadyForPickup();
+    publishEvents(order);
   }
 
   @Transactional
   public void notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePickedUp();
+    publishEvents(order);
   }
 
   @Transactional
   public void noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteDelivered();
+    publishEvents(order);
   }
 }
