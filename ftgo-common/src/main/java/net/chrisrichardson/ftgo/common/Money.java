@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 
 @Embeddable
 @Access(AccessType.FIELD)
+@Schema(type = "string", description = "Monetary amount serialized as a decimal string", example = "12.34")
 public class Money {
 
   public static Money ZERO = new Money(0);

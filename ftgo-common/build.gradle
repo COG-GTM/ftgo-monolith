@@ -12,6 +12,8 @@ dependencies {
 
     compile 'mysql:mysql-connector-java:8.0.33'
 
+    compile "io.swagger.core.v3:swagger-annotations:2.0.10"
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
     runtime "javax.xml.bind:jaxb-api:2.2.11"
