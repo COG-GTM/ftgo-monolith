@@ -4,7 +4,7 @@
 
 | Module | Existing Tests | Classes Covered |
 |--------|---------------|-----------------|
-| `ftgo-common` | `MoneyTest`, `MoneySerializationTest` | `Money`, `MoneyModule` |
+| `ftgo-common` | `MoneyTest`, `MoneySerializationTest`, `AddressTest`, `ErrorResponseTest`, `PersonNameTest` | `Money`, `MoneyModule`, `Address`, `ErrorResponse`, `PersonName` |
 | `ftgo-domain` | `CourierAssignmentStrategyTest` | `DistanceOptimizedCourierAssignmentStrategy` |
 | `ftgo-order-service` | `OrderControllerTest` | `OrderController` (GET only) |
 | `ftgo-application` | `FtgoApplicationTest` | Integration / E2E (requires DB) |
