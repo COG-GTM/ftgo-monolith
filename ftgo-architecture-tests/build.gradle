@@ -1,0 +1,14 @@
+evaluationDependsOn(":ftgo-application")
+
+dependencies {
+    // ftgo-application applies the Spring Boot plugin, which disables its plain jar,
+    // so its compiled classes are added directly.
+    testCompile project(":ftgo-application").sourceSets.main.output
+    testCompile project(":ftgo-consumer-service")
+    testCompile project(":ftgo-order-service")
+    testCompile project(":ftgo-restaurant-service")
+    testCompile project(":ftgo-courier-service")
+
+    testCompile "com.tngtech.archunit:archunit-junit4:1.3.0"
+    testCompile "junit:junit:4.12"
+}
