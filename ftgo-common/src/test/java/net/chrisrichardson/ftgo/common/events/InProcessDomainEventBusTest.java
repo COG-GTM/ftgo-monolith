@@ -88,6 +88,26 @@ public class InProcessDomainEventBusTest {
   }
 
   @Test
+  public void shouldIsolateSubscriberWhoseEventTypeLookupFails() {
+    List<SubEvent> received = new ArrayList<>();
+    bus.subscribe(new DomainEventSubscriber<SubEvent>() {
+      @Override
+      public Class<SubEvent> getEventType() {
+        throw new IllegalStateException("boom");
+      }
+
+      @Override
+      public void handle(SubEvent event) {
+      }
+    });
+    bus.subscribe(SubEvent.class, received::add);
+
+    bus.publish(new SubEvent());
+
+    assertEquals(1, received.size());
+  }
+
+  @Test
   public void shouldRegisterSubscribersPassedToConstructor() {
     List<SubEvent> received = new ArrayList<>();
     DomainEventSubscriber<SubEvent> subscriber = new DomainEventSubscriber<SubEvent>() {

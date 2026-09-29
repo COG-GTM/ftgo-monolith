@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common.events;
 
+import net.chrisrichardson.ftgo.common.events.TestEvents.OtherEvent;
 import net.chrisrichardson.ftgo.common.events.TestEvents.SubEvent;
 import org.junit.After;
 import org.junit.Before;
@@ -62,10 +63,54 @@ public class TransactionAwareDomainEventPublisherTest {
     assertTrue(delivered.isEmpty());
   }
 
+  @Test
+  public void shouldDeliverEventsPublishedBySubscribersDuringCommit() {
+    InProcessDomainEventBus bus = new InProcessDomainEventBus();
+    TransactionAwareDomainEventPublisher busPublisher = new TransactionAwareDomainEventPublisher(bus);
+    OtherEvent followUp = new OtherEvent();
+    bus.subscribe(SubEvent.class, e -> busPublisher.publish(followUp));
+    bus.subscribe(OtherEvent.class, delivered::add);
+    TransactionSynchronizationManager.initSynchronization();
+
+    busPublisher.publish(new SubEvent());
+    commit();
+
+    assertEquals(Collections.singletonList(followUp), delivered);
+  }
+
+  @Test
+  public void shouldDeferEventsPublishedInNewTransactionStartedDuringCommit() {
+    InProcessDomainEventBus bus = new InProcessDomainEventBus();
+    TransactionAwareDomainEventPublisher busPublisher = new TransactionAwareDomainEventPublisher(bus);
+    OtherEvent followUp = new OtherEvent();
+    List<List<TransactionSynchronization>> innerSynchronizations = new ArrayList<>();
+    bus.subscribe(SubEvent.class, e -> {
+      List<TransactionSynchronization> outer = TransactionSynchronizationManager.getSynchronizations();
+      TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.initSynchronization();
+      busPublisher.publish(followUp);
+      assertTrue(delivered.isEmpty());
+      innerSynchronizations.add(TransactionSynchronizationManager.getSynchronizations());
+      TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.initSynchronization();
+      outer.forEach(TransactionSynchronizationManager::registerSynchronization);
+    });
+    bus.subscribe(OtherEvent.class, delivered::add);
+    TransactionSynchronizationManager.initSynchronization();
+
+    busPublisher.publish(new SubEvent());
+    commit();
+    assertTrue(delivered.isEmpty());
+
+    innerSynchronizations.get(0).forEach(TransactionSynchronization::afterCommit);
+    assertEquals(Collections.singletonList(followUp), delivered);
+  }
+
   private void commit() {
     List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
     synchronizations.forEach(TransactionSynchronization::afterCommit);
     synchronizations.forEach(s -> s.afterCompletion(TransactionSynchronization.STATUS_COMMITTED));
+    TransactionSynchronizationManager.clearSynchronization();
   }
 
   private void rollback() {

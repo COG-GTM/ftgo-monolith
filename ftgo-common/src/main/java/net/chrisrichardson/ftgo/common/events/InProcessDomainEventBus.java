@@ -55,15 +55,16 @@ public class InProcessDomainEventBus implements DomainEventPublisher {
   @Override
   public void publish(DomainEvent event) {
     for (DomainEventSubscriber<?> subscriber : subscribers) {
-      if (subscriber.getEventType().isInstance(event)) {
-        dispatch(subscriber, event);
-      }
+      dispatch(subscriber, event);
     }
   }
 
   private <E extends DomainEvent> void dispatch(DomainEventSubscriber<E> subscriber, DomainEvent event) {
     try {
-      subscriber.handle(subscriber.getEventType().cast(event));
+      Class<E> eventType = subscriber.getEventType();
+      if (eventType.isInstance(event)) {
+        subscriber.handle(eventType.cast(event));
+      }
     } catch (RuntimeException e) {
       logger.error("Subscriber {} failed to handle {}", subscriber, event.getClass().getSimpleName(), e);
     }
