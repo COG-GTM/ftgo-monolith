@@ -107,7 +107,7 @@
 > Modules: `ftgo-order-service`, `ftgo-consumer-service`, `ftgo-courier-service`  
 > Add `testCompile "org.mockito:mockito-core:2.23.4"` where not already present via spring-boot-starter-test.
 
-### 3.1 `OrderServiceTest`
+### 3.1 `OrderServiceTest` ✅ (implemented, plus extra edge cases)
 **File:** `ftgo-order-service/src/test/java/.../domain/OrderServiceTest.java`
 
 | # | Test Case |
