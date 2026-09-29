@@ -1,0 +1,79 @@
+# Output of trace-sql-writes.sh against master @ 4823d191 (MySQL 5.7, Flyway V1+V2 schema).
+# NOTE: orders.latitude/longitude were added locally before this run to work around the
+# POST /orders defect described in README.md; nothing else was changed.
+# DML statements per request, grouped by table (count = statements issued).
+
+### consumer: create  (POST /consumers)
+          1 insert into api_request_log
+          1 insert into consumers
+          1 update hibernate_sequence
+
+### restaurant: create  (POST /restaurants)
+          1 insert into api_request_log
+          1 insert into restaurant_menu_items
+          1 insert into restaurants
+
+### courier: create  (POST /couriers)
+          1 insert into api_request_log
+          1 insert into courier
+
+### courier: availability  (POST /couriers/1/availability)
+          1 insert into api_request_log
+          1 update courier
+
+### courier: location  (POST /couriers/1/location)
+          1 insert into api_request_log
+          1 update courier
+
+### order: create  (POST /orders)
+          1 insert into api_request_log
+          1 insert into order_line_items
+          1 insert into orders
+
+### order: revise  (POST /orders/1/revise)
+          1 delete from order_line_items
+          1 insert into api_request_log
+          1 insert into order_line_items
+          1 update orders
+
+### kitchen: accept (schedules courier)  (POST /orders/1/accept)
+          1 insert into api_request_log
+          2 insert into courier_actions
+          1 update orders
+
+### kitchen: preparing  (POST /orders/1/preparing)
+          1 insert into api_request_log
+          1 update orders
+
+### kitchen: ready  (POST /orders/1/ready)
+          1 insert into api_request_log
+          1 update orders
+
+### delivery: picked up  (POST /orders/1/pickedup)
+          1 insert into api_request_log
+          1 update orders
+
+### delivery: delivered  (POST /orders/1/delivered)
+          1 insert into api_request_log
+          1 update orders
+
+### order: create (to cancel)  (POST /orders)
+          1 insert into api_request_log
+          1 insert into order_line_items
+          1 insert into orders
+
+### order: cancel  (POST /orders/2/cancel)
+          1 insert into api_request_log
+          1 update orders
+
+### order: get (read-only)  (GET /orders/1)
+          1 insert into api_request_log
+
+### courier: workload (read-only)  (GET /couriers/1/workload)
+          1 insert into api_request_log
+
+### second accept on same courier (order 3)
+      1 delete from courier_actions where courier_id=?
+      1 insert into api_request_log (correlation_id, duration_ms, error_message, http_method, query_string, remote_addr, request
+      4 insert into courier_actions (courier_id, order_id, time, type) values (?, ?, ?, ?)
+      1 update orders set accept_time=?, assigned_courier_id=?, order_state=?, ready_by=?, version=? where id=? and version=?
