@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import net.chrisrichardson.ftgo.common.events.DomainEventPublisher;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,13 +27,20 @@ public class OrderConfiguration {
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
                                    CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierAssignmentStrategy courierAssignmentStrategy,
+                                   DomainEventPublisher domainEventPublisher) {
     return new OrderService(orderRepository,
             restaurantRepository,
             meterRegistry,
             consumerService,
             courierRepository,
-            courierAssignmentStrategy);
+            courierAssignmentStrategy,
+            domainEventPublisher);
+  }
+
+  @Bean
+  public OrderStateTransitionMetrics orderStateTransitionMetrics(Optional<MeterRegistry> meterRegistry) {
+    return new OrderStateTransitionMetrics(meterRegistry);
   }
 
   @Bean
