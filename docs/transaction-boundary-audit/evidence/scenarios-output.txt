@@ -1,0 +1,28 @@
+consumer=2 restaurant=1
+== S1 createOrder (happy path)
+{"orderId":1}
+== S2 createOrder with unknown consumer
+http=500
+orders for consumer 999999: 0
+== S3 accept with no available courier
+{"timestamp":"2026-09-29T15:30:25.613","status":503,"error":"No Courier Available","message":"No courier available for assignment","path":"/orders/1/accept","correlationId":"38e06350-5cdc-445c-a325-55fa74e9dc7f"}
+http=503
+order 1 after failed accept: APPROVED	NULL	NULL	NULL
+== S4 create courier + available, accept again
+http=200
+order 1: ACCEPTED	1
+courier_actions: 
+1	1	PICKUP	NULL
+1	1	DROPOFF	2026-09-29 16:45:25
+== S5 second order accepted onto same courier
+http=200
+== S6 drive O1 to DELIVERED, check courier workload
+preparing http=200
+ready http=200
+pickedup http=200
+delivered http=200
+order 1: DELIVERED
+courier_actions for delivered order 1: 2
+workload: {"courierId":1,"activeDeliveries":2,"available":true,"currentLatitude":37.81,"currentLongitude":-122.21,"lastLocationUpdate":null}
+== S7 GET /orders/1 (read path, OSIV)
+{"orderId":1,"state":"DELIVERED","orderTotal":"24.68","restaurantName":"Ajanta","assignedCourier":1,"courierActions":[{"type":"PICKUP","time":null},{"type":"DROPOFF","time":"2026-09-29T16:45:25"}],"estimatedDeliveryTime":"2026-09-29T16:45:25"}

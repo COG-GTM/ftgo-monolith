@@ -1,0 +1,15 @@
+accept 4 http=200
+accept 3 http=200
+run 1 courier=2 orders assigned to it: 3,4  courier_actions rows: 4 orders_with_actions: 3,4
+accept 5 http=200
+accept 6 http=200
+run 2 courier=3 orders assigned to it: 5,6  courier_actions rows: 4 orders_with_actions: 5,6
+accept 8 http=200
+accept 7 http=200
+run 3 courier=4 orders assigned to it: 7,8  courier_actions rows: 4 orders_with_actions: 7,8
+accept 9 http=200
+accept 10 http=200
+run 4 courier=5 orders assigned to it: 9,10  courier_actions rows: 4 orders_with_actions: 9,10
+accept 11 http=200
+accept 12 http=200
+run 5 courier=6 orders assigned to it: 11,12  courier_actions rows: 4 orders_with_actions: 11,12
