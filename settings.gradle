@@ -25,6 +25,8 @@ include "ftgo-courier-service"
 
 include "ftgo-application"
 
+include "ftgo-architecture-tests"
+
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
 
