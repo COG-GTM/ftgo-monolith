@@ -1,0 +1,92 @@
+// JaCoCo code coverage.
+//
+//   ./gradlew test                          per-module reports: <module>/build/reports/jacoco/test/
+//   ./gradlew jacocoAggregateReport         aggregate report:   build/reports/jacoco/aggregate/
+//   ./gradlew check                         also enforces the minimum aggregate coverage
+//
+// Coverage thresholds live in gradle.properties (jacocoMinimum*Coverage) so they can be ratcheted up.
+
+apply plugin: "base"
+apply plugin: "jacoco"
+
+repositories {
+    mavenCentral()
+}
+
+jacoco {
+    toolVersion = jacocoVersion
+}
+
+// Black-box tests that run against an externally deployed application; they exercise no in-process code.
+def coverageExcludedTestProjects = [":ftgo-end-to-end-tests"]
+
+subprojects {
+    apply plugin: "jacoco"
+
+    jacoco {
+        toolVersion = jacocoVersion
+    }
+
+    tasks.withType(Test) {
+        finalizedBy "jacocoTestReport"
+    }
+
+    jacocoTestReport {
+        executionData = fileTree(buildDir).include("jacoco/*.exec")
+        reports {
+            xml.enabled = true
+            html.enabled = true
+            csv.enabled = false
+        }
+    }
+}
+
+def coveredProjects = subprojects.findAll { it.file("src/main/java").exists() }
+def testedProjects = subprojects.findAll { !(it.path in coverageExcludedTestProjects) }
+
+def configureAggregate = { task ->
+    testedProjects.each { p ->
+        task.dependsOn p.tasks.matching { it.name == "test" }
+        task.mustRunAfter p.tasks.withType(Test)
+    }
+    task.executionData = files(testedProjects.collect { p -> p.fileTree(p.buildDir).include("jacoco/*.exec") })
+    task.sourceDirectories = files(coveredProjects.collect { p -> p.sourceSets.main.allSource.srcDirs })
+    task.classDirectories = files(coveredProjects.collect { p -> p.sourceSets.main.output.classesDirs })
+}
+
+task jacocoAggregateReport(type: JacocoReport) {
+    group = "verification"
+    description = "Generates a JaCoCo coverage report aggregated across all modules."
+    configureAggregate(delegate)
+    reports {
+        xml.enabled = true
+        xml.destination = file("$buildDir/reports/jacoco/aggregate/jacocoAggregateReport.xml")
+        html.enabled = true
+        html.destination = file("$buildDir/reports/jacoco/aggregate/html")
+        csv.enabled = false
+    }
+}
+
+task jacocoAggregateCoverageVerification(type: JacocoCoverageVerification) {
+    group = "verification"
+    description = "Fails the build if aggregate coverage drops below the jacocoMinimum*Coverage thresholds."
+    configureAggregate(delegate)
+    violationRules {
+        rule {
+            element = "BUNDLE"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = new BigDecimal(jacocoMinimumLineCoverage)
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = new BigDecimal(jacocoMinimumBranchCoverage)
+            }
+        }
+    }
+    finalizedBy jacocoAggregateReport
+}
+
+check.dependsOn jacocoAggregateCoverageVerification
