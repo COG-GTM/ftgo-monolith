@@ -4,10 +4,10 @@
 
 | Module | Existing Tests | Classes Covered |
 |--------|---------------|-----------------|
-| `ftgo-common` | `MoneyTest`, `MoneySerializationTest` | `Money`, `MoneyModule` |
+| `ftgo-common` | `MoneyTest`, `MoneySerializationTest`, `ApiTrackingInterceptorTest`, `ApiRequestLogTest` | `Money`, `MoneyModule`, `ApiTrackingInterceptor`, `ApiRequestLog` |
 | `ftgo-domain` | `CourierAssignmentStrategyTest` | `DistanceOptimizedCourierAssignmentStrategy` |
 | `ftgo-order-service` | `OrderControllerTest` | `OrderController` (GET only) |
-| `ftgo-application` | `FtgoApplicationTest` | Integration / E2E (requires DB) |
+| `ftgo-application` | `FtgoApplicationTest`, `GlobalExceptionHandlerTest` | Integration / E2E (requires DB), `GlobalExceptionHandler` |
 
 **Untested classes: ~25+.** The sections below are ordered by priority (highest-value, lowest-risk tests first).
 
