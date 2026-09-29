@@ -202,34 +202,36 @@
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldGenerateCorrelationIdWhenMissing` |
-| 2 | `shouldPropagateExistingCorrelationId` |
-| 3 | `shouldSetCorrelationIdInResponseHeader` |
-| 4 | `shouldPersistLogAfterCompletion` |
-| 5 | `shouldRecordErrorMessageOnException` |
-| 6 | `shouldHandleSaveFailureGracefully` |
+| 1 | ✅ `shouldGenerateCorrelationIdWhenMissing` |
+| 2 | ✅ `shouldPropagateExistingCorrelationId` |
+| 3 | ✅ `shouldSetCorrelationIdInResponseHeader` |
+| 4 | ✅ `shouldPersistLogAfterCompletion` |
+| 5 | ✅ `shouldRecordErrorMessageOnException` |
+| 6 | ✅ `shouldHandleSaveFailureGracefully` |
+| 7 | ✅ `shouldGenerateCorrelationIdWhenHeaderIsEmpty` (added) |
+| 8 | ✅ `shouldNotPersistWhenPreHandleDidNotRun` (added) |
 
 ### 5.2 `ApiRequestLogTest`
 **File:** `ftgo-common/src/test/java/.../tracking/ApiRequestLogTest.java`
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldCreateWithRequiredFields` |
-| 2 | `shouldCompleteWithStatus` |
-| 3 | `shouldCompleteWithError` |
+| 1 | ✅ `shouldCreateWithRequiredFields` |
+| 2 | ✅ `shouldCompleteWithStatus` |
+| 3 | ✅ `shouldCompleteWithError` |
 
 ### 5.3 `GlobalExceptionHandlerTest`
 **File:** `ftgo-application/src/test/java/.../GlobalExceptionHandlerTest.java`
 
 | # | Test Case |
 |---|-----------|
-| 1 | `shouldReturn404ForOrderNotFound` |
-| 2 | `shouldReturn404ForRestaurantNotFound` |
-| 3 | `shouldReturn404ForCourierNotFound` |
-| 4 | `shouldReturn409ForUnsupportedStateTransition` |
-| 5 | `shouldReturn503ForNoCourierAvailable` |
-| 6 | `shouldReturn400ForIllegalArgument` |
-| 7 | `shouldReturn500ForUnhandledException` |
+| 1 | ✅ `shouldReturn404ForOrderNotFound` |
+| 2 | ✅ `shouldReturn404ForRestaurantNotFound` |
+| 3 | ✅ `shouldReturn404ForCourierNotFound` |
+| 4 | ✅ `shouldReturn409ForUnsupportedStateTransition` |
+| 5 | ✅ `shouldReturn503ForNoCourierAvailable` |
+| 6 | ✅ `shouldReturn400ForIllegalArgument` |
+| 7 | ✅ `shouldReturn500ForUnhandledException` |
 
 ---
 
