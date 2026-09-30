@@ -5,6 +5,9 @@
 #
 # Release lifecycle demos against a deployed release (deployment/kind/README.md, "Release lifecycle"):
 #   make helm-test | demo-helm-test | demo-upgrade | demo-rollback | demo-reinstall
+#
+# Live demo (docs/demo/helm-on-kind.md):
+#   make demo-reset [QUICK=1] | demo-legacy | demo-order
 
 KIND_VERSION    ?= v0.24.0
 KUBECTL_VERSION ?= v1.31.0
@@ -31,7 +34,8 @@ REPLICAS     ?= 2
 export KIND_VERSION KUBECTL_VERSION HELM_VERSION
 
 .PHONY: kind-demo tools kind-up images deploy smoke e2e kind-down \
-        helm-test demo-helm-test demo-upgrade demo-rollback demo-reinstall
+        helm-test demo-helm-test demo-upgrade demo-rollback demo-reinstall \
+        demo-reset demo-legacy demo-order
 
 # kind-demo's prerequisites are sequential steps.
 .NOTPARALLEL:
@@ -91,6 +95,15 @@ demo-rollback: tools
 
 demo-reinstall: tools
 	$(DEMO_ENV) scripts/demo-reinstall.sh $(if $(CLEAN),--clean)
+
+demo-reset: tools
+	$(DEMO_ENV) scripts/demo-reset.sh $(if $(QUICK),--quick)
+
+demo-legacy: tools
+	$(DEMO_ENV) scripts/demo-legacy.sh
+
+demo-order: tools
+	$(DEMO_ENV) scripts/demo-order.sh
 
 kind-down: tools
 	kind delete cluster --name '$(CLUSTER)'
