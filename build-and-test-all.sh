@@ -28,6 +28,12 @@ echo KEEP_RUNNING=$KEEP_RUNNING
 
 . ./set-env.sh
 
+# ADMIN user shared by the ftgo-application container and the end-to-end tests (see README, Security).
+export FTGO_ADMIN_USERNAME=${FTGO_ADMIN_USERNAME:-admin}
+if [ -z "$FTGO_ADMIN_PASSWORD" ] ; then
+    export FTGO_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')
+fi
+
 # TODO Temporarily
 
 ./gradlew testClasses
