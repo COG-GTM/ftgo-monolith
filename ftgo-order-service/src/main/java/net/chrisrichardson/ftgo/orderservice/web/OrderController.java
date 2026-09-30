@@ -7,8 +7,10 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import net.chrisrichardson.ftgo.orderservice.web.security.OrderAccessPolicy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -26,14 +28,23 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private OrderAccessPolicy orderAccessPolicy;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository, OrderAccessPolicy orderAccessPolicy) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.orderAccessPolicy = orderAccessPolicy;
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Void> handleAccessDenied() {
+    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
   }
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+    orderAccessPolicy.requireConsumer(request.getConsumerId());
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
@@ -85,6 +96,7 @@ public class OrderController {
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
     try {
+      orderAccessPolicy.requireConsumerOwns(orderId);
       Order order = orderService.cancel(orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
@@ -95,6 +107,7 @@ public class OrderController {
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
     try {
+      orderAccessPolicy.requireConsumerOwns(orderId);
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
@@ -104,30 +117,35 @@ public class OrderController {
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
   public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+    orderAccessPolicy.requireRestaurantOwns(orderId);
     orderService.accept(orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
   public ResponseEntity<String> preparing(@PathVariable long orderId) {
+    orderAccessPolicy.requireRestaurantOwns(orderId);
     orderService.notePreparing(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
   public ResponseEntity<String> ready(@PathVariable long orderId) {
+    orderAccessPolicy.requireRestaurantOwns(orderId);
     orderService.noteReadyForPickup(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
   public ResponseEntity<String> pickedup(@PathVariable long orderId) {
+    orderAccessPolicy.requireCourierAssigned(orderId);
     orderService.notePickedUp(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
   public ResponseEntity<String> delivered(@PathVariable long orderId) {
+    orderAccessPolicy.requireCourierAssigned(orderId);
     orderService.noteDelivered(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
