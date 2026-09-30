@@ -6,6 +6,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.response.ExtractableResponse;
+import com.jayway.restassured.response.Response;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -45,6 +47,7 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+  private String courierAccessToken;
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -293,21 +296,24 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    ExtractableResponse<Response> response = given().
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
             post(baseUrl(getApplicationPort(), "couriers")).
             then().
             statusCode(200)
-            .extract()
-            .path("id");
+            .extract();
+    courierId = response.path("id");
+    courierAccessToken = response.path("accessToken");
+    assertNotNull(courierAccessToken);
   }
 
   private void noteCourierAvailable() {
     given().
             body(new CourierAvailability(true)).
             contentType("application/json").
+            header("Authorization", "Bearer " + courierAccessToken).
             when().
             post(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "availability")).
             then().
@@ -340,6 +346,7 @@ public abstract class AbstractEndToEndTests {
     });
 
     given().
+            header("Authorization", "Bearer " + courierAccessToken).
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().

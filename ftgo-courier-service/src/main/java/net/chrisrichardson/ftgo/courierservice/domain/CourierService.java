@@ -24,10 +24,17 @@ public class CourierService {
   }
 
   @Transactional
-  public Courier createCourier(PersonName name, Address address) {
+  public CourierRegistration createCourier(PersonName name, Address address) {
     Courier courier = new Courier(name, address);
+    String accessToken = courier.issueAccessToken();
     courierRepository.save(courier);
-    return courier;
+    return new CourierRegistration(courier, accessToken);
+  }
+
+  public boolean authenticate(long courierId, String accessToken) {
+    return courierRepository.findById(courierId)
+            .map(courier -> courier.verifyAccessToken(accessToken))
+            .orElse(false);
   }
 
   void noteAvailable(long courierId) {
