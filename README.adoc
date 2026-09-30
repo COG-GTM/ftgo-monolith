@@ -27,4 +27,4 @@ DOCKER_HOST_IP=localhost java -jar ftgo-application/build/libs/ftgo-application.
 ```
 
 The end-to-end tests authenticate with `FTGO_ADMIN_USERNAME` / `FTGO_ADMIN_PASSWORD` (defaults: `admin` / `admin-e2e-password`), so start the application under test with a matching `ADMIN` user.
-`docker-compose.yml` configures the `ftgo-application` container with that user from the same two variables (`{noop}`-encoded, for local development and CI only).
+`docker-compose.yml` configures the `ftgo-application` container with that user from the same two variables and refuses to start without `FTGO_ADMIN_PASSWORD`; `set-env.sh` (sourced by `build-and-test-all.sh` and `build-and-run.sh`) generates a random one per shell when it is not already set, so no default credential exists anywhere.
