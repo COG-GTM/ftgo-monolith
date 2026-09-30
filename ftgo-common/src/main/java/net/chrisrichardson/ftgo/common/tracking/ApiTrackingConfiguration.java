@@ -2,10 +2,12 @@ package net.chrisrichardson.ftgo.common.tracking;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@Import(ApiTrackingSecurityConfiguration.class)
 public class ApiTrackingConfiguration implements WebMvcConfigurer {
 
   private final ApiRequestLogRepository apiRequestLogRepository;
