@@ -479,8 +479,8 @@
           "$ref": "#/definitions/port"
         },
         "database": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9_]+$"
+          "const": "ftgo",
+          "description": "The Flyway migrations (ftgo-flyway) start with `use ftgo;`, so the schema name is fixed."
         },
         "username": {
           "type": "string"
