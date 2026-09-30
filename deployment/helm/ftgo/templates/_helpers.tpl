@@ -33,8 +33,21 @@ app.kubernetes.io/name: {{ include "ftgo.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/*
+Prefix for component names, at most 46 chars so "<prefix>-mysql" stays within the
+52-char StatefulSet name limit. Longer fullnames keep a hash suffix to stay unique.
+*/}}
+{{- define "ftgo.componentPrefix" -}}
+{{- $full := include "ftgo.fullname" . }}
+{{- if le (len $full) 46 }}
+{{- $full }}
+{{- else }}
+{{- printf "%s-%s" ($full | trunc 39 | trimSuffix "-") ($full | sha256sum | trunc 6) }}
+{{- end }}
+{{- end }}
+
 {{- define "ftgo.app.fullname" -}}
-{{- printf "%s-application" (include "ftgo.fullname" . | trunc 40 | trimSuffix "-") }}
+{{- printf "%s-application" (include "ftgo.componentPrefix" .) }}
 {{- end }}
 
 {{- define "ftgo.app.labels" -}}
@@ -52,7 +65,7 @@ app.kubernetes.io/component: application
 {{- end }}
 
 {{- define "ftgo.mysql.fullname" -}}
-{{- printf "%s-mysql" (include "ftgo.fullname" . | trunc 40 | trimSuffix "-") }}
+{{- printf "%s-mysql" (include "ftgo.componentPrefix" .) }}
 {{- end }}
 
 {{- define "ftgo.mysql.secretName" -}}
