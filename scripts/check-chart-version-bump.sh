@@ -24,18 +24,31 @@ error() {
   exit 1
 }
 
-SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z.-]+))?(\+[0-9A-Za-z.-]+)?$'
+# Compares two non-negative decimal integers of any size; prints -1, 0 or 1.
+num_cmp() {
+  local x=${1#"${1%%[!0]*}"} y=${2#"${2%%[!0]*}"}
+  if ((${#x} != ${#y})); then
+    ((${#x} < ${#y})) && echo -1 || echo 1
+  elif [ "$x" = "$y" ]; then
+    echo 0
+  else
+    [[ $x < $y ]] && echo -1 || echo 1
+  fi
+}
+
+SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
 
 # Prints -1, 0 or 1 comparing two valid SemVer 2.0.0 versions by precedence (build metadata ignored).
 semver_cmp() {
-  local a b i x y
+  local a b i x y c
   [[ $1 =~ $SEMVER_RE ]]
   a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[5]}")
   [[ $2 =~ $SEMVER_RE ]]
   b=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[5]}")
   for i in 0 1 2; do
-    if ((a[i] != b[i])); then
-      ((a[i] < b[i])) && echo -1 || echo 1
+    c=$(num_cmp "${a[i]}" "${b[i]}")
+    if [ "$c" != 0 ]; then
+      echo "$c"
       return
     fi
   done
@@ -49,7 +62,7 @@ semver_cmp() {
     x=${pa[i]} y=${pb[i]}
     [ "$x" = "$y" ] && continue
     if [[ $x =~ ^[0-9]+$ && $y =~ ^[0-9]+$ ]]; then
-      ((10#$x < 10#$y)) && echo -1 || echo 1
+      num_cmp "$x" "$y"
     elif [[ $x =~ ^[0-9]+$ ]]; then
       echo -1
     elif [[ $y =~ ^[0-9]+$ ]]; then
