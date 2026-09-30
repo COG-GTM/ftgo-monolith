@@ -8,6 +8,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/demo-lib.sh"
 
 REPLICAS=${REPLICAS:-2}
+[[ "$REPLICAS" =~ ^[1-9][0-9]*$ ]] || die "REPLICAS must be a positive integer (the demo checks the app is healthy after the upgrade), got '$REPLICAS'"
 
 require_release
 

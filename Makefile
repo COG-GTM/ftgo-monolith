@@ -90,7 +90,7 @@ demo-rollback: tools
 	$(DEMO_ENV) scripts/demo-rollback.sh
 
 demo-reinstall: tools
-	$(DEMO_ENV) scripts/demo-reinstall.sh $(if $(CLEAN),--clean)
+	$(DEMO_ENV) scripts/demo-reinstall.sh $(if $(filter 1,$(CLEAN)),--clean)
 
 kind-down: tools
 	kind delete cluster --name '$(CLUSTER)'
