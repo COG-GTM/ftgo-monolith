@@ -71,10 +71,13 @@ public class ApiTrackingControllerTest {
             .andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/tracking/logs/errors").param("minutesBack", "0"))
             .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/tracking/logs/search").param("uri", "/orders").param("minutesBack", "1441"))
+            .andExpect(status().isBadRequest());
 
     verify(repository, never()).findRecentLogs(any(LocalDateTime.class));
     verify(repository, never()).findRecentLogs(any(LocalDateTime.class), any(Pageable.class));
     verify(repository, never()).findErrorsSince(any(LocalDateTime.class), any(Pageable.class));
+    verify(repository, never()).findByRequestUriContaining(anyString(), any(LocalDateTime.class), any(Pageable.class));
   }
 
   @Test
@@ -85,7 +88,7 @@ public class ApiTrackingControllerTest {
             .andExpect(status().isBadRequest());
 
     verify(repository, never()).findRecentLogs(any(LocalDateTime.class), any(Pageable.class));
-    verify(repository, never()).findByRequestUriContaining(anyString(), any(Pageable.class));
+    verify(repository, never()).findByRequestUriContaining(anyString(), any(LocalDateTime.class), any(Pageable.class));
   }
 
   @Test
@@ -117,7 +120,7 @@ public class ApiTrackingControllerTest {
 
   @Test
   public void shouldTreatSearchTermLiterally() throws Exception {
-    when(repository.findByRequestUriContaining(anyString(), any(Pageable.class)))
+    when(repository.findByRequestUriContaining(anyString(), any(LocalDateTime.class), any(Pageable.class)))
             .thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/tracking/logs/search").param("uri", "%"))
@@ -125,8 +128,8 @@ public class ApiTrackingControllerTest {
     mockMvc.perform(get("/api/tracking/logs/search").param("uri", "/orders_1!"))
             .andExpect(status().isOk());
 
-    verify(repository).findByRequestUriContaining(eq("%!%%"), any(Pageable.class));
-    verify(repository).findByRequestUriContaining(eq("%/orders!_1!!%"), any(Pageable.class));
+    verify(repository).findByRequestUriContaining(eq("%!%%"), any(LocalDateTime.class), any(Pageable.class));
+    verify(repository).findByRequestUriContaining(eq("%/orders!_1!!%"), any(LocalDateTime.class), any(Pageable.class));
   }
 
   @Test
@@ -134,6 +137,6 @@ public class ApiTrackingControllerTest {
     mockMvc.perform(get("/api/tracking/logs/search").param("uri", "  "))
             .andExpect(status().isBadRequest());
 
-    verify(repository, never()).findByRequestUriContaining(anyString(), any(Pageable.class));
+    verify(repository, never()).findByRequestUriContaining(anyString(), any(LocalDateTime.class), any(Pageable.class));
   }
 }

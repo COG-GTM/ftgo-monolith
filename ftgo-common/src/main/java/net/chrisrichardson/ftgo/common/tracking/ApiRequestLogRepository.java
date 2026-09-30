@@ -16,8 +16,8 @@ public interface ApiRequestLogRepository extends CrudRepository<ApiRequestLog, L
   @Query("SELECT a FROM ApiRequestLog a WHERE a.requestTimestamp >= :since ORDER BY a.requestTimestamp DESC, a.id DESC")
   List<ApiRequestLog> findRecentLogs(@Param("since") LocalDateTime since, Pageable pageable);
 
-  @Query("SELECT a FROM ApiRequestLog a WHERE a.requestUri LIKE :pattern ESCAPE '!' ORDER BY a.requestTimestamp DESC, a.id DESC")
-  List<ApiRequestLog> findByRequestUriContaining(@Param("pattern") String pattern, Pageable pageable);
+  @Query("SELECT a FROM ApiRequestLog a WHERE a.requestUri LIKE :pattern ESCAPE '!' AND a.requestTimestamp >= :since ORDER BY a.requestTimestamp DESC, a.id DESC")
+  List<ApiRequestLog> findByRequestUriContaining(@Param("pattern") String pattern, @Param("since") LocalDateTime since, Pageable pageable);
 
   @Query("SELECT a FROM ApiRequestLog a WHERE a.correlationId = :correlationId")
   ApiRequestLog findByCorrelationId(@Param("correlationId") String correlationId);

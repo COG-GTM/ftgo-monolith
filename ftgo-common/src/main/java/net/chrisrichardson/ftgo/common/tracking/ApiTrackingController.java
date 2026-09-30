@@ -50,13 +50,15 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLogView>> searchByUri(
           @RequestParam String uri,
+          @RequestParam(defaultValue = "60") int minutesBack,
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
     if (uri.trim().isEmpty()) {
       throw new IllegalArgumentException("uri must not be blank");
     }
+    LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUriContaining(
-            likePattern(uri.trim()), page(page, limit));
+            likePattern(uri.trim()), since, page(page, limit));
     return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
