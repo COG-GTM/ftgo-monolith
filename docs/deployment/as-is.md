@@ -114,3 +114,44 @@ Result:
 * The app manifest glob matches nothing, so `kubectl apply` gets no objects (D6).
 * No pods carry `application=ftgo` or `svc=ftgo-application`, so the wait and port-forward scripts have nothing to act on (D7).
 * End state: one Secret and one Service; **no MySQL and no `ftgo-application` running**.
+
+## Final status: legacy → Helm parity (AB-412)
+
+Every row from the inventory is either **migrated** (a chart template, value, hook, helm test or Make target now does the job) or **retired** (deleted with the legacy Kubernetes directory in AB-412, with nothing needed in its place). Compose rows are **kept** for inner-loop development: `docker-compose.yml` and its scripts stay, cleaned up (see below).
+
+| ID | Legacy artifact | Status | Replacement |
+| --- | --- | --- | --- |
+| L1 | `build-and-run.sh` | kept (compose) + migrated | `make kind-demo` |
+| L2 | `start-services.sh` | kept (compose) + migrated | `make deploy` (`helm upgrade --install --wait`) |
+| L3 | `start-infrastructure-services.sh` | kept (compose) + migrated | `templates/mysql-statefulset.yaml`, `mysql-service.yaml` |
+| L4 | `build-and-restart-application.sh` | kept (compose) + migrated | `make images deploy` (unique image tag rolls the Deployment) |
+| L5 | `set-env.sh` | kept (compose) | `make e2e` sets `DOCKER_HOST_IP=localhost` |
+| L6 | `wait-for-mysql.sh`, `mysql-cli.sh` | kept (compose) + migrated | MySQL startup/readiness probes; Flyway `connectRetries`; `helm --wait` |
+| L7 | `wait-for-services.sh` | kept (compose, fixed: D11) + migrated | app startup/readiness/liveness probes; `templates/tests/test-health.yaml` (AB-410) |
+| L8 | `docker-compose.yml` | kept (compose, cleaned: D9, D15) + migrated | `app-deployment.yaml`, `app-configmap.yaml`, `db-secret.yaml`, `app.javaOpts` |
+| L9 | `mysql/Dockerfile` | kept (compose) + migrated | official `mysql:8.0.39` (`mysql.image.*`) |
+| L10 | `mysql/schema.sql` | migrated | `mysql-initdb-configmap.yaml` (reads `files/schema.sql` → `mysql/schema.sql`) |
+| L11 | `ftgo-application/Dockerfile` | migrated | multi-stage image (AB-405); `app.image.*` |
+| L12 | host `./gradlew :ftgo-flyway:flywayMigrate` | migrated | `ftgo-flyway` image as initContainer or hook Job (`migrations.*`); compose `ftgo-flyway` service |
+| L13 | `build-and-test-all.sh` | kept (compose CI) | chart CI pipeline (AB-411) |
+| L14 | `run-end-to-end-tests.sh` | kept (compose) + migrated | `make e2e` |
+| L15 | legacy MySQL StatefulSet YAML | retired | `mysql-statefulset.yaml`, `mysql-service.yaml` |
+| L16 | legacy DB Secret YAML | retired | `db-secret.yaml` / `mysql.auth.existingSecret` |
+| L17 | `create-db-secret.sh` | retired | `db-secret.yaml` / `mysql.auth.existingSecret` |
+| L18 | `kubernetes-deploy-all.sh` | retired | `make deploy` |
+| L19 | `kubernetes-wait-for-ready-pods.sh` | retired | `helm --wait` + probes |
+| L20 | `port-forwards.sh` | retired | kind `extraPortMappings` → NodePort 30081 (`app.service.*`) |
+| L21 | `kubernetes-kill-port-forwarding.sh` | retired | no port-forwards |
+| L22 | `kubernetes-run-end-to-end-tests.sh` | retired | `make e2e`, `helm test` |
+| L23 | `kubernetes-deploy-and-test.sh` | retired | `make kind-demo` |
+| L24 | `kubernetes-delete-all.sh` | retired | `helm uninstall ftgo` / `make kind-down` |
+| L25 | `kubernetes-delete-volumes.sh` | retired | `kubectl delete pvc -l app.kubernetes.io/instance=ftgo,app.kubernetes.io/component=mysql` (README "Uninstall") |
+
+Compose clean-up in AB-412:
+
+- The stale Kafka, Zookeeper, Sleuth and Zipkin variables are removed (D9).
+- A one-shot `ftgo-flyway` service, built from the same `ftgo-flyway/Dockerfile` as the chart's migrations image, migrates the schema. `ftgo-application` waits for it to complete successfully, so `build-and-run.sh` no longer leaves an empty schema (D15).
+- `wait-for-services.sh` polls `/actuator/health` with `curl -f` (D11).
+- The scripts call `docker compose` (Compose v2). The standalone `docker-compose` v1 binary is end-of-life.
+
+The file/line references in the tables above describe the legacy tree as it was on `master` before AB-412. The legacy Kubernetes files remain available in git history.

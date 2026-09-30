@@ -8,3 +8,84 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+## Running locally with Docker Compose
+
+For the inner development loop (JDK 8 and Docker with the Compose plugin):
+
+[source,bash]
+----
+export DOCKER_HOST_IP=localhost
+./build-and-run.sh               # builds the images, recreates MySQL, runs Flyway, starts the app
+./run-end-to-end-tests.sh        # optional
+docker compose down -v           # stop and delete the database volume
+----
+
+`docker-compose.yml` runs three services: `mysql`, a one-shot `ftgo-flyway` that applies the migrations in `ftgo-flyway/src/main/resources/db/migration`, and `ftgo-application`, which starts only after the migrations succeed. The app listens on http://localhost:8081 (health: `/actuator/health`, API docs: `/swagger-ui.html`).
+
+## Deploying to Kubernetes with Helm
+
+The app, MySQL and the Flyway migrations are packaged as one Helm chart in `deployment/helm/ftgo`.
+The chart's local target is a https://kind.sigs.k8s.io[kind] cluster; see `deployment/kind/README.md` for details and troubleshooting.
+
+### Prerequisites
+
+Docker (daemon running), kind v0.24, kubectl v1.31 (±1 minor), Helm v3.16, and JDK 8 for the end-to-end tests.
+`make tools` checks them. Host port 8081 must be free.
+
+### Deploy
+
+[source,bash]
+----
+export JAVA_HOME=/path/to/jdk8
+make kind-demo      # create the kind cluster, build + load the images, helm upgrade --install --wait, smoke test, e2e tests
+----
+
+The app is then at http://localhost:8081 (dashboard at `/`, health at `/actuator/health`).
+Individual steps: `make kind-up`, `make images`, `make deploy`, `make smoke`, `make e2e`.
+
+### Values reference
+
+Set these with `--set` or an extra `-f` file (`deployment/helm/ftgo/values-kind.yaml` holds the kind overrides). `values.schema.json` rejects invalid values at install time.
+
+[cols="2,1,4"]
+|===
+|Value |Default |Description
+
+|`app.replicaCount` |`1` |Application replicas
+|`app.image.repository` / `app.image.tag` |`ftgo-application` / chart `appVersion` |Application image; `make images` builds it and loads it into kind
+|`app.javaOpts` |`-Xmx192m` |`JAVA_OPTS` for the application
+|`app.service.type` / `app.service.nodePort` |`ClusterIP` / – |kind uses `NodePort` 30081, mapped to `localhost:8081`
+|`app.resources` |see `values.yaml` |Requests and limits
+|`app.extraConfig` |`{}` |Extra non-secret environment variables
+|`migrations.enabled` |`true` |Run Flyway
+|`migrations.mode` |`initContainer` |`initContainer` (before each app pod) or `hook` (a Job on post-install / pre-upgrade)
+|`migrations.image.repository` / `migrations.image.tag` |`ftgo-flyway` / chart `appVersion` |Flyway image built from `ftgo-flyway/Dockerfile`
+|`mysql.enabled` |`true` |In-chart MySQL 8.0 StatefulSet; set `false` to use `externalDatabase.*`
+|`mysql.auth.password` / `mysql.auth.rootPassword` |generated |Generated on first install and reused on upgrade
+|`mysql.auth.existingSecret` |`""` |Secret with `mysql-root-password`, `mysql-user`, `mysql-password`
+|`mysql.persistence.size` / `mysql.persistence.storageClass` |`1Gi` / cluster default |MySQL volume
+|`externalDatabase.host` / `port` / `database` / `username` / `password` / `existingSecret` |– |External MySQL (the database must be `ftgo` while migrations are enabled)
+|===
+
+### Upgrade and rollback
+
+[source,bash]
+----
+helm upgrade ftgo deployment/helm/ftgo -f deployment/helm/ftgo/values-kind.yaml --reuse-values --set app.replicaCount=2 --wait
+helm history ftgo
+helm rollback ftgo <revision> --wait
+helm test ftgo
+----
+
+After a code change, `make images deploy` builds uniquely tagged images and rolls the app. Flyway applies any new migrations before the new pods start.
+
+### Uninstall
+
+[source,bash]
+----
+helm uninstall ftgo       # removes the release; the MySQL PVC and DB Secret are kept, so a reinstall keeps the data
+kubectl delete pvc -l app.kubernetes.io/instance=ftgo,app.kubernetes.io/component=mysql
+kubectl delete secret ftgo-mysql   # delete both (never just the Secret) for a clean slate
+make kind-down            # or delete the whole cluster
+----
