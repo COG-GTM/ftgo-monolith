@@ -17,7 +17,7 @@ public class FtgoSecurityConfiguration {
   }
 
   @Bean
-  public UserDetailsService ftgoUserDetailsService(FtgoSecurityProperties properties, PasswordEncoder passwordEncoder) {
-    return new FtgoUserDetailsService(properties, passwordEncoder);
+  public UserDetailsService ftgoUserDetailsService(FtgoSecurityProperties properties) {
+    return new FtgoUserDetailsService(properties);
   }
 }

@@ -68,7 +68,7 @@ C4Container
 - **Data classification:** order data (internal / customer PII in delivery address) — unchanged; credentials in configuration are secrets.
 - **Encryption at rest:** N/A — no new data store. Configured passwords must be stored hashed (`{bcrypt}`); `{noop}` is for tests only.
 - **Encryption in transit:** HTTP Basic requires TLS termination in front of the service (existing deployment concern; TBD — owner to confirm before ARB).
-- **AuthN / AuthZ:** HTTP Basic against `ftgo.security.users`; authorization in `OrderAccessPolicy` bound to the principal's role and `actorId`, never to path/body ids. If no users are configured the service starts with a single `admin` user and a random generated password logged once (Spring Boot default-user behaviour) so the endpoints are never open.
+- **AuthN / AuthZ:** HTTP Basic against `ftgo.security.users`; authorization in `OrderAccessPolicy` bound to the principal's role and `actorId`, never to path/body ids. If no users are configured nobody can authenticate, so the protected endpoints fail closed (`401` for every caller); no default or generated credentials exist and no credential is ever logged.
 - **Secrets:** user credentials supplied via Spring configuration (environment variables `FTGO_SECURITY_USERS_<n>_USERNAME/PASSWORD/ROLE/ACTORID` or a secrets-backed property source). Not committed to the repository; tests use `{noop}` passwords only.
 - **Audit logging:** existing `ApiRequestLog` interceptor keeps recording requests; failed authentication is logged by Spring Security at DEBUG. Follow-up: include the principal in the API request log.
 - **Data residency / regions:** unchanged.

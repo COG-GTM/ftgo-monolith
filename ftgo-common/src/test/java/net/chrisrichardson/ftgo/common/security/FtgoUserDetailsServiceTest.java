@@ -32,7 +32,7 @@ public class FtgoUserDetailsServiceTest {
             user("ops", "{noop}ops-pw", FtgoRole.ADMIN, null),
             user("consumer-42", "{noop}c-pw", FtgoRole.CONSUMER, 42L)));
 
-    FtgoUserDetailsService service = new FtgoUserDetailsService(properties, passwordEncoder);
+    FtgoUserDetailsService service = new FtgoUserDetailsService(properties);
 
     FtgoPrincipal consumer = (FtgoPrincipal) service.loadUserByUsername("consumer-42");
     assertEquals(FtgoRole.CONSUMER, consumer.getRole());
@@ -52,16 +52,12 @@ public class FtgoUserDetailsServiceTest {
     FtgoSecurityProperties properties = new FtgoSecurityProperties();
     properties.setUsers(Arrays.asList(user("ops", "{noop}ops-pw", FtgoRole.ADMIN, null)));
 
-    new FtgoUserDetailsService(properties, passwordEncoder).loadUserByUsername("nobody");
+    new FtgoUserDetailsService(properties).loadUserByUsername("nobody");
   }
 
-  @Test
-  public void shouldCreateGeneratedAdminWhenNoUsersConfigured() {
-    FtgoUserDetailsService service = new FtgoUserDetailsService(new FtgoSecurityProperties(), passwordEncoder);
-
-    FtgoPrincipal admin = (FtgoPrincipal) service.loadUserByUsername(FtgoUserDetailsService.DEFAULT_ADMIN_USERNAME);
-    assertTrue(admin.isAdmin());
-    assertFalse(passwordEncoder.matches("admin", admin.getPassword()));
+  @Test(expected = UsernameNotFoundException.class)
+  public void shouldHaveNoUsersWhenNoneConfigured() {
+    new FtgoUserDetailsService(new FtgoSecurityProperties()).loadUserByUsername("admin");
   }
 
   @Test(expected = IllegalStateException.class)
@@ -71,7 +67,7 @@ public class FtgoUserDetailsServiceTest {
             user("ops", "{noop}a", FtgoRole.ADMIN, null),
             user("ops", "{noop}b", FtgoRole.ADMIN, null)));
 
-    new FtgoUserDetailsService(properties, passwordEncoder);
+    new FtgoUserDetailsService(properties);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -79,6 +75,6 @@ public class FtgoUserDetailsServiceTest {
     FtgoSecurityProperties properties = new FtgoSecurityProperties();
     properties.setUsers(Arrays.asList(user("courier", "{noop}a", FtgoRole.COURIER, null)));
 
-    new FtgoUserDetailsService(properties, passwordEncoder);
+    new FtgoUserDetailsService(properties);
   }
 }

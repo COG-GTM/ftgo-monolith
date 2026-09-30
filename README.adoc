@@ -16,7 +16,7 @@ Users are configured with `ftgo.security.users[n].username|password|role|actorId
 Passwords use Spring Security's `{id}encodedPassword` format, e.g. `{bcrypt}$2a$10$...`.
 Consumers may only create, cancel and revise their own orders, restaurants may only accept/prepare/ready orders placed with them, couriers may only pick up/deliver orders assigned to them, and admins may act on any order.
 
-If no users are configured the application starts with a single `admin` user whose generated password is logged once at startup.
+If no users are configured nobody can call the state-changing order endpoints (every request gets `401`), so configure at least one user.
 For example:
 
 ```
@@ -27,3 +27,4 @@ DOCKER_HOST_IP=localhost java -jar ftgo-application/build/libs/ftgo-application.
 ```
 
 The end-to-end tests authenticate with `FTGO_ADMIN_USERNAME` / `FTGO_ADMIN_PASSWORD` (defaults: `admin` / `admin-e2e-password`), so start the application under test with a matching `ADMIN` user.
+`docker-compose.yml` configures the `ftgo-application` container with that user from the same two variables (`{noop}`-encoded, for local development and CI only).
