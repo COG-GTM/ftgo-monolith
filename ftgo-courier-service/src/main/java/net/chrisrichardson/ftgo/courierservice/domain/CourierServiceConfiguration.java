@@ -11,8 +11,13 @@ import org.springframework.context.annotation.Import;
 public class CourierServiceConfiguration {
 
   @Bean
-  public CourierService courierService(CourierRepository courierRepository) {
-    return new CourierService(courierRepository);
+  public CourierAccessTokens courierAccessTokens() {
+    return new CourierAccessTokens();
+  }
+
+  @Bean
+  public CourierService courierService(CourierRepository courierRepository, CourierAccessTokens courierAccessTokens) {
+    return new CourierService(courierRepository, courierAccessTokens);
   }
 
 }
