@@ -84,7 +84,7 @@ preload_image() {
 # Third-party images referenced by the chart with the kind values (everything except the locally built ones).
 third_party_images() {
   "${HELM[@]}" template "$RELEASE" "$CHART" -f "$KIND_VALUES" \
-      --set-string app.image.tag=x --set-string migrations.image.tag=x |
+      --set-string app.image.tag=x --set-string migrations.image.tag=x 2> >(grep -v 'found symbolic link' >&2) |
     sed -n 's/^[[:space:]]*image:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' |
     grep -Ev '^(ftgo-application|ftgo-flyway):' | sort -u
 }

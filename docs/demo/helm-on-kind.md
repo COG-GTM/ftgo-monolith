@@ -2,7 +2,9 @@
 
 Epic [AB-402](https://cog-gtm.atlassian.net/browse/AB-402), ticket [AB-413](https://cog-gtm.atlassian.net/browse/AB-413).
 
-The demo runs in about **12 minutes** once images are prebuilt (the timings below are from a rehearsal). You don't need
+The demo takes about **12 minutes** with talking, once images are prebuilt. The commands themselves take about 4
+minutes (measured in a rehearsal on a 4-vCPU Linux VM: `make kind-demo` 80 s, `make demo-upgrade` 17 s,
+`make demo-rollback` 126 s, most of it the deliberate 2-minute failed-upgrade timeout). You don't need
 to know the repo: every step is one command, run from the repository root, and each one says what you should see.
 
 | # | Section                                                   | Command                                         | Time      |
@@ -10,11 +12,11 @@ to know the repo: every step is one command, run from the repository root, and e
 | 0 | [Pre-flight](#0-pre-flight-the-day-before)                | `make demo-reset`                               | before    |
 | 1 | [Before: the legacy deployment](#1-before-the-legacy-deployment) | `make demo-legacy`                       | ~1 min    |
 | 2 | [Chart tour](#2-chart-tour)                               | `helm template … \| less`                       | ~2 min    |
-| 3 | [Deploy](#3-deploy-make-kind-demo)                        | `make kind-demo`                                | ~4 min    |
+| 3 | [Deploy](#3-deploy-make-kind-demo)                        | `make kind-demo`                                | ~2 min    |
 | 4 | [Use it](#4-use-it-open-the-app-and-place-an-order)       | browser + `make demo-order`                     | ~1 min    |
-| 5 | [Operate](#5-operate-test-upgrade-failed-upgrade-rollback) | `make helm-test demo-upgrade demo-rollback`    | ~4 min    |
+| 5 | [Operate](#5-operate-test-upgrade-failed-upgrade-rollback) | `make helm-test demo-upgrade demo-rollback`    | ~5 min    |
 | 6 | [Teardown](#6-teardown)                                   | `helm uninstall` / `make kind-down`             | ~1 min    |
-| 7 | [Reset for the next run](#7-reset-for-the-next-run)       | `make demo-reset QUICK=1`                       | ~1 min    |
+| 7 | [Reset for the next run](#7-reset-for-the-next-run)       | `make demo-reset QUICK=1`                       | seconds   |
 
 What the audience should take away: before the epic, the only working path was Docker Compose, and the Kubernetes
 YAML couldn't even be applied. Now a single versioned chart owns the app, MySQL and the Flyway migrations, with
@@ -57,7 +59,9 @@ make demo-reset
 [`scripts/demo-reset.sh`](../../scripts/demo-reset.sh) deletes the `ftgo` kind cluster if it exists, recreates it,
 builds the `ftgo-application` and `ftgo-flyway` images and loads them into the node, then preloads every third-party
 image the chart uses (`mysql:8.0.39` and the digest-pinned `curlimages/curl` used by `helm test`). It finishes by
-printing the start state: no Helm release, no PVC, no Secret. It takes about 5 minutes with a warm Gradle cache.
+printing the start state: no Helm release, no PVC, no Secret. With warm Docker and Gradle caches it takes about
+1–2 minutes. The very first run downloads the node image, the base images and the Gradle dependencies, so give it
+10–15 minutes on a good connection.
 
 After that, the demo pulls nothing from a registry: `make kind-demo` reuses the cluster, and its image build is
 fully cached.
@@ -100,11 +104,12 @@ Talk track:
 What you should see:
 
 ```
+App manifests matching */src/deployment/kubernetes/*.yml on origin/master:
+  (none)
+...
 secret/ftgo-db-secret created (server dry run)
 service/ftgo-mysql created (server dry run)
 error: resource mapping not found for name: "ftgo-mysql" namespace: "" from "STDIN": no matches for kind "StatefulSet" in version "apps/v1beta1"
-App manifests matching */src/deployment/kubernetes/*.yml on origin/master:
-  (none)
 ```
 
 `apps/v1beta1` was removed in Kubernetes 1.16. For the full captured failure with `apps/v1` patched in (the
@@ -191,7 +196,7 @@ make demo-order
 see:
 
 ```
-{"orderId":4,"state":"APPROVED","orderTotal":"24.68","restaurantName":"Demo Curry House",...}
+{"orderId":3,"state":"APPROVED","orderTotal":"24.68","restaurantName":"Demo Curry House",...}
 ```
 
 Remember the order ID; section 5 shows that it survives a failed upgrade and a rollback. The IDs start above 1
@@ -285,8 +290,8 @@ make kind-down      # deletes the cluster, every container and the localhost:808
 
 | You want to…                                       | Run                          | Time     |
 |----------------------------------------------------|------------------------------|----------|
-| Run the demo again on the same cluster             | `make demo-reset QUICK=1`    | ~1 min   |
-| Start from scratch (e.g. after `make kind-down`)   | `make demo-reset`            | ~5 min   |
+| Run the demo again on the same cluster             | `make demo-reset QUICK=1`    | seconds  |
+| Start from scratch (e.g. after `make kind-down`)   | `make demo-reset`            | 1–2 min (warm caches) |
 
 `QUICK=1` uninstalls the release if present, deletes the MySQL PVC and Secret and the leftover `helm test` pod,
 and checks that the preloaded images are still on the node. Both modes are safe to run repeatedly, and neither
