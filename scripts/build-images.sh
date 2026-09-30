@@ -9,6 +9,7 @@
 # Environment:
 #   IMAGE_TAG          overrides the <short-git-sha> tag
 #   MAVEN_MIRROR_URL   optional Maven repository mirror passed to the Gradle build (see gradle/init.d/maven-mirror.gradle)
+#   DOCKER_BUILD_CACHE_DIR  optional directory for a persistent BuildKit layer cache (docker buildx, type=local; used by CI)
 
 set -euo pipefail
 
@@ -25,7 +26,7 @@ KIND_LOAD=
 KIND_CLUSTER=$DEFAULT_KIND_CLUSTER
 
 usage() {
-  sed -n '3,12s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"
+  sed -n '3,13s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"
 }
 
 while [ $# -gt 0 ]; do
@@ -74,11 +75,22 @@ BUILT=()
 for spec in "${IMAGES[@]}"; do
   IFS='|' read -r name dockerfile context <<< "$spec"
   echo "==> Building $name:$IMAGE_TAG and $name:dev"
-  docker build "${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}" \
+  BUILD_CMD=(docker build)
+  if [ -n "${DOCKER_BUILD_CACHE_DIR:-}" ]; then
+    BUILD_CMD=(docker buildx build --load
+      --cache-from "type=local,src=$DOCKER_BUILD_CACHE_DIR/$name"
+      --cache-to "type=local,dest=$DOCKER_BUILD_CACHE_DIR/$name.new,mode=max")
+  fi
+  "${BUILD_CMD[@]}" "${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}" \
     -f "$ROOT_DIR/$dockerfile" \
     -t "$name:$IMAGE_TAG" \
     -t "$name:dev" \
     "$ROOT_DIR/$context"
+  if [ -n "${DOCKER_BUILD_CACHE_DIR:-}" ]; then
+    # --cache-to type=local never prunes, so replace the cache instead of growing it.
+    rm -rf "${DOCKER_BUILD_CACHE_DIR:?}/$name"
+    mv "$DOCKER_BUILD_CACHE_DIR/$name.new" "$DOCKER_BUILD_CACHE_DIR/$name"
+  fi
   BUILT+=("$name:$IMAGE_TAG" "$name:dev")
 done
 

@@ -1,0 +1,187 @@
+# Validates the FTGO Helm chart (deployment/helm/ftgo) and installs it on a kind cluster.
+#   lint                  helm lint --strict, helm template | kubeconform, invalid values rejected (make lint)
+#   chart-version         the chart version must be bumped whenever deployment/helm/ftgo (or a file symlinked into it) changes
+#   kind-install          make images deploy smoke on kind, then helm test (and make e2e on manual runs with e2e: true)
+name: Helm chart
+
+on:
+  pull_request:
+    paths:
+      - deployment/**
+      - ftgo-flyway/**
+      - mysql/schema.sql
+      - Makefile
+      - scripts/**
+      - .github/workflows/helm-chart.yml
+  push:
+    branches: [master]
+    paths:
+      - deployment/**
+      - ftgo-flyway/**
+      - mysql/schema.sql
+      - Makefile
+      - scripts/**
+      - .github/workflows/helm-chart.yml
+  workflow_dispatch:
+    inputs:
+      e2e:
+        description: Also run make e2e (needs io.eventuate.util:eventuate-util-test:0.1.0.RELEASE, which is not on Maven Central; set the MAVEN_MIRROR_URL repository variable to a proxy that has it)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-chart-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Keep in sync with the Makefile (checked by the lint job).
+env:
+  KIND_VERSION: v0.24.0
+  KUBECTL_VERSION: v1.31.0
+  HELM_VERSION: v3.16.2
+  KUBECONFORM_VERSION: v0.6.7
+  KUBECONFORM_SHA256: 95f14e87aa28c09d5941f11bd024c1d02fdc0303ccaa23f61cef67bc92619d73
+  KUBERNETES_VERSION: 1.31.0
+
+jobs:
+  lint:
+    name: Lint and schema-validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check tool versions match the Makefile
+        run: |
+          status=0
+          for var in KIND_VERSION KUBECTL_VERSION HELM_VERSION KUBECONFORM_VERSION KUBERNETES_VERSION; do
+            pinned=$(sed -nE "s/^${var}[[:space:]]*\?=[[:space:]]*([^[:space:]]+).*/\1/p" Makefile)
+            if [ "$pinned" != "${!var}" ]; then
+              echo "::error file=.github/workflows/helm-chart.yml,title=Tool version drift::$var is ${!var} in the workflow but '${pinned:-<unset>}' in the Makefile"
+              status=1
+            fi
+          done
+          exit $status
+
+      - uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Install kubeconform ${{ env.KUBECONFORM_VERSION }}
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/kubeconform.tar.gz" \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  $RUNNER_TEMP/kubeconform.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/kubeconform.tar.gz" -C "$RUNNER_TEMP/bin" kubeconform
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: make lint
+        run: make lint
+
+  chart-version:
+    name: Chart version bump
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Require a Chart.yaml version bump when the chart changes
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ -z "${BASE_SHA//0/}" ]; then
+            echo "No base commit to compare against (${GITHUB_EVENT_NAME}); skipping."
+            exit 0
+          fi
+          scripts/check-chart-version-bump.sh "$BASE_SHA" HEAD
+
+  kind-install:
+    name: Install on kind
+    needs: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CLUSTER: ftgo
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "8"
+
+      - uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
+        with:
+          cache-read-only: false
+          cache-cleanup: never
+
+      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Restore Docker layer cache
+        id: buildx-cache
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ${{ runner.temp }}/buildx-cache
+          key: buildx-${{ runner.os }}-${{ hashFiles('ftgo-application/Dockerfile', 'ftgo-flyway/Dockerfile') }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ runner.os }}-${{ hashFiles('ftgo-application/Dockerfile', 'ftgo-flyway/Dockerfile') }}-
+            buildx-${{ runner.os }}-
+
+      - uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Create kind cluster
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+        with:
+          version: ${{ env.KIND_VERSION }}
+          kubectl_version: ${{ env.KUBECTL_VERSION }}
+          config: deployment/kind/kind-config.yaml
+          cluster_name: ${{ env.CLUSTER }}
+          wait: 120s
+
+      - name: make images deploy smoke
+        env:
+          DOCKER_BUILD_CACHE_DIR: ${{ runner.temp }}/buildx-cache
+        run: make images deploy smoke
+
+      - name: Save Docker layer cache
+        if: always() && steps.buildx-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ${{ runner.temp }}/buildx-cache
+          key: ${{ steps.buildx-cache.outputs.cache-primary-key }}
+
+      - name: make helm-test
+        run: make helm-test
+
+      - name: make e2e
+        if: github.event_name == 'workflow_dispatch' && inputs.e2e
+        env:
+          MAVEN_MIRROR_URL: ${{ vars.MAVEN_MIRROR_URL }}
+        run: |
+          if [ -n "$MAVEN_MIRROR_URL" ]; then
+            mkdir -p ~/.gradle/init.d
+            cp gradle/init.d/maven-mirror.gradle ~/.gradle/init.d/
+          fi
+          make e2e
+
+      - name: Dump cluster state
+        if: failure()
+        run: |
+          set +e
+          k() { echo "::group::kubectl $*"; kubectl --context "kind-$CLUSTER" "$@"; echo "::endgroup::"; }
+          k get pods,svc,pvc,jobs -o wide
+          k get events --sort-by=.lastTimestamp
+          k describe pods
+          k logs deploy/ftgo-application -c flyway-migrate --tail=300
+          k logs deploy/ftgo-application -c ftgo-application --tail=500
+          k logs deploy/ftgo-application -c ftgo-application --previous --tail=300
+          k logs -l app.kubernetes.io/component=migrations --all-containers --tail=300
+          k logs statefulset/ftgo-mysql --all-containers --tail=300
+          k logs statefulset/ftgo-mysql --all-containers --previous --tail=300
