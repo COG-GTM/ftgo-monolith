@@ -1,0 +1,77 @@
+nameOverride: ""
+fullnameOverride: ""
+
+app:
+  replicaCount: 1
+
+  # Not published to a registry: build it and load it into the cluster first
+  # (kind: `kind load docker-image ftgo-application:<tag>`), or point repository/tag at a registry image.
+  image:
+    repository: ftgo-application
+    # Defaults to .Chart.AppVersion
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+
+  javaOpts: "-Xmx192m"
+
+  # Query string appended to the JDBC URL. The in-cluster demo MySQL has no CA-signed cert, so TLS is off;
+  # for a real database use e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
+  jdbcParams: "useSSL=false&allowPublicKeyRetrieval=true"
+
+  # Extra non-secret environment variables, rendered into the app ConfigMap.
+  extraConfig: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
+    # Only used when type is NodePort.
+    nodePort: null
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 384Mi
+    limits:
+      memory: 512Mi
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+
+  probes:
+    startup:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 36
+    readiness:
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+mysql:
+  auth:
+    database: ftgo
+    # Name of an existing Secret with keys `mysql-user` and `mysql-password`.
+    # Defaults to "<fullname>-mysql".
+    existingSecret: ""
+  service:
+    port: 3306
