@@ -16,9 +16,10 @@ app:
 
   javaOpts: "-Xmx192m"
 
-  # Query string appended to the JDBC URL. The in-cluster demo MySQL has no CA-signed cert, so TLS is off;
-  # for a real database use e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
-  jdbcParams: "useSSL=false&allowPublicKeyRetrieval=true"
+  # Query string appended to the JDBC URL. Empty picks a default: "useSSL=false&allowPublicKeyRetrieval=true"
+  # for the in-chart MySQL (no CA-signed cert), "sslMode=REQUIRED" for externalDatabase.
+  # For a real database prefer e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
+  jdbcParams: ""
 
   # Extra non-secret environment variables, rendered into the app ConfigMap.
   extraConfig: {}
@@ -81,6 +82,8 @@ mysql:
     database: ftgo
     username: mysqluser
     # Leave empty to generate random passwords on first install; they are then reused on upgrade.
+    # MySQL only applies these when it initialises an empty volume, so once the Secret exists a different
+    # value fails the install/upgrade instead of silently diverging from the database.
     rootPassword: ""
     password: ""
     # Name of an existing Secret with keys `mysql-root-password`, `mysql-user` and `mysql-password`.

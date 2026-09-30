@@ -87,8 +87,22 @@ app.kubernetes.io/component: mysql
 {{- if .Values.mysql.enabled }}
 {{- .Values.mysql.auth.existingSecret | default (include "ftgo.mysql.fullname" .) }}
 {{- else }}
-{{- .Values.externalDatabase.existingSecret | default (printf "%s-external-db" (include "ftgo.fullname" .)) }}
+{{- .Values.externalDatabase.existingSecret | default (printf "%s-external-db" (include "ftgo.componentPrefix" .)) }}
 {{- end }}
+{{- end }}
+
+{{/*
+Base64 password for the in-chart MySQL Secret: the value already stored in the Secret, else the supplied value,
+else random. MySQL keeps the password it was initialised with, so a supplied value that differs from the stored one fails.
+Args: (list $existingData key suppliedValue valuePath)
+*/}}
+{{- define "ftgo.mysql.retainedPassword" -}}
+{{- $stored := get (index . 0) (index . 1) }}
+{{- $supplied := index . 2 | b64enc }}
+{{- if and $stored $supplied (ne $stored $supplied) }}
+{{- fail (printf "%s differs from the password already stored in the MySQL Secret; MySQL only applies it on an empty volume. Rotate it in MySQL and the Secret first, or leave %s empty." (index . 3) (index . 3)) }}
+{{- end }}
+{{- $stored | default $supplied | default (randAlphaNum 24 | b64enc) }}
 {{- end }}
 
 {{- define "ftgo.db.createSecret" -}}
@@ -115,6 +129,14 @@ app.kubernetes.io/component: mysql
 {{- if .Values.mysql.enabled }}{{ .Values.mysql.auth.database }}{{ else }}{{ .Values.externalDatabase.database }}{{ end }}
 {{- end }}
 
+{{/*
+JDBC query string: app.jdbcParams if set, otherwise plaintext for the in-chart MySQL (no CA-signed cert)
+and TLS required for an external database.
+*/}}
+{{- define "ftgo.jdbcParams" -}}
+{{- .Values.app.jdbcParams | default (ternary "useSSL=false&allowPublicKeyRetrieval=true" "sslMode=REQUIRED" .Values.mysql.enabled) }}
+{{- end }}
+
 {{- define "ftgo.datasourceUrl" -}}
-{{- printf "jdbc:mysql://%s:%s/%s?%s" (include "ftgo.db.host" .) (include "ftgo.db.port" .) (include "ftgo.db.name" .) .Values.app.jdbcParams }}
+{{- printf "jdbc:mysql://%s:%s/%s?%s" (include "ftgo.db.host" .) (include "ftgo.db.port" .) (include "ftgo.db.name" .) (include "ftgo.jdbcParams" .) }}
 {{- end }}
