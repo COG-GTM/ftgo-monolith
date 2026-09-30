@@ -9,6 +9,7 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -43,13 +44,28 @@ public class OrderController {
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
-  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
-    Optional<Order> order = orderRepository.findById(orderId);
+  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    Optional<Order> order = findOwnedOrder(orderId, authenticatedConsumerId.get());
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
+  private Optional<Order> findOwnedOrder(long orderId, long consumerId) {
+    return orderRepository.findById(orderId).filter(o -> Long.valueOf(consumerId).equals(o.getConsumerId()));
+  }
+
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    if (authenticatedConsumerId.get() != consumerId) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
     List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
             .stream()
             .map(this::makeGetOrderResponse)
@@ -83,7 +99,14 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    if (!findOwnedOrder(orderId, authenticatedConsumerId.get()).isPresent()) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
     try {
       Order order = orderService.cancel(orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
@@ -93,7 +116,14 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    if (!findOwnedOrder(orderId, authenticatedConsumerId.get()).isPresent()) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);

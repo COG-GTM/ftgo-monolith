@@ -8,16 +8,24 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER;
+import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CONSUMER_ID;
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER_TOTAL;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class OrderControllerTest {
@@ -34,6 +42,13 @@ public class OrderControllerTest {
   }
 
 
+  private static final long OTHER_CONSUMER_ID = CONSUMER_ID + 1;
+
+  private static Authentication consumer(long consumerId) {
+    ConsumerUserDetails userDetails = new ConsumerUserDetails(consumerId, "[REDACTED]");
+    return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+  }
+
   @Test
   public void shouldFindOrder() {
 
@@ -41,6 +56,7 @@ public class OrderControllerTest {
 
     given().
             standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(CONSUMER_ID)).
     when().
             get("/orders/1").
     then().
@@ -57,11 +73,154 @@ public class OrderControllerTest {
 
     given().
             standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
+            auth().principal(consumer(CONSUMER_ID)).
     when().
             get("/orders/1").
     then().
             statusCode(404)
     ;
+  }
+
+  @Test
+  public void shouldNotFindOrderOfAnotherConsumer() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+    when().
+            get("/orders/1").
+    then().
+            statusCode(404)
+    ;
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedGetOrder() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders/1").
+    then().
+            statusCode(401)
+    ;
+  }
+
+  @Test
+  public void shouldFindOrdersOfAuthenticatedConsumer() {
+    when(orderRepository.findAllByConsumerId(CONSUMER_ID)).thenReturn(Collections.singletonList(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(CONSUMER_ID)).
+    when().
+            get("/orders?consumerId=" + CONSUMER_ID).
+    then().
+            statusCode(200).
+            body("size()", equalTo(1)).
+            body("[0].orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue()))
+    ;
+  }
+
+  @Test
+  public void shouldRejectOrdersOfAnotherConsumer() {
+    when(orderRepository.findAllByConsumerId(CONSUMER_ID)).thenReturn(Collections.singletonList(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+    when().
+            get("/orders?consumerId=" + CONSUMER_ID).
+    then().
+            statusCode(403)
+    ;
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedGetOrders() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders?consumerId=" + CONSUMER_ID).
+    then().
+            statusCode(401)
+    ;
+  }
+
+  @Test
+  public void shouldCancelOwnOrder() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+    when(orderService.cancel(1L)).thenReturn(CHICKEN_VINDALOO_ORDER);
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(CONSUMER_ID)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(200).
+            body("orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue()))
+    ;
+  }
+
+  @Test
+  public void shouldNotCancelOrderOfAnotherConsumer() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(404)
+    ;
+    verify(orderService, never()).cancel(anyLong());
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedCancel() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(401)
+    ;
+    verify(orderService, never()).cancel(anyLong());
+  }
+
+  @Test
+  public void shouldNotReviseOrderOfAnotherConsumer() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+            contentType("application/json").
+            body("{\"revisedLineItemQuantities\": {}}").
+    when().
+            post("/orders/1/revise").
+    then().
+            statusCode(404)
+    ;
+    verify(orderService, never()).reviseOrder(anyLong(), any());
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedRevise() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            contentType("application/json").
+            body("{\"revisedLineItemQuantities\": {}}").
+    when().
+            post("/orders/1/revise").
+    then().
+            statusCode(401)
+    ;
+    verify(orderService, never()).reviseOrder(anyLong(), any());
   }
 
   private StandaloneMockMvcBuilder configureControllers(Object... controllers) {
