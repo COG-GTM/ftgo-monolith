@@ -68,10 +68,53 @@ app.kubernetes.io/component: application
 {{- printf "%s-mysql" (include "ftgo.componentPrefix" .) }}
 {{- end }}
 
-{{- define "ftgo.mysql.secretName" -}}
+{{- define "ftgo.mysql.labels" -}}
+{{ include "ftgo.labels" . }}
+app.kubernetes.io/component: mysql
+{{- end }}
+
+{{- define "ftgo.mysql.selectorLabels" -}}
+{{ include "ftgo.selectorLabels" . }}
+app.kubernetes.io/component: mysql
+{{- end }}
+
+{{- define "ftgo.mysql.image" -}}
+{{- printf "%s:%s" .Values.mysql.image.repository .Values.mysql.image.tag }}
+{{- end }}
+
+{{/* Secret holding the database credentials used by the app (keys: mysql-user, mysql-password). */}}
+{{- define "ftgo.db.secretName" -}}
+{{- if .Values.mysql.enabled }}
 {{- .Values.mysql.auth.existingSecret | default (include "ftgo.mysql.fullname" .) }}
+{{- else }}
+{{- .Values.externalDatabase.existingSecret | default (printf "%s-external-db" (include "ftgo.fullname" .)) }}
+{{- end }}
+{{- end }}
+
+{{- define "ftgo.db.createSecret" -}}
+{{- if .Values.mysql.enabled }}
+{{- if not .Values.mysql.auth.existingSecret }}true{{ end }}
+{{- else }}
+{{- if not .Values.externalDatabase.existingSecret }}true{{ end }}
+{{- end }}
+{{- end }}
+
+{{- define "ftgo.db.host" -}}
+{{- if .Values.mysql.enabled }}
+{{- include "ftgo.mysql.fullname" . }}
+{{- else }}
+{{- required "externalDatabase.host is required when mysql.enabled=false" .Values.externalDatabase.host }}
+{{- end }}
+{{- end }}
+
+{{- define "ftgo.db.port" -}}
+{{- if .Values.mysql.enabled }}{{ .Values.mysql.service.port }}{{ else }}{{ .Values.externalDatabase.port }}{{ end }}
+{{- end }}
+
+{{- define "ftgo.db.name" -}}
+{{- if .Values.mysql.enabled }}{{ .Values.mysql.auth.database }}{{ else }}{{ .Values.externalDatabase.database }}{{ end }}
 {{- end }}
 
 {{- define "ftgo.datasourceUrl" -}}
-{{- printf "jdbc:mysql://%s:%v/%s?%s" (include "ftgo.mysql.fullname" .) .Values.mysql.service.port .Values.mysql.auth.database .Values.app.jdbcParams }}
+{{- printf "jdbc:mysql://%s:%s/%s?%s" (include "ftgo.db.host" .) (include "ftgo.db.port" .) (include "ftgo.db.name" .) .Values.app.jdbcParams }}
 {{- end }}

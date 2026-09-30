@@ -1,0 +1,101 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ftgo.mysql.fullname" . }}
+  labels:
+    {{- include "ftgo.mysql.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "ftgo.mysql.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ftgo.mysql.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ftgo.mysql.labels" . | nindent 8 }}
+      annotations:
+        checksum/initdb: {{ include (print $.Template.BasePath "/mysql-initdb-configmap.yaml") . | sha256sum }}
+        {{- with omit .Values.mysql.podAnnotations "checksum/initdb" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        {{- toYaml .Values.mysql.podSecurityContext | nindent 8 }}
+      containers:
+        - name: mysql
+          image: {{ include "ftgo.mysql.image" . | quote }}
+          imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ftgo.db.secretName" . }}
+                  key: mysql-root-password
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ftgo.db.secretName" . }}
+                  key: mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ftgo.db.secretName" . }}
+                  key: mysql-password
+          startupProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            {{- toYaml .Values.mysql.probes.startup | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            {{- toYaml .Values.mysql.probes.readiness | nindent 12 }}
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            {{- toYaml .Values.mysql.probes.liveness | nindent 12 }}
+          resources:
+            {{- toYaml .Values.mysql.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: initdb
+          configMap:
+            name: {{ include "ftgo.mysql.fullname" . }}-initdb
+      {{- with .Values.mysql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mysql.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mysql.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "ftgo.mysql.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes:
+          {{- toYaml .Values.mysql.persistence.accessModes | nindent 10 }}
+        {{- with .Values.mysql.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.mysql.persistence.size | quote }}
+{{- end }}

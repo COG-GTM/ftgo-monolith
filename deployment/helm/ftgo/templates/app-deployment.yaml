@@ -42,12 +42,12 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "ftgo.mysql.secretName" . }}
+                  name: {{ include "ftgo.db.secretName" . }}
                   key: mysql-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "ftgo.mysql.secretName" . }}
+                  name: {{ include "ftgo.db.secretName" . }}
                   key: mysql-password
           startupProbe:
             httpGet:
