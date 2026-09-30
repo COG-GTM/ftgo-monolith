@@ -9,6 +9,39 @@
     "mysql",
     "externalDatabase"
   ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mysql": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          },
+          "migrations": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "externalDatabase": {
+            "properties": {
+              "database": {
+                "const": "ftgo"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "definitions": {
     "resources": {
       "type": "object",
@@ -479,8 +512,9 @@
           "$ref": "#/definitions/port"
         },
         "database": {
-          "const": "ftgo",
-          "description": "The Flyway migrations (ftgo-flyway) start with `use ftgo;`, so the schema name is fixed."
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$",
+          "description": "Must be ftgo when migrations.enabled: the Flyway migrations (ftgo-flyway) start with `use ftgo;`."
         },
         "username": {
           "type": "string"
