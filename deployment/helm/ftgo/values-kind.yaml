@@ -16,6 +16,7 @@ app:
       memory: 512Mi
 
 migrations:
+  mode: bogus
   image:
     pullPolicy: IfNotPresent
 
