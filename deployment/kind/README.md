@@ -32,8 +32,22 @@ Host port 8081 must be free.
 | `smoke`     | `curl -f http://localhost:8081/actuator/health` and the dashboard at `http://localhost:8081/`.                 |
 | `e2e`       | `DOCKER_HOST_IP=localhost ./gradlew :ftgo-end-to-end-tests:cleanTest :ftgo-end-to-end-tests:test`.             |
 | `kind-down` | `kind delete cluster --name ftgo`.                                                                              |
+| `lint`      | `scripts/helm-lint.sh`: `helm lint --strict` and `helm template \| kubeconform -strict -kubernetes-version 1.31.0` for the default values, `values-kind.yaml` and hook-mode migrations, and checks that invalid values are rejected. Needs Helm and kubeconform v0.6.7, no cluster. |
+| `helm-test` | `helm test ftgo --logs`: runs the chart's test hooks, if any.                                                   |
 
 Overrides: `CLUSTER`, `RELEASE`, `NAMESPACE`, and `MAVEN_MIRROR_URL` (passed to the image build; see `scripts/build-images.sh`).
+
+## CI
+
+`.github/workflows/helm-chart.yml` runs on every pull request (and push to `master`) that touches `deployment/**`,
+`ftgo-flyway/**`, `Makefile`, `scripts/**` or the workflow itself:
+
+- **Lint and schema-validate**: `make lint`, plus a check that the workflow's tool versions match the `Makefile`.
+- **Chart version bump**: `scripts/check-chart-version-bump.sh <base>` fails if `deployment/helm/ftgo/**` changed but
+  `version` in `Chart.yaml` did not increase.
+- **Install on kind**: `helm/kind-action` creates cluster `ftgo` from `kind-config.yaml`, then
+  `make images deploy smoke`, `make helm-test` and `make e2e`. On failure it dumps pods, events and the
+  app/Flyway/MySQL logs.
 
 ## Troubleshooting
 

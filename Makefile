@@ -2,10 +2,14 @@
 #
 #   make kind-demo   create the cluster, build and load images, deploy, smoke test and run the end-to-end tests
 #   make kind-down   delete the cluster
+#   make lint        helm lint --strict, kubeconform and invalid-values checks (no cluster needed; also run by CI)
 
 KIND_VERSION    ?= v0.24.0
 KUBECTL_VERSION ?= v1.31.0
 HELM_VERSION    ?= v3.16.2
+KUBECONFORM_VERSION ?= v0.6.7
+# Kubernetes version of the kind node image in deployment/kind/kind-config.yaml; kubeconform validates against it.
+KUBERNETES_VERSION  ?= 1.31.0
 
 CLUSTER      ?= ftgo
 RELEASE      ?= ftgo
@@ -20,9 +24,9 @@ KUBE_CONTEXT := kind-$(CLUSTER)
 HELM         := helm --kube-context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
 KUBECTL      := kubectl --context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
 
-export KIND_VERSION KUBECTL_VERSION HELM_VERSION
+export KIND_VERSION KUBECTL_VERSION HELM_VERSION KUBECONFORM_VERSION KUBERNETES_VERSION
 
-.PHONY: kind-demo tools kind-up images deploy smoke e2e kind-down
+.PHONY: kind-demo tools lint kind-up images deploy smoke helm-test e2e kind-down
 
 # kind-demo's prerequisites are sequential steps.
 .NOTPARALLEL:
@@ -31,6 +35,9 @@ kind-demo: kind-up images deploy smoke e2e
 
 tools:
 	@scripts/kind-check-tools.sh
+
+lint:
+	@scripts/helm-lint.sh
 
 kind-up: tools
 	@if kind get clusters 2>/dev/null | grep -qx '$(CLUSTER)'; then \
@@ -62,6 +69,10 @@ smoke:
 	curl -fsS --retry 10 --retry-delay 3 --retry-all-errors '$(APP_URL)/actuator/health'
 	@echo
 	curl -fsS -o /dev/null '$(APP_URL)/' && echo "UI OK: $(APP_URL)/"
+
+# Runs the chart's helm.sh/hook: test Pods, if any.
+helm-test:
+	$(HELM) test '$(RELEASE)' --logs --timeout 5m
 
 e2e:
 	@"$${JAVA_HOME:+$$JAVA_HOME/bin/}java" -version 2>&1 | grep -q '"1\.8\.' || \
