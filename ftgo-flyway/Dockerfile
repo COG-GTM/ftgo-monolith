@@ -1,5 +1,5 @@
 # Migrations image for the Helm chart (deployment/helm/ftgo): runs `flyway migrate` over the SQL files below.
-# Build context is ftgo-flyway/:  docker build -t ftgo-flyway:dev ftgo-flyway
+# Built by scripts/build-images.sh (build context: ftgo-flyway/).
 FROM flyway/flyway:10.17.3
 
 # Same JDBC driver as the app, so jdbc:mysql URLs and query parameters (e.g. sslMode) behave identically.

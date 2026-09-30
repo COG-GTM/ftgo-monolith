@@ -17,6 +17,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # name|dockerfile|build context (paths relative to the repo root)
 IMAGES=(
   "ftgo-application|ftgo-application/Dockerfile|."
+  "ftgo-flyway|ftgo-flyway/Dockerfile|ftgo-flyway"
 )
 
 DEFAULT_KIND_CLUSTER=ftgo
