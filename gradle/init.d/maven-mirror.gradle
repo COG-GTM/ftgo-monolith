@@ -1,0 +1,26 @@
+// Redirects Maven Central / JCenter to the repository in MAVEN_MIRROR_URL (e.g. an Artifactory/Nexus proxy).
+// No-op when MAVEN_MIRROR_URL is unset.
+def mirror = System.getenv('MAVEN_MIRROR_URL')
+
+if (mirror) {
+    def publicRepos = ['https://repo.maven.apache.org/', 'https://repo1.maven.org/', 'https://jcenter.bintray.com/']
+    def redirect = { RepositoryHandler repos ->
+        repos.withType(MavenArtifactRepository) { repo ->
+            if (publicRepos.any { repo.url.toString().startsWith(it) }) {
+                repo.url = mirror
+            }
+        }
+    }
+
+    settingsEvaluated { settings ->
+        settings.pluginManagement.repositories {
+            maven { url mirror }
+            gradlePluginPortal()
+        }
+    }
+
+    allprojects {
+        redirect(buildscript.repositories)
+        redirect(repositories)
+    }
+}

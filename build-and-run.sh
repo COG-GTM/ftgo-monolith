@@ -2,8 +2,6 @@
 
 . ./set-env.sh
 
-./gradlew assemble
-
 docker-compose build
 
 . ./set-env.sh
