@@ -48,6 +48,16 @@ public class JwtTokenVerifierTest {
   }
 
   @Test
+  public void shouldRejectTokenSignedWithOtherHmacAlgorithm() {
+    String token = Jwts.builder().setSubject("consumer-42")
+            .claim(JwtTokenVerifier.ROLE_CLAIM, "CONSUMER").claim("consumerId", 42L)
+            .setExpiration(future)
+            .signWith(io.jsonwebtoken.SignatureAlgorithm.HS384,
+                    new javax.crypto.spec.SecretKeySpec(TEST_SECRET.getBytes(), "HmacSHA384")).compact();
+    assertRejected(token);
+  }
+
+  @Test
   public void shouldRejectTokenWithUnknownRole() {
     String token = Jwts.builder().setSubject("x").claim(JwtTokenVerifier.ROLE_CLAIM, "ADMIN").claim("consumerId", 42L)
             .setExpiration(future)

@@ -197,6 +197,14 @@ public class OrderControllerSecurityTest {
   }
 
   @Test
+  public void shouldAllowDeliveredByAssignedCourier() throws Exception {
+    mockMvc.perform(post("/orders/{orderId}/delivered", ORDER_ID)
+            .header("Authorization", bearer(FtgoRole.COURIER, COURIER_ID)))
+            .andExpect(status().isOk());
+    verify(orderService).noteDelivered(ORDER_ID);
+  }
+
+  @Test
   public void shouldRejectDeliveredByUnassignedCourier() throws Exception {
     mockMvc.perform(post("/orders/{orderId}/delivered", ORDER_ID)
             .header("Authorization", bearer(FtgoRole.COURIER, COURIER_ID + 1)))

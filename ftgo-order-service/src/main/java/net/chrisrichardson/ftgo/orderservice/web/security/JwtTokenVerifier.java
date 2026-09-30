@@ -2,7 +2,9 @@ package net.chrisrichardson.ftgo.orderservice.web.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -40,10 +42,13 @@ public class JwtTokenVerifier {
   public FtgoPrincipal verify(String token) {
     Claims claims;
     try {
-      claims = Jwts.parser()
+      Jws<Claims> jws = Jwts.parser()
               .setSigningKey(key)
-              .parseClaimsJws(token)
-              .getBody();
+              .parseClaimsJws(token);
+      if (!SignatureAlgorithm.HS256.getValue().equals(jws.getHeader().getAlgorithm())) {
+        throw new BadCredentialsException("Unsupported token algorithm");
+      }
+      claims = jws.getBody();
     } catch (JwtException | IllegalArgumentException e) {
       throw new BadCredentialsException("Invalid token", e);
     }
