@@ -14,7 +14,8 @@ ENV GRADLE_USER_HOME=/root/.gradle \
     MAVEN_MIRROR_URL=${MAVEN_MIRROR_URL}
 COPY . .
 RUN --mount=type=cache,target=/root/.gradle \
-    mkdir -p "$GRADLE_USER_HOME/init.d" \
+    { [ -x gradlew ] || { echo "ERROR: build context must be the repository root: docker build -f ftgo-application/Dockerfile ." >&2; exit 1; }; } \
+ && mkdir -p "$GRADLE_USER_HOME/init.d" \
  && cp gradle/init.d/maven-mirror.gradle "$GRADLE_USER_HOME/init.d/" \
  && ./gradlew --no-daemon :ftgo-application:bootJar \
  && cp ftgo-application/build/libs/ftgo-application.jar /ftgo-application.jar
