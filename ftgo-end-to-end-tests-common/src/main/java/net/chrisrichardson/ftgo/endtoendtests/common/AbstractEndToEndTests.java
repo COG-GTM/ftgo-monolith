@@ -6,12 +6,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.specification.RequestSpecification;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
+import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
@@ -40,6 +42,7 @@ public abstract class AbstractEndToEndTests {
 
   private final int revisedQuantityOfChickenVindaloo = 10;
   private int consumerId;
+  private String consumerPassword;
   private int restaurantId;
   private int orderId;
   private final Money priceOfChickenVindaloo = new Money("12.34");
@@ -76,6 +79,14 @@ public abstract class AbstractEndToEndTests {
     return baseUrl(getApplicationPort(), "orders", pathElements);
   }
 
+  private RequestSpecification asConsumer() {
+    return asConsumer(consumerId, consumerPassword);
+  }
+
+  private RequestSpecification asConsumer(int consumerId, String consumerPassword) {
+    return given().auth().preemptive().basic(Integer.toString(consumerId), consumerPassword);
+  }
+
   @BeforeClass
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
@@ -97,6 +108,46 @@ public abstract class AbstractEndToEndTests {
 
     cancelOrder();
 
+  }
+
+  @Test
+  public void shouldOnlyAllowOwningConsumerToReadOrders() {
+
+    createOrder();
+
+    given().
+            when().
+            get(orderBaseUrl(Integer.toString(orderId))).
+            then().
+            statusCode(401);
+
+    given().
+            when().
+            get(orderBaseUrl() + "?consumerId=" + consumerId).
+            then().
+            statusCode(401);
+
+    int otherConsumerId = createConsumer();
+    String otherConsumerPassword = consumerPassword;
+
+    asConsumer(otherConsumerId, otherConsumerPassword).
+            when().
+            get(orderBaseUrl(Integer.toString(orderId))).
+            then().
+            statusCode(404);
+
+    asConsumer(otherConsumerId, otherConsumerPassword).
+            when().
+            get(orderBaseUrl() + "?consumerId=" + consumerId).
+            then().
+            statusCode(403);
+
+    asConsumer(otherConsumerId, otherConsumerPassword).
+            when().
+            get(orderBaseUrl() + "?consumerId=" + otherConsumerId).
+            then().
+            statusCode(200).
+            body("size()", equalTo(0));
   }
 
   @Test
@@ -129,7 +180,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderRevised(int orderId) {
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
-      String orderTotal = given().
+      String orderTotal = asConsumer().
               when().
               get(baseUrl(getApplicationPort(), "orders", Integer.toString(orderId))).
               then().
@@ -139,7 +190,7 @@ public abstract class AbstractEndToEndTests {
       assertEquals(priceOfChickenVindaloo.multiply(revisedQuantityOfChickenVindaloo).asString(), orderTotal);
     });
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
-      String state = given().
+      String state = asConsumer().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -183,7 +234,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderCancelled(int orderId) {
     Eventually.eventually(String.format("verifyOrderCancelled %s", orderId), () -> {
-      String state = given().
+      String state = asConsumer().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -207,7 +258,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private Integer createConsumer() {
-    Integer consumerId =
+    CreateConsumerResponse response =
             given().
                     body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
                     contentType("application/json").
@@ -216,9 +267,12 @@ public abstract class AbstractEndToEndTests {
                     then().
                     statusCode(200).
                     extract().
-                    path("consumerId");
+                    as(CreateConsumerResponse.class);
 
+    Integer consumerId = (int) response.getConsumerId();
     assertNotNull(consumerId);
+    assertNotNull(response.getPassword());
+    consumerPassword = response.getPassword();
     return consumerId;
   }
 
@@ -267,7 +321,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderAuthorized(int orderId) {
     Eventually.eventually(String.format("verifyOrderApproved %s", orderId), () -> {
-      String state = given().
+      String state = asConsumer().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -280,7 +334,7 @@ public abstract class AbstractEndToEndTests {
 
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
-      String state = given().
+      String state = asConsumer().
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().
@@ -326,7 +380,7 @@ public abstract class AbstractEndToEndTests {
 
   private void assertOrderAssignedToCourier() {
     int courierId = Eventually.eventuallyReturning(() -> {
-      int assignedCourier = given().
+      int assignedCourier = asConsumer().
               when().
               get(orderBaseUrl(Long.toString(orderId))).
               then().
