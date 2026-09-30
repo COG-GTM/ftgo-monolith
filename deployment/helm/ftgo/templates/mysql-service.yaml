@@ -1,0 +1,19 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ftgo.mysql.fullname" . }}
+  labels:
+    {{- include "ftgo.mysql.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  # Resolvable before the pod is Ready, so early clients get "connection refused" and retry instead of a cached NXDOMAIN.
+  publishNotReadyAddresses: true
+  selector:
+    {{- include "ftgo.mysql.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: mysql
+      port: {{ .Values.mysql.service.port }}
+      targetPort: mysql
+      protocol: TCP
+{{- end }}

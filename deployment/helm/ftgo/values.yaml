@@ -16,9 +16,10 @@ app:
 
   javaOpts: "-Xmx192m"
 
-  # Query string appended to the JDBC URL. The in-cluster demo MySQL has no CA-signed cert, so TLS is off;
-  # for a real database use e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
-  jdbcParams: "useSSL=false&allowPublicKeyRetrieval=true"
+  # Query string appended to the JDBC URL. Empty picks a default: "useSSL=false&allowPublicKeyRetrieval=true"
+  # for the in-chart MySQL (no CA-signed cert), "sslMode=REQUIRED" for externalDatabase.
+  # For a real database prefer e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
+  jdbcParams: ""
 
   # Extra non-secret environment variables, rendered into the app ConfigMap.
   extraConfig: {}
@@ -68,10 +69,70 @@ app:
   affinity: {}
 
 mysql:
+  # Set to false to use externalDatabase instead of the in-chart StatefulSet.
+  enabled: true
+
+  image:
+    repository: mysql
+    tag: "8.0.39"
+    pullPolicy: IfNotPresent
+
   auth:
+    # Must match files/schema.sql (symlink to mysql/schema.sql), which creates the database and grants the user.
     database: ftgo
-    # Name of an existing Secret with keys `mysql-user` and `mysql-password`.
-    # Defaults to "<fullname>-mysql".
+    username: mysqluser
+    # Leave empty to generate random passwords on first install; they are then reused on upgrade.
+    # MySQL only applies these when it initialises an empty volume, so once the Secret exists a different
+    # value fails the install/upgrade instead of silently diverging from the database.
+    rootPassword: ""
+    password: ""
+    # Name of an existing Secret with keys `mysql-root-password`, `mysql-user` and `mysql-password`.
     existingSecret: ""
+
   service:
     port: 3306
+
+  persistence:
+    size: 1Gi
+    # Empty uses the cluster default StorageClass (kind: `standard`).
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      memory: 1Gi
+
+  podSecurityContext:
+    fsGroup: 999
+
+  probes:
+    startup:
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 60
+    readiness:
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 6
+
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Used when mysql.enabled is false.
+externalDatabase:
+  host: ""
+  port: 3306
+  database: ftgo
+  username: ""
+  password: ""
+  # Name of an existing Secret with keys `mysql-user` and `mysql-password`.
+  existingSecret: ""

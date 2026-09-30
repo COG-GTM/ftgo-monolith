@@ -1,0 +1,12 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ftgo.mysql.fullname" . }}-initdb
+  labels:
+    {{- include "ftgo.mysql.labels" . | nindent 4 }}
+data:
+  # Runs once, on an empty data directory. Source of truth: mysql/schema.sql (files/schema.sql is a symlink).
+  schema.sql: |
+    {{- .Files.Get "files/schema.sql" | nindent 4 }}
+{{- end }}
