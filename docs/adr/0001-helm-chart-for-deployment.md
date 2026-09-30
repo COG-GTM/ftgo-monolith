@@ -22,8 +22,8 @@ inconsistent ways:
   `V2__add_courier_optimization_and_api_tracking.sql`) are run by hand from a developer machine
   with root credentials; nothing in the Kubernetes path runs them.
 
-None of these paths works on a current Kubernetes (1.16+ removed `apps/v1beta1`), none is
-versioned or upgradeable as a unit, and none can be rolled back. Epic AB-402 replaces them with a
+The Kubernetes path does not apply on any current Kubernetes (1.16+ removed `apps/v1beta1`), and
+none of the three paths is versioned or upgradeable as a unit or can be rolled back. Epic AB-402 replaces them with a
 single Helm chart, demoed on a local kind cluster.
 
 Constraints:
@@ -59,7 +59,8 @@ local/demo target, with pinned tool versions (kind v0.24.0,
 kubectl v1.31.x, Helm v3.16.x, kubeconform validating Kubernetes 1.31.0). Images
 `ftgo-application:<git-sha>` / `:dev` and `ftgo-flyway:*` are built locally and loaded with
 `kind load docker-image` into a cluster named `ftgo`, using `imagePullPolicy: IfNotPresent`. The app
-is reachable on `http://localhost:8081`.
+is reachable on `http://localhost:8081` via a NodePort Service and a kind `extraPortMappings` entry
+(see decision 7).
 
 ### Decision details
 
@@ -159,6 +160,21 @@ exist before install (breaks the one-command demo); Sealed Secrets / SOPS / Exte
 | MySQL | `mysql:8.0.39` | Exact tag |
 | Flyway | `flyway/flyway:10.x` pinned to an exact tag in AB-408 (10.17.3 used for verification) | |
 
+#### 7. Local access: NodePort + kind `extraPortMappings`
+
+kind's `extraPortMappings` forwards a host port to a port on the kind node container, not to a
+Service, so the kind values expose the app through a `NodePort` Service with a fixed `nodePort`
+(default `30081`, configurable; `service.type` stays `ClusterIP` by default outside kind), and the
+kind cluster config maps `containerPort: 30081` -> `hostPort: 8081` with
+`listenAddress: 127.0.0.1`. This gives a stable `http://localhost:8081` for the e2e tests with no
+long-running process.
+
+| Alternative | Pros | Cons | Why rejected |
+| --- | --- | --- | --- |
+| **NodePort + `extraPortMappings` (chosen)** | No extra components; survives pod restarts; one-command deploy | Port fixed at cluster-create time; kind-specific values | — |
+| Ingress controller (ingress-nginx) + `extraPortMappings` 80/443 | Production-like routing | Extra controller to install and pin; host routing not needed for one app | Overkill for the demo |
+| `kubectl port-forward svc/ftgo 8081:8080` | No cluster config | Foreground process that dies on pod restarts/rollouts; breaks during `helm upgrade` demos | Kept only as a runbook fallback |
+
 Images are built locally (`scripts/build-images.sh`, AB-405) and loaded with
 `kind load docker-image` into the kind cluster `ftgo`; no registry is involved, hence
 `imagePullPolicy: IfNotPresent`.
@@ -191,7 +207,7 @@ C4Container
         }
     }
     System_Ext(hub, "Docker Hub", "mysql, flyway/flyway, kindest/node base images (pinned)")
-    Rel(user, app, "HTTP (no auth) via kind port mapping localhost:8081 -> Service")
+    Rel(user, app, "HTTP (no auth): localhost:8081 -> kind extraPortMappings -> NodePort 30081 -> :8080")
     Rel(flyway, mysql, "MySQL protocol :3306 / mysqluser password")
     Rel(app, mysql, "JDBC (Connector/J 8.0.33) :3306 / mysqluser password")
     Rel(app, secret, "env from secretKeyRef")
@@ -233,8 +249,8 @@ readiness on `/actuator/health`.
 - **Policy sections satisfied:** No AWS/CDK/Terraform resources, so `approved-infra.yaml` (T5) is
   not engaged. Images pinned by exact tag (node image by digest); no `latest`.
 - **Threats considered:** supply chain (pinned tags/digest; no third-party charts); credential
-  leakage (no real creds committed; override path); accidental exposure (kind port mapping binds
-  to localhost only — to be enforced in the kind config in AB-409).
+  leakage (no real creds committed; override path); accidental exposure (kind `extraPortMappings`
+  uses `listenAddress: 127.0.0.1` — implemented in the kind config in AB-409).
 
 ## Cost
 
