@@ -90,8 +90,8 @@ make demo-legacy
 ```
 
 [`scripts/demo-legacy.sh`](../../scripts/demo-legacy.sh) shows the deployment paths the repo had before this epic.
-It reads them from `origin/master` (the Kubernetes YAML was deleted in AB-412; set `LEGACY_REF` to use another
-commit) and applies the legacy MySQL manifests to the kind cluster with `--dry-run=server`, so nothing is created.
+It reads them from `4823d191`, the last `master` commit before AB-412 deleted the Kubernetes YAML (set `LEGACY_REF`
+to use another commit) and applies the legacy MySQL manifests to the kind cluster with `--dry-run=server`, so nothing is created.
 
 Talk track:
 
@@ -104,7 +104,7 @@ Talk track:
 What you should see:
 
 ```
-App manifests matching */src/deployment/kubernetes/*.yml on origin/master:
+App manifests matching */src/deployment/kubernetes/*.yml on 4823d191…:
   (none)
 ...
 secret/ftgo-db-secret created (server dry run)
@@ -294,7 +294,8 @@ make kind-down      # deletes the cluster, every container and the localhost:808
 | Start from scratch (e.g. after `make kind-down`)   | `make demo-reset`            | 1–2 min (warm caches) |
 
 `QUICK=1` uninstalls the release if present, deletes the MySQL PVC and Secret and the leftover `helm test` pod,
-and checks that the preloaded images are still on the node. Both modes are safe to run repeatedly, and neither
+and checks that the app images (tag in `build/kind-image-tag`) and third-party images are on the node, building or
+loading any that are missing. Both modes are safe to run repeatedly, and neither
 touches your Git working tree.
 
 ## Troubleshooting

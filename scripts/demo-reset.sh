@@ -81,12 +81,23 @@ preload_image() {
   echo "$ref: loaded into $NODE"
 }
 
-# Third-party images referenced by the chart with the kind values (everything except the locally built ones).
+# Third-party images referenced by the chart with the kind values. The locally built app and Flyway images are
+# rendered with a sentinel tag so they can be told apart whatever their repository is set to.
+LOCAL_TAG=demo-reset-local-build
 third_party_images() {
-  "${HELM[@]}" template "$RELEASE" "$CHART" -f "$KIND_VALUES" \
-      --set-string app.image.tag=x --set-string migrations.image.tag=x 2> >(grep -v 'found symbolic link' >&2) |
-    sed -n 's/^[[:space:]]*image:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' |
-    grep -Ev '^(ftgo-application|ftgo-flyway):' | sort -u
+  local rendered
+  rendered=$("${HELM[@]}" template "$RELEASE" "$CHART" -f "$KIND_VALUES" \
+    --set-string app.image.tag="$LOCAL_TAG" --set-string migrations.image.tag="$LOCAL_TAG" 2> >(grep -v 'found symbolic link' >&2)) ||
+    die "helm template $CHART failed; cannot determine the images to preload"
+  sed -n 's/^[[:space:]]*image:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' <<< "$rendered" |
+    grep -v ":$LOCAL_TAG\$" | sort -u || true
+}
+
+# The app and Flyway images deployed by `make deploy` (tag from IMAGE_TAG_FILE) must already be on the node.
+app_images_on_node() {
+  local tag
+  tag=$(cat "$IMAGE_TAG_FILE" 2> /dev/null) || return 1
+  [ -n "$tag" ] && on_node "ftgo-application:$tag" && on_node "ftgo-flyway:$tag"
 }
 
 if [ -n "$QUICK" ]; then
@@ -97,6 +108,10 @@ if [ -n "$QUICK" ]; then
   fi
   run "${KUBECTL[@]}" delete pvc,secret -l "$MYSQL_SELECTOR" --ignore-not-found --wait
   run "${KUBECTL[@]}" delete pod -l "app.kubernetes.io/instance=$RELEASE,app.kubernetes.io/component=test" --ignore-not-found
+  if ! app_images_on_node; then
+    step "App images from $IMAGE_TAG_FILE are not on $NODE: build and load them"
+    run make -C "$ROOT_DIR" --no-print-directory CLUSTER="$CLUSTER" images
+  fi
 else
   if cluster_exists; then
     step "Delete kind cluster '$CLUSTER'"
@@ -107,9 +122,12 @@ else
 fi
 
 step "Preload third-party images into $NODE"
+IMAGES=$(third_party_images)
+[ -n "$IMAGES" ] || die "no third-party images found in the rendered chart"
 while read -r image; do
   preload_image "$image"
-done < <(third_party_images)
+done <<< "$IMAGES"
+app_images_on_node || die "app images from $IMAGE_TAG_FILE are not on $NODE"
 
 step "Start state"
 run "${HELM[@]}" list --all
