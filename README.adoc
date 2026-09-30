@@ -20,4 +20,4 @@ Tokens are HS256-signed with the secret configured by `ftgo.security.jwt.secret`
 
 If no secret is configured the application starts with a random ephemeral key, so every token is rejected.
 The end-to-end tests mint their own tokens (see `TestAuthTokens`) using `FTGO_SECURITY_JWT_SECRET`, or a built-in test-only default when the variable is unset.
-`docker-compose.yml` falls back to the same test-only default so the end-to-end suite works out of the box; always set `FTGO_SECURITY_JWT_SECRET` to a real secret outside local development.
+When running the external end-to-end suite against `docker compose`, export the same `FTGO_SECURITY_JWT_SECRET` (at least 32 bytes) before `docker compose up` and before `./run-end-to-end-tests.sh`; the script refuses to run without it, and the compose application otherwise starts with an ephemeral key that rejects every token.
