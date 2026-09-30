@@ -4,6 +4,8 @@ fullnameOverride: ""
 app:
   replicaCount: 1
 
+  # Not published to a registry: build it and load it into the cluster first
+  # (kind: `kind load docker-image ftgo-application:<tag>`), or point repository/tag at a registry image.
   image:
     repository: ftgo-application
     # Defaults to .Chart.AppVersion
@@ -13,6 +15,10 @@ app:
   imagePullSecrets: []
 
   javaOpts: "-Xmx192m"
+
+  # Query string appended to the JDBC URL. The in-cluster demo MySQL has no CA-signed cert, so TLS is off;
+  # for a real database use e.g. "sslMode=VERIFY_IDENTITY" with a truststore.
+  jdbcParams: "useSSL=false&allowPublicKeyRetrieval=true"
 
   # Extra non-secret environment variables, rendered into the app ConfigMap.
   extraConfig: {}

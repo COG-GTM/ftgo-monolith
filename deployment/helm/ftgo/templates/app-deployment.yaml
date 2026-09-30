@@ -15,7 +15,7 @@ spec:
         {{- include "ftgo.app.labels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app-configmap.yaml") . | sha256sum }}
-        {{- with .Values.app.podAnnotations }}
+        {{- with omit .Values.app.podAnnotations "checksum/config" }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:

@@ -34,7 +34,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "ftgo.app.fullname" -}}
-{{- printf "%s-application" (include "ftgo.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-application" (include "ftgo.fullname" . | trunc 40 | trimSuffix "-") }}
 {{- end }}
 
 {{- define "ftgo.app.labels" -}}
@@ -52,7 +52,7 @@ app.kubernetes.io/component: application
 {{- end }}
 
 {{- define "ftgo.mysql.fullname" -}}
-{{- printf "%s-mysql" (include "ftgo.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-mysql" (include "ftgo.fullname" . | trunc 40 | trimSuffix "-") }}
 {{- end }}
 
 {{- define "ftgo.mysql.secretName" -}}
@@ -60,5 +60,5 @@ app.kubernetes.io/component: application
 {{- end }}
 
 {{- define "ftgo.datasourceUrl" -}}
-{{- printf "jdbc:mysql://%s:%v/%s?useSSL=false&allowPublicKeyRetrieval=true" (include "ftgo.mysql.fullname" .) .Values.mysql.service.port .Values.mysql.auth.database }}
+{{- printf "jdbc:mysql://%s:%v/%s?%s" (include "ftgo.mysql.fullname" .) .Values.mysql.service.port .Values.mysql.auth.database .Values.app.jdbcParams }}
 {{- end }}
