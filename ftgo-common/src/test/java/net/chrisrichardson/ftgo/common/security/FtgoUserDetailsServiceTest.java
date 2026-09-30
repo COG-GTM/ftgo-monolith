@@ -61,6 +61,14 @@ public class FtgoUserDetailsServiceTest {
   }
 
   @Test(expected = IllegalStateException.class)
+  public void shouldRejectEmptyEncodedPassword() {
+    FtgoSecurityProperties properties = new FtgoSecurityProperties();
+    properties.setUsers(Arrays.asList(user("ops", "{noop}", FtgoRole.ADMIN, null)));
+
+    new FtgoUserDetailsService(properties);
+  }
+
+  @Test(expected = IllegalStateException.class)
   public void shouldRejectDuplicateUsernames() {
     FtgoSecurityProperties properties = new FtgoSecurityProperties();
     properties.setUsers(Arrays.asList(

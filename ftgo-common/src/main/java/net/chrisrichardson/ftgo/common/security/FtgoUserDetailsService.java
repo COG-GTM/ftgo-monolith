@@ -23,6 +23,8 @@ public class FtgoUserDetailsService implements UserDetailsService {
     for (FtgoSecurityProperties.User user : properties.getUsers()) {
       if (isBlank(user.getUsername()) || isBlank(user.getPassword()) || user.getRole() == null)
         throw new IllegalStateException("ftgo.security.users entries need username, password and role");
+      if (isBlank(withoutEncoderId(user.getPassword())))
+        throw new IllegalStateException("ftgo.security.users password for " + user.getUsername() + " is empty");
       if (users.containsKey(user.getUsername()))
         throw new IllegalStateException("Duplicate ftgo.security.users username: " + user.getUsername());
       users.put(user.getUsername(), new FtgoPrincipal(user.getUsername(), user.getPassword(), user.getRole(), user.getActorId()));
@@ -37,6 +39,10 @@ public class FtgoUserDetailsService implements UserDetailsService {
     if (principal == null)
       throw new UsernameNotFoundException(username);
     return principal;
+  }
+
+  private static String withoutEncoderId(String password) {
+    return password.startsWith("{") && password.indexOf('}') > 0 ? password.substring(password.indexOf('}') + 1) : password;
   }
 
   private static boolean isBlank(String s) {
