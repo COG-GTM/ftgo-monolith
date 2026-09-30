@@ -1,0 +1,16 @@
+FTGO {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Wait for the application to become ready:
+
+  kubectl -n {{ .Release.Namespace }} rollout status deployment/{{ include "ftgo.app.fullname" . }}
+
+{{- if eq .Values.app.service.type "NodePort" }}
+
+The application is exposed on node port {{ .Values.app.service.nodePort | default "(auto-assigned)" }}.
+{{- else }}
+
+Reach the application locally:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ftgo.app.fullname" . }} 8081:{{ .Values.app.service.port }}
+  curl http://localhost:8081/actuator/health
+{{- end }}

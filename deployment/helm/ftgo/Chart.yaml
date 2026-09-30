@@ -1,0 +1,9 @@
+apiVersion: v2
+name: ftgo
+description: FTGO monolith (Spring Boot + MySQL) for Kubernetes
+type: application
+version: 0.1.0
+appVersion: "dev"
+home: https://github.com/COG-GTM/ftgo-monolith
+sources:
+  - https://github.com/COG-GTM/ftgo-monolith
