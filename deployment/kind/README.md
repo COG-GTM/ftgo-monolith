@@ -40,14 +40,16 @@ Overrides: `CLUSTER`, `RELEASE`, `NAMESPACE`, and `MAVEN_MIRROR_URL` (passed to 
 ## CI
 
 `.github/workflows/helm-chart.yml` runs on every pull request (and push to `master`) that touches `deployment/**`,
-`ftgo-flyway/**`, `Makefile`, `scripts/**` or the workflow itself:
+`ftgo-flyway/**`, `mysql/schema.sql` (symlinked into the chart), `Makefile`, `scripts/**` or the workflow itself:
 
 - **Lint and schema-validate**: `make lint`, plus a check that the workflow's tool versions match the `Makefile`.
-- **Chart version bump**: `scripts/check-chart-version-bump.sh <base>` fails if `deployment/helm/ftgo/**` changed but
-  `version` in `Chart.yaml` did not increase.
+- **Chart version bump**: `scripts/check-chart-version-bump.sh <base>` fails if `deployment/helm/ftgo/**` (or a file
+  symlinked into it) changed but `version` in `Chart.yaml` did not increase by SemVer precedence.
 - **Install on kind**: `helm/kind-action` creates cluster `ftgo` from `kind-config.yaml`, then
-  `make images deploy smoke`, `make helm-test` and `make e2e`. On failure it dumps pods, events and the
-  app/Flyway/MySQL logs.
+  `make images deploy smoke` and `make helm-test`. On failure it dumps pods, events and the app/Flyway/MySQL logs.
+  `make e2e` runs only from a manual run (`workflow_dispatch` with `e2e: true`): its dependency
+  `io.eventuate.util:eventuate-util-test:0.1.0.RELEASE` was only published to the retired Bintray/JCenter and is not
+  on Maven Central, so it doesn't resolve on stock runners.
 
 ## Troubleshooting
 

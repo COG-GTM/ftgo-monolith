@@ -24,13 +24,61 @@ error() {
   exit 1
 }
 
+SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z.-]+))?(\+[0-9A-Za-z.-]+)?$'
+
+# Prints -1, 0 or 1 comparing two valid SemVer 2.0.0 versions by precedence (build metadata ignored).
+semver_cmp() {
+  local a b i x y
+  [[ $1 =~ $SEMVER_RE ]]
+  a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[5]}")
+  [[ $2 =~ $SEMVER_RE ]]
+  b=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[5]}")
+  for i in 0 1 2; do
+    if ((a[i] != b[i])); then
+      ((a[i] < b[i])) && echo -1 || echo 1
+      return
+    fi
+  done
+  if [ "${a[3]}" = "${b[3]}" ]; then echo 0; return; fi
+  [ -z "${a[3]}" ] && { echo 1; return; }
+  [ -z "${b[3]}" ] && { echo -1; return; }
+  local -a pa pb
+  IFS=. read -ra pa <<< "${a[3]}"
+  IFS=. read -ra pb <<< "${b[3]}"
+  for ((i = 0; i < ${#pa[@]} && i < ${#pb[@]}; i++)); do
+    x=${pa[i]} y=${pb[i]}
+    [ "$x" = "$y" ] && continue
+    if [[ $x =~ ^[0-9]+$ && $y =~ ^[0-9]+$ ]]; then
+      ((10#$x < 10#$y)) && echo -1 || echo 1
+    elif [[ $x =~ ^[0-9]+$ ]]; then
+      echo -1
+    elif [[ $y =~ ^[0-9]+$ ]]; then
+      echo 1
+    else
+      [[ $x < $y ]] && echo -1 || echo 1
+    fi
+    return
+  done
+  ((${#pa[@]} < ${#pb[@]})) && echo -1 || echo 1
+}
+
+# The chart directory plus the targets of any symlinks inside it (e.g. files/schema.sql -> mysql/schema.sql).
+chart_paths() {
+  echo "$CHART_DIR"
+  git ls-tree -r "$1" -- "$CHART_DIR" | while read -r mode _ object path; do
+    [ "$mode" = 120000 ] || continue
+    realpath -m -s --relative-to=. "$(dirname "$path")/$(git cat-file -p "$object")"
+  done
+}
+
 chart_version() {
   { git show "$1:$CHART_YAML" 2> /dev/null || true; } | sed -nE 's/^version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p'
 }
 
 git rev-parse --verify --quiet "$BASE_REF^{commit}" > /dev/null || error "base commit $BASE_REF not found (fetch full history)"
 
-changed=$(git diff --name-only "$BASE_REF" "$HEAD_REF" -- "$CHART_DIR")
+mapfile -t paths < <({ chart_paths "$BASE_REF"; chart_paths "$HEAD_REF"; } | sort -u)
+changed=$(git diff --name-only "$BASE_REF" "$HEAD_REF" -- "${paths[@]}")
 if [ -z "$changed" ]; then
   echo "No changes under $CHART_DIR since $(git rev-parse --short "$BASE_REF"); no version bump needed."
   exit 0
@@ -49,12 +97,16 @@ if [ -z "$base_version" ]; then
   exit 0
 fi
 
-if [ "$base_version" = "$head_version" ]; then
+for v in "$base_version" "$head_version"; do
+  [[ $v =~ $SEMVER_RE ]] || error "chart version '$v' is not valid SemVer 2.0.0"
+done
+
+cmp=$(semver_cmp "$base_version" "$head_version")
+if [ "$cmp" = 0 ]; then
   error "$CHART_DIR changed but the chart version is still $base_version. Bump 'version' in $CHART_YAML (SemVer: patch for fixes, minor for new values/features, major for breaking changes)."
 fi
 
-highest=$(printf '%s\n%s\n' "$base_version" "$head_version" | sort -V | tail -n1)
-if [ "$highest" != "$head_version" ]; then
+if [ "$cmp" = 1 ]; then
   error "chart version went backwards: $base_version -> $head_version. 'version' in $CHART_YAML must increase."
 fi
 
