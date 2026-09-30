@@ -19,6 +19,7 @@ public class ApiTrackingController {
   static final int MAX_MINUTES_BACK = 24 * 60;
   static final int DEFAULT_LIMIT = 100;
   static final int MAX_LIMIT = 1000;
+  static final char LIKE_ESCAPE = '!';
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -29,29 +30,33 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLogView>> getRecentLogs(
           @RequestParam(defaultValue = "60") int minutesBack,
+          @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
     LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
-    List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since, page(limit));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since, page(page, limit));
     return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLogView>> getErrors(
           @RequestParam(defaultValue = "60") int minutesBack,
+          @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
     LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
-    List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since, page(limit));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since, page(page, limit));
     return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLogView>> searchByUri(
           @RequestParam String uri,
+          @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
     if (uri.trim().isEmpty()) {
       throw new IllegalArgumentException("uri must not be blank");
     }
-    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri.trim(), page(limit));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUriContaining(
+            likePattern(uri.trim()), page(page, limit));
     return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
@@ -132,11 +137,25 @@ public class ApiTrackingController {
     return minutesBack;
   }
 
-  private static Pageable page(int limit) {
+  private static Pageable page(int page, int limit) {
+    if (page < 0) {
+      throw new IllegalArgumentException("page must be 0 or greater");
+    }
     if (limit < 1 || limit > MAX_LIMIT) {
       throw new IllegalArgumentException("limit must be between 1 and " + MAX_LIMIT);
     }
-    return PageRequest.of(0, limit);
+    return PageRequest.of(page, limit);
+  }
+
+  static String likePattern(String term) {
+    StringBuilder sb = new StringBuilder(term.length() + 2).append('%');
+    for (char c : term.toCharArray()) {
+      if (c == '%' || c == '_' || c == LIKE_ESCAPE) {
+        sb.append(LIKE_ESCAPE);
+      }
+      sb.append(c);
+    }
+    return sb.append('%').toString();
   }
 
   private static List<ApiRequestLogView> toViews(List<ApiRequestLog> logs) {

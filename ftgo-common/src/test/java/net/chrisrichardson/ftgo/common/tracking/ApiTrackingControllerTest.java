@@ -85,7 +85,7 @@ public class ApiTrackingControllerTest {
             .andExpect(status().isBadRequest());
 
     verify(repository, never()).findRecentLogs(any(LocalDateTime.class), any(Pageable.class));
-    verify(repository, never()).findByRequestUri(anyString(), any(Pageable.class));
+    verify(repository, never()).findByRequestUriContaining(anyString(), any(Pageable.class));
   }
 
   @Test
@@ -101,10 +101,39 @@ public class ApiTrackingControllerTest {
   }
 
   @Test
+  public void shouldRequestSelectedPage() throws Exception {
+    when(repository.findErrorsSince(any(LocalDateTime.class), any(Pageable.class)))
+            .thenReturn(Collections.emptyList());
+
+    mockMvc.perform(get("/api/tracking/logs/errors").param("page", "3").param("limit", "50"))
+            .andExpect(status().isOk());
+    mockMvc.perform(get("/api/tracking/logs").param("page", "-1"))
+            .andExpect(status().isBadRequest());
+
+    verify(repository).findErrorsSince(any(LocalDateTime.class),
+            argThat(p -> p.getPageNumber() == 3 && p.getPageSize() == 50));
+    verify(repository, never()).findRecentLogs(any(LocalDateTime.class), any(Pageable.class));
+  }
+
+  @Test
+  public void shouldTreatSearchTermLiterally() throws Exception {
+    when(repository.findByRequestUriContaining(anyString(), any(Pageable.class)))
+            .thenReturn(Collections.emptyList());
+
+    mockMvc.perform(get("/api/tracking/logs/search").param("uri", "%"))
+            .andExpect(status().isOk());
+    mockMvc.perform(get("/api/tracking/logs/search").param("uri", "/orders_1!"))
+            .andExpect(status().isOk());
+
+    verify(repository).findByRequestUriContaining(eq("%!%%"), any(Pageable.class));
+    verify(repository).findByRequestUriContaining(eq("%/orders!_1!!%"), any(Pageable.class));
+  }
+
+  @Test
   public void shouldRejectBlankSearchUri() throws Exception {
     mockMvc.perform(get("/api/tracking/logs/search").param("uri", "  "))
             .andExpect(status().isBadRequest());
 
-    verify(repository, never()).findByRequestUri(eq("  "), any(Pageable.class));
+    verify(repository, never()).findByRequestUriContaining(anyString(), any(Pageable.class));
   }
 }
