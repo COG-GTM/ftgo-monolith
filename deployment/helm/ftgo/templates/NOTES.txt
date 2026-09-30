@@ -14,3 +14,7 @@ Reach the application locally:
   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ftgo.app.fullname" . }} 8081:{{ .Values.app.service.port }}
   curl http://localhost:8081/actuator/health
 {{- end }}
+
+Check the release (health endpoint and a read endpoint through the Service):
+
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }} --logs

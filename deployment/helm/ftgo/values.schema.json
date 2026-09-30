@@ -150,6 +150,18 @@
           ]
         }
       }
+    },
+    "intOrPercent": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^[0-9]+%$"
+        }
+      ]
     }
   },
   "properties": {
@@ -171,6 +183,27 @@
       ],
       "properties": {
         "replicaCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rollingUpdate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxSurge",
+            "maxUnavailable"
+          ],
+          "properties": {
+            "maxSurge": {
+              "$ref": "#/definitions/intOrPercent"
+            },
+            "maxUnavailable": {
+              "$ref": "#/definitions/intOrPercent"
+            }
+          },
+          "description": "Deployment RollingUpdate parameters (the API server rejects maxSurge and maxUnavailable both 0)."
+        },
+        "revisionHistoryLimit": {
           "type": "integer",
           "minimum": 0
         },
@@ -299,6 +332,65 @@
         },
         "jdbcParams": {
           "type": "string"
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "tag"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$"
+            },
+            "pullPolicy": {
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ]
+            }
+          }
+        },
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
         }
       }
     },

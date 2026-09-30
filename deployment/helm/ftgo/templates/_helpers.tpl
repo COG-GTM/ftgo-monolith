@@ -178,3 +178,8 @@ Connects as the application DB user, which owns ftgo.* (GRANT ALL in schema.sql)
   resources:
     {{- toYaml .Values.migrations.resources | nindent 4 }}
 {{- end }}
+
+{{- define "ftgo.tests.image" -}}
+{{- $img := printf "%s:%s" .Values.tests.image.repository .Values.tests.image.tag }}
+{{- if .Values.tests.image.digest }}{{ printf "%s@%s" $img .Values.tests.image.digest }}{{ else }}{{ $img }}{{ end }}
+{{- end }}
