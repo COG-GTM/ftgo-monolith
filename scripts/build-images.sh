@@ -2,7 +2,7 @@
 #
 # Builds the FTGO container images and optionally loads them into a kind cluster.
 #
-# Each image is tagged <name>:<short-git-sha> (suffixed with -dirty for uncommitted changes) and <name>:dev.
+# Each image is tagged <name>:<short-git-sha> (suffixed with -dirty for uncommitted or untracked changes) and <name>:dev.
 #
 # Usage: scripts/build-images.sh [--kind-load [cluster]] [--help]
 #
@@ -51,7 +51,7 @@ done
 
 if [ -z "${IMAGE_TAG:-}" ]; then
   IMAGE_TAG="$(git -C "$ROOT_DIR" rev-parse --short HEAD)"
-  if [ -n "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=no)" ]; then
+  if [ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]; then
     IMAGE_TAG="${IMAGE_TAG}-dirty"
   fi
 fi
