@@ -24,7 +24,7 @@ ARB triggers: T6 (authentication/authorization change on a public endpoint), T2 
 
 ## Decision
 
-We will authenticate the two order-read endpoints with HTTP Basic (Spring Security, stateless) using
+We will authenticate the order-read endpoints and the consumer-initiated `cancel` / `revise` actions (which also return order details) with HTTP Basic (Spring Security, stateless) using
 per-consumer credentials issued once at `POST /consumers` and stored only as a BCrypt hash in
 `consumers.password_hash`, and we will derive the consumer identity from the authenticated principal:
 `GET /orders/{orderId}` returns 404 unless the order belongs to the caller, and `GET /orders?consumerId=`
@@ -77,7 +77,7 @@ C4Container
 - **Data classification:** Consumer order history (personal data) now requires authentication; credential material stored as BCrypt hash only (Confidential).
 - **Encryption at rest:** N/A — existing MySQL volume; no new store. TBD whether the existing volume is encrypted (owner to confirm).
 - **Encryption in transit:** HTTP Basic sends the password per request; TLS termination in front of the monolith is required in any non-local deployment (existing deployment concern, not introduced here).
-- **AuthN / AuthZ:** Spring Security HTTP Basic -> `ConsumerUserDetailsService` (BCrypt via shared `PasswordEncoder` bean). AuthZ: `hasAuthority("ROLE_CONSUMER")` on the two read endpoints plus object-level ownership check in `OrderController` (404 for non-owned order, 403 for foreign `consumerId`). Controller also fails closed (401) if no principal is present.
+- **AuthN / AuthZ:** Spring Security HTTP Basic -> `ConsumerUserDetailsService` (BCrypt via shared `PasswordEncoder` bean). AuthZ: `hasAuthority("ROLE_CONSUMER")` on the read, `cancel` and `revise` endpoints plus object-level ownership check in `OrderController` (404 for non-owned order, 403 for foreign `consumerId`). Controller also fails closed (401) if no principal is present.
 - **Secrets:** Per-consumer password generated with `KeyGenerators.secureRandom(32)` (256 bits), returned exactly once in `CreateConsumerResponse.password`; never logged; only the hash is persisted. No new deployment secrets.
 - **Audit logging:** Existing `api_request_log` request tracking unchanged; failed authentications surface as 401/403 in that log. No dedicated auth audit trail (see follow-ups).
 - **Data residency / regions:** Unchanged.
@@ -110,7 +110,7 @@ C4Container
 
 - Positive: anonymous and cross-consumer order reads are no longer possible; identity comes from the authenticated principal, not the client-supplied `consumerId`.
 - Negative / risks: `POST /consumers` response gains a `password` field; pre-existing consumers cannot read orders until credentials are issued; HTTP Basic requires TLS in transit.
-- Follow-ups: extend authentication to the mutating `/orders/{id}/*` endpoints and to restaurant/courier/operations roles; add a credential-reset endpoint; consider brute-force throttling and dedicated auth audit logging.
+- Follow-ups: extend authentication to the restaurant/courier state-transition endpoints (`accept`, `preparing`, `ready`, `pickedup`) and to restaurant/courier/operations roles; add a credential-reset endpoint; consider brute-force throttling and dedicated auth audit logging.
 
 ## Open questions
 

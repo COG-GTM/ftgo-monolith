@@ -202,7 +202,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void reviseOrder(int orderId) {
-    given().
+    asConsumer().
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -247,7 +247,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void cancelOrder(int orderId) {
-    given().
+    asConsumer().
             body("{}").
             contentType("application/json").
             when().

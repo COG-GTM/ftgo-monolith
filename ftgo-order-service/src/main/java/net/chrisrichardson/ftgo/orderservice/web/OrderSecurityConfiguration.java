@@ -41,6 +41,7 @@ public class OrderSecurityConfiguration extends WebSecurityConfigurerAdapter {
             .and()
             .authorizeRequests()
             .mvcMatchers(HttpMethod.GET, "/orders", "/orders/{orderId}").hasAuthority(ConsumerUserDetails.ROLE_CONSUMER)
+            .mvcMatchers(HttpMethod.POST, "/orders/{orderId}/cancel", "/orders/{orderId}/revise").hasAuthority(ConsumerUserDetails.ROLE_CONSUMER)
             .anyRequest().permitAll()
             .and()
             .httpBasic();

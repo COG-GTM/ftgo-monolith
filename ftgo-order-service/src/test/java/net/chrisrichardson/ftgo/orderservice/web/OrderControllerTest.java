@@ -21,7 +21,11 @@ import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_V
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CONSUMER_ID;
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER_TOTAL;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class OrderControllerTest {
@@ -143,6 +147,80 @@ public class OrderControllerTest {
     then().
             statusCode(401)
     ;
+  }
+
+  @Test
+  public void shouldCancelOwnOrder() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+    when(orderService.cancel(1L)).thenReturn(CHICKEN_VINDALOO_ORDER);
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(CONSUMER_ID)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(200).
+            body("orderId", equalTo(new Long(OrderDetailsMother.ORDER_ID).intValue()))
+    ;
+  }
+
+  @Test
+  public void shouldNotCancelOrderOfAnotherConsumer() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(404)
+    ;
+    verify(orderService, never()).cancel(anyLong());
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedCancel() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            post("/orders/1/cancel").
+    then().
+            statusCode(401)
+    ;
+    verify(orderService, never()).cancel(anyLong());
+  }
+
+  @Test
+  public void shouldNotReviseOrderOfAnotherConsumer() {
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            auth().principal(consumer(OTHER_CONSUMER_ID)).
+            contentType("application/json").
+            body("{\"revisedLineItemQuantities\": {}}").
+    when().
+            post("/orders/1/revise").
+    then().
+            statusCode(404)
+    ;
+    verify(orderService, never()).reviseOrder(anyLong(), any());
+  }
+
+  @Test
+  public void shouldRejectUnauthenticatedRevise() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+            contentType("application/json").
+            body("{\"revisedLineItemQuantities\": {}}").
+    when().
+            post("/orders/1/revise").
+    then().
+            statusCode(401)
+    ;
+    verify(orderService, never()).reviseOrder(anyLong(), any());
   }
 
   private StandaloneMockMvcBuilder configureControllers(Object... controllers) {

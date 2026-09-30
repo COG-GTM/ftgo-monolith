@@ -49,9 +49,12 @@ public class OrderController {
     if (!authenticatedConsumerId.isPresent()) {
       return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
-    Optional<Order> order = orderRepository.findById(orderId)
-            .filter(o -> authenticatedConsumerId.get().equals(o.getConsumerId()));
+    Optional<Order> order = findOwnedOrder(orderId, authenticatedConsumerId.get());
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
+  private Optional<Order> findOwnedOrder(long orderId, long consumerId) {
+    return orderRepository.findById(orderId).filter(o -> consumerId == o.getConsumerId());
   }
 
   @RequestMapping(method = RequestMethod.GET)
@@ -96,7 +99,14 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    if (!findOwnedOrder(orderId, authenticatedConsumerId.get()).isPresent()) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
     try {
       Order order = orderService.cancel(orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
@@ -106,7 +116,14 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request, Authentication authentication) {
+    Optional<Long> authenticatedConsumerId = ConsumerUserDetails.consumerIdOf(authentication);
+    if (!authenticatedConsumerId.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+    if (!findOwnedOrder(orderId, authenticatedConsumerId.get()).isPresent()) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
