@@ -35,6 +35,72 @@ Host port 8081 must be free.
 
 Overrides: `CLUSTER`, `RELEASE`, `NAMESPACE`, and `MAVEN_MIRROR_URL` (passed to the image build; see `scripts/build-images.sh`).
 
+## Release lifecycle
+
+These targets run against a release deployed with `make kind-up images deploy` (or `make kind-demo`). Each one is
+re-runnable, prints every `helm`/`kubectl` command before running it, and exits non-zero if the scenario does not
+behave as expected. They use the same `CLUSTER`, `RELEASE` and `NAMESPACE` (kube-context `kind-$(CLUSTER)`).
+
+| Target                           | Script                        | What it does |
+|----------------------------------|-------------------------------|--------------|
+| `helm-test`                      | –                             | `helm test ftgo --logs`: runs the chart's test pod (`templates/tests/test-health.yaml`), which curls `GET /actuator/health` and `GET /orders?consumerId=0` on the app Service and fails on any non-2xx response. |
+| `demo-helm-test`                 | `scripts/demo-helm-test.sh`   | `helm test` on the healthy release (passes), with the MySQL StatefulSet scaled to 0 (fails), and after MySQL is restored (passes). |
+| `demo-upgrade [REPLICAS=2]`      | `scripts/demo-upgrade.sh`     | `helm upgrade --reset-then-reuse-values --set app.replicaCount=$(REPLICAS) --wait`, then `helm history`. |
+| `demo-rollback`                  | `scripts/demo-rollback.sh`    | Creates a consumer, upgrades `app.image.tag` to a nonexistent tag with `--wait --timeout 2m` (fails), shows the old pod still serving, runs `helm rollback ftgo <last good revision> --wait`, reads the consumer back and runs `helm test`. |
+| `demo-reinstall [CLEAN=1]`       | `scripts/demo-reinstall.sh`   | Creates a consumer, `helm uninstall`, shows what is left behind, reinstalls as `make deploy` does, and reads the consumer back. `CLEAN=1` deletes the MySQL PVC and Secret between uninstall and reinstall, so the consumer is gone. |
+
+The app Deployment uses `RollingUpdate` with `maxSurge: 1`, `maxUnavailable: 0` and `revisionHistoryLimit: 5`
+(`app.rollingUpdate`, `app.revisionHistoryLimit`). A new pod has to be Ready before an old one is removed, so a bad
+upgrade leaves the previous version serving until you roll back.
+
+### Upgrade → failed upgrade → rollback
+
+`make demo-upgrade demo-rollback` on a fresh install produces:
+
+```
+REVISION  STATUS      DESCRIPTION
+1         superseded  Install complete
+2         superseded  Upgrade complete
+3         failed      Upgrade "ftgo" failed: context deadline exceeded
+4         deployed    Rollback to 2
+```
+
+Revision 3 never becomes Ready (`ImagePullBackOff`), revision 2's pods keep serving throughout, and the rollback
+creates revision 4 with revision 2's manifest and values. MySQL is not touched, so data created before the failed
+upgrade is still there. `GET /consumers/{id}` returns `consumerId: 0` (a known app bug), so the demo compares names.
+
+### Uninstall, reinstall and a clean slate
+
+`helm uninstall ftgo` does **not** delete:
+
+- the MySQL PVC `data-ftgo-mysql-0`: it is created from the StatefulSet's `volumeClaimTemplates`, and Kubernetes does
+  not delete those PVCs when the StatefulSet is deleted;
+- the Secret `ftgo-mysql`: it is annotated `helm.sh/resource-policy: keep` (`templates/db-secret.yaml`), and Helm reports
+  it as kept.
+
+The last `helm test` pod (`ftgo-application-test-health`) is also left behind, because Helm does not delete test hook
+resources on uninstall. It is harmless: the next `helm test` replaces it (`hook-delete-policy: before-hook-creation`).
+
+A reinstall under the same release name and namespace adopts the kept Secret (its Helm ownership annotations still
+match). `ftgo.mysql.retainedPassword` (`templates/_helpers.tpl`) reads it with `lookup` and reuses the stored
+passwords, which are the ones MySQL was initialised with on the kept PVC, so the app connects and all data is still
+there. Setting `mysql.auth.password` / `mysql.auth.rootPassword` to a different value fails the reinstall rather than
+diverging from the data on disk.
+
+For a clean slate, delete both after the uninstall:
+
+```bash
+helm --kube-context kind-ftgo uninstall ftgo --wait
+kubectl --context kind-ftgo delete pvc -l app.kubernetes.io/instance=ftgo,app.kubernetes.io/component=mysql
+kubectl --context kind-ftgo delete secret ftgo-mysql
+kubectl --context kind-ftgo delete pod -l app.kubernetes.io/instance=ftgo,app.kubernetes.io/component=test
+```
+
+(`make demo-reinstall CLEAN=1` does this.) Delete them together: deleting only the Secret makes the reinstall generate
+new random passwords that do not match the MySQL data on the kept PVC, so the app and Flyway fail with `Access denied`
+until you delete the PVC as well. Deleting only the PVC is harmless: MySQL initialises the new volume with the kept
+passwords. `make kind-down` deletes everything with the cluster.
+
 ## Troubleshooting
 
 - **`kind cluster 'ftgo' exists but does not map localhost:8081`**: the cluster was created without `kind-config.yaml`. Run `make kind-down && make kind-up`.

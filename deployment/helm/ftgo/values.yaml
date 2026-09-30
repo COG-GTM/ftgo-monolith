@@ -4,6 +4,15 @@ fullnameOverride: ""
 app:
   replicaCount: 1
 
+  # RollingUpdate with maxUnavailable 0: old pods keep serving until a new pod is Ready, so a bad image or a
+  # crash-looping release leaves the previous version up while `helm upgrade --wait` times out.
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+  # Old ReplicaSets kept for `kubectl rollout undo`. `helm rollback` re-applies the stored release and does not need them.
+  revisionHistoryLimit: 5
+
   # Not published to a registry: build it and load it into the cluster first
   # (kind: `kind load docker-image ftgo-application:<tag>`), or point repository/tag at a registry image.
   image:
@@ -67,6 +76,39 @@ app:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+# `helm test <release>`: a pod that curls the app Service and fails on any non-2xx response.
+tests:
+  enabled: true
+  image:
+    repository: curlimages/curl
+    tag: "8.10.1"
+    # Pinned by digest; set to "" to pull by tag only.
+    digest: "sha256:d9b4541e214bcd85196d6e92e2753ac6d0ea699f0af5741f8c6cccbfcf00ef4b"
+    pullPolicy: IfNotPresent
+  # GET paths checked in order. The read endpoint must return 2xx on an empty database:
+  # GET /orders?consumerId=0 queries the orders table and returns [].
+  paths:
+    - /actuator/health
+    - /orders?consumerId=0
+  # Per-request timeout in seconds.
+  timeoutSeconds: 10
+  podSecurityContext:
+    runAsNonRoot: true
+    # curl_user in the curlimages/curl image
+    runAsUser: 100
+    runAsGroup: 101
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      memory: 64Mi
 
 migrations:
   enabled: true

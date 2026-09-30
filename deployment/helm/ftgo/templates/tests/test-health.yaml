@@ -1,0 +1,54 @@
+{{- if .Values.tests.enabled }}
+{{- $base := printf "http://%s:%v" (include "ftgo.app.fullname" .) .Values.app.service.port }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "ftgo.app.fullname" . }}-test-health
+  labels:
+    {{- include "ftgo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    # Kept after a run so `helm test --logs` and `kubectl logs` can show the output; replaced on the next run.
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    {{- toYaml .Values.tests.podSecurityContext | nindent 4 }}
+  containers:
+    - name: curl
+      image: {{ include "ftgo.tests.image" . | quote }}
+      imagePullPolicy: {{ .Values.tests.image.pullPolicy }}
+      securityContext:
+        {{- toYaml .Values.tests.securityContext | nindent 8 }}
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -u
+          failed=0
+          for path in "$@"; do
+            url="{{ $base }}$path"
+            code=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time {{ .Values.tests.timeoutSeconds }} \
+              --retry 3 --retry-delay 2 --retry-connrefused "$url") || code=000
+            body=$(head -c 300 /tmp/body 2>/dev/null)
+            case "$code" in
+              2??) echo "PASS $code GET $url $body" ;;
+              *)   echo "FAIL $code GET $url $body"; failed=1 ;;
+            esac
+          done
+          exit "$failed"
+        - test-health
+        {{- range .Values.tests.paths }}
+        - {{ . | quote }}
+        {{- end }}
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      resources:
+        {{- toYaml .Values.tests.resources | nindent 8 }}
+  volumes:
+    - name: tmp
+      emptyDir:
+        sizeLimit: 1Mi
+{{- end }}

@@ -2,6 +2,9 @@
 #
 #   make kind-demo   create the cluster, build and load images, deploy, smoke test and run the end-to-end tests
 #   make kind-down   delete the cluster
+#
+# Release lifecycle demos against a deployed release (deployment/kind/README.md, "Release lifecycle"):
+#   make helm-test | demo-helm-test | demo-upgrade | demo-rollback | demo-reinstall
 
 KIND_VERSION    ?= v0.24.0
 KUBECTL_VERSION ?= v1.31.0
@@ -20,9 +23,15 @@ KUBE_CONTEXT := kind-$(CLUSTER)
 HELM         := helm --kube-context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
 KUBECTL      := kubectl --context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
 
+# Environment for scripts/demo-*.sh.
+DEMO_ENV     := CLUSTER='$(CLUSTER)' RELEASE='$(RELEASE)' NAMESPACE='$(NAMESPACE)' CHART='$(CHART)' \
+                KIND_VALUES='$(KIND_VALUES)' APP_URL='$(APP_URL)' IMAGE_TAG_FILE='$(IMAGE_TAG_FILE)'
+REPLICAS     ?= 2
+
 export KIND_VERSION KUBECTL_VERSION HELM_VERSION
 
-.PHONY: kind-demo tools kind-up images deploy smoke e2e kind-down
+.PHONY: kind-demo tools kind-up images deploy smoke e2e kind-down \
+        helm-test demo-helm-test demo-upgrade demo-rollback demo-reinstall
 
 # kind-demo's prerequisites are sequential steps.
 .NOTPARALLEL:
@@ -67,6 +76,21 @@ e2e:
 	@"$${JAVA_HOME:+$$JAVA_HOME/bin/}java" -version 2>&1 | grep -q '"1\.8\.' || \
 	  { echo "ERROR: the Gradle build needs Java 8 (set JAVA_HOME to a JDK 8)" >&2; exit 1; }
 	DOCKER_HOST_IP=localhost ./gradlew :ftgo-end-to-end-tests:cleanTest :ftgo-end-to-end-tests:test
+
+helm-test: tools
+	$(HELM) test '$(RELEASE)' --logs --hide-notes --timeout 3m
+
+demo-helm-test: tools
+	$(DEMO_ENV) scripts/demo-helm-test.sh
+
+demo-upgrade: tools
+	$(DEMO_ENV) REPLICAS='$(REPLICAS)' scripts/demo-upgrade.sh
+
+demo-rollback: tools
+	$(DEMO_ENV) scripts/demo-rollback.sh
+
+demo-reinstall: tools
+	$(DEMO_ENV) scripts/demo-reinstall.sh $(if $(CLEAN),--clean)
 
 kind-down: tools
 	kind delete cluster --name '$(CLUSTER)'
