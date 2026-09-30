@@ -64,7 +64,10 @@ public class OrderController {
   @RequestMapping(method = RequestMethod.GET)
   public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam(required = false) Long consumerId) {
     // Consumers are always scoped to their own id; operations staff must say which consumer they want.
-    Long scope = consumerId != null ? consumerId : orderAccessPolicy.callerConsumerId().orElse(null);
+    Long scope = consumerId;
+    if (scope == null && !orderAccessPolicy.isOperations()) {
+      scope = orderAccessPolicy.callerConsumerId().orElse(null);
+    }
     if (scope == null) {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }

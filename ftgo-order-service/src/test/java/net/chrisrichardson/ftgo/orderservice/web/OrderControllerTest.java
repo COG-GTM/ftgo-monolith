@@ -160,6 +160,20 @@ public class OrderControllerTest {
   }
 
   @Test
+  public void shouldRequireConsumerIdForOperationsEvenWhenBoundToConsumer() {
+    authenticateAs(new FtgoUser("ops", "", AuthorityUtils.createAuthorityList("ROLE_" + FtgoRoles.OPERATIONS), CONSUMER_ID));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders").
+    then().
+            statusCode(400)
+    ;
+    verify(orderRepository, never()).findAllByConsumerId(CONSUMER_ID);
+  }
+
+  @Test
   public void shouldScopeOrderListToAuthenticatedConsumer() {
     authenticateAsConsumer(CONSUMER_ID);
 

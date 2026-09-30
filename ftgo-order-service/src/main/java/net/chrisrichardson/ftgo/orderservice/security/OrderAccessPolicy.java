@@ -15,6 +15,9 @@ public class OrderAccessPolicy {
   private static final String OPERATIONS_AUTHORITY = "ROLE_" + FtgoRoles.OPERATIONS;
 
   public boolean canAccess(Order order) {
+    if (isOperations()) {
+      return true;
+    }
     return order.getConsumerId() != null && canActForConsumer(order.getConsumerId());
   }
 

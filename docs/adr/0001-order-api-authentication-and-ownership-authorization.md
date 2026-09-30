@@ -79,7 +79,7 @@ C4Container
 - **Encryption in transit:** HTTP Basic MUST be terminated behind TLS; deployment topology unchanged by this change (TBD — owner to confirm TLS termination before ARB).
 - **AuthN / AuthZ:** Spring Security HTTP Basic against configured users; `OrderAccessPolicy` enforces ownership per order, `hasRole(OPERATIONS)` for status transitions; `ROLE_` authorities.
 - **Secrets:** credentials injected via environment (`FTGO_OPERATIONS_USERNAME/PASSWORD` or `FTGO_SECURITY_USERS_n_*`); plaintext values are BCrypt-encoded at startup, `{bcrypt}` hashes accepted directly. The committed defaults are development-only and documented as such.
-- **Audit logging:** existing `ApiTrackingInterceptor` records every request (correlation id, status); 401/403 outcomes are therefore persisted in `api_request_log`.
+- **Audit logging:** controller-level 403s (and all authenticated requests) pass through the existing `ApiTrackingInterceptor` and are persisted in `api_request_log`. 401s are rejected by the Spring Security filter chain *before* the MVC interceptor runs and are therefore **not** recorded there today; capturing failed authentications (e.g. an `AuthenticationEntryPoint` that logs, or Spring Security's `AuthenticationFailureEvent`s) is listed under follow-up work.
 - **Data residency / regions:** unchanged.
 - **Policy sections satisfied:** no infrastructure change; no CDK resources.
 - **Threats considered:** IDOR by id enumeration (closed by ownership check), consumer-id spoofing via query param (param ignored/forbidden unless it matches caller), credential brute force (BCrypt, stateless — rate limiting is a follow-up), information leak through existence oracle (403 vs 404 accepted; order ids are not secret).
@@ -109,7 +109,7 @@ C4Container
 
 - Positive: anonymous enumeration of orders is no longer possible; consumers cannot read or modify each other's orders; a clear seam exists to plug a real IdP later.
 - Negative / risks: Swagger "Try it out" and any ad-hoc clients must now send credentials; static user configuration does not scale to real consumer self-service.
-- Follow-ups: extend authentication to `/consumers`, `/restaurants`, `/couriers`; replace property-backed users with an IdP; add login rate limiting.
+- Follow-ups: extend authentication to `/consumers`, `/restaurants`, `/couriers`; replace property-backed users with an IdP; add login rate limiting; record failed authentications (401s) in the audit trail, since they never reach `ApiTrackingInterceptor`; fail fast on the committed development credentials outside local/dev profiles.
 
 ## Open questions
 
