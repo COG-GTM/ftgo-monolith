@@ -179,7 +179,7 @@ mysql:
 externalDatabase:
   host: ""
   port: 3306
-  # Fixed: the Flyway migrations start with `use ftgo;`.
+  # Must stay ftgo when migrations.enabled (the Flyway migrations start with `use ftgo;`).
   database: ftgo
   username: ""
   password: ""
