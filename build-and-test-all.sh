@@ -5,11 +5,11 @@ ASSEMBLE_ONLY=
 DATABASE_SERVICES="mysql"
 
 if [ -z "$DOCKER_COMPOSE" ] ; then
-    if docker compose version > /dev/null 2>&1 ; then
-        DOCKER_COMPOSE="docker compose"
-    else
-        DOCKER_COMPOSE=docker-compose
+    if ! docker compose version > /dev/null 2>&1 ; then
+        echo "Docker Compose v2 is required (docker compose version failed): https://docs.docker.com/compose/install/" >&2
+        exit 1
     fi
+    DOCKER_COMPOSE="docker compose"
 fi
 
 while [ ! -z "$*" ] ; do
