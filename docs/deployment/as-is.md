@@ -4,9 +4,11 @@ Part of epic [AB-402](https://cog-gtm.atlassian.net/browse/AB-402) (scripts + pl
 
 This document inventories every deployment artifact on `master` as of this ticket, records the known defects with file/line references, and maps each artifact to its target in the Helm chart (`deployment/helm/ftgo/`). Later tickets reference rows by their ID (`L1`, `L2`, ...). No application or script behaviour is changed by this ticket.
 
-## How the app is deployed today
+## How the app was deployed before the Helm chart (as of AB-403)
 
-There are two paths. Only the first one works.
+This section and the inventory below describe `master` before the epic. For the current state (Compose runs Flyway automatically, the Kubernetes YAML is gone), see [Final status](#final-status-legacy--helm-parity-ab-412).
+
+There were two paths. Only the first one worked.
 
 1. **Docker Compose (works, with a manual step).** `build-and-run.sh` → `./gradlew assemble` on the host → `docker-compose build` → `docker-compose down -v` (wipes the MySQL volume) → start `mysql` → `./gradlew waitForMySql` → start `ftgo-application` on `localhost:8081`. `mysql/schema.sql` only creates the empty `ftgo` database and user; the tables come from Flyway, which `build-and-run.sh` never runs (only `build-and-test-all.sh` runs `./gradlew :ftgo-flyway:flywayMigrate`). So after `build-and-run.sh` alone the app starts but database-backed requests fail until Flyway is run by hand (D15).
 2. **Kubernetes (broken).** `deployment/kubernetes/scripts/kubernetes-deploy-all.sh` applies the MySQL StatefulSet and then a glob that matches no files. On any Kubernetes ≥ 1.16 it fails on the first StatefulSet; even with that fixed there is no `ftgo-application` workload, no in-cluster migrations and no way to reach the app except port-forward scripts that select on labels nothing sets. See [Before evidence](#before-evidence-legacy-path-on-kind).
