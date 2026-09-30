@@ -54,7 +54,7 @@ public class OrderController {
   }
 
   private Optional<Order> findOwnedOrder(long orderId, long consumerId) {
-    return orderRepository.findById(orderId).filter(o -> consumerId == o.getConsumerId());
+    return orderRepository.findById(orderId).filter(o -> Long.valueOf(consumerId).equals(o.getConsumerId()));
   }
 
   @RequestMapping(method = RequestMethod.GET)
