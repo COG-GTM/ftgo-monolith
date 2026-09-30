@@ -68,6 +68,54 @@ app:
   tolerations: []
   affinity: {}
 
+migrations:
+  enabled: true
+  # initContainer: `flyway migrate` runs before the app container in every app pod, so pods only go Ready
+  #   on a migrated schema (Flyway's schema-history lock serialises concurrent replicas).
+  # hook: a Job runs once per release as a post-install / pre-upgrade hook instead. On a fresh install the app
+  #   starts alongside MySQL and the Job migrates afterwards (pre-install can't be used: the in-chart MySQL and DB
+  #   Secret don't exist yet); on upgrade a failed Job fails the release before the new app pods roll out.
+  mode: initContainer
+
+  # Built from ftgo-flyway/Dockerfile (flyway/flyway + the SQL in ftgo-flyway/src/main/resources/db/migration).
+  # Not published to a registry: `scripts/build-images.sh --kind-load` builds and loads it with the app image.
+  image:
+    repository: ftgo-flyway
+    # Defaults to .Chart.AppVersion
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  # Hook Job only; in initContainer mode the app pod's imagePullSecrets apply.
+  imagePullSecrets: []
+
+  # Flyway waits for the database: up to connectRetries attempts, connectRetriesInterval seconds apart.
+  connectRetries: 60
+  connectRetriesInterval: 5
+
+  javaArgs: "-Xmx128m"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      memory: 384Mi
+
+  # Used by the hook Job; in initContainer mode the app pod's podSecurityContext applies.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+
+  job:
+    backoffLimit: 0
+    activeDeadlineSeconds: 900
+
 mysql:
   # Set to false to use externalDatabase instead of the in-chart StatefulSet.
   enabled: true
@@ -131,6 +179,7 @@ mysql:
 externalDatabase:
   host: ""
   port: 3306
+  # Must stay ftgo when migrations.enabled (the Flyway migrations start with `use ftgo;`).
   database: ftgo
   username: ""
   password: ""

@@ -25,6 +25,10 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.app.podSecurityContext | nindent 8 }}
+      {{- if and .Values.migrations.enabled (eq .Values.migrations.mode "initContainer") }}
+      initContainers:
+        {{- include "ftgo.migrations.container" . | nindent 8 }}
+      {{- end }}
       containers:
         - name: ftgo-application
           image: {{ include "ftgo.app.image" . | quote }}

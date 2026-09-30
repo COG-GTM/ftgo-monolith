@@ -1,0 +1,35 @@
+{{- if and .Values.migrations.enabled (eq .Values.migrations.mode "hook") }}
+{{- /*
+post-install rather than pre-install: on a fresh install the in-chart MySQL and the DB Secret
+are regular release resources and don't exist yet when pre-install hooks run.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ftgo.componentPrefix" . }}-migrations
+  labels:
+    {{- include "ftgo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrations
+  annotations:
+    helm.sh/hook: post-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrations.job.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrations.job.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "ftgo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrations
+    spec:
+      restartPolicy: Never
+      {{- with .Values.migrations.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.migrations.podSecurityContext | nindent 8 }}
+      containers:
+        {{- include "ftgo.migrations.container" . | nindent 8 }}
+{{- end }}

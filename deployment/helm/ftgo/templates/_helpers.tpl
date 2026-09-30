@@ -140,3 +140,41 @@ and TLS required for an external database.
 {{- define "ftgo.datasourceUrl" -}}
 {{- printf "jdbc:mysql://%s:%s/%s?%s" (include "ftgo.db.host" .) (include "ftgo.db.port" .) (include "ftgo.db.name" .) (include "ftgo.jdbcParams" .) }}
 {{- end }}
+
+{{- define "ftgo.migrations.image" -}}
+{{- printf "%s:%s" .Values.migrations.image.repository (.Values.migrations.image.tag | default .Chart.AppVersion) }}
+{{- end }}
+
+{{/*
+Flyway container, shared by the app initContainer and the hook Job.
+Connects as the application DB user, which owns ftgo.* (GRANT ALL in schema.sql).
+*/}}
+{{- define "ftgo.migrations.container" -}}
+- name: flyway-migrate
+  image: {{ include "ftgo.migrations.image" . | quote }}
+  imagePullPolicy: {{ .Values.migrations.image.pullPolicy }}
+  args: ["migrate"]
+  securityContext:
+    {{- toYaml .Values.migrations.securityContext | nindent 4 }}
+  env:
+    - name: FLYWAY_URL
+      value: {{ include "ftgo.datasourceUrl" . | quote }}
+    - name: FLYWAY_USER
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "ftgo.db.secretName" . }}
+          key: mysql-user
+    - name: FLYWAY_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "ftgo.db.secretName" . }}
+          key: mysql-password
+    - name: FLYWAY_CONNECT_RETRIES
+      value: {{ .Values.migrations.connectRetries | quote }}
+    - name: FLYWAY_CONNECT_RETRIES_INTERVAL
+      value: {{ .Values.migrations.connectRetriesInterval | quote }}
+    - name: JAVA_ARGS
+      value: {{ .Values.migrations.javaArgs | quote }}
+  resources:
+    {{- toYaml .Values.migrations.resources | nindent 4 }}
+{{- end }}

@@ -5,8 +5,42 @@
   "additionalProperties": false,
   "required": [
     "app",
+    "migrations",
     "mysql",
     "externalDatabase"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mysql": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          },
+          "migrations": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "externalDatabase": {
+            "properties": {
+              "database": {
+                "const": "ftgo"
+              }
+            }
+          }
+        }
+      }
+    }
   ],
   "definitions": {
     "resources": {
@@ -268,6 +302,97 @@
         }
       }
     },
+    "migrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "mode",
+        "image"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "mode": {
+          "enum": [
+            "initContainer",
+            "hook"
+          ]
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string"
+            },
+            "pullPolicy": {
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ]
+            }
+          }
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "connectRetries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "connectRetriesInterval": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "javaArgs": {
+          "type": "string"
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "job": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "backoffLimit": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "activeDeadlineSeconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
     "mysql": {
       "type": "object",
       "additionalProperties": false,
@@ -388,7 +513,8 @@
         },
         "database": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+$",
+          "description": "Must be ftgo when migrations.enabled: the Flyway migrations (ftgo-flyway) start with `use ftgo;`."
         },
         "username": {
           "type": "string"
