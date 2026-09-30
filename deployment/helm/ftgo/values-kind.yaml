@@ -1,0 +1,28 @@
+# Overrides for the local kind cluster created from deployment/kind/kind-config.yaml.
+#   helm upgrade --install ftgo deployment/helm/ftgo -f deployment/helm/ftgo/values-kind.yaml
+app:
+  replicaCount: 1
+  image:
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    # Must match extraPortMappings.containerPort in deployment/kind/kind-config.yaml.
+    nodePort: 30081
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+migrations:
+  image:
+    pullPolicy: IfNotPresent
+
+mysql:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
