@@ -43,11 +43,12 @@ kind-up: tools
 	  kind create cluster --name '$(CLUSTER)' --config '$(KIND_CONFIG)' --wait 120s; \
 	fi
 
-# A dirty tree gets a per-build tag, so every rebuild changes the pod template and rolls the app.
+# Every build gets a unique tag (<sha>[-dirty]-<epoch>), so each rebuild changes the pod template and rolls the app.
 images: tools
 	@mkdir -p '$(dir $(IMAGE_TAG_FILE))'
 	@tag=$$(git rev-parse --short HEAD); \
-	if [ -n "$$(git status --porcelain)" ]; then tag="$$tag-dirty-$$(date +%s)"; fi; \
+	if [ -n "$$(git status --porcelain)" ]; then tag="$$tag-dirty"; fi; \
+	tag="$$tag-$$(date +%s)"; \
 	IMAGE_TAG="$$tag" scripts/build-images.sh --kind-load '$(CLUSTER)' && echo "$$tag" > '$(IMAGE_TAG_FILE)'
 
 # Deploys the tag from the last `make images`, or the chart default (dev) if there is none.
