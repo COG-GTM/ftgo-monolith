@@ -68,6 +68,51 @@ app:
   tolerations: []
   affinity: {}
 
+migrations:
+  enabled: true
+  # initContainer: `flyway migrate` runs before the app container in every app pod, so pods only go Ready
+  #   on a migrated schema (Flyway's schema-history lock serialises concurrent replicas).
+  # hook: a Job runs once per release as a post-install / pre-upgrade hook instead.
+  mode: initContainer
+
+  # Built from ftgo-flyway/Dockerfile (flyway/flyway + the SQL in ftgo-flyway/src/main/resources/db/migration).
+  # Not published to a registry: build it and load it into the cluster like the app image.
+  image:
+    repository: ftgo-flyway
+    # Defaults to .Chart.AppVersion
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+
+  # Flyway waits for the database: up to connectRetries attempts, connectRetriesInterval seconds apart.
+  connectRetries: 60
+  connectRetriesInterval: 5
+
+  javaArgs: "-Xmx128m"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      memory: 384Mi
+
+  # Used by the hook Job; in initContainer mode the app pod's podSecurityContext applies.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+
+  job:
+    backoffLimit: 0
+    activeDeadlineSeconds: 900
+
 mysql:
   # Set to false to use externalDatabase instead of the in-chart StatefulSet.
   enabled: true
