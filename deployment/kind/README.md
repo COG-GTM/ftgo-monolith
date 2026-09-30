@@ -27,8 +27,8 @@ Host port 8081 must be free.
 | Target      | What it does                                                                                                   |
 |-------------|----------------------------------------------------------------------------------------------------------------|
 | `kind-up`   | Creates cluster `ftgo` from `kind-config.yaml` (node `kindest/node:v1.31.0`, host `127.0.0.1:8081` → NodePort 30081) unless it already exists. |
-| `images`    | `scripts/build-images.sh --kind-load ftgo`: builds `ftgo-application` and `ftgo-flyway` and loads them into the cluster. |
-| `deploy`    | `helm upgrade --install ftgo deployment/helm/ftgo -f deployment/helm/ftgo/values-kind.yaml --wait --timeout 10m`. Flyway migrates the schema in the app pod's initContainer. |
+| `images`    | `scripts/build-images.sh --kind-load ftgo`: builds `ftgo-application` and `ftgo-flyway`, loads them into the cluster, and records the tag in `build/kind-image-tag` (`<sha>`, or `<sha>-dirty-<timestamp>` for uncommitted changes). |
+| `deploy`    | `helm upgrade --install ftgo deployment/helm/ftgo -f deployment/helm/ftgo/values-kind.yaml --wait --timeout 10m`, with both image tags set from `build/kind-image-tag`, so every rebuild rolls the app. Flyway migrates the schema in the app pod's initContainer. |
 | `smoke`     | `curl -f http://localhost:8081/actuator/health` and the dashboard at `http://localhost:8081/`.                 |
 | `e2e`       | `DOCKER_HOST_IP=localhost ./gradlew :ftgo-end-to-end-tests:cleanTest :ftgo-end-to-end-tests:test`.             |
 | `kind-down` | `kind delete cluster --name ftgo`.                                                                              |

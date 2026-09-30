@@ -14,6 +14,7 @@ CHART        := deployment/helm/ftgo
 KIND_CONFIG  := deployment/kind/kind-config.yaml
 KIND_VALUES  := $(CHART)/values-kind.yaml
 APP_URL      := http://localhost:8081
+IMAGE_TAG_FILE := build/kind-image-tag
 
 KUBE_CONTEXT := kind-$(CLUSTER)
 HELM         := helm --kube-context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
@@ -22,6 +23,9 @@ KUBECTL      := kubectl --context $(KUBE_CONTEXT) --namespace $(NAMESPACE)
 export KIND_VERSION KUBECTL_VERSION HELM_VERSION
 
 .PHONY: kind-demo tools kind-up images deploy smoke e2e kind-down
+
+# kind-demo's prerequisites are sequential steps.
+.NOTPARALLEL:
 
 kind-demo: kind-up images deploy smoke e2e
 
@@ -39,11 +43,18 @@ kind-up: tools
 	  kind create cluster --name '$(CLUSTER)' --config '$(KIND_CONFIG)' --wait 120s; \
 	fi
 
+# A dirty tree gets a per-build tag, so every rebuild changes the pod template and rolls the app.
 images: tools
-	scripts/build-images.sh --kind-load '$(CLUSTER)'
+	@mkdir -p '$(dir $(IMAGE_TAG_FILE))'
+	@tag=$$(git rev-parse --short HEAD); \
+	if [ -n "$$(git status --porcelain)" ]; then tag="$$tag-dirty-$$(date +%s)"; fi; \
+	IMAGE_TAG="$$tag" scripts/build-images.sh --kind-load '$(CLUSTER)' && echo "$$tag" > '$(IMAGE_TAG_FILE)'
 
+# Deploys the tag from the last `make images`, or the chart default (dev) if there is none.
 deploy: tools
-	$(HELM) upgrade --install '$(RELEASE)' '$(CHART)' -f '$(KIND_VALUES)' --wait --timeout 10m
+	$(HELM) upgrade --install '$(RELEASE)' '$(CHART)' -f '$(KIND_VALUES)' --create-namespace \
+	  $$(tag=$$(cat '$(IMAGE_TAG_FILE)' 2>/dev/null) && echo "--set-string app.image.tag=$$tag --set-string migrations.image.tag=$$tag") \
+	  --wait --timeout 10m
 	$(KUBECTL) get pods -l app.kubernetes.io/instance='$(RELEASE)'
 
 smoke:
