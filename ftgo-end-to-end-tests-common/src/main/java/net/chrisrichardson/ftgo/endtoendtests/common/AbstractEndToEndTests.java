@@ -86,6 +86,34 @@ public abstract class AbstractEndToEndTests {
             (aClass, s) -> objectMapper
     ));
 
+    // /orders/** requires an authenticated caller; the tests act as the operations user.
+    RestAssured.authentication = RestAssured.preemptive().basic(
+            envOrDefault("FTGO_OPERATIONS_USERNAME", "operations"),
+            envOrDefault("FTGO_OPERATIONS_PASSWORD", "operations-dev-password"));
+  }
+
+  private static String envOrDefault(String name, String defaultValue) {
+    String value = System.getenv(name);
+    return value == null || value.isEmpty() ? defaultValue : value;
+  }
+
+  @Test
+  public void shouldRejectAnonymousAccessToOrders() {
+    createOrder();
+
+    given().
+            auth().none().
+            when().
+            get(orderBaseUrl(Integer.toString(orderId))).
+            then().
+            statusCode(401);
+
+    given().
+            auth().none().
+            when().
+            get(orderBaseUrl() + "?consumerId=" + consumerId).
+            then().
+            statusCode(401);
   }
 
   @Test

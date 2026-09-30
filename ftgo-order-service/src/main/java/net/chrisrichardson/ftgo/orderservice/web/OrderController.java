@@ -7,6 +7,7 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import net.chrisrichardson.ftgo.orderservice.security.OrderAccessPolicy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,31 +27,54 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private OrderAccessPolicy orderAccessPolicy;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository, OrderAccessPolicy orderAccessPolicy) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.orderAccessPolicy = orderAccessPolicy;
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+  public ResponseEntity<CreateOrderResponse> create(@RequestBody CreateOrderRequest request) {
+    if (!orderAccessPolicy.canActForConsumer(request.getConsumerId())) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
     );
-    return new CreateOrderResponse(order.getId());
+    return new ResponseEntity<>(new CreateOrderResponse(order.getId()), HttpStatus.OK);
   }
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
   public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
     Optional<Order> order = orderRepository.findById(orderId);
-    return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    if (!order.isPresent()) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+    if (!orderAccessPolicy.canAccess(order.get())) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+    return new ResponseEntity<>(makeGetOrderResponse(order.get()), HttpStatus.OK);
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam(required = false) Long consumerId) {
+    // Consumers are always scoped to their own id; operations staff must say which consumer they want.
+    Long scope = consumerId;
+    if (scope == null && !orderAccessPolicy.isOperations()) {
+      scope = orderAccessPolicy.callerConsumerId().orElse(null);
+    }
+    if (scope == null) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+    if (!orderAccessPolicy.canActForConsumer(scope)) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(scope)
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
@@ -84,6 +108,9 @@ public class OrderController {
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+    if (!callerMayModify(orderId)) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
     try {
       Order order = orderService.cancel(orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
@@ -94,12 +121,20 @@ public class OrderController {
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+    if (!callerMayModify(orderId)) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+  }
+
+  // Unknown orders fall through so the service can raise OrderNotFoundException as before.
+  private boolean callerMayModify(long orderId) {
+    return orderRepository.findById(orderId).map(orderAccessPolicy::canAccess).orElse(true);
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
