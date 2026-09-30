@@ -6,6 +6,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.path.json.JsonPath;
+import com.jayway.restassured.specification.RequestSpecification;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -45,6 +47,7 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+  private String courierAccessToken;
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -293,7 +296,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    JsonPath response = given().
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
@@ -301,11 +304,18 @@ public abstract class AbstractEndToEndTests {
             then().
             statusCode(200)
             .extract()
-            .path("id");
+            .jsonPath();
+    courierId = response.getInt("id");
+    courierAccessToken = response.getString("accessToken");
+    assertNotNull("accessToken", courierAccessToken);
+  }
+
+  private RequestSpecification asCourier() {
+    return given().header("Authorization", "Bearer " + courierAccessToken);
   }
 
   private void noteCourierAvailable() {
-    given().
+    asCourier().
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().
@@ -339,7 +349,7 @@ public abstract class AbstractEndToEndTests {
       return assignedCourier;
     });
 
-    given().
+    asCourier().
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().

@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
@@ -32,12 +33,20 @@ public class Courier {
   private Double currentLongitude;
   private LocalDateTime lastLocationUpdate;
 
+  @JsonIgnore
+  private String accessTokenHash;
+
   public Courier() {
   }
 
   public Courier(PersonName name, Address address) {
+    this(name, address, null);
+  }
+
+  public Courier(PersonName name, Address address, String accessTokenHash) {
     this.name = name;
     this.address = address;
+    this.accessTokenHash = accessTokenHash;
     if (address != null && address.getLatitude() != null) {
       this.currentLatitude = address.getLatitude();
       this.currentLongitude = address.getLongitude();
@@ -110,6 +119,11 @@ public class Courier {
     return (int) plan.getActions().stream()
             .filter(a -> a.getType() == ActionType.PICKUP)
             .count();
+  }
+
+  @JsonIgnore
+  public String getAccessTokenHash() {
+    return accessTokenHash;
   }
 
   public boolean hasLocation() {
