@@ -1,5 +1,7 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,10 +10,16 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/api/tracking")
 public class ApiTrackingController {
+
+  static final int MAX_MINUTES_BACK = 24 * 60;
+  static final int DEFAULT_LIMIT = 100;
+  static final int MAX_LIMIT = 1000;
+  static final char LIKE_ESCAPE = '!';
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -20,45 +28,59 @@ public class ApiTrackingController {
   }
 
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
-          @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
-    List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+  public ResponseEntity<List<ApiRequestLogView>> getRecentLogs(
+          @RequestParam(defaultValue = "60") int minutesBack,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since, page(page, limit));
+    return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> getErrors(
-          @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
-    List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+  public ResponseEntity<List<ApiRequestLogView>> getErrors(
+          @RequestParam(defaultValue = "60") int minutesBack,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since, page(page, limit));
+    return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
-    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
-    return new ResponseEntity<>(logs, HttpStatus.OK);
+  public ResponseEntity<List<ApiRequestLogView>> searchByUri(
+          @RequestParam String uri,
+          @RequestParam(defaultValue = "60") int minutesBack,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
+    if (uri.trim().isEmpty()) {
+      throw new IllegalArgumentException("uri must not be blank");
+    }
+    LocalDateTime since = LocalDateTime.now().minusMinutes(validMinutesBack(minutesBack));
+    List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUriContaining(
+            likePattern(uri.trim()), since, page(page, limit));
+    return new ResponseEntity<>(toViews(logs), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/{correlationId}", method = RequestMethod.GET)
-  public ResponseEntity<ApiRequestLog> getByCorrelationId(@PathVariable String correlationId) {
+  public ResponseEntity<ApiRequestLogView> getByCorrelationId(@PathVariable String correlationId) {
     ApiRequestLog log = apiRequestLogRepository.findByCorrelationId(correlationId);
     if (log == null) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    return new ResponseEntity<>(log, HttpStatus.OK);
+    return new ResponseEntity<>(new ApiRequestLogView(log), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    int period = validMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(period);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", minutesBack);
+    stats.put("periodMinutes", period);
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -101,5 +123,44 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
+    Map<String, String> body = new HashMap<>();
+    body.put("error", e.getMessage());
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
+  private static int validMinutesBack(int minutesBack) {
+    if (minutesBack < 1 || minutesBack > MAX_MINUTES_BACK) {
+      throw new IllegalArgumentException("minutesBack must be between 1 and " + MAX_MINUTES_BACK);
+    }
+    return minutesBack;
+  }
+
+  private static Pageable page(int page, int limit) {
+    if (page < 0) {
+      throw new IllegalArgumentException("page must be 0 or greater");
+    }
+    if (limit < 1 || limit > MAX_LIMIT) {
+      throw new IllegalArgumentException("limit must be between 1 and " + MAX_LIMIT);
+    }
+    return PageRequest.of(page, limit);
+  }
+
+  static String likePattern(String term) {
+    StringBuilder sb = new StringBuilder(term.length() + 2).append('%');
+    for (char c : term.toCharArray()) {
+      if (c == '%' || c == '_' || c == LIKE_ESCAPE) {
+        sb.append(LIKE_ESCAPE);
+      }
+      sb.append(c);
+    }
+    return sb.append('%').toString();
+  }
+
+  private static List<ApiRequestLogView> toViews(List<ApiRequestLog> logs) {
+    return logs.stream().map(ApiRequestLogView::new).collect(Collectors.toList());
   }
 }
