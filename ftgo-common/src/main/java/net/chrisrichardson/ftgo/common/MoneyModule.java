@@ -11,8 +11,14 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class MoneyModule extends SimpleModule {
+
+  // Matches the decimal(19, 2) money columns.
+  static final int MAX_INTEGER_DIGITS = 17;
+  static final int MAX_SCALE = 2;
+  static final int MAX_LENGTH = 32;
 
   class MoneyDeserializer extends StdScalarDeserializer<Money> {
 
@@ -28,10 +34,24 @@ public class MoneyModule extends SimpleModule {
         if (str.isEmpty())
           return null;
         else
-          return new Money(str);
+          return new Money(parseBoundedAmount(str, ctxt));
       } else
         throw ctxt.mappingException(getValueClass());
     }
+  }
+
+  static BigDecimal parseBoundedAmount(String str, DeserializationContext ctxt) throws IOException {
+    if (str.length() > MAX_LENGTH)
+      throw ctxt.weirdStringException(str, Money.class, "amount is too long");
+    BigDecimal amount;
+    try {
+      amount = new BigDecimal(str);
+    } catch (NumberFormatException e) {
+      throw ctxt.weirdStringException(str, Money.class, "not a valid decimal amount");
+    }
+    if (amount.scale() > MAX_SCALE || amount.precision() - amount.scale() > MAX_INTEGER_DIGITS)
+      throw ctxt.weirdStringException(str, Money.class, "amount is out of range");
+    return amount;
   }
 
   class MoneySerializer extends StdScalarSerializer<Money> {
