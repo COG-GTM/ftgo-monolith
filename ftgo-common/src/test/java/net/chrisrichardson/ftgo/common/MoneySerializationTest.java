@@ -94,6 +94,11 @@ public class MoneySerializationTest {
   }
 
   @Test
+  public void shouldRejectMaxIntExponent() throws IOException {
+    assertRejected("1e2147483647");
+  }
+
+  @Test
   public void shouldRejectHugeNegativeExponent() throws IOException {
     assertRejected("1e-999999999");
   }

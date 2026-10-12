@@ -49,7 +49,7 @@ public class MoneyModule extends SimpleModule {
     } catch (NumberFormatException e) {
       throw ctxt.weirdStringException(str, Money.class, "not a valid decimal amount");
     }
-    if (amount.scale() > MAX_SCALE || amount.precision() - amount.scale() > MAX_INTEGER_DIGITS)
+    if (amount.scale() > MAX_SCALE || (long) amount.precision() - amount.scale() > MAX_INTEGER_DIGITS)
       throw ctxt.weirdStringException(str, Money.class, "amount is out of range");
     return amount;
   }
