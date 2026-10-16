@@ -87,4 +87,61 @@ public class MoneySerializationTest {
   }
 
 
+
+  @Test
+  public void shouldRejectHugePositiveExponent() throws IOException {
+    assertRejected("1e999999999");
+  }
+
+  @Test
+  public void shouldRejectMaxIntExponent() throws IOException {
+    assertRejected("1e2147483647");
+  }
+
+  @Test
+  public void shouldRejectHugeNegativeExponent() throws IOException {
+    assertRejected("1e-999999999");
+  }
+
+  @Test
+  public void shouldRejectTooManyIntegerDigits() throws IOException {
+    assertRejected("123456789012345678");
+  }
+
+  @Test
+  public void shouldRejectTooManyFractionDigits() throws IOException {
+    assertRejected("1.234");
+  }
+
+  @Test
+  public void shouldRejectOverlongAmount() throws IOException {
+    assertRejected("0000000000000000000000000000000001");
+  }
+
+  @Test
+  public void shouldRejectNonNumericAmount() throws IOException {
+    assertRejected("abc");
+  }
+
+  @Test
+  public void shouldAcceptLargestStorableAmount() throws IOException {
+    MoneyContainer mc = objectMapper.readValue("{\"price\":\"99999999999999999.99\"}", MoneyContainer.class);
+    assertEquals(new Money("99999999999999999.99"), mc.getPrice());
+  }
+
+  @Test
+  public void shouldAcceptSmallPositiveExponent() throws IOException {
+    MoneyContainer mc = objectMapper.readValue("{\"price\":\"1.5E+3\"}", MoneyContainer.class);
+    assertEquals("1500", mc.getPrice().asString());
+  }
+
+  private void assertRejected(String amount) throws IOException {
+    try {
+      objectMapper.readValue("{\"price\":\"" + amount + "\"}", MoneyContainer.class);
+      fail("expected exception for " + amount);
+    } catch (JsonMappingException e) {
+      // expected
+    }
+  }
+
 }

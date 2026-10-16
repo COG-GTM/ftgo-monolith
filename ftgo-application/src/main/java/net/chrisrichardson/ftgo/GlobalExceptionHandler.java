@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -74,6 +75,16 @@ public class GlobalExceptionHandler {
     logger.warn("Bad request: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleUnreadableMessage(
+          HttpMessageNotReadableException ex, HttpServletRequest request) {
+    logger.warn("Malformed request body on {} {}", request.getMethod(), request.getRequestURI());
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), "Bad Request", "Malformed request body",
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
