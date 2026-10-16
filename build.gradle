@@ -14,10 +14,57 @@ plugins {
     id "com.github.ben-manes.versions" version "0.20.0"
 }
 
+apply plugin: "jacoco"
+
+repositories {
+    mavenCentral()
+}
+
+jacoco {
+    toolVersion = "0.8.2"
+}
+
+ext.coverageExcludes = ['**/*Configuration*', '**/*Main*']
 
 subprojects {
 
     apply plugin: "java"
+    apply plugin: "jacoco"
+
+    jacoco {
+        toolVersion = "0.8.2"
+    }
+
+    task ensureJacocoExecutionData {
+        onlyIf {
+            project.sourceSets.main.allJava.srcDirs.any { it.exists() }
+        }
+        doLast {
+            def executionDataFile = project.file("${project.buildDir}/jacoco/test.exec")
+            if (!executionDataFile.exists()) {
+                executionDataFile.parentFile.mkdirs()
+                executionDataFile.createNewFile()
+            }
+        }
+    }
+
+    ensureJacocoExecutionData.mustRunAfter test
+
+    afterEvaluate {
+        jacocoTestReport {
+            reports {
+                xml.enabled = true
+                html.enabled = true
+            }
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: rootProject.coverageExcludes)
+            })
+            dependsOn ensureJacocoExecutionData
+        }
+    }
+
+    test.finalizedBy jacocoTestReport
+
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
@@ -40,4 +87,33 @@ subprojects {
 
     }
 
+}
+
+subprojects.each {
+    evaluationDependsOn(it.path)
+}
+
+def coverageProjects = subprojects.findAll {
+    it.sourceSets.main.allJava.srcDirs.any { it.exists() }
+}
+
+task jacocoRootReport(type: JacocoReport) {
+    dependsOn coverageProjects.collect { it.tasks.test }
+    dependsOn coverageProjects.collect { it.tasks.ensureJacocoExecutionData }
+    executionData = files(coverageProjects.collect {
+        new File(it.buildDir, "jacoco/test.exec")
+    }).filter { it.exists() }
+    sourceDirectories = files(coverageProjects.collect {
+        it.sourceSets.main.allJava.srcDirs
+    })
+    classDirectories = files(coverageProjects.collect { project ->
+        project.sourceSets.main.output.classesDirs.files.collect {
+            fileTree(dir: it, exclude: coverageExcludes)
+        }
+    })
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
 }
