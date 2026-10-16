@@ -59,6 +59,7 @@ subprojects {
             classDirectories = files(classDirectories.files.collect {
                 fileTree(dir: it, exclude: rootProject.coverageExcludes)
             })
+            dependsOn test
             dependsOn ensureJacocoExecutionData
         }
     }
