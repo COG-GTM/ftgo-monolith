@@ -1,15 +1,38 @@
+// Restaurant service module (Spring Boot 3.5 / Java 21 / Jakarta EE). The Java toolchain, the Boot
+// BOM (io.spring.dependency-management) and the JUnit Platform test runner are inherited from the
+// root build, so only unmanaged versions (rest-assured, springdoc via common-swagger) are named here.
+
+// Spring Framework 6.1 (Boot 3.2+) removed parameter-name discovery from bytecode debug info, so web
+// binding (@PathVariable/@RequestParam) and Spring Data query methods need javac's -parameters flag.
+// The Spring Boot Gradle plugin adds it automatically, but this module only applies java-library.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
+
 dependencies {
-    compile project(":common-swagger")
-    compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-domain")
+    api project(":common-swagger")
+    api project(":ftgo-restaurant-service-api")
+    api project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    api "org.springframework.boot:spring-boot-starter-web"
+    api "org.springframework.boot:spring-boot-starter-actuator"
 
-    compile 'javax.el:javax.el-api:2.2.5'
+    // Bean Validation (Hibernate Validator + Jakarta EL) replaces the old javax.el-api dependency.
+    api "org.springframework.boot:spring-boot-starter-validation"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    // JUnit 5 (Jupiter), Mockito, Spring Test and Hamcrest; versions managed by the Boot BOM.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // io.rest-assured 5.x replaces com.jayway.restassured: `rest-assured` drives the real HTTP
+    // endpoints in the Boot smoke test, `spring-mock-mvc` the standalone controller test.
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
+    testImplementation "com.jayway.jsonpath:json-path"
+
+    // In-memory database the Boot smoke test runs Hibernate 6 against (the Flyway scripts are MySQL-only).
+    testRuntimeOnly "com.h2database:h2"
+    // Gradle 8 no longer injects the JUnit Platform launcher; a BOM-aligned launcher is required so it
+    // matches the junit-platform-engine pulled in by spring-boot-starter-test.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

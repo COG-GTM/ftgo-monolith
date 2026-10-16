@@ -20,8 +20,10 @@ public class ConsumerController {
     return new CreateConsumerResponse(consumerService.create(request.getName()).getId());
   }
 
+  // Spring 6.1+ no longer infers parameter names from bytecode debug info, so the path
+  // variable name is declared explicitly rather than relying on the `-parameters` compiler flag.
   @RequestMapping(method= RequestMethod.GET,  path="/{consumerId}")
-  public ResponseEntity<GetConsumerResponse> get(@PathVariable long consumerId) {
+  public ResponseEntity<GetConsumerResponse> get(@PathVariable("consumerId") long consumerId) {
     return consumerService.findById(consumerId)
             .map(consumer -> new ResponseEntity<>(new GetConsumerResponse(consumer.getName()), HttpStatus.OK))
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));

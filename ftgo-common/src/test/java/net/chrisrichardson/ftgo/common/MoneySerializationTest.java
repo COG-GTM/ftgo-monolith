@@ -5,20 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.springframework.util.Assert;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+// JUnit 5 (Jupiter) tests for the Jackson MoneyModule: Money <-> JSON string round trip.
 public class MoneySerializationTest {
 
   private static ObjectMapper objectMapper = new ObjectMapper();
 
-  @BeforeClass
+  // Register the Money serializer/deserializer once for all tests in this class.
+  @BeforeAll
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
   }
@@ -74,16 +75,11 @@ public class MoneySerializationTest {
     assertEquals(mc, objectMapper.readValue("{\"price\":\"12.34\"}", MoneyContainer.class));
   }
 
+  // A Money encoded as an object instead of a string must be rejected with a JsonMappingException.
   @Test
-  public void shouldFailToDe() throws IOException  {
-    JsonMappingException jsonMappingException = null;
-    try {
-      objectMapper.readValue("{\"price\": { \"amount\" : \"12.34\"} }", MoneyContainer.class);
-      fail("expected exception");
-    } catch (JsonMappingException e) {
-      jsonMappingException = e;
-    }
-    Assert.notNull(jsonMappingException);
+  public void shouldFailToDe() {
+    assertThrows(JsonMappingException.class,
+            () -> objectMapper.readValue("{\"price\": { \"amount\" : \"12.34\"} }", MoneyContainer.class));
   }
 
 

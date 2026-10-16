@@ -1,15 +1,24 @@
 dependencies {
-    compile project(":common-swagger")
-    compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-domain")
+    api project(":common-swagger")
+    api project(":ftgo-consumer-service-api")
+    api project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    api "org.springframework.boot:spring-boot-starter-web"
+    api "org.springframework.boot:spring-boot-starter-actuator"
 
-    compile 'javax.el:javax.el-api:2.2.5'
+    // Bean Validation (Hibernate Validator + Jakarta EL) replaces the old javax.el-api dependency.
+    api "org.springframework.boot:spring-boot-starter-validation"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    // JUnit 5 (Jupiter), Mockito, AssertJ and Spring MockMvc for the unit tests.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // io.rest-assured 5.x replaces com.jayway.restassured; spring-mock-mvc drives the
+    // controller tests through MockMvc without starting a servlet container.
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:spring-mock-mvc:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
+    testImplementation "com.jayway.jsonpath:json-path"
+    // Gradle 8 no longer ships the JUnit Platform launcher on the test runtime classpath;
+    // the version is managed by the Boot BOM so it stays aligned with junit-platform-engine.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

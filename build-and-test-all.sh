@@ -4,8 +4,10 @@ KEEP_RUNNING=
 ASSEMBLE_ONLY=
 DATABASE_SERVICES="mysql"
 
+# Default to the Compose v2 plugin (`docker compose`); override with DOCKER_COMPOSE=docker-compose
+# if only the legacy standalone binary is installed.
 if [ -z "$DOCKER_COMPOSE" ] ; then
-    DOCKER_COMPOSE=docker-compose
+    DOCKER_COMPOSE="docker compose"
 fi
 
 while [ ! -z "$*" ] ; do

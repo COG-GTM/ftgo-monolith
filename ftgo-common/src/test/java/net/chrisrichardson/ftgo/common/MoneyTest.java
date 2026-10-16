@@ -1,10 +1,11 @@
 package net.chrisrichardson.ftgo.common;
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+// JUnit 5 (Jupiter) unit tests for the Money value object's arithmetic and comparison.
 public class MoneyTest {
 
   private final int M1_AMOUNT = 10;

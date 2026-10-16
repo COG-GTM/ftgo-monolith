@@ -1,6 +1,6 @@
-version: '3'
 services:
   mysql:
+    # mysql/Dockerfile: mysql:8.0 + schema.sql that creates the `ftgo` database.
     build: ./mysql
     ports:
       - 3306:3306
@@ -15,13 +15,11 @@ services:
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      # Connector/J 8 + MySQL 8: caching_sha2_password logins over plain TCP need
+      # allowPublicKeyRetrieval=true; useSSL=false silences the self-signed-cert warning.
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: mysqlpw
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
-      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      # com.mysql:mysql-connector-j moved the driver class to the com.mysql.cj package.
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       JAVA_OPTS: -Xmx192m
-      SPRING_SLEUTH_ENABLED: "true"
-      SPRING_SLEUTH_SAMPLER_PROBABILITY: 1
-      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411/

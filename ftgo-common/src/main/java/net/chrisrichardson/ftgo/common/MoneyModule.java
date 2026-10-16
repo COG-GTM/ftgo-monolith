@@ -20,9 +20,10 @@ public class MoneyModule extends SimpleModule {
       super(Money.class);
     }
 
+    // Money is serialized as a plain JSON string (e.g. "12.34"); any other token shape is a mapping error.
     @Override
     public Money deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-      JsonToken token = jp.getCurrentToken();
+      JsonToken token = jp.currentToken();
       if (token == JsonToken.VALUE_STRING) {
         String str = jp.getText().trim();
         if (str.isEmpty())
@@ -30,7 +31,9 @@ public class MoneyModule extends SimpleModule {
         else
           return new Money(str);
       } else
-        throw ctxt.mappingException(getValueClass());
+        // Jackson 2.13+ removed DeserializationContext.mappingException(Class); handleUnexpectedToken
+        // reports the unexpected token and throws MismatchedInputException (a JsonMappingException).
+        return (Money) ctxt.handleUnexpectedToken(handledType(), jp);
     }
   }
 

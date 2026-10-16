@@ -1,3 +1,13 @@
+// Consumer service API module: request/response DTOs shared by ftgo-consumer-service
+// and its clients. Jackson, Spring Boot and JUnit versions come from the Boot 3.5 BOM
+// imported in the root build.gradle.
 dependencies {
-    compile project(":ftgo-common")
+    // PersonName and the other shared value objects live in ftgo-common.
+    api project(":ftgo-common")
+
+    // JUnit 5 (Jupiter) + AssertJ for the DTO serialization tests.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer injects its own launcher; a BOM-aligned launcher version is required so it
+    // matches the junit-platform-engine pulled in by spring-boot-starter-test.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

@@ -1,5 +1,8 @@
 dependencies {
-
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile project(":ftgo-common")
+    // Spring Data JPA + Hibernate 6 (versions come from the Spring Boot 3.5 BOM applied in the root
+    // build); exposed as `api` so downstream modules (ftgo-domain, services) get jakarta.persistence
+    // and Hibernate on their compile classpath transitively.
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    // Value objects (Money, Address) mapped as embeddables by src/main/resources/META-INF/orm.xml.
+    api project(":ftgo-common")
 }

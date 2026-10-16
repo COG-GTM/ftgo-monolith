@@ -1,8 +1,11 @@
 buildscript {
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
     dependencies {
+        // Boot + dependency-management plugins live on the buildscript classpath so that
+        // buildSrc's FtgoServicePlugin can `apply plugin: 'org.springframework.boot'` by id.
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
         classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
     }
@@ -11,33 +14,45 @@ buildscript {
 }
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    // `./gradlew dependencyUpdates` report; Gradle 8 compatible release.
+    id "io.github.ben-manes.versions" version "0.60.0"
 }
 
 
 subprojects {
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    // java-library gives every module the api/implementation configurations that
+    // replaced Gradle 4's compile/runtime.
+    apply plugin: "java-library"
+    // Import the Boot BOM everywhere (not only in modules that apply the Boot plugin)
+    // so third-party versions (Jackson, MySQL driver, JUnit, Micrometer...) are managed centrally.
+    apply plugin: "io.spring.dependency-management"
 
     group = "net.chrisrichardson.ftgo"
 
-    repositories {
-        mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
-
-        maven {
-            url "${project.rootDir}/build/repo"
+    // Compile and run on JDK 21; the foojay resolver in settings.gradle downloads it if needed.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
         }
-
     }
 
+    repositories {
+        mavenCentral()
+
+        maven {
+            url = "${project.rootDir}/build/repo"
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        }
+    }
+
+    // Spring Boot 3 ships JUnit 5 (Jupiter) via spring-boot-starter-test; run tests on the JUnit Platform.
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
 }

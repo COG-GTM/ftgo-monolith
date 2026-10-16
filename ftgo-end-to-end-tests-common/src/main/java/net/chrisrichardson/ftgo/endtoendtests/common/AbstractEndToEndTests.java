@@ -3,10 +3,9 @@ package net.chrisrichardson.ftgo.endtoendtests.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.ObjectMapperConfig;
-import com.jayway.restassured.config.RestAssuredConfig;
-import io.eventuate.util.test.async.Eventually;
+import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
@@ -20,17 +19,17 @@ import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public abstract class AbstractEndToEndTests {
 
@@ -47,7 +46,7 @@ public abstract class AbstractEndToEndTests {
   private int courierId;
 
   private String baseUrl(int port, String path, String... pathElements) {
-    assertNotNull("host", getHost());
+    assertNotNull(getHost(), "host");
     StringBuilder sb = new StringBuilder("http://");
     sb.append(getHost());
     sb.append(":");
@@ -76,7 +75,8 @@ public abstract class AbstractEndToEndTests {
     return baseUrl(getApplicationPort(), "orders", pathElements);
   }
 
-  @BeforeClass
+  // JUnit 5: runs once before any test in the (concrete) subclass, replacing JUnit 4's @BeforeClass.
+  @BeforeAll
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
     objectMapper.registerModule(new JavaTimeModule());

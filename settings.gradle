@@ -1,4 +1,9 @@
 
+// Auto-provisions the JDK requested by the Java toolchain (JDK 21, see root build.gradle)
+// from the foojay Disco API when it is not already installed on the machine.
+plugins {
+    id "org.gradle.toolchains.foojay-resolver-convention" version "1.0.0"
+}
 
 include "common-swagger"
 
@@ -27,4 +32,3 @@ include "ftgo-application"
 
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
-

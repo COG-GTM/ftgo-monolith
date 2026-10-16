@@ -1,15 +1,28 @@
+// Monolith entrypoint: FtgoServicePlugin applies the Spring Boot plugin (bootJar/bootRun).
 apply plugin: FtgoServicePlugin
 
+// The Dockerfile copies build/libs/ftgo-application.jar, so keep the jar name version-free.
+bootJar {
+    archiveFileName = "ftgo-application.jar"
+}
+
 dependencies {
-    compile project(":ftgo-consumer-service")
-    compile project(":ftgo-order-service")
-    compile project(":ftgo-restaurant-service")
-    compile project(":ftgo-courier-service")
+    api project(":ftgo-consumer-service")
+    api project(":ftgo-order-service")
+    api project(":ftgo-restaurant-service")
+    api project(":ftgo-courier-service")
 
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    api "org.springframework.boot:spring-boot-starter-actuator"
+    api "org.springframework.boot:spring-boot-starter-web"
 
-    runtime 'mysql:mysql-connector-java:8.0.33'
+    // Version managed by the Spring Boot BOM.
+    runtimeOnly "com.mysql:mysql-connector-j"
 
-    testCompile project(":ftgo-end-to-end-tests-common")
+    // Shared end-to-end scenarios (AbstractEndToEndTests) run in-process against the monolith.
+    testImplementation project(":ftgo-end-to-end-tests-common")
+    // JUnit 5 (Jupiter), Spring test support and @SpringBootTest.
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Gradle 8 no longer adds the JUnit Platform launcher to the test runtime classpath;
+    // the version is managed by the Boot BOM so it stays aligned with junit-platform-engine.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
