@@ -1,5 +1,11 @@
 apply plugin: FtgoServicePlugin
 
+test {
+    if (project.hasProperty('skipDbTests')) {
+        exclude '**/FtgoApplicationTest*'
+    }
+}
+
 dependencies {
     compile project(":ftgo-consumer-service")
     compile project(":ftgo-order-service")
@@ -12,4 +18,5 @@ dependencies {
     runtime 'mysql:mysql-connector-java:8.0.33'
 
     testCompile project(":ftgo-end-to-end-tests-common")
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 }

@@ -12,6 +12,7 @@ import org.springframework.util.Assert;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class MoneySerializationTest {
@@ -84,6 +85,45 @@ public class MoneySerializationTest {
       jsonMappingException = e;
     }
     Assert.notNull(jsonMappingException);
+  }
+
+  @Test
+  public void blankAmountDeserializesAsNull() throws IOException {
+    assertNull(objectMapper.readValue("{\"price\":\"\"}", MoneyContainer.class).getPrice());
+    assertNull(objectMapper.readValue("{\"price\":\"   \"}", MoneyContainer.class).getPrice());
+  }
+
+  @Test
+  public void amountIsTrimmedDuringDeserialization() throws IOException {
+    assertEquals(new Money("12.34"),
+            objectMapper.readValue("{\"price\":\" 12.34 \"}", MoneyContainer.class).getPrice());
+  }
+
+  @Test
+  public void nullAmountDeserializesAsNull() throws IOException {
+    assertNull(objectMapper.readValue("{\"price\":null}", MoneyContainer.class).getPrice());
+  }
+
+  @Test
+  public void moneyDeserializationRejectsJsonNumbers() throws IOException {
+    // Money JSON is string-only to preserve BigDecimal precision.
+    try {
+      objectMapper.readValue("{\"price\":12.34}", MoneyContainer.class);
+      fail("expected numeric JSON amount to be rejected");
+    } catch (JsonMappingException expected) {
+      // Numeric values are intentionally not accepted by the current deserializer.
+    }
+  }
+
+  @Test
+  public void serializesScientificAmountAsPlainString() throws IOException {
+    assertEquals("\"1000\"", objectMapper.writeValueAsString(new Money("1E+3")));
+  }
+
+  @Test
+  public void moduleNameCurrentlyHasTypo() {
+    // Suspected bug: module name typo "FtgoCommonMOdule".
+    assertEquals("FtgoCommonMOdule", new MoneyModule().getModuleName());
   }
 
 
