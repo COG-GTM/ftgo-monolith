@@ -151,6 +151,7 @@ public class ApiTrackingInterceptorTest {
   }
 
   private void assertGeneratedCorrelationId(String incomingId) {
+    MDC.clear();
     MockHttpServletRequest request = new MockHttpServletRequest("GET", "/orders");
     if (incomingId != null) {
       request.addHeader("X-Correlation-ID", incomingId);
@@ -162,6 +163,7 @@ public class ApiTrackingInterceptorTest {
     String generatedId = response.getHeader("X-Correlation-ID");
     UUID.fromString(generatedId);
     assertEquals(generatedId, ((ApiRequestLog) request.getAttribute("apiTracking.logEntry")).getCorrelationId());
+    assertEquals(generatedId, MDC.get("correlationId"));
   }
 
   private MockHttpServletRequest requestWithCorrelationId() {

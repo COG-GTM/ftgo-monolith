@@ -105,8 +105,8 @@ public class MoneySerializationTest {
   }
 
   @Test
-  public void moneyDeserializationCurrentlyRejectsJsonNumbers() throws IOException {
-    // Suspected bug: numeric JSON amounts are rejected; only strings accepted.
+  public void moneyDeserializationRejectsJsonNumbers() throws IOException {
+    // Money JSON is string-only to preserve BigDecimal precision.
     try {
       objectMapper.readValue("{\"price\":12.34}", MoneyContainer.class);
       fail("expected numeric JSON amount to be rejected");

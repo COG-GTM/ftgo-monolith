@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,7 +47,24 @@ public class ErrorResponseTest {
     assertTrue(json.contains("\"message\":\"missing\""));
     assertTrue(json.contains("\"path\":\"/orders/1\""));
     assertTrue(json.contains("\"correlationId\":\"abc-123\""));
-    assertTrue(json.contains("\"timestamp\":\"" + response.getTimestamp().toString() + "\""));
+    JsonNode ts = mapper.readTree(json).get("timestamp");
+    assertTrue(ts.isTextual());
+    assertEquals(response.getTimestamp(), LocalDateTime.parse(ts.asText()));
+  }
+
+  @Test
+  public void serializesTimestampInIsoLocalDateTimeFormat() throws Exception {
+    ObjectMapper mapper = initializedMapper();
+    ErrorResponse response = new ErrorResponse(404, "Not Found", "missing", "/orders/1", "abc-123");
+
+    ReflectionTestUtils.setField(response, "timestamp",
+            LocalDateTime.of(2024, 1, 2, 3, 4, 5, 120_000_000));
+    assertEquals("2024-01-02T03:04:05.12",
+            mapper.readTree(mapper.writeValueAsString(response)).get("timestamp").asText());
+
+    ReflectionTestUtils.setField(response, "timestamp", LocalDateTime.of(2024, 1, 2, 3, 4));
+    assertEquals("2024-01-02T03:04:00",
+            mapper.readTree(mapper.writeValueAsString(response)).get("timestamp").asText());
   }
 
   @Test
