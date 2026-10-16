@@ -73,6 +73,7 @@ public class ConsumerControllerTest {
 
   @Test
   public void getConsumerCurrentlyReturnsZeroConsumerId() throws Exception {
+    // Suspected bug: GetConsumerResponse extends CreateConsumerResponse but never sets consumerId, so GET /consumers/{id} always reports consumerId 0.
     when(consumerService.findById(101L)).thenReturn(Optional.of(consumerWithId(101L, new PersonName("John", "Doe"))));
 
     mockMvc.perform(get("/consumers/101"))
