@@ -10,13 +10,16 @@ import org.mockito.ArgumentCaptor;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class CourierServiceTest {
@@ -63,7 +66,7 @@ public class CourierServiceTest {
 
     service.updateAvailability(2L, false);
 
-    assertTrue(!courier.isAvailable());
+    assertFalse(courier.isAvailable());
     verify(repository).findById(2L);
   }
 
@@ -97,12 +100,12 @@ public class CourierServiceTest {
     when(repository.findById(99L)).thenReturn(Optional.empty());
     CourierService service = new CourierService(repository);
 
-    try {
-      service.updateLocation(99L, 40.1, -73.9);
-      fail("Expected CourierNotFoundException");
-    } catch (CourierNotFoundException e) {
-      assertEquals("Courier not found: 99", e.getMessage());
-    }
+    assertThatThrownBy(() -> service.updateLocation(99L, 40.1, -73.9))
+            .isInstanceOf(CourierNotFoundException.class)
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Courier not found: 99");
+    verify(repository).findById(99L);
+    verifyNoMoreInteractions(repository);
   }
 
   @Test
@@ -112,31 +115,25 @@ public class CourierServiceTest {
     when(repository.findById(99L)).thenReturn(Optional.empty());
     CourierService service = new CourierService(repository);
 
-    try {
-      service.findCourierById(99L);
-      fail("Expected NoSuchElementException");
-    } catch (NoSuchElementException expected) {
-      assertNotNull(expected);
-    }
+    assertThatThrownBy(() -> service.findCourierById(99L))
+            .isExactlyInstanceOf(NoSuchElementException.class)
+            .isNotInstanceOf(CourierNotFoundException.class);
+    verify(repository).findById(99L);
+    verifyNoMoreInteractions(repository);
   }
 
   @Test
   public void updateAvailabilityForUnknownCourierCurrentlyThrowsNoSuchElementException() {
-    // Suspected bug: uses Optional.get() so missing couriers throw NoSuchElementException instead of CourierNotFoundException.
+    // Suspected bug: noteAvailable/noteUnavailable use Optional.get() so missing couriers throw NoSuchElementException instead of CourierNotFoundException.
     CourierRepository repository = mock(CourierRepository.class);
     when(repository.findById(99L)).thenReturn(Optional.empty());
     CourierService service = new CourierService(repository);
 
-    assertUpdateAvailabilityThrowsNoSuchElement(service, true);
-    assertUpdateAvailabilityThrowsNoSuchElement(service, false);
-  }
-
-  private void assertUpdateAvailabilityThrowsNoSuchElement(CourierService service, boolean available) {
-    try {
-      service.updateAvailability(99L, available);
-      fail("Expected NoSuchElementException");
-    } catch (NoSuchElementException expected) {
-      assertNotNull(expected);
-    }
+    assertThatThrownBy(() -> service.updateAvailability(99L, true))
+            .isExactlyInstanceOf(NoSuchElementException.class);
+    assertThatThrownBy(() -> service.updateAvailability(99L, false))
+            .isExactlyInstanceOf(NoSuchElementException.class);
+    verify(repository, times(2)).findById(99L);
+    verifyNoMoreInteractions(repository);
   }
 }

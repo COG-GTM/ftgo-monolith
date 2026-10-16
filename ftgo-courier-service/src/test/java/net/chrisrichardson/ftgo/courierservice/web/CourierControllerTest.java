@@ -12,10 +12,12 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.util.NestedServletException;
 
 import java.util.Collections;
+import java.util.NoSuchElementException;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -23,14 +25,12 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class CourierControllerTest {
@@ -155,21 +155,59 @@ public class CourierControllerTest {
   }
 
   @Test
-  public void updateLocationForUnknownCourierCurrentlyPropagatesExceptionInsteadOf404() throws Exception {
+  public void updateLocationForUnknownCourierPropagatesCourierNotFoundException() throws Exception {
     CourierService courierService = mock(CourierService.class);
     doThrow(new CourierNotFoundException(99L)).when(courierService).updateLocation(99L, 40.1, -73.9);
-    MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new CourierController(courierService)).build();
 
-    // Suspected bug: the controller does not map an unknown courier to a 404 response.
-    try {
-      mockMvc.perform(post("/couriers/99/location")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content("{\"latitude\":40.1,\"longitude\":-73.9}"));
-      throw new AssertionError("Expected the unhandled exception to propagate");
-    } catch (NestedServletException e) {
-      assertTrue(e.getCause() instanceof CourierNotFoundException);
-      assertEquals("Courier not found: 99", e.getCause().getMessage());
-    }
+    // The 404 mapping for CourierNotFoundException lives in ftgo-application's GlobalExceptionHandler
+    // (@ControllerAdvice), which is not on this module's classpath, so standalone MockMvc surfaces the raw exception.
+    Throwable cause = performAndCaptureCause(courierService, post("/couriers/99/location")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"latitude\":40.1,\"longitude\":-73.9}"));
+
+    assertTrue(cause instanceof CourierNotFoundException);
+    assertEquals("Courier not found: 99", cause.getMessage());
+  }
+
+  @Test
+  public void getUnknownCourierCurrentlyPropagatesNoSuchElementExceptionInsteadOfCourierNotFound() throws Exception {
+    CourierService courierService = mock(CourierService.class);
+    when(courierService.findCourierById(99L)).thenThrow(new NoSuchElementException("No value present"));
+
+    // Suspected bug: CourierService.findCourierById uses Optional.get(), so GET /couriers/{id} for an unknown
+    // courier raises NoSuchElementException; GlobalExceptionHandler's catch-all turns that into a 500, not a 404.
+    Throwable cause = performAndCaptureCause(courierService, get("/couriers/99"));
+
+    assertTrue(cause instanceof NoSuchElementException);
+    verify(courierService).findCourierById(99L);
+  }
+
+  @Test
+  public void getWorkloadForUnknownCourierCurrentlyPropagatesNoSuchElementExceptionInsteadOfCourierNotFound() throws Exception {
+    CourierService courierService = mock(CourierService.class);
+    when(courierService.findCourierById(99L)).thenThrow(new NoSuchElementException("No value present"));
+
+    // Suspected bug: same Optional.get() in CourierService.findCourierById; GET /couriers/{id}/workload
+    // for an unknown courier ends up as a 500 via GlobalExceptionHandler's catch-all instead of a 404.
+    Throwable cause = performAndCaptureCause(courierService, get("/couriers/99/workload"));
+
+    assertTrue(cause instanceof NoSuchElementException);
+    verify(courierService).findCourierById(99L);
+  }
+
+  @Test
+  public void updateAvailabilityForUnknownCourierCurrentlyPropagatesNoSuchElementExceptionInsteadOfCourierNotFound() throws Exception {
+    CourierService courierService = mock(CourierService.class);
+    doThrow(new NoSuchElementException("No value present")).when(courierService).updateAvailability(99L, true);
+
+    // Suspected bug: CourierService.noteAvailable/noteUnavailable use Optional.get(), so POST
+    // /couriers/{id}/availability for an unknown courier ends up as a 500 instead of a 404.
+    Throwable cause = performAndCaptureCause(courierService, post("/couriers/99/availability")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"available\":true}"));
+
+    assertTrue(cause instanceof NoSuchElementException);
+    verify(courierService).updateAvailability(99L, true);
   }
 
   @Test
@@ -185,8 +223,17 @@ public class CourierControllerTest {
     then().
             statusCode(400);
 
-    verify(courierService, never()).updateAvailability(anyLong(), anyBoolean());
     verifyZeroInteractions(courierService);
+  }
+
+  private Throwable performAndCaptureCause(CourierService courierService, MockHttpServletRequestBuilder request) throws Exception {
+    MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new CourierController(courierService)).build();
+    try {
+      mockMvc.perform(request);
+    } catch (NestedServletException e) {
+      return e.getCause();
+    }
+    throw new AssertionError("Expected the exception to propagate out of the controller");
   }
 
   private Courier courierWithId(long id) {
