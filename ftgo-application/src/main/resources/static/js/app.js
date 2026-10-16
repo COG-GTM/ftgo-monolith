@@ -448,6 +448,10 @@ function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
+  if (type === 'error' && window.Sentry) {
+    Sentry.captureMessage(message, 'error');
+  }
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
 
