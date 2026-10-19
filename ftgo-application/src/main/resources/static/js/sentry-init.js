@@ -16,17 +16,17 @@
         sendDefaultPii: config.sendDefaultPii,
         integrations: [
           Sentry.browserTracingIntegration(),
-          Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
+          Sentry.replayIntegration({ maskAllText: true, maskAllInputs: true, blockAllMedia: true }),
           Sentry.feedbackIntegration({
             colorScheme: 'light',
             triggerLabel: 'Report a bug',
             formTitle: 'Report a bug',
             submitButtonLabel: 'Send bug report',
-            enableScreenshot: true
+            enableScreenshot: false
           })
         ],
         tracesSampleRate: 1.0,
-        replaysSessionSampleRate: 1.0,
+        replaysSessionSampleRate: 0,
         replaysOnErrorSampleRate: 1.0
       });
       Sentry.setTag('app', 'ftgo-dashboard');

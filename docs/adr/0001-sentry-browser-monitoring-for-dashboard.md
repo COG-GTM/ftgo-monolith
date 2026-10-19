@@ -69,7 +69,7 @@ C4Container
 
 ## Security & compliance
 
-- **Data classification:** user IP, URL, page text and form input in replays (text masking disabled). Treat as Internal/PII.
+- **Data classification:** URL and masked replays (text, inputs and media masked; replays captured on error only); `sendDefaultPii` off unless `SENTRY_SEND_DEFAULT_PII=true`; feedback screenshots disabled. Treat as Internal/PII.
 - **Encryption at rest:** Sentry-managed.
 - **Encryption in transit:** HTTPS to CDN and ingest.
 - **AuthN / AuthZ:** DSN is a public client key by design; `GET /config/sentry` is unauthenticated and returns only DSN, environment and the PII flag.
@@ -77,7 +77,7 @@ C4Container
 - **Audit logging:** N/A.
 - **Data residency / regions:** Sentry US ingest (`ingest.us.sentry.io`).
 - **Policy sections satisfied:** no `policy/approved-infra.yaml` in this repo; no infrastructure added.
-- **Threats considered:** CDN script tampering (mitigated by SRI + `crossorigin`); PII leakage via replay (accept for demo; enable `maskAllText` before real customer data).
+- **Threats considered:** CDN script tampering (mitigated by SRI + `crossorigin`); PII leakage via replay (mitigated: `maskAllText`/`maskAllInputs`/`blockAllMedia` on, session sampling off).
 
 ## Cost
 

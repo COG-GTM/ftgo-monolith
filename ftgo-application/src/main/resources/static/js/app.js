@@ -449,7 +449,8 @@ function showToast(message, type = 'success') {
   if (!container) return;
 
   if (type === 'error' && window.Sentry) {
-    Sentry.captureMessage(message, 'error');
+    // Report only the static prefix; the part after ':' can carry user or server data.
+    Sentry.captureMessage(String(message).split(':')[0], 'error');
   }
 
   const toast = document.createElement('div');
