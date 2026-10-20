@@ -138,6 +138,35 @@ public class ApiTrackingInterceptorTest {
   }
 
   @Test
+  public void postHandleIsANoOp() throws Exception {
+    MockHttpServletRequest request = requestWithCorrelationId();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    interceptor.preHandle(request, response, new Object());
+    ApiRequestLog entry = (ApiRequestLog) request.getAttribute("apiTracking.logEntry");
+
+    interceptor.postHandle(request, response, new Object(), null);
+
+    verifyZeroInteractions(repository);
+    assertEquals("abc-123", MDC.get("correlationId"));
+    assertEquals(null, entry.getResponseStatus());
+    assertEquals(null, entry.getDurationMs());
+  }
+
+  @Test
+  public void afterCompletionWithLogEntryButNoStartTimeDoesNotPersistAndClearsMdc() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/orders");
+    ApiRequestLog entry = new ApiRequestLog("abc-123", "GET", "/orders", null, null, null);
+    request.setAttribute("apiTracking.logEntry", entry);
+    MDC.put("correlationId", "abc-123");
+
+    interceptor.afterCompletion(request, new MockHttpServletResponse(), new Object(), null);
+
+    verifyZeroInteractions(repository);
+    assertEquals(null, entry.getResponseStatus());
+    assertEquals(null, MDC.get("correlationId"));
+  }
+
+  @Test
   public void repositoryFailureIsSwallowedAndMdcIsCleared() throws Exception {
     when(repository.save(any(ApiRequestLog.class))).thenThrow(new RuntimeException("database unavailable"));
     MockHttpServletRequest request = requestWithCorrelationId();

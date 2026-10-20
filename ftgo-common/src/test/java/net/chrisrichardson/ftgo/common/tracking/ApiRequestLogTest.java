@@ -32,6 +32,19 @@ public class ApiRequestLogTest {
   }
 
   @Test
+  public void noArgConstructorLeavesAllFieldsUnset() {
+    ApiRequestLog log = new ApiRequestLog();
+
+    assertNull(log.getId());
+    assertNull(log.getCorrelationId());
+    assertNull(log.getHttpMethod());
+    assertNull(log.getRequestUri());
+    assertNull(log.getRequestTimestamp());
+    assertNull(log.getResponseStatus());
+    assertNull(log.getDurationMs());
+  }
+
+  @Test
   public void completeWithoutErrorStoresStatusAndDuration() {
     ApiRequestLog log = new ApiRequestLog("abc-123", "GET", "/orders", null, null, null);
 

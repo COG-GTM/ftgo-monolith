@@ -1,3 +1,5 @@
 dependencies {
     compile project(":ftgo-common")
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 }
