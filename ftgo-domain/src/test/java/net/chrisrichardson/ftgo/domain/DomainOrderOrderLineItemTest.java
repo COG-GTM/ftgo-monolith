@@ -73,4 +73,14 @@ public class DomainOrderOrderLineItemTest {
             .contains("name=Chicken Vindaloo")
             .contains("quantity=5");
   }
+
+  @Test
+  public void gettersReturnConstructorValues() {
+    OrderLineItem item = chickenVindaloo(5);
+
+    assertThat(item.getMenuItemId()).isEqualTo("1");
+    assertThat(item.getName()).isEqualTo("Chicken Vindaloo");
+    assertThat(item.getPrice()).isEqualTo(money("12.34"));
+    assertThat(item.getQuantity()).isEqualTo(5);
+  }
 }
