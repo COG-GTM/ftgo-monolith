@@ -94,8 +94,11 @@ subprojects.each {
     evaluationDependsOn(it.path)
 }
 
+def coverageTestSupportProjects = ["ftgo-end-to-end-tests-common", "ftgo-test-util"]
+
 def coverageProjects = subprojects.findAll {
-    it.sourceSets.main.allJava.srcDirs.any { it.exists() }
+    !(it.name in coverageTestSupportProjects) &&
+        it.sourceSets.main.allJava.srcDirs.any { it.exists() }
 }
 
 task jacocoRootReport(type: JacocoReport) {
