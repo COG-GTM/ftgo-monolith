@@ -176,14 +176,14 @@ async def unit_flow(unit):
 
 
 async def combine(base, outcomes):
-    mergeable = [o for o in outcomes if o["status"] in ("accepted", "accepted_after_revision", "unreviewed")]
+    mergeable = [o for o in outcomes if o["status"] in ("accepted", "accepted_after_revision")]
     others = [o for o in outcomes if o not in mergeable]
     prompt = f"""{CONTEXT}
 TASK: combine the reviewed coverage branches and add a ratcheting coverage gate. Do NOT open a PR (the orchestrator will).
 1. Check out `{BASE_BRANCH}` (root line coverage there: {base['root_line_pct']}%, branch {base['root_branch_pct']}%).
 2. Merge each of these branches (no-ff), in order: {json.dumps([o['result']['branch'] for o in mergeable])}. They touch disjoint module test dirs; resolve any conflict conservatively and report it. If a branch breaks the build, skip it and report it in skipped_branches.
 3. Run the full DB-free test + JaCoCo command; all tests must pass.
-4. In the root build.gradle add a `jacocoRootCoverageVerification` task (type JacocoCoverageVerification, same executionData/source/class dirs as jacocoRootReport) with a LINE COVEREDRATIO minimum = floor(achieved aggregate line %) / 100, and make root `check` depend on it. Verify `./gradlew -PskipDbTests -x :ftgo-end-to-end-tests:test check` passes on JDK 8 (if `check` pulls in DB-backed tests, also add `-x` for them and say which).
+4. In the root build.gradle add a `jacocoRootCoverageVerification` task (type JacocoCoverageVerification, same executionData/source/class dirs as jacocoRootReport) with a LINE COVEREDRATIO minimum = floor(achieved aggregate line %) / 100, and make root `check` depend on it (and a root `build` task depend on root `check`, so CI's `./gradlew build` runs the gate). If the task already exists, update its minimum instead. Verify `./gradlew -PskipDbTests -x :ftgo-end-to-end-tests:test check` passes on JDK 8 (if `check` pulls in DB-backed tests, also add `-x` for them and say which).
 5. Commit and `git push origin {BASE_BRANCH}`.
 Report: branch, head sha, final aggregate line/branch %, gate value, a markdown table (module | line % before | line % after | branch % after) using the per-module XMLs (before = `{BASE_BRANCH}` before merges; branch % 'N/A' when a module has no branches), merged/skipped branches, and the union of pinned bugs.
 Pinned bugs reported by unit authors: {json.dumps(sorted({b for o in mergeable for b in o['result'].get('pinned_bugs', [])}))}
@@ -216,6 +216,10 @@ async def main():
         log(f"unit {o['unit']}: {o['status']}" + (f" branch={o['result']['branch']}" if 'result' in o else ""))
     final = await combine(base, outcomes)
     log("FINAL " + json.dumps(final, sort_keys=True))
+    if not final["all_tests_pass"] or final["root_line_pct"] < TARGET_LINE_PCT:
+        raise RuntimeError(f"Target not met: line {final['root_line_pct']}% (target {TARGET_LINE_PCT}%), "
+                           f"all_tests_pass={final['all_tests_pass']}. Branch {final['branch']} is pushed but should not be "
+                           "published as a successful run; resume or rerun for the remaining gaps.")
 
 
 asyncio.run(main())

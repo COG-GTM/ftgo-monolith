@@ -144,3 +144,9 @@ def rootCheck = tasks.findByName('check') ?: task('check') {
     description = 'Runs all checks, including the aggregate coverage gate.'
 }
 rootCheck.dependsOn jacocoRootCoverageVerification
+
+def rootBuild = tasks.findByName('build') ?: task('build') {
+    group = 'build'
+    description = 'Runs root checks (aggregate coverage gate) so `./gradlew build` enforces them.'
+}
+rootBuild.dependsOn rootCheck

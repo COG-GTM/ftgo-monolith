@@ -24,7 +24,7 @@ Runs `workflow.py` (next to this file) with the `run_workflow` tool. Invoke the 
 - **review** (1 per unit, plus at most one revise/re-review round).
 - **combine** (1 agent): merges accepted branches into the base branch, adds/updates
   `jacocoRootCoverageVerification` (wired into root `check`) at floor(achieved line %), and pushes.
-  It does not open a PR. The orchestrator opens one from `devin/<RUN_TAG>-base` into `START_BRANCH`.
+  CI (`./gradlew build`) runs the gate via a root `build` task. The workflow fails if final coverage < `TARGET_LINE_PCT`; unreviewed branches are never merged. It does not open a PR. The orchestrator opens one from `devin/<RUN_TAG>-base` into `START_BRANCH`.
 
 The fan-out comes from the baseline agent's JaCoCo output, so a rerun only targets modules that still have gaps.
 Resume an interrupted run by passing its `run_id`.
