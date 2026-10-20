@@ -121,3 +121,26 @@ task jacocoRootReport(type: JacocoReport) {
         html.enabled = true
     }
 }
+
+task jacocoRootCoverageVerification(type: JacocoCoverageVerification) {
+    dependsOn jacocoRootReport
+    executionData = jacocoRootReport.executionData
+    sourceDirectories = jacocoRootReport.sourceDirectories
+    classDirectories = jacocoRootReport.classDirectories
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.00
+            }
+        }
+    }
+}
+
+def rootCheck = tasks.findByName('check') ?: task('check') {
+    group = 'verification'
+    description = 'Runs all checks, including the aggregate coverage gate.'
+}
+rootCheck.dependsOn jacocoRootCoverageVerification
