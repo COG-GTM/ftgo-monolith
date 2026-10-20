@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.domain;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -117,5 +118,44 @@ public class CourierTest {
     Order order = new Order(1L, null, Collections.emptyList());
     order.setId(id);
     return order;
+  }
+
+  @Test
+  public void getNameAndPlanReturnConstructedState() {
+    PersonName name = new PersonName("Casey", "Courier");
+    Courier courier = new Courier(name, null);
+    Order order = order(1L);
+
+    courier.addAction(Action.makePickup(order));
+
+    assertSame(name, courier.getName());
+    assertEquals(1, courier.getPlan().getActions().size());
+    assertEquals(ActionType.PICKUP, courier.getPlan().getActions().get(0).getType());
+  }
+
+  @Test
+  public void activeDeliveryCountIsZeroWhenPlanIsNullAsWhenLoadedWithEmptyEmbeddable() {
+    Courier courier = new Courier();
+    ReflectionTestUtils.setField(courier, "plan", null);
+
+    assertEquals(0, courier.getActiveDeliveryCount());
+  }
+
+  @Test
+  public void activeDeliveryCountIsZeroWhenPlanHasNullActions() {
+    Courier courier = new Courier();
+    ReflectionTestUtils.setField(courier.getPlan(), "actions", null);
+
+    assertEquals(0, courier.getActiveDeliveryCount());
+  }
+
+  @Test
+  public void hasNoLocationWhenAddressHasLatitudeButNoLongitude() {
+    Courier courier = courierWithAddress(new Address("1 Main St", null, "Oakland", "CA",
+            "94612", 37.8, null));
+
+    assertEquals(Double.valueOf(37.8), courier.getCurrentLatitude());
+    assertNull(courier.getCurrentLongitude());
+    assertFalse(courier.hasLocation());
   }
 }

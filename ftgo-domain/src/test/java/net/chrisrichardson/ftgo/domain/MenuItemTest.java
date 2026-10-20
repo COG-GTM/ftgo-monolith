@@ -46,4 +46,13 @@ public class MenuItemTest {
   private static MenuItem item(String id, String name, String price) {
     return new MenuItem(id, name, new Money(price));
   }
+
+  @Test
+  public void gettersReturnConstructorValues() {
+    MenuItem menuItem = item("soup", "Soup", "4.50");
+
+    assertEquals("soup", menuItem.getId());
+    assertEquals("Soup", menuItem.getName());
+    assertEquals(new Money("4.50"), menuItem.getPrice());
+  }
 }

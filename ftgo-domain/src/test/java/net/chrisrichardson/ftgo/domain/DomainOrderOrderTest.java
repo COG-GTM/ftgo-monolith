@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -338,5 +339,19 @@ public class DomainOrderOrderTest {
     assertThatThrownBy(() -> order.revise(revision(quantities("unknown", 1))))
             .isInstanceOf(NoSuchElementException.class);
     assertThat(order.getOrderTotal()).isEqualTo(money("68.70"));
+  }
+
+  @Test
+  public void noArgConstructorUsedByJpaLeavesStateUnsetAndDefaultsOrderMinimumToMaxInt() throws Exception {
+    Constructor<Order> constructor = Order.class.getDeclaredConstructor();
+    constructor.setAccessible(true);
+
+    Order jpaOrder = constructor.newInstance();
+
+    assertThat(jpaOrder.getId()).isNull();
+    assertThat(jpaOrder.getOrderState()).isNull();
+    assertThat(jpaOrder.getConsumerId()).isNull();
+    assertThat(jpaOrder.getRestaurant()).isNull();
+    assertThat(ReflectionTestUtils.getField(jpaOrder, "orderMinimum")).isEqualTo(new Money(Integer.MAX_VALUE));
   }
 }
