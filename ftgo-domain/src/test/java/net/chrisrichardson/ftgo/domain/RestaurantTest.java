@@ -70,4 +70,15 @@ public class RestaurantTest {
   private static RestaurantMenu menu() {
     return new RestaurantMenu(Collections.emptyList());
   }
+
+  @Test
+  public void setIdAndSetNameReplaceIdentityAndName() {
+    Restaurant restaurant = new Restaurant("Ajanta", null, new RestaurantMenu(Collections.emptyList()));
+
+    restaurant.setId(42L);
+    restaurant.setName("Ajanta Express");
+
+    assertEquals(Long.valueOf(42L), restaurant.getId());
+    assertEquals("Ajanta Express", restaurant.getName());
+  }
 }

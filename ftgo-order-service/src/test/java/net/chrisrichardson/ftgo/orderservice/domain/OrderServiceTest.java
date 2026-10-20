@@ -272,6 +272,19 @@ public class OrderServiceTest {
   }
 
   @Test
+  public void acceptUsesThirtyMinuteEtaWhenOrderHasNoRestaurant() {
+    Order order = order(null);
+    Courier courier = courierAt(37.8044, -122.2712);
+    LocalDateTime readyBy = LocalDateTime.now().plusHours(1);
+    assign(courier, order);
+
+    orderService.accept(99L, readyBy);
+
+    assertThat(courier.getPlan().getActions().get(1).getTime()).isEqualTo(readyBy.plusMinutes(30));
+    assertThat(order.getAssignedCourier()).isSameAs(courier);
+  }
+
+  @Test
   public void acceptUsesThirtyMinuteEtaWhenRestaurantHasNullAddress() {
     Order order = order(RestaurantMother.AJANTA_RESTAURANT);
     Courier courier = courierAt(37.8044, -122.2712);

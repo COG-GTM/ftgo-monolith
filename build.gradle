@@ -94,8 +94,11 @@ subprojects.each {
     evaluationDependsOn(it.path)
 }
 
+def coverageTestSupportProjects = ["ftgo-end-to-end-tests-common", "ftgo-test-util"]
+
 def coverageProjects = subprojects.findAll {
-    it.sourceSets.main.allJava.srcDirs.any { it.exists() }
+    !(it.name in coverageTestSupportProjects) &&
+        it.sourceSets.main.allJava.srcDirs.any { it.exists() }
 }
 
 task jacocoRootReport(type: JacocoReport) {
@@ -118,3 +121,32 @@ task jacocoRootReport(type: JacocoReport) {
         html.enabled = true
     }
 }
+
+task jacocoRootCoverageVerification(type: JacocoCoverageVerification) {
+    dependsOn jacocoRootReport
+    executionData = jacocoRootReport.executionData
+    sourceDirectories = jacocoRootReport.sourceDirectories
+    classDirectories = jacocoRootReport.classDirectories
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.00
+            }
+        }
+    }
+}
+
+def rootCheck = tasks.findByName('check') ?: task('check') {
+    group = 'verification'
+    description = 'Runs all checks, including the aggregate coverage gate.'
+}
+rootCheck.dependsOn jacocoRootCoverageVerification
+
+def rootBuild = tasks.findByName('build') ?: task('build') {
+    group = 'build'
+    description = 'Runs root checks (aggregate coverage gate) so `./gradlew build` enforces them.'
+}
+rootBuild.dependsOn rootCheck
