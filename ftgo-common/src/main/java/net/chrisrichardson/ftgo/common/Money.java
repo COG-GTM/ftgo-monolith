@@ -68,6 +68,10 @@ public class Money {
     return amount.compareTo(other.amount) >= 0;
   }
 
+  public boolean isPositive() {
+    return amount.signum() > 0;
+  }
+
   public String asString() {
     return amount.toPlainString();
   }
