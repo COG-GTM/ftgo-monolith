@@ -1,5 +1,10 @@
 use ftgo;
 
+-- NOTE: The `consumers` table is now owned by the standalone ftgo-consumer-service
+-- (see ftgo-consumer-service/src/main/resources/db/migration/V1__create_consumer_db.sql,
+-- which targets its own `ftgo_consumer_service` database). It is intentionally kept here
+-- for backward compatibility with existing deployments and may be removed in a future
+-- migration once no monolith deployments depend on it.
 create table consumers
 (
   id         bigint not null,
