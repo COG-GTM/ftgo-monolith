@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.common.security.FtgoPrincipal;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -9,11 +10,14 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -26,19 +30,24 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private OrderAccessPolicy accessPolicy;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  public OrderController(OrderService orderService, OrderRepository orderRepository, OrderAccessPolicy accessPolicy) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.accessPolicy = accessPolicy;
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+  public ResponseEntity<CreateOrderResponse> create(@RequestBody CreateOrderRequest request,
+                                                    @AuthenticationPrincipal FtgoPrincipal principal) {
+    if (!accessPolicy.canCreateOrderFor(principal, request.getConsumerId()))
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
     );
-    return new CreateOrderResponse(order.getId());
+    return new ResponseEntity<>(new CreateOrderResponse(order.getId()), HttpStatus.OK);
   }
 
 
@@ -83,53 +92,74 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
-    try {
-      Order order = orderService.cancel(orderId);
-      return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
-    } catch (OrderNotFoundException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId, @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsConsumer,
+            order -> new ResponseEntity<>(makeGetOrderResponse(orderService.cancel(orderId)), HttpStatus.OK));
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
-    try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
-      return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
-    } catch (OrderNotFoundException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request,
+                                                 @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsConsumer, order -> {
+      Order revised = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+      return new ResponseEntity<>(makeGetOrderResponse(revised), HttpStatus.OK);
+    });
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance,
+                                       @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsRestaurant, order -> {
+      orderService.accept(orderId, orderAcceptance.getReadyBy());
+      return new ResponseEntity<>(HttpStatus.OK);
+    });
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
-    orderService.notePreparing(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> preparing(@PathVariable long orderId, @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsRestaurant, order -> {
+      orderService.notePreparing(orderId);
+      return new ResponseEntity<>(HttpStatus.OK);
+    });
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
-    orderService.noteReadyForPickup(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> ready(@PathVariable long orderId, @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsRestaurant, order -> {
+      orderService.noteReadyForPickup(orderId);
+      return new ResponseEntity<>(HttpStatus.OK);
+    });
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
-    orderService.notePickedUp(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> pickedup(@PathVariable long orderId, @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsCourier, order -> {
+      orderService.notePickedUp(orderId);
+      return new ResponseEntity<>(HttpStatus.OK);
+    });
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
-    orderService.noteDelivered(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> delivered(@PathVariable long orderId, @AuthenticationPrincipal FtgoPrincipal principal) {
+    return withAuthorizedOrder(orderId, principal, accessPolicy::canActAsCourier, order -> {
+      orderService.noteDelivered(orderId);
+      return new ResponseEntity<>(HttpStatus.OK);
+    });
+  }
+
+  private <T> ResponseEntity<T> withAuthorizedOrder(long orderId, FtgoPrincipal principal,
+                                                    BiPredicate<FtgoPrincipal, Order> permitted,
+                                                    Function<Order, ResponseEntity<T>> action) {
+    Optional<Order> order = orderRepository.findById(orderId);
+    if (!order.isPresent())
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    if (!permitted.test(principal, order.get()))
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    try {
+      return action.apply(order.get());
+    } catch (OrderNotFoundException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
   }
 
 }

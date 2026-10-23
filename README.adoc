@@ -8,3 +8,24 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+## Security
+
+State-changing order endpoints (`POST /orders` and `POST /orders/{orderId}/cancel|revise|accept|preparing|ready|pickedup|delivered`) require HTTP Basic authentication.
+Users are configured with `ftgo.security.users[n].username|password|role|actorId`, where `role` is one of `ADMIN`, `CONSUMER`, `RESTAURANT` or `COURIER` and `actorId` is the id of the consumer, restaurant or courier the user acts as (not used for `ADMIN`).
+Passwords use Spring Security's `{id}encodedPassword` format, e.g. `{bcrypt}$2a$10$...`.
+Consumers may only create, cancel and revise their own orders, restaurants may only accept/prepare/ready orders placed with them, couriers may only pick up/deliver orders assigned to them, and admins may act on any order.
+
+If no users are configured nobody can call the state-changing order endpoints (every request gets `401`), so configure at least one user.
+For example:
+
+```
+FTGO_SECURITY_USERS_0_USERNAME=admin \
+FTGO_SECURITY_USERS_0_PASSWORD='{bcrypt}$2a$10$...' \
+FTGO_SECURITY_USERS_0_ROLE=ADMIN \
+DOCKER_HOST_IP=localhost java -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081
+```
+
+The end-to-end tests authenticate with `FTGO_ADMIN_USERNAME` / `FTGO_ADMIN_PASSWORD` (defaults: `admin` / `admin-e2e-password`), so start the application under test with a matching `ADMIN` user.
+`docker-compose.yml` configures the `ftgo-application` container with that user from the same two variables; the application refuses to start when the password is empty, and `start-services.sh` / `build-and-run.sh` refuse to run unless `FTGO_ADMIN_PASSWORD` is exported, so export it once in your shell before starting the application and running `run-end-to-end-tests.sh`.
+`build-and-test-all.sh` generates a random password for its own run when none is set. The deployable configuration contains no default credential; the `admin-e2e-password` fallback is used only by the in-process `FtgoApplicationTest`.

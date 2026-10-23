@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.specification.RequestSpecification;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -35,6 +36,8 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractEndToEndTests {
 
   public static final String CHICKED_VINDALOO_MENU_ITEM_ID = "1";
+  public static final String DEFAULT_ADMIN_USERNAME = "admin";
+  public static final String DEFAULT_ADMIN_PASSWORD = "admin-e2e-password";
   public static final String RESTAURANT_NAME = "My Restaurant";
   private static final Address RESTAURANT_ADDRESS = new Address("1 High Street", null, "Oakland", "CA", "94619");
 
@@ -45,6 +48,22 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+
+  /**
+   * State-changing order endpoints require authentication. The credentials of an ADMIN user
+   * configured via {@code ftgo.security.users} are taken from FTGO_ADMIN_USERNAME / FTGO_ADMIN_PASSWORD,
+   * falling back to the defaults used by the in-process application test.
+   */
+  protected RequestSpecification givenAdmin() {
+    return given().auth().preemptive().basic(
+            envOrDefault("FTGO_ADMIN_USERNAME", DEFAULT_ADMIN_USERNAME),
+            envOrDefault("FTGO_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD));
+  }
+
+  private static String envOrDefault(String name, String defaultValue) {
+    String value = System.getenv(name);
+    return value == null || value.isEmpty() ? defaultValue : value;
+  }
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -122,6 +141,36 @@ public abstract class AbstractEndToEndTests {
 
   }
 
+  @Test
+  public void shouldRejectUnauthenticatedOrderChanges() {
+
+    createOrder();
+
+    given().
+            body("{}").
+            contentType("application/json").
+            when().
+            post(orderBaseUrl(Integer.toString(orderId), "cancel")).
+            then().
+            statusCode(401);
+
+    given().
+            when().
+            post(orderBaseUrl(Integer.toString(orderId), "delivered")).
+            then().
+            statusCode(401);
+
+    given().
+            body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 1)))).
+            contentType("application/json").
+            when().
+            post(orderBaseUrl()).
+            then().
+            statusCode(401);
+
+    verifyOrderAuthorized(orderId);
+  }
+
   private void reviseOrder() {
     reviseOrder(orderId);
     verifyOrderRevised(orderId);
@@ -151,7 +200,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void reviseOrder(int orderId) {
-    given().
+    givenAdmin().
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -196,7 +245,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void cancelOrder(int orderId) {
-    given().
+    givenAdmin().
             body("{}").
             contentType("application/json").
             when().
@@ -251,7 +300,7 @@ public abstract class AbstractEndToEndTests {
 
   private int createOrder(int consumerId, int restaurantId) {
     Integer orderId =
-            given().
+            givenAdmin().
                     body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
                     contentType("application/json").
                     when().
@@ -315,7 +364,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void acceptOrder() {
-    given().
+    givenAdmin().
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -350,7 +399,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void startPreparingOrder() {
-    given().
+    givenAdmin().
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -358,7 +407,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void orderReadyforPickup() {
-    given().
+    givenAdmin().
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -366,7 +415,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void pickupOrder() {
-    given().
+    givenAdmin().
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -374,7 +423,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void deliverOrder() {
-    given().
+    givenAdmin().
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().
