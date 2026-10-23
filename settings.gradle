@@ -19,6 +19,7 @@ include "ftgo-consumer-service"
 
 include "ftgo-restaurant-service-api"
 include "ftgo-restaurant-service"
+include "ftgo-restaurant-service-application"
 
 include "ftgo-courier-service-api"
 include "ftgo-courier-service"

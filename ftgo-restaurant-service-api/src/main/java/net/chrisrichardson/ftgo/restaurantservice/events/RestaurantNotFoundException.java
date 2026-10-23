@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.orderservice.domain;
+package net.chrisrichardson.ftgo.restaurantservice.events;
 
 public class RestaurantNotFoundException extends RuntimeException {
   public RestaurantNotFoundException(long restaurantId) {
