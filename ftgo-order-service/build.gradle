@@ -12,6 +12,7 @@
 
 // apply plugin: 'docker-compose'
 apply plugin:'io.spring.dependency-management'
+apply plugin: JacksonPinPlugin
 
 apply plugin: IntegrationTestsPlugin
 
