@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierAccessDeniedException;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierAuthenticationException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
@@ -46,6 +48,25 @@ public class GlobalExceptionHandler {
             HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(),
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(CourierAuthenticationException.class)
+  public ResponseEntity<ErrorResponse> handleCourierAuthentication(
+          CourierAuthenticationException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(), "Unauthorized", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(CourierAccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleCourierAccessDenied(
+          CourierAccessDeniedException ex, HttpServletRequest request) {
+    logger.warn("Courier access denied: {}", ex.getMessage());
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(UnsupportedStateTransitionException.class)
