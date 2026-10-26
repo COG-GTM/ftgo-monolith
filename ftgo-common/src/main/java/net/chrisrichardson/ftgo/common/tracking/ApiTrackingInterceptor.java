@@ -9,6 +9,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
 
@@ -16,6 +17,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final Pattern SAFE_CORRELATION_ID = Pattern.compile("[A-Za-z0-9_-]{1,64}");
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -28,10 +30,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     long startTime = System.currentTimeMillis();
     request.setAttribute(START_TIME_ATTR, startTime);
 
-    String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-    if (correlationId == null || correlationId.isEmpty()) {
-      correlationId = UUID.randomUUID().toString();
-    }
+    String correlationId = sanitizeCorrelationId(request.getHeader(CORRELATION_ID_HEADER));
 
     MDC.put("correlationId", correlationId);
     response.setHeader(CORRELATION_ID_HEADER, correlationId);
@@ -83,5 +82,12 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  private static String sanitizeCorrelationId(String headerValue) {
+    if (headerValue == null || !SAFE_CORRELATION_ID.matcher(headerValue).matches()) {
+      return UUID.randomUUID().toString();
+    }
+    return headerValue;
   }
 }
