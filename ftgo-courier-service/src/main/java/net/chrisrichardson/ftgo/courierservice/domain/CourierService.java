@@ -44,8 +44,16 @@ public class CourierService {
 
   @Transactional
   public void updateLocation(long courierId, double latitude, double longitude) {
+    validateCoordinate("latitude", latitude, 90.0);
+    validateCoordinate("longitude", longitude, 180.0);
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);
+  }
+
+  private static void validateCoordinate(String name, double value, double limit) {
+    if (!Double.isFinite(value) || Math.abs(value) > limit) {
+      throw new IllegalArgumentException(name + " must be a finite value between -" + limit + " and " + limit);
+    }
   }
 }
