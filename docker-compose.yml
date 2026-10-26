@@ -5,9 +5,9 @@ services:
     ports:
       - 3306:3306
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_USER=mysqluser
-      - MYSQL_PASSWORD=mysqlpw
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in your .env file}
+      - MYSQL_USER=${MYSQL_USER:-mysqluser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}
   ftgo-application:
     build: ./ftgo-application
     ports:
@@ -15,9 +15,9 @@ services:
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
-      SPRING_DATASOURCE_USERNAME: mysqluser
-      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?useSSL=true&requireSSL=true&verifyServerCertificate=${DB_VERIFY_SERVER_CERTIFICATE:-false}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-mysqluser}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in your .env file}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
