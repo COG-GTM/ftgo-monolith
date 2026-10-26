@@ -40,8 +40,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            redactQueryString(request.getQueryString()),
+            maskClientAddress(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -83,5 +83,57 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  /**
+   * Masks the host-identifying portion of a client address: IPv4 addresses
+   * keep the first three octets, IPv6 addresses keep at most the first three
+   * groups before any {@code ::} compression, with the remainder elided.
+   */
+  static String maskClientAddress(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return remoteAddr;
+    }
+    if (remoteAddr.contains(":")) {
+      int doubleColon = remoteAddr.indexOf("::");
+      String head = doubleColon >= 0 ? remoteAddr.substring(0, doubleColon) : remoteAddr;
+      String[] groups = head.isEmpty() ? new String[0] : head.split(":");
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < Math.min(3, groups.length); i++) {
+        if (i > 0) {
+          sb.append(':');
+        }
+        sb.append(groups[i]);
+      }
+      return sb.append("::").toString();
+    }
+    int lastDot = remoteAddr.lastIndexOf('.');
+    if (lastDot < 0) {
+      return remoteAddr;
+    }
+    return remoteAddr.substring(0, lastDot) + ".0";
+  }
+
+  /**
+   * Keeps query parameter names but replaces their values, which can carry
+   * PII such as emails, addresses, or tokens.
+   */
+  static String redactQueryString(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (String param : queryString.split("&")) {
+      if (sb.length() > 0) {
+        sb.append('&');
+      }
+      int eq = param.indexOf('=');
+      if (eq >= 0) {
+        sb.append(param, 0, eq).append("=REDACTED");
+      } else {
+        sb.append(param);
+      }
+    }
+    return sb.toString();
   }
 }
