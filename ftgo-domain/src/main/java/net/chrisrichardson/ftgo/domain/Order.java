@@ -17,6 +17,8 @@ import static net.chrisrichardson.ftgo.domain.OrderState.*;
 @DynamicUpdate
 public class Order {
 
+  private static final int DEFAULT_ORDER_MINIMUM = 10;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -43,7 +45,7 @@ public class Order {
 
   @Embedded
   @AttributeOverride(name="amount", column = @Column(name="order_minimum"))
-  private Money orderMinimum = new Money(Integer.MAX_VALUE);
+  private Money orderMinimum = new Money(DEFAULT_ORDER_MINIMUM);
 
   private LocalDateTime readyBy;
   private LocalDateTime acceptTime;
@@ -90,26 +92,26 @@ public class Order {
   }
 
   public void revise(OrderRevision orderRevision) {
-    if (orderState == APPROVED) {
-      LineItemQuantityChange change = orderLineItems.lineItemQuantityChange(orderRevision);
-      if (change.newOrderTotal.isGreaterThanOrEqual(orderMinimum)) {
-        throw new OrderMinimumNotMetException();
-      }
-    } else {
+    if (orderState != APPROVED) {
       throw new UnsupportedStateTransitionException(orderState);
     }
 
+    orderLineItems.validateRevision(orderRevision);
+
+    LineItemQuantityChange change = orderLineItems.lineItemQuantityChange(orderRevision);
+    if (!change.newOrderTotal.isGreaterThanOrEqual(getOrderMinimum())) {
+      throw new OrderMinimumNotMetException();
+    }
+
     orderRevision.getDeliveryInformation().ifPresent(newDi -> this.deliveryInformation = newDi);
 
     if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
       orderLineItems.updateLineItems(orderRevision);
     }
+  }
 
-    orderRevision.getDeliveryInformation().ifPresent(newDi -> this.deliveryInformation = newDi);
-    if (!orderRevision.getRevisedLineItemQuantities().isEmpty()) {
-      orderLineItems.updateLineItems(orderRevision);
-    }
-
+  public Money getOrderMinimum() {
+    return orderMinimum == null ? new Money(DEFAULT_ORDER_MINIMUM) : orderMinimum;
   }
 
 
