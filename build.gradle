@@ -23,6 +23,19 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    ext['jackson.version'] = '2.13.5'
+
+    configurations.all {
+        resolutionStrategy {
+            force "com.fasterxml.jackson.core:jackson-core:2.13.5",
+                  "com.fasterxml.jackson.core:jackson-annotations:2.13.5",
+                  "com.fasterxml.jackson.core:jackson-databind:2.13.5",
+                  "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.5",
+                  "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.5",
+                  "com.fasterxml.jackson.module:jackson-module-parameter-names:2.13.5"
+        }
+    }
+
     repositories {
         mavenCentral()
         jcenter()
