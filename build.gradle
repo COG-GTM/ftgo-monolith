@@ -23,6 +23,22 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    // Override the Spring Boot BOM's managed Jackson version so the patched 2.9.10
+    // line is used everywhere the dependency-management plugin is applied (e.g. the
+    // deployable ftgo-application), instead of the BOM default that would otherwise
+    // pull Jackson back down to the vulnerable version on transitive resolution.
+    ext['jackson.version'] = '2.9.10'
+
+    // jackson-databind has its own patch line (2.9.10.x) beyond the shared jackson
+    // version; force the fully-patched build in the dependency-managed modules too.
+    plugins.withId('io.spring.dependency-management') {
+        dependencyManagement {
+            dependencies {
+                dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.10.8'
+            }
+        }
+    }
+
     repositories {
         mavenCentral()
         jcenter()
