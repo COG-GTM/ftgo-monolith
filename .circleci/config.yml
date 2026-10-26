@@ -5,6 +5,11 @@ jobs:
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
+      # The machine image defaults to Java 8; install/select Java 10 and export
+      # JAVA_HOME + PATH via $BASH_ENV so every later step (and ./gradlew) uses it.
+      - run:
+          name:        Install Java 10
+          command:     ./.circleci/install-java-10.sh
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
