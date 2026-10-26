@@ -3,6 +3,27 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Courier API security
+
+The `/couriers` endpoints expose personal data (courier name and live GPS coordinates) and therefore
+require HTTP Basic authentication. A `DISPATCHER` account may access any courier; a `COURIER` account
+may only access the courier it is bound to. Accounts are configured with:
+
+....
+ftgo.courier.security.users[0].username=dispatcher
+ftgo.courier.security.users[0].password={bcrypt}$2a$10$...
+ftgo.courier.security.users[0].role=DISPATCHER
+
+ftgo.courier.security.users[1].username=courier-1
+ftgo.courier.security.users[1].password={bcrypt}$2a$10$...
+ftgo.courier.security.users[1].role=COURIER
+ftgo.courier.security.users[1].courierId=1
+....
+
+Passwords are encoded values carrying an encoder id (`{bcrypt}`, and `{noop}` for local development only).
+No accounts are configured by default, in which case the courier endpoints reject every request.
+`docker-compose.yml` defines a local development dispatcher account.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
