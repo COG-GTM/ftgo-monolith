@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo.restaurantservice.domain;
 
 import net.chrisrichardson.ftgo.domain.DomainConfiguration;
+import net.chrisrichardson.ftgo.domain.RestaurantRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -10,7 +11,7 @@ import org.springframework.context.annotation.Import;
 public class RestaurantServiceDomainConfiguration {
 
   @Bean
-  public RestaurantService restaurantService() {
-    return new RestaurantService();
+  public RestaurantService restaurantService(RestaurantRepository restaurantRepository) {
+    return new RestaurantService(restaurantRepository);
   }
 }
