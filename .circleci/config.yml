@@ -1,12 +1,26 @@
-version:               2
+version:               2.1
 jobs:
   build:
-    machine:           true
+    machine:
+      image:           ubuntu-2204:current
     working_directory: ~/ftgo-monolith
+    environment:
+      DOCKER_COMPOSE:  docker compose
     steps:
       - checkout
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+      - run:
+          name:        Install Temurin JDK 21
+          command:     |
+            sudo apt-get update
+            sudo apt-get install -y wget apt-transport-https gnupg
+            wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adoptium.gpg
+            echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
+            sudo apt-get update
+            sudo apt-get install -y temurin-21-jdk
+            echo 'export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64' >> "$BASH_ENV"
+            echo 'export PATH=$JAVA_HOME/bin:$PATH' >> "$BASH_ENV"
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
@@ -15,7 +29,6 @@ jobs:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:
           command:     |
-            ./.circleci/upgrade-docker-compose.sh
             . ./setenv-circle-ci.sh
             ./build-and-test-all.sh
       - run:

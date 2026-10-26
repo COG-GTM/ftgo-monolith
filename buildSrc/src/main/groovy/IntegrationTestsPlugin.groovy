@@ -6,29 +6,28 @@ class IntegrationTestsPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        project.sourceSets {
-            integrationTest {
-                java {
-                    compileClasspath += main.output + test.output
-                    runtimeClasspath += main.output + test.output
-                    srcDir project.file('src/integration-test/java')
-                }
-                resources.srcDir project.file('src/integration-test/resources')
-            }
+        def sourceSets = project.sourceSets
+
+        sourceSets.create('integrationTest') {
+            java.srcDir project.file('src/integration-test/java')
+            resources.srcDir project.file('src/integration-test/resources')
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
         }
 
         project.configurations {
-            integrationTestCompile.extendsFrom testCompile
-            integrationTestRuntime.extendsFrom testRuntime
+            integrationTestImplementation.extendsFrom testImplementation
+            integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
         }
 
-        project.task("integrationTest", type: Test) {
-            testClassesDir = project.sourceSets.integrationTest.output.classesDir
-            classpath = project.sourceSets.integrationTest.runtimeClasspath
+        project.tasks.register('integrationTest', Test) {
+            testClassesDirs = sourceSets.integrationTest.output.classesDirs
+            classpath = sourceSets.integrationTest.runtimeClasspath
+            useJUnitPlatform()
         }
 
-        project.tasks.withType(Test) {
-            reports.html.destination = project.file("${project.reporting.baseDir}/${name}")
+        project.tasks.withType(Test).configureEach {
+            reports.html.outputLocation = project.file("${project.reporting.baseDirectory.get().asFile}/${name}")
         }
     }
 }

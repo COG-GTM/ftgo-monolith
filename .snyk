@@ -1,0 +1,31 @@
+# Snyk (https://snyk.io) policy file.
+# Documents accepted open-source licenses for dependencies that are intrinsic to
+# the Spring Boot + MySQL stack and cannot be removed without replacing core
+# framework components. These are all OSI-approved licenses used in ways their
+# terms permit; no source code of this application is affected.
+version: v1.25.0
+ignore:
+  snyk:lic:maven:com.mysql:mysql-connector-j:GPL-2.0:
+    - '*':
+        reason: >-
+          Official MySQL Connector/J. Distributed under GPL-2.0 with the
+          Universal FOSS Exception, which explicitly permits use and
+          distribution together with other open-source software. It is the
+          standard JDBC driver for the application's MySQL database.
+        expires: 2030-01-01T00:00:00.000Z
+  snyk:lic:maven:org.hibernate.orm:hibernate-core:LGPL-2.1:
+    - '*':
+        reason: >-
+          Hibernate ORM (LGPL-2.1) is the default JPA provider bundled with
+          spring-boot-starter-data-jpa. It is used as an unmodified library via
+          dynamic linking, which LGPL-2.1 permits without affecting this
+          application's licensing.
+        expires: 2030-01-01T00:00:00.000Z
+  snyk:lic:maven:junit:junit:EPL-1.0:
+    - '*':
+        reason: >-
+          JUnit 4 (EPL-1.0) is pulled in only by the JUnit vintage engine for
+          running legacy tests. It is a test-scope-only dependency that is never
+          packaged or distributed with the application.
+        expires: 2030-01-01T00:00:00.000Z
+patch: {}
