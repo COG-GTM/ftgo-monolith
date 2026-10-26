@@ -8,6 +8,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.UUID;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
@@ -16,6 +18,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final String UNKNOWN_ADDRESS = "unknown";
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -40,8 +43,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            null,
+            anonymize(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -49,6 +52,38 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
 
     logger.info("[{}] {} {} started", correlationId, request.getMethod(), request.getRequestURI());
 
+    return true;
+  }
+
+  static String anonymize(String remoteAddr) {
+    if (remoteAddr == null) {
+      return null;
+    }
+    if (!isAddressLiteral(remoteAddr)) {
+      return UNKNOWN_ADDRESS;
+    }
+    try {
+      byte[] address = InetAddress.getByName(remoteAddr).getAddress();
+      int retainedBytes = address.length == 4 ? 3 : 6;
+      for (int i = retainedBytes; i < address.length; i++) {
+        address[i] = 0;
+      }
+      return InetAddress.getByAddress(address).getHostAddress();
+    } catch (UnknownHostException e) {
+      return UNKNOWN_ADDRESS;
+    }
+  }
+
+  private static boolean isAddressLiteral(String value) {
+    if (value.isEmpty()) {
+      return false;
+    }
+    for (char c : value.toCharArray()) {
+      boolean hexDigit = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+      if (!hexDigit && c != '.' && c != ':' && c != '%') {
+        return false;
+      }
+    }
     return true;
   }
 
