@@ -51,8 +51,6 @@ public class CourierController {
             courier.getId(),
             courier.getActiveDeliveryCount(),
             courier.isAvailable(),
-            courier.getCurrentLatitude(),
-            courier.getCurrentLongitude(),
             courier.getLastLocationUpdate()
     );
     return new ResponseEntity<>(response, HttpStatus.OK);
