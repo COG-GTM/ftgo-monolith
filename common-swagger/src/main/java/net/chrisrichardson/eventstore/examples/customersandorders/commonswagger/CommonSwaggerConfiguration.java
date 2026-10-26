@@ -2,6 +2,7 @@ package net.chrisrichardson.eventstore.examples.customersandorders.commonswagger
 
 import com.fasterxml.classmate.TypeResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import static springfox.documentation.schema.AlternateTypeRules.newRule;
 
 @Configuration
 @EnableSwagger2
+@ConditionalOnProperty(name = "swagger.enabled", havingValue = "true", matchIfNotPresent = false)
 public class CommonSwaggerConfiguration {
 
     @Bean
