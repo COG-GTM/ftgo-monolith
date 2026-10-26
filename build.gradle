@@ -18,6 +18,8 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    ext['jackson.version'] = '2.18.10'
+
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
