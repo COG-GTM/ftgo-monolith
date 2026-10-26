@@ -18,6 +18,7 @@ plugins {
 subprojects {
 
     apply plugin: "java"
+    apply plugin: "jacoco"
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
@@ -40,4 +41,89 @@ subprojects {
 
     }
 
+    dependencies {
+        testCompile "org.junit.jupiter:junit-jupiter-api:5.9.3"
+        testCompile "org.junit.jupiter:junit-jupiter-params:5.9.3"
+        testRuntime "org.junit.jupiter:junit-jupiter-engine:5.9.3"
+        testRuntime "org.junit.vintage:junit-vintage-engine:5.9.3"
+        testCompile "org.mockito:mockito-core:4.11.0"
+        testCompile "org.mockito:mockito-junit-jupiter:4.11.0"
+        testCompile "org.assertj:assertj-core:3.24.2"
+    }
+
+    test {
+        useJUnitPlatform()
+        jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    }
+
+    jacoco {
+        toolVersion = "0.8.10"
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.enabled true
+            html.enabled true
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        dependsOn jacocoTestReport
+        afterEvaluate {
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                    '**/*Configuration.class',
+                    '**/*Configuration$*.class'
+                ])
+            })
+        }
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.95
+                }
+            }
+            rule {
+                limit {
+                    counter = 'BRANCH'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.85
+                }
+            }
+        }
+    }
+
+}
+
+apply plugin: "jacoco"
+
+task jacocoAggregateReport(type: JacocoReport) {
+    def testProjects = subprojects.findAll { p ->
+        !p.name.startsWith('ftgo-end-to-end') &&
+        !p.name.startsWith('ftgo-flyway') &&
+        !p.name.startsWith('buildSrc') &&
+        !p.name.startsWith('common-swagger') &&
+        !p.name.startsWith('ftgo-test-util')
+    }
+
+    dependsOn testProjects.collect { it.tasks.withType(Test) }
+
+    additionalSourceDirs = files(testProjects.collect { it.sourceSets.main.allSource.srcDirs }.flatten())
+    sourceDirectories = files(testProjects.collect { it.sourceSets.main.allSource.srcDirs }.flatten())
+    classDirectories = files(testProjects.collect { it.sourceSets.main.output }.flatten())
+    executionData = files(testProjects.collect {
+        it.tasks.withType(Test).collect { t -> t.extensions.getByType(JacocoTaskExtension).destinationFile }
+    }.flatten())
+
+    reports {
+        xml.enabled true
+        html.enabled true
+        html.destination file("${buildDir}/reports/jacoco/aggregate/html")
+        xml.destination file("${buildDir}/reports/jacoco/aggregate/jacocoAggregateReport.xml")
+    }
 }
