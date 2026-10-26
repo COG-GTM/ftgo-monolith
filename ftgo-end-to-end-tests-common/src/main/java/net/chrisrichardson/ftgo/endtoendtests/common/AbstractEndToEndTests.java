@@ -45,6 +45,7 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+  private int assignedCourierId;
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -100,6 +101,49 @@ public abstract class AbstractEndToEndTests {
   }
 
   @Test
+  public void shouldRejectUnauthenticatedAndNonOwnerOrderMutations() {
+
+    createOrder();
+
+    given().
+            body("{}").
+            contentType("application/json").
+            when().
+            post(orderBaseUrl(Integer.toString(orderId), "cancel")).
+            then().
+            statusCode(401);
+
+    given().
+            header("Authorization", "Bearer " + TestAuthTokens.consumerToken(consumerId + 1)).
+            body("{}").
+            contentType("application/json").
+            when().
+            post(orderBaseUrl(Integer.toString(orderId), "cancel")).
+            then().
+            statusCode(403);
+
+    given().
+            header("Authorization", "Bearer " + TestAuthTokens.consumerToken(consumerId + 1)).
+            body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
+            contentType("application/json").
+            when().
+            post(orderBaseUrl()).
+            then().
+            statusCode(403);
+
+    given().
+            header("Authorization", "Bearer " + TestAuthTokens.restaurantToken(restaurantId + 1)).
+            body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
+            contentType("application/json").
+            when().
+            post(orderBaseUrl(Long.toString(orderId), "accept")).
+            then().
+            statusCode(403);
+
+    verifyOrderAuthorized(orderId);
+  }
+
+  @Test
   public void shouldDeliverOrder() {
 
     createOrder();
@@ -152,6 +196,7 @@ public abstract class AbstractEndToEndTests {
 
   private void reviseOrder(int orderId) {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.consumerToken(consumerId)).
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -197,6 +242,7 @@ public abstract class AbstractEndToEndTests {
 
   private void cancelOrder(int orderId) {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.consumerToken(consumerId)).
             body("{}").
             contentType("application/json").
             when().
@@ -252,6 +298,7 @@ public abstract class AbstractEndToEndTests {
   private int createOrder(int consumerId, int restaurantId) {
     Integer orderId =
             given().
+                    header("Authorization", "Bearer " + TestAuthTokens.consumerToken(consumerId)).
                     body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
                     contentType("application/json").
                     when().
@@ -316,6 +363,7 @@ public abstract class AbstractEndToEndTests {
 
   private void acceptOrder() {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.restaurantToken(restaurantId)).
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -338,6 +386,7 @@ public abstract class AbstractEndToEndTests {
       assertThat(assignedCourier).isGreaterThan(0);
       return assignedCourier;
     });
+    assignedCourierId = courierId;
 
     given().
             when().
@@ -351,6 +400,7 @@ public abstract class AbstractEndToEndTests {
 
   private void startPreparingOrder() {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.restaurantToken(restaurantId)).
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -359,6 +409,7 @@ public abstract class AbstractEndToEndTests {
 
   private void orderReadyforPickup() {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.restaurantToken(restaurantId)).
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -367,6 +418,7 @@ public abstract class AbstractEndToEndTests {
 
   private void pickupOrder() {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.courierToken(assignedCourierId)).
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -375,6 +427,7 @@ public abstract class AbstractEndToEndTests {
 
   private void deliverOrder() {
     given().
+            header("Authorization", "Bearer " + TestAuthTokens.courierToken(assignedCourierId)).
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().

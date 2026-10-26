@@ -8,3 +8,16 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+## Authentication for order endpoints
+
+The state-changing order endpoints (`POST /orders`, `/orders/{orderId}/cancel`, `/revise`, `/accept`, `/preparing`, `/ready`, `/pickedup`, `/delivered`) require an `Authorization: Bearer <JWT>` header.
+Tokens are HS256-signed with the secret configured by `ftgo.security.jwt.secret` (environment variable `FTGO_SECURITY_JWT_SECRET`, at least 32 bytes) and must carry an `exp` claim, a `role` claim (`CONSUMER`, `RESTAURANT` or `COURIER`) and the matching `consumerId`, `restaurantId` or `courierId` claim.
+
+* Consumers can only create orders for their own `consumerId` and only cancel/revise their own orders.
+* Restaurants can only accept/prepare/ready orders placed at their restaurant.
+* Couriers can only pick up/deliver orders assigned to them.
+
+If no secret is configured the application starts with a random ephemeral key, so every token is rejected.
+The end-to-end tests mint their own tokens (see `TestAuthTokens`) using `FTGO_SECURITY_JWT_SECRET`, or a built-in test-only default when the variable is unset.
+When running the external end-to-end suite against `docker compose`, export the same `FTGO_SECURITY_JWT_SECRET` (at least 32 bytes) before `docker compose up` and before `./run-end-to-end-tests.sh`; the script refuses to run without it, and the compose application otherwise starts with an ephemeral key that rejects every token.
