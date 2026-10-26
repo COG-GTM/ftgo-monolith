@@ -20,9 +20,10 @@ public class ConsumerService {
     consumer.orElseThrow(ConsumerNotFoundException::new).validateOrderByConsumer(orderTotal);
   }
 
-  public Consumer create(PersonName name) {
-    Consumer consumer = consumerRepository.save(new Consumer(name));
-    return consumer;
+  public ConsumerRegistration create(PersonName name) {
+    String apiKey = ConsumerApiKeys.generateApiKey();
+    Consumer consumer = consumerRepository.save(new Consumer(name, ConsumerApiKeys.hash(apiKey)));
+    return new ConsumerRegistration(consumer, apiKey);
   }
 
   public Optional<Consumer> findById(long consumerId) {

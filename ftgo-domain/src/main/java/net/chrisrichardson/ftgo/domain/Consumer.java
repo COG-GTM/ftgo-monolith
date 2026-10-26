@@ -19,11 +19,19 @@ public class Consumer {
   @Embedded
   private PersonName name;
 
+  @Column(name = "api_key_hash")
+  private String apiKeyHash;
+
   private Consumer() {
   }
 
   public Consumer(PersonName name) {
     this.name = name;
+  }
+
+  public Consumer(PersonName name, String apiKeyHash) {
+    this.name = name;
+    this.apiKeyHash = apiKeyHash;
   }
 
 
@@ -37,5 +45,9 @@ public class Consumer {
 
   public PersonName getName() {
     return name;
+  }
+
+  public String getApiKeyHash() {
+    return apiKeyHash;
   }
 }
