@@ -30,7 +30,7 @@ public class MoneyModule extends SimpleModule {
         else
           return new Money(str);
       } else
-        throw ctxt.mappingException(getValueClass());
+        return (Money) ctxt.handleUnexpectedToken(getValueType(ctxt), jp);
     }
   }
 
