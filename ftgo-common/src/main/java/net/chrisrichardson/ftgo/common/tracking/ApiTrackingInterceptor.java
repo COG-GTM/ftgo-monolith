@@ -16,6 +16,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
   private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
+  private static final String REDACTED = "REDACTED";
+  private static final int MAX_QUERY_STRING_LENGTH = 2048;
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
@@ -40,8 +42,8 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
             correlationId,
             request.getMethod(),
             request.getRequestURI(),
-            request.getQueryString(),
-            request.getRemoteAddr(),
+            redactQueryStringValues(request.getQueryString()),
+            anonymizeIp(request.getRemoteAddr()),
             request.getHeader("User-Agent")
     );
 
@@ -83,5 +85,86 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     }
 
     MDC.remove("correlationId");
+  }
+
+  static String redactQueryStringValues(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return queryString;
+    }
+    StringBuilder redacted = new StringBuilder(queryString.length());
+    for (String pair : queryString.split("&")) {
+      if (pair.isEmpty()) {
+        continue;
+      }
+      if (redacted.length() > 0) {
+        redacted.append('&');
+      }
+      int separator = pair.indexOf('=');
+      redacted.append(separator < 0 ? REDACTED : pair.substring(0, separator + 1) + REDACTED);
+    }
+    return redacted.length() > MAX_QUERY_STRING_LENGTH
+            ? redacted.substring(0, MAX_QUERY_STRING_LENGTH)
+            : redacted.toString();
+  }
+
+  static String anonymizeIp(String remoteAddr) {
+    if (remoteAddr == null || remoteAddr.isEmpty()) {
+      return remoteAddr;
+    }
+    if (remoteAddr.indexOf('.') >= 0) {
+      int lastColon = remoteAddr.lastIndexOf(':');
+      String host = lastColon >= 0 && remoteAddr.indexOf('.', lastColon) < 0
+              ? remoteAddr.substring(0, lastColon)
+              : remoteAddr;
+      int prefixEnd = host.lastIndexOf(':');
+      String prefix = host.substring(0, prefixEnd + 1);
+      String ipv4 = host.substring(prefixEnd + 1);
+      return isIpv4Literal(ipv4) && isIpv4MappedPrefix(prefix)
+              ? prefix + anonymizeIpv4(ipv4)
+              : REDACTED;
+    }
+    if (remoteAddr.indexOf(':') < 0) {
+      return remoteAddr;
+    }
+    StringBuilder prefix = new StringBuilder();
+    int retained = 0;
+    for (String group : remoteAddr.split(":", -1)) {
+      if (group.isEmpty() || retained == 3) {
+        break;
+      }
+      prefix.append(group).append(':');
+      retained++;
+    }
+    return retained == 0 ? "::" : prefix.append(':').toString();
+  }
+
+  private static boolean isIpv4MappedPrefix(String prefix) {
+    return prefix.isEmpty() || prefix.equals("::") || prefix.equalsIgnoreCase("::ffff:");
+  }
+
+  private static boolean isIpv4Literal(String address) {
+    String[] octets = address.split("\\.", -1);
+    if (octets.length != 4) {
+      return false;
+    }
+    for (String octet : octets) {
+      if (octet.isEmpty() || octet.length() > 3) {
+        return false;
+      }
+      for (int i = 0; i < octet.length(); i++) {
+        if (octet.charAt(i) < '0' || octet.charAt(i) > '9') {
+          return false;
+        }
+      }
+      if (Integer.parseInt(octet) > 255) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static String anonymizeIpv4(String address) {
+    int lastDot = address.lastIndexOf('.');
+    return lastDot < 0 ? address : address.substring(0, lastDot) + ".0";
   }
 }
