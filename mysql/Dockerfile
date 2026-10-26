@@ -1,2 +1,2 @@
-FROM mysql:5.7.13
+FROM mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
 COPY schema.sql /docker-entrypoint-initdb.d/schema.sql

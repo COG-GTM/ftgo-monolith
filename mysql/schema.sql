@@ -1,2 +1,2 @@
 create database ftgo;
-GRANT ALL PRIVILEGES ON ftgo.* TO 'mysqluser'@'%' WITH GRANT OPTION;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ftgo.* TO 'mysqluser'@'%';
