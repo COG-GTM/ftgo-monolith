@@ -3,8 +3,7 @@
    Food To Go · Internal Operations Console
    ============================================================ */
 
-/* ----- Google Fonts Import ----- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* ----- Fonts: system font stack only, no third-party font CDN ----- */
 
 /* ============================================================
    1. CSS Custom Properties (Design Tokens)
@@ -68,7 +67,7 @@
   --color-info-bg:        rgba(59, 130, 246, 0.10);
 
   /* --- Typography --- */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --fw-light:    300;
   --fw-regular:  400;
   --fw-medium:   500;
