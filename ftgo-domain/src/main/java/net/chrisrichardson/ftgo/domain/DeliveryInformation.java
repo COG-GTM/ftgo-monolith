@@ -19,6 +19,9 @@ public class DeliveryInformation {
           @AttributeOverride(name="city", column=@Column(name="delivery_address_city")),
           @AttributeOverride(name="state", column=@Column(name="delivery_address_state")),
           @AttributeOverride(name="zip", column=@Column(name="delivery_address_zip")),
+          // Address.latitude/longitude map to the delivery_address_* columns added by V2 migration
+          @AttributeOverride(name="latitude", column=@Column(name="delivery_address_latitude")),
+          @AttributeOverride(name="longitude", column=@Column(name="delivery_address_longitude")),
   })
   private Address deliveryAddress;
 }
