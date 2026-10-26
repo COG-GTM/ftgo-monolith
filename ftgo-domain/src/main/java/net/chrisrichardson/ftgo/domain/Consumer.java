@@ -19,11 +19,18 @@ public class Consumer {
   @Embedded
   private PersonName name;
 
+  private String passwordHash;
+
   private Consumer() {
   }
 
   public Consumer(PersonName name) {
     this.name = name;
+  }
+
+  public Consumer(PersonName name, String passwordHash) {
+    this.name = name;
+    this.passwordHash = passwordHash;
   }
 
 
@@ -37,5 +44,9 @@ public class Consumer {
 
   public PersonName getName() {
     return name;
+  }
+
+  public String getPasswordHash() {
+    return passwordHash;
   }
 }
