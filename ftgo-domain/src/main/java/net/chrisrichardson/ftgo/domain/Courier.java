@@ -5,7 +5,12 @@ import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 @Entity
@@ -31,6 +36,8 @@ public class Courier {
   private Double currentLatitude;
   private Double currentLongitude;
   private LocalDateTime lastLocationUpdate;
+
+  private String accessTokenHash;
 
   public Courier() {
   }
@@ -114,5 +121,30 @@ public class Courier {
 
   public boolean hasLocation() {
     return currentLatitude != null && currentLongitude != null;
+  }
+
+  public String issueAccessToken() {
+    byte[] bytes = new byte[32];
+    new SecureRandom().nextBytes(bytes);
+    String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    this.accessTokenHash = hashAccessToken(token);
+    return token;
+  }
+
+  public boolean verifyAccessToken(String token) {
+    if (accessTokenHash == null || token == null) {
+      return false;
+    }
+    return MessageDigest.isEqual(accessTokenHash.getBytes(StandardCharsets.UTF_8),
+            hashAccessToken(token).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static String hashAccessToken(String token) {
+    try {
+      byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+      return Base64.getEncoder().encodeToString(digest);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

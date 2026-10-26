@@ -5,6 +5,7 @@ import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
 import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierRegistration;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
@@ -22,8 +23,8 @@ public class CourierController {
 
   @RequestMapping(path="/couriers", method= RequestMethod.POST)
   public ResponseEntity<CreateCourierResponse> create(@RequestBody CreateCourierRequest request) {
-    Courier courier = courierService.createCourier(request.getName(), request.getAddress());
-    return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
+    CourierRegistration registration = courierService.createCourier(request.getName(), request.getAddress());
+    return new ResponseEntity<>(new CreateCourierResponse(registration.getCourier().getId(), registration.getAccessToken()), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
