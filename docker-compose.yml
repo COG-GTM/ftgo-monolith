@@ -9,16 +9,21 @@ services:
       - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=mysqlpw
   ftgo-application:
-    build: ./ftgo-application
+    image: ftgo-application:dev
+    build:
+      context: .
+      dockerfile: ftgo-application/Dockerfile
+      args:
+        MAVEN_MIRROR_URL: ${MAVEN_MIRROR_URL:-}
     ports:
       - "8081:8080"
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: mysqlpw
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
       JAVA_OPTS: -Xmx192m

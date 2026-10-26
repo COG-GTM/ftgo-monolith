@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+#
+# Builds the FTGO container images and optionally loads them into a kind cluster.
+#
+# Each image is tagged <name>:<short-git-sha> (suffixed with -dirty for uncommitted or untracked changes) and <name>:dev.
+#
+# Usage: scripts/build-images.sh [--kind-load [cluster]] [--help]
+#
+# Environment:
+#   IMAGE_TAG          overrides the <short-git-sha> tag
+#   MAVEN_MIRROR_URL   optional Maven repository mirror passed to the Gradle build (see gradle/init.d/maven-mirror.gradle)
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# name|dockerfile|build context (paths relative to the repo root)
+IMAGES=(
+  "ftgo-application|ftgo-application/Dockerfile|."
+)
+
+DEFAULT_KIND_CLUSTER=ftgo
+KIND_LOAD=
+KIND_CLUSTER=$DEFAULT_KIND_CLUSTER
+
+usage() {
+  sed -n '3,12s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --kind-load)
+      KIND_LOAD=yes
+      if [ $# -gt 1 ] && [ "${2#-}" = "$2" ]; then
+        KIND_CLUSTER=$2
+        shift
+      fi
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if [ -z "${IMAGE_TAG:-}" ]; then
+  IMAGE_TAG="$(git -C "$ROOT_DIR" rev-parse --short HEAD)"
+  if [ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]; then
+    IMAGE_TAG="${IMAGE_TAG}-dirty"
+  fi
+fi
+
+if [ -n "$KIND_LOAD" ]; then
+  command -v kind > /dev/null || { echo "kind is not installed" >&2; exit 1; }
+  if ! kind get clusters 2> /dev/null | grep -qx "$KIND_CLUSTER"; then
+    echo "kind cluster '$KIND_CLUSTER' not found (create it with: kind create cluster --name $KIND_CLUSTER)" >&2
+    exit 1
+  fi
+fi
+
+BUILD_ARGS=()
+if [ -n "${MAVEN_MIRROR_URL:-}" ]; then
+  BUILD_ARGS+=(--build-arg "MAVEN_MIRROR_URL=$MAVEN_MIRROR_URL")
+fi
+
+BUILT=()
+for spec in "${IMAGES[@]}"; do
+  IFS='|' read -r name dockerfile context <<< "$spec"
+  echo "==> Building $name:$IMAGE_TAG and $name:dev"
+  docker build "${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}" \
+    -f "$ROOT_DIR/$dockerfile" \
+    -t "$name:$IMAGE_TAG" \
+    -t "$name:dev" \
+    "$ROOT_DIR/$context"
+  BUILT+=("$name:$IMAGE_TAG" "$name:dev")
+done
+
+if [ -n "$KIND_LOAD" ]; then
+  for image in "${BUILT[@]}"; do
+    echo "==> Loading $image into kind cluster '$KIND_CLUSTER'"
+    kind load docker-image "$image" --name "$KIND_CLUSTER"
+  done
+fi
+
+echo "Built images:"
+printf '  %s\n' "${BUILT[@]}"
