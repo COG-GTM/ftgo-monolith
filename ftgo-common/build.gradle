@@ -14,8 +14,10 @@ dependencies {
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
-    runtime "javax.xml.bind:jaxb-api:2.2.11"
-    runtime "com.sun.xml.bind:jaxb-core:2.2.11"
-    runtime "com.sun.xml.bind:jaxb-impl:2.2.11"
-    runtime "javax.activation:activation:1.1.1"
+    // JAXB and JAF are no longer bundled with the JDK starting with Java 11
+    // (JEP 320), so they are provided explicitly. The 2.3.x line is the
+    // reference implementation that runs cleanly on Java 11.
+    runtime "javax.xml.bind:jaxb-api:2.3.1"
+    runtime "org.glassfish.jaxb:jaxb-runtime:2.3.1"
+    runtime "javax.activation:javax.activation-api:1.2.0"
 }
