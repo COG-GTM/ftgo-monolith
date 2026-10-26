@@ -2,10 +2,13 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
+import net.chrisrichardson.ftgo.domain.events.*;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static net.chrisrichardson.ftgo.domain.OrderState.*;
@@ -55,6 +58,9 @@ public class Order {
   @ManyToOne
   private Courier assignedCourier;
 
+  @Transient
+  private List<OrderDomainEvent> domainEvents = new ArrayList<>();
+
   private Order() {
   }
 
@@ -86,7 +92,7 @@ public class Order {
     }
 
     this.orderState = CANCELLED;
-
+    registerEvent(new OrderCancelledEvent(this, APPROVED));
   }
 
   public void revise(OrderRevision orderRevision) {
@@ -140,6 +146,7 @@ public class Order {
         throw new IllegalArgumentException("readyBy is not in the future");
       this.readyBy = readyBy;
       this.orderState = ACCEPTED;
+      registerEvent(new OrderAcceptedEvent(this, APPROVED, readyBy));
       return;
     }
     throw new UnsupportedStateTransitionException(orderState);
@@ -150,6 +157,7 @@ public class Order {
       case ACCEPTED:
         this.orderState = orderState.PREPARING;
         this.preparingTime = LocalDateTime.now();
+        registerEvent(new OrderPreparationStartedEvent(this, ACCEPTED));
         return;
       default:
         throw new UnsupportedStateTransitionException(orderState);
@@ -161,6 +169,7 @@ public class Order {
       case PREPARING:
         this.orderState = OrderState.READY_FOR_PICKUP;
         this.readyForPickupTime = LocalDateTime.now();
+        registerEvent(new OrderReadyForPickupEvent(this, PREPARING));
         return;
       default:
         throw new UnsupportedStateTransitionException(orderState);
@@ -172,6 +181,7 @@ public class Order {
       case READY_FOR_PICKUP:
         this.orderState = OrderState.PICKED_UP;
         this.pickedUpTime = LocalDateTime.now();
+        registerEvent(new OrderPickedUpEvent(this, READY_FOR_PICKUP));
         return;
       default:
         throw new UnsupportedStateTransitionException(orderState);
@@ -191,10 +201,38 @@ public class Order {
       case PICKED_UP:
         this.orderState = OrderState.DELIVERED;
         this.deliveredTime = LocalDateTime.now();
+        registerEvent(new OrderDeliveredEvent(this, PICKED_UP));
         return;
       default:
         throw new UnsupportedStateTransitionException(orderState);
     }
+  }
+
+  /**
+   * Records that this order has been created. Must be called once the order has been persisted,
+   * since the event carries the generated order id.
+   */
+  public void noteCreated() {
+    if (id == null) {
+      throw new IllegalStateException("Order must be persisted before it is noted as created");
+    }
+    registerEvent(new OrderCreatedEvent(this));
+  }
+
+  /**
+   * Returns the events recorded since the last call and clears them, so each event is published once.
+   */
+  public List<OrderDomainEvent> pullDomainEvents() {
+    if (domainEvents.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<OrderDomainEvent> events = new ArrayList<>(domainEvents);
+    domainEvents.clear();
+    return events;
+  }
+
+  private void registerEvent(OrderDomainEvent event) {
+    domainEvents.add(event);
   }
 }
 
