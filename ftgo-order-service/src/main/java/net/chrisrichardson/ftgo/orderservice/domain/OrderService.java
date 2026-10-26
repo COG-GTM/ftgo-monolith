@@ -48,6 +48,9 @@ public class OrderService {
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    if (lineItems == null || lineItems.isEmpty()) {
+      throw new IllegalArgumentException("Order must contain at least one line item");
+    }
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 

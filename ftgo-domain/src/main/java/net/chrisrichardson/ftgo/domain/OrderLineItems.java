@@ -31,7 +31,21 @@ public class OrderLineItems {
   }
 
   OrderLineItem findOrderLineItem(String lineItemId) {
-    return lineItems.stream().filter(li -> li.getMenuItemId().equals(lineItemId)).findFirst().get();
+    return lineItems.stream().filter(li -> li.getMenuItemId().equals(lineItemId)).findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Unknown line item " + lineItemId));
+  }
+
+  void validateRevision(OrderRevision orderRevision) {
+    if (orderRevision.getRevisedLineItemQuantities() == null) {
+      throw new IllegalArgumentException("Revision must specify line item quantities");
+    }
+    orderRevision.getRevisedLineItemQuantities().forEach((lineItemId, newQuantity) -> {
+      findOrderLineItem(lineItemId);
+      if (newQuantity == null) {
+        throw new IllegalArgumentException("Missing quantity for line item " + lineItemId);
+      }
+      OrderLineItem.requirePositiveQuantity(newQuantity);
+    });
   }
 
   Money changeToOrderTotal(OrderRevision orderRevision) {
@@ -47,7 +61,9 @@ public class OrderLineItems {
   void updateLineItems(OrderRevision orderRevision) {
     getLineItems().stream().forEach(li -> {
       Integer revised = orderRevision.getRevisedLineItemQuantities().get(li.getMenuItemId());
-      li.setQuantity(revised);
+      if (revised != null) {
+        li.setQuantity(revised);
+      }
     });
   }
 
@@ -56,6 +72,7 @@ public class OrderLineItems {
   }
 
   LineItemQuantityChange lineItemQuantityChange(OrderRevision orderRevision) {
+    validateRevision(orderRevision);
     Money currentOrderTotal = orderTotal();
     Money delta = changeToOrderTotal(orderRevision);
     Money newOrderTotal = currentOrderTotal.add(delta);
