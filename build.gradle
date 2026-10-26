@@ -4,40 +4,55 @@ buildscript {
     }
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
+        classpath "io.spring.gradle:dependency-management-plugin:${springDependencyManagementPluginVersion}"
     }
-
-    apply plugin: WaitForMySqlPlugin
 }
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
 }
 
+apply plugin: WaitForMySqlPlugin
 
 subprojects {
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    apply plugin: "java-library"
+    apply plugin: "io.spring.dependency-management"
 
     group = "net.chrisrichardson.ftgo"
 
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
     repositories {
         mavenCentral()
-        jcenter()
+    }
 
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
-
-        maven {
-            url "${project.rootDir}/build/repo"
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
         }
+    }
 
+    dependencies {
+        // Existing tests are written against JUnit 4; run them on the JUnit Platform
+        // via the vintage engine (no longer bundled with spring-boot-starter-test).
+        // Declared as an api/impl dependency so the JUnit 4 API is also on the test
+        // compile classpath.
+        testImplementation "org.junit.vintage:junit-vintage-engine"
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        // Spring 6 / Boot 3 resolves @PathVariable/@RequestParam names from the
+        // compiled parameter names; retain them as Boot 2's plugin did by default.
+        options.compilerArgs.add("-parameters")
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
     }
 
 }

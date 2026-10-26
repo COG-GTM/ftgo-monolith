@@ -18,17 +18,14 @@ class IntegrationTestsPlugin implements Plugin<Project> {
         }
 
         project.configurations {
-            integrationTestCompile.extendsFrom testCompile
-            integrationTestRuntime.extendsFrom testRuntime
+            integrationTestImplementation.extendsFrom testImplementation
+            integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
         }
 
-        project.task("integrationTest", type: Test) {
-            testClassesDir = project.sourceSets.integrationTest.output.classesDir
+        project.tasks.register("integrationTest", Test) {
+            testClassesDirs = project.sourceSets.integrationTest.output.classesDirs
             classpath = project.sourceSets.integrationTest.runtimeClasspath
-        }
-
-        project.tasks.withType(Test) {
-            reports.html.destination = project.file("${project.reporting.baseDir}/${name}")
+            shouldRunAfter project.tasks.named("test")
         }
     }
 }
