@@ -31,15 +31,16 @@ public class CourierService {
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    findCourierById(courierId).noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    findCourierById(courierId).noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
-    return courierRepository.findById(courierId).get();
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId));
   }
 
   @Transactional
