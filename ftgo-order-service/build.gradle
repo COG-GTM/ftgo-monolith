@@ -49,9 +49,13 @@ dependencies {
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
-    testImplementation 'io.rest-assured:rest-assured:3.0.6'
-    testImplementation 'io.rest-assured:spring-mock-mvc:3.0.6'
-    testImplementation "io.rest-assured:json-path:3.0.6"
+    testImplementation "io.rest-assured:rest-assured"
+    testImplementation "io.rest-assured:spring-mock-mvc"
+    testImplementation "io.rest-assured:json-path"
 
     testImplementation project(":ftgo-test-util")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
 }
