@@ -9,6 +9,5 @@ dependencies {
 
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testImplementation "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testImplementation "com.jayway.jsonpath:json-path:2.3.0"
+    testImplementation "io.rest-assured:rest-assured"
 }
