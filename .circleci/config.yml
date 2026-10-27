@@ -1,10 +1,19 @@
 version:               2
 jobs:
   build:
-    machine:           true
+    machine:
+      image:           ubuntu-2204:current
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
+      - run:
+          name:        Install JDK 17
+          command:     |
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk-headless
+            echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> $BASH_ENV
+            echo 'export PATH=$JAVA_HOME/bin:$PATH' >> $BASH_ENV
+      - run:           java -version 2>&1 | grep '"17\.'
       - restore_cache:
           key:         ftgo-monolith-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
