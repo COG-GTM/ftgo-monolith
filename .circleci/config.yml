@@ -1,18 +1,28 @@
 version:               2
 jobs:
   build:
-    machine:           true
+    machine:
+      image: ubuntu-2204:current
     working_directory: ~/ftgo-monolith
     steps:
       - checkout
+      - run:
+          name: Install and select JDK 17
+          command: |
+            sudo apt-get update && sudo apt-get install -y openjdk-17-jdk-headless
+            echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> "$BASH_ENV"
+            echo 'export PATH=$JAVA_HOME/bin:$PATH' >> "$BASH_ENV"
+            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+            export PATH="$JAVA_HOME/bin:$PATH"
+            java -version
       - restore_cache:
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          key:         ftgo-monolith-gradle8-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "gradle.properties" }}
       - run:           TERM=dumb ./gradlew testClasses
       - save_cache:
           paths:
             - ~/.gradle
             - ~/.m2
-          key:         ftgo-monolith-{{ checksum "gradle.properties" }}
+          key:         ftgo-monolith-gradle8-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "gradle.properties" }}
       - run:
           command:     |
             ./.circleci/upgrade-docker-compose.sh
