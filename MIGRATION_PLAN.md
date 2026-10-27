@@ -26,8 +26,9 @@ All phases are complete: Spring Boot 3.5.16, Java 17, `jakarta.*`, MySQL 8.0.
 | 3 | Runtime/config + verification (PR into `migration/boot3`, not master) | #383 |
 
 Phase 3 decisions:
-* `mysql/Dockerfile` is on **MySQL 8.0** (8.0.46), which clears Hibernate 6.6's HHH000511 warning. It runs with `--default-authentication-plugin=mysql_native_password` because the Flyway URL uses `useSSL=false` without `allowPublicKeyRetrieval=true`, which `caching_sha2_password` rejects.
+* `mysql/Dockerfile` is on **MySQL 8.0** (8.0.46) with its default `caching_sha2_password` auth, which clears Hibernate 6.6's HHH000511 warning. The Flyway URL in `ftgo-flyway/build.gradle` adds `allowPublicKeyRetrieval=true`, because it connects with `useSSL=false`.
 * `./build-and-test-all.sh` passes on JDK 17: `build` (`MoneyTest` 4/4, `MoneySerializationTest` 3/3, `CourierAssignmentStrategyTest` 9/9, `OrderControllerTest` 2/2, `FtgoApplicationTest` 2/2), `integrationTest` (no sources), the compose app image on `eclipse-temurin:17-jre-alpine` (healthy), and `EndToEndTests` 2/2.
+* `deployment/kubernetes` is stale and unverified: it still uses `apps/v1beta1` (removed in Kubernetes 1.16) and `--ignore-db-dir` (removed in MySQL 8.0).
 
 ## 1. Verified baseline (master @ `1fb9c78d`)
 
@@ -216,7 +217,7 @@ Owns: `ftgo-application/Dockerfile`, `docker-compose.yml`, `buildSrc/src/main/gr
    * Branch names: `devin/<ts>-boot3-phase<N>-<session>`.
 3. **Ownership:** a child session edits only the paths in its row. If it finds a needed change outside them (for example a shared type in `ftgo-common`), it stops and reports to the parent session. The parent makes the change on `migration/boot3` and the child rebases.
 4. **Compile edges ≠ file edges:** 2b sessions may be blocked from a *full* `build` until a sibling merges (C waits on B + D, F waits on B + C + D). Each session first proves its own module compiles (`:module:compileJava compileTestJava`) and does its final `build` after rebasing.
-5. **Verification per PR:** each PR description includes the exact Gradle command it ran and the test counts. Anything that needs MySQL runs against `docker run mysql:5.7` + `./gradlew :ftgo-flyway:flywayMigrate`, with `DOCKER_HOST_IP=localhost`.
+5. **Verification per PR:** each PR description includes the exact Gradle command it ran and the test counts. Anything that needs MySQL runs against `docker run mysql:8.0` + `./gradlew :ftgo-flyway:flywayMigrate`, with `DOCKER_HOST_IP=localhost`.
 6. **Environment gotchas (Devin VMs):**
    * `repo.maven.apache.org` returns HTTP 429. Use a `~/.gradle/init.d` init script that points at `https://maven-central.storage-download.googleapis.com/maven2/`.
    * Docker Hub pulls can hit 429. `mirror.gcr.io/library/<image>` works.
