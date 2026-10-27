@@ -23,7 +23,7 @@ All phases are complete: Spring Boot 3.5.16, Java 17, `jakarta.*`, MySQL 8.0.
 | 2b-C | Order service | #380 |
 | 2b-D | Consumer + courier services | #381 |
 | 2b-F | Application + E2E | #382 |
-| 3 | Runtime/config + verification (PR into `migration/boot3`, not master) | PHASE3_PR |
+| 3 | Runtime/config + verification (PR into `migration/boot3`, not master) | #383 |
 
 Phase 3 decisions:
 * `mysql/Dockerfile` is on **MySQL 8.0** (8.0.46), which clears Hibernate 6.6's HHH000511 warning. It runs with `--default-authentication-plugin=mysql_native_password` because the Flyway URL uses `useSSL=false` without `allowPublicKeyRetrieval=true`, which `caching_sha2_password` rejects.
