@@ -10,6 +10,25 @@ toolchain   Boot 3.5    shared        services + application         runtime / v
 
 ---
 
+## Status
+
+All phases are complete: Spring Boot 3.5.16, Java 17, `jakarta.*`, MySQL 8.0.
+
+| Phase | Scope | PR |
+|---|---|---|
+| 0 | Gradle 8.14.3 + Java 17 toolchain (Boot 2.7.18 bridge) | #374 |
+| 1 | Spring Boot 3.5.16 + springdoc (creates `migration/boot3`) | #376 |
+| 2a | Shared modules `javax` → `jakarta` | #378 |
+| 2b-B | Restaurant modules | #379 |
+| 2b-C | Order service | #380 |
+| 2b-D | Consumer + courier services | #381 |
+| 2b-F | Application + E2E | #382 |
+| 3 | Runtime/config + verification (PR into `migration/boot3`, not master) | PHASE3_PR |
+
+Phase 3 decisions:
+* `mysql/Dockerfile` is on **MySQL 8.0** (8.0.46), which clears Hibernate 6.6's HHH000511 warning. It runs with `--default-authentication-plugin=mysql_native_password` because the Flyway URL uses `useSSL=false` without `allowPublicKeyRetrieval=true`, which `caching_sha2_password` rejects.
+* `./build-and-test-all.sh` passes on JDK 17: `build` (`MoneyTest` 4/4, `MoneySerializationTest` 3/3, `CourierAssignmentStrategyTest` 9/9, `OrderControllerTest` 2/2, `FtgoApplicationTest` 2/2), `integrationTest` (no sources), the compose app image on `eclipse-temurin:17-jre-alpine` (healthy), and `EndToEndTests` 2/2.
+
 ## 1. Verified baseline (master @ `1fb9c78d`)
 
 | Item | Expected (brief) | Found | Notes |

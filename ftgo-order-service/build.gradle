@@ -44,7 +44,7 @@ dependencies {
 
     api "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     api "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    api "io.micrometer:micrometer-registry-prometheus:$micrometerVersion"
+    api "io.micrometer:micrometer-registry-prometheus"
     api "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
@@ -54,8 +54,4 @@ dependencies {
     testImplementation "io.rest-assured:json-path"
 
     testImplementation project(":ftgo-test-util")
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs << "-parameters"
 }
