@@ -6,9 +6,12 @@ import net.chrisrichardson.ftgo.domain.RestaurantMenu;
 import net.chrisrichardson.ftgo.domain.RestaurantRepository;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
+import net.chrisrichardson.ftgo.restaurantservice.web.MenuItemResponse;
+import net.chrisrichardson.ftgo.restaurantservice.web.RestaurantMenuResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,5 +33,29 @@ public class RestaurantService {
 
   public Optional<Restaurant> findById(long restaurantId) {
     return restaurantRepository.findById(restaurantId);
+  }
+
+  public Optional<RestaurantMenuResponse> getRestaurantMenu(long restaurantId) {
+    return restaurantRepository.findById(restaurantId)
+            .map(this::mapToMenuResponse);
+  }
+
+  private RestaurantMenuResponse mapToMenuResponse(Restaurant restaurant) {
+    List<MenuItemResponse> menuItemResponses = restaurant.getMenuItems().stream()
+            .map(menuItem -> new MenuItemResponse(
+                    menuItem.getId(),
+                    menuItem.getName(),
+                    menuItem.getPrice(),
+                    "Uncategorized",
+                    true,
+                    "No description available"
+            ))
+            .collect(Collectors.toList());
+    
+    return new RestaurantMenuResponse(
+            restaurant.getId(),
+            restaurant.getName(),
+            menuItemResponses
+    );
   }
 }

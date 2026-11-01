@@ -69,4 +69,8 @@ public class Restaurant {
   public void reviseMenu(RestaurantMenu revisedMenu) {
     throw new UnsupportedOperationException();
   }
+
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
+  }
 }
