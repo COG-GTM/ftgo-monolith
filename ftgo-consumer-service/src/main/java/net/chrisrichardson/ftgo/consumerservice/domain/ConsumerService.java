@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.consumerservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.consumerservice.api.ConsumerValidator;
 import net.chrisrichardson.ftgo.domain.Consumer;
 import net.chrisrichardson.ftgo.domain.ConsumerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Transactional
-public class ConsumerService {
+public class ConsumerService implements ConsumerValidator {
 
   @Autowired
   private ConsumerRepository consumerRepository;
