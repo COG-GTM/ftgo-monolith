@@ -3,7 +3,7 @@ package net.chrisrichardson.ftgo;
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
-import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
+import net.chrisrichardson.ftgo.courierservice.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.RestaurantNotFoundException;
 import org.slf4j.Logger;

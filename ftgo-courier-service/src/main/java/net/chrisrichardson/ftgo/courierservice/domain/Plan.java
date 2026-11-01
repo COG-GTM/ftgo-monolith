@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.courierservice.domain;
 
 import javax.persistence.ElementCollection;
 import java.util.LinkedList;
@@ -14,15 +14,15 @@ public class Plan {
     actions.add(action);
   }
 
-  public void removeDelivery(Order order) {
-    actions = actions.stream().filter(action -> !action.actionFor(order)).collect(Collectors.toList());
+  public void removeDelivery(Long orderId) {
+    actions = actions.stream().filter(action -> !action.actionFor(orderId)).collect(Collectors.toList());
   }
 
   public List<Action> getActions() {
     return actions;
   }
 
-  public List<Action> actionsForDelivery(Order order) {
-    return actions.stream().filter(action -> action.actionFor(order)).collect(Collectors.toList());
+  public List<Action> actionsForDelivery(Long orderId) {
+    return actions.stream().filter(action -> action.actionFor(orderId)).collect(Collectors.toList());
   }
 }

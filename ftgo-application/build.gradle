@@ -11,5 +11,7 @@ dependencies {
 
     runtime 'mysql:mysql-connector-java:8.0.33'
 
+    compile 'org.javassist:javassist:3.29.2-GA'
+
     testCompile project(":ftgo-end-to-end-tests-common")
 }

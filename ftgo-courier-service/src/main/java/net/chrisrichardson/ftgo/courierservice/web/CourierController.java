@@ -5,11 +5,16 @@ import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
 import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignmentRequest;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignmentResponse;
+import net.chrisrichardson.ftgo.courierservice.api.CourierActionDTO;
+import net.chrisrichardson.ftgo.courierservice.domain.Courier;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class CourierController {
@@ -58,4 +63,16 @@ public class CourierController {
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @RequestMapping(path="/couriers/assignments", method= RequestMethod.POST)
+  public ResponseEntity<CourierAssignmentResponse> assignCourier(@RequestBody CourierAssignmentRequest request) {
+    CourierAssignmentResponse response = courierService.assignCourier(request);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @RequestMapping(path="/couriers/{courierId}/actions", method= RequestMethod.GET)
+  public ResponseEntity<List<CourierActionDTO>> getActionsForOrder(
+          @PathVariable long courierId, @RequestParam long orderId) {
+    List<CourierActionDTO> actions = courierService.getActionsForOrder(courierId, orderId);
+    return new ResponseEntity<>(actions, HttpStatus.OK);
+  }
 }

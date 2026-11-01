@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
+import net.chrisrichardson.ftgo.orderservice.domain.CourierServiceClient;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,13 +25,15 @@ public class OrderControllerTest {
 
   private OrderService orderService;
   private OrderRepository orderRepository;
+  private CourierServiceClient courierServiceClient;
   private OrderController orderController;
 
   @Before
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    orderController = new OrderController(orderService, orderRepository);
+    courierServiceClient = mock(CourierServiceClient.class);
+    orderController = new OrderController(orderService, orderRepository, courierServiceClient);
   }
 
 
@@ -56,7 +59,7 @@ public class OrderControllerTest {
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
     given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
+            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository, courierServiceClient))).
     when().
             get("/orders/1").
     then().

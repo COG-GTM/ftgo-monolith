@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.courierservice.domain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,22 +16,12 @@ public class DistanceOptimizedCourierAssignmentStrategy implements CourierAssign
   private static final int MAX_ACTIVE_DELIVERIES = 5;
 
   @Override
-  public Courier assignCourier(List<Courier> availableCouriers, Order order) {
+  public Courier assignCourier(List<Courier> availableCouriers, Double restaurantLatitude, Double restaurantLongitude) {
     if (availableCouriers.isEmpty()) {
       throw new NoCourierAvailableException();
     }
 
-    Double restaurantLat = null;
-    Double restaurantLng = null;
-    if (order.getRestaurant() != null && order.getRestaurant().getAddress() != null) {
-      restaurantLat = order.getRestaurant().getAddress().getLatitude();
-      restaurantLng = order.getRestaurant().getAddress().getLongitude();
-    }
-
-    final Double targetLat = restaurantLat;
-    final Double targetLng = restaurantLng;
-
-    if (targetLat == null || targetLng == null) {
+    if (restaurantLatitude == null || restaurantLongitude == null) {
       logger.info("Restaurant has no location data, using load-balanced assignment");
       return assignByLoadBalance(availableCouriers);
     }
@@ -48,7 +38,7 @@ public class DistanceOptimizedCourierAssignmentStrategy implements CourierAssign
       if (courier.hasLocation()) {
         double distance = haversineDistance(
                 courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-                targetLat, targetLng);
+                restaurantLatitude, restaurantLongitude);
         double normalizedDistance = Math.min(distance / 20.0, 1.0);
         double normalizedLoad = (double) courier.getActiveDeliveryCount() / MAX_ACTIVE_DELIVERIES;
         score = (DISTANCE_WEIGHT * normalizedDistance) + (LOAD_WEIGHT * normalizedLoad);

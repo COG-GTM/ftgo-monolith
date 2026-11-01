@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
@@ -7,31 +7,23 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
 public class CourierAssignmentStrategyTest {
 
   private DistanceOptimizedCourierAssignmentStrategy strategy;
-  private Restaurant restaurant;
-  private Order order;
+  private Double restaurantLat = 37.8044;
+  private Double restaurantLng = -122.2712;
 
   @Before
   public void setUp() {
     strategy = new DistanceOptimizedCourierAssignmentStrategy();
-
-    Address restaurantAddress = new Address("1 Main St", null, "Oakland", "CA", "94612",
-            37.8044, -122.2712);
-    restaurant = new Restaurant("Test Restaurant", restaurantAddress,
-            new RestaurantMenu(Collections.emptyList()));
-
-    order = new Order(1L, restaurant, Collections.emptyList());
   }
 
   @Test(expected = NoCourierAvailableException.class)
   public void shouldThrowWhenNoCouriersAvailable() {
-    strategy.assignCourier(Collections.emptyList(), order);
+    strategy.assignCourier(Collections.emptyList(), restaurantLat, restaurantLng);
   }
 
   @Test
@@ -39,7 +31,7 @@ public class CourierAssignmentStrategyTest {
     Courier nearCourier = makeCourier("Near", 37.8050, -122.2720);
     Courier farCourier = makeCourier("Far", 37.9000, -122.4000);
 
-    Courier assigned = strategy.assignCourier(Arrays.asList(nearCourier, farCourier), order);
+    Courier assigned = strategy.assignCourier(Arrays.asList(nearCourier, farCourier), restaurantLat, restaurantLng);
 
     assertEquals(nearCourier, assigned);
   }
@@ -51,23 +43,18 @@ public class CourierAssignmentStrategyTest {
 
     addFakeDeliveries(busyCourier, 4);
 
-    Courier assigned = strategy.assignCourier(Arrays.asList(busyCourier, idleCourier), order);
+    Courier assigned = strategy.assignCourier(Arrays.asList(busyCourier, idleCourier), restaurantLat, restaurantLng);
 
     assertEquals(idleCourier, assigned);
   }
 
   @Test
   public void shouldFallbackToLoadBalancingWhenNoLocations() {
-    Address noLocationAddr = new Address("1 Main St", null, "Oakland", "CA", "94612");
-    Restaurant noLocRestaurant = new Restaurant("Test", noLocationAddr,
-            new RestaurantMenu(Collections.emptyList()));
-    Order noLocOrder = new Order(1L, noLocRestaurant, Collections.emptyList());
-
     Courier c1 = makeCourierNoLocation("C1");
     Courier c2 = makeCourierNoLocation("C2");
     addFakeDeliveries(c1, 3);
 
-    Courier assigned = strategy.assignCourier(Arrays.asList(c1, c2), noLocOrder);
+    Courier assigned = strategy.assignCourier(Arrays.asList(c1, c2), null, null);
 
     assertEquals(c2, assigned);
   }
@@ -79,7 +66,7 @@ public class CourierAssignmentStrategyTest {
 
     addFakeDeliveries(maxedCourier, 5);
 
-    Courier assigned = strategy.assignCourier(Arrays.asList(maxedCourier, availableCourier), order);
+    Courier assigned = strategy.assignCourier(Arrays.asList(maxedCourier, availableCourier), restaurantLat, restaurantLng);
 
     assertEquals(availableCourier, assigned);
   }
@@ -88,7 +75,7 @@ public class CourierAssignmentStrategyTest {
   public void shouldHandleSingleCourier() {
     Courier onlyCourier = makeCourier("Only", 37.8050, -122.2720);
 
-    Courier assigned = strategy.assignCourier(Collections.singletonList(onlyCourier), order);
+    Courier assigned = strategy.assignCourier(Collections.singletonList(onlyCourier), restaurantLat, restaurantLng);
 
     assertEquals(onlyCourier, assigned);
   }
@@ -111,7 +98,7 @@ public class CourierAssignmentStrategyTest {
     Courier locatedNear = makeCourier("Near", 37.8045, -122.2713);
     Courier unlocated = makeCourierNoLocation("NoLoc");
 
-    Courier assigned = strategy.assignCourier(Arrays.asList(locatedNear, unlocated), order);
+    Courier assigned = strategy.assignCourier(Arrays.asList(locatedNear, unlocated), restaurantLat, restaurantLng);
 
     assertEquals(locatedNear, assigned);
   }
@@ -133,9 +120,7 @@ public class CourierAssignmentStrategyTest {
 
   private void addFakeDeliveries(Courier courier, int count) {
     for (int i = 0; i < count; i++) {
-      Order fakeOrder = new Order(999L, restaurant, Collections.emptyList());
-      fakeOrder.setId((long) (1000 + i));
-      courier.addAction(Action.makePickup(fakeOrder));
+      courier.addAction(Action.makePickup((long) (1000 + i)));
     }
   }
 }
