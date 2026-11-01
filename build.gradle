@@ -23,6 +23,14 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    configurations.all {
+        resolutionStrategy {
+            force 'net.bytebuddy:byte-buddy:1.14.12'
+            force 'net.bytebuddy:byte-buddy-agent:1.14.12'
+            force 'org.mockito:mockito-core:4.11.0'
+        }
+    }
+
     repositories {
         mavenCentral()
         jcenter()
