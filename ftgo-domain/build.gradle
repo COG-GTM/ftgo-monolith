@@ -1,6 +1,6 @@
 dependencies {
-    compile project(":ftgo-common")
-    compile project(":ftgo-common-jpa")
+    api project(":ftgo-common")
+    api project(":ftgo-common-jpa")
 
-    testCompile "junit:junit:4.12"
+    testImplementation "junit:junit:4.13.2"
 }

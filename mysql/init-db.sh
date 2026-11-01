@@ -1,0 +1,5 @@
+#!/bin/bash
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
+    CREATE DATABASE IF NOT EXISTS ftgo;
+    GRANT ALL PRIVILEGES ON ftgo.* TO '${MYSQL_USER:-mysqluser}'@'%' WITH GRANT OPTION;
+EOSQL
