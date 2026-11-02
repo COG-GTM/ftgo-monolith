@@ -9,15 +9,20 @@ import net.chrisrichardson.ftgo.orderservice.domain.RestaurantNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -76,6 +81,29 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
+          MethodArgumentTypeMismatchException ex, WebRequest request) {
+    return handleExceptionInternal(ex, null, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleExceptionInternal(
+          Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    String path = request instanceof ServletWebRequest
+            ? ((ServletWebRequest) request).getRequest().getRequestURI() : null;
+    if (status.is5xxServerError()) {
+      logger.error("Request failed on {}: {}", path, ex.getMessage(), ex);
+    } else {
+      logger.warn("Rejected request on {}: {} ({})", path, status.value(), ex.getClass().getSimpleName());
+    }
+    ErrorResponse error = new ErrorResponse(
+            status.value(), status.getReasonPhrase(),
+            status.is5xxServerError() ? "An unexpected error occurred" : "The request could not be processed",
+            path, MDC.get("correlationId"));
+    return new ResponseEntity<>(error, headers, status);
   }
 
   @ExceptionHandler(Exception.class)
