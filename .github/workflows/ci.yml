@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_HOST_IP: localhost
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_USER: mysqluser
+          MYSQL_PASSWORD: mysqlpw
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Migrate database
+        run: ./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-flyway:flywayValidate
+      - name: Build and test on JDK 21
+        run: ./gradlew build -x :ftgo-end-to-end-tests:test
+      - name: Verify local datetime storage in a non-UTC JVM
+        run: ./gradlew :ftgo-application:test --tests '*MySqlDateTimeTest' -PtestTimeZone=America/Los_Angeles
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build executable jar
+        run: ./gradlew :ftgo-application:bootJar
+      - name: Start and migrate Compose database
+        run: |
+          docker compose up -d --build mysql
+          ./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+      - name: Start container and run end-to-end tests
+        run: |
+          docker compose up -d --build --wait --wait-timeout 180
+          docker compose ps
+          ./run-end-to-end-tests.sh
+      - name: Capture container logs
+        if: always()
+        run: docker compose logs --no-color > container.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-results
+          path: |
+            container.log
+            ftgo-end-to-end-tests/build/reports/tests/
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v
+
+  flyway-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Validate fresh schema and Flyway 6 migration history
+        run: ./ftgo-flyway/verify-compatibility.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_USER: mysqluser
+          MYSQL_PASSWORD: mysqlpw
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Migrate database and build app
+        run: ./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-application:bootJar
+      - name: Run app and end-to-end tests
+        shell: bash
+        run: |
+          java -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081 > app.log 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" || true' EXIT
+          ready=false
+          for attempt in {1..90}; do
+            if curl --fail --silent http://localhost:8081/ > /dev/null; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$app_pid" 2>/dev/null; then
+              cat app.log
+              exit 1
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then cat app.log; exit 1; fi
+          curl --fail http://localhost:8081/swagger-ui.html > /dev/null
+          curl --fail http://localhost:8081/v3/api-docs > /dev/null
+          curl --fail http://localhost:8081/actuator/health > /dev/null
+          curl --fail http://localhost:8081/actuator/prometheus > /dev/null
+          ./run-end-to-end-tests.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            app.log
+            ftgo-end-to-end-tests/build/reports/tests/

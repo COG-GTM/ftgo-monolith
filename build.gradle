@@ -1,43 +1,68 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
-    }
-
-    apply plugin: WaitForMySqlPlugin
-}
-
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.dependency.management) apply false
+    alias(libs.plugins.versions)
 }
 
+apply plugin: WaitForMySqlPlugin
 
 subprojects {
+    apply plugin: "java-library"
 
-    apply plugin: "java"
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
 
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 21
+        // Spring 6.1+ resolves @PathVariable/@RequestParam names from -parameters metadata only
+        options.compilerArgs.add('-parameters')
+    }
     group = "net.chrisrichardson.ftgo"
+
+    // Keep io.spring.dependency-management in line with the catalog overrides of Boot-managed versions
+    ext['mysql.version'] = libs.versions.mysql.connector.j.get()
+    ext['commons-lang3.version'] = libs.versions.commons.lang3.get()
 
     repositories {
         mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
-
-        maven {
-            url "${project.rootDir}/build/repo"
-        }
-
     }
 
+    dependencies {
+        api platform(libs.spring.boot.bom)
+        testImplementation libs.junit
+        testRuntimeOnly libs.junit.platform.launcher
+        testImplementation libs.mockito.core
+        testRuntimeOnly libs.byte.buddy.agent
+    }
+
+    configurations.configureEach {
+        exclude group: "junit", module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+    }
+
+    afterEvaluate {
+        configurations.configureEach {
+            resolutionStrategy.eachDependency {
+                if (requested.group == 'io.rest-assured') {
+                    useVersion libs.versions.rest.assured.get()
+                } else if (requested.group == 'org.awaitility') {
+                    useVersion libs.versions.awaitility.get()
+                }
+            }
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        doFirst {
+            def agent = classpath.files.find { it.name.startsWith("byte-buddy-agent-") }
+            if (agent == null) {
+                throw new GradleException("Byte Buddy agent missing from ${path} runtime classpath")
+            }
+            jvmArgs "-javaagent:${agent.absolutePath}"
+        }
+    }
 }

@@ -3,6 +3,70 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+== Development prerequisites
+
+Install JDK 21 and Docker with the Compose v2 plugin (`docker compose`).
+Run the Gradle wrapper on JDK 21; Java 8 cannot run this build. Set `JAVA_HOME`
+only if your shell does not already select JDK 21. Check `java -version` and
+`./gradlew --version` before building.
+
+== Build and run
+
+[source,bash]
+----
+export DOCKER_HOST_IP=localhost
+docker compose up -d --build mysql
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-flyway:flywayValidate
+./gradlew -x :ftgo-end-to-end-tests:test build
+java -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081
+----
+
+If a host MySQL service holds port 3306, stop it first (on Linux,
+`sudo systemctl stop mysql`). In another terminal, export `DOCKER_HOST_IP=localhost`
+and run `./run-end-to-end-tests.sh` against the application on port 8081.
+
+== Reset disposable MySQL data
+
+WARNING: This deletes all volumes/data in the Compose project. Back up anything
+needed first. Never reuse a MySQL 5.7 data directory directly with MySQL 8.4.
+
+[source,bash]
+----
+docker compose down -v
+docker compose up -d --build mysql
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-flyway:flywayValidate
+----
+
+See link:docs/upgrade/java21/UPGRADE.md[Java 21 upgrade and rollback operations].
+
+== API documentation
+
+On port 8081, open http://localhost:8081/swagger-ui.html (springdoc redirects to
+`/swagger-ui/index.html`). Existing Swagger UI scripts remain valid.
+The OpenAPI 3 specification is at http://localhost:8081/v3/api-docs.
+The application uses Spring Boot 3.5 and springdoc 2.x.
+
+## Container runtime
+
+Use JDK 21 and Docker Compose v2 (`docker compose`). CI runs in GitHub Actions;
+the legacy CircleCI configuration and setup scripts have been retired.
+MySQL initialization creates the database and grants only; run Flyway before
+starting the application:
+
+[source,shell]
+----
+export DOCKER_HOST_IP=localhost
+./gradlew :ftgo-application:bootJar
+docker compose up -d --build mysql
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+docker compose up -d --build --wait
+./run-end-to-end-tests.sh
+docker compose down -v
+----
+
+The non-root Temurin 21 JRE container serves port 8081 on the host. It has a
+512 MiB memory limit and sets the JVM maximum heap to 75% of available memory.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

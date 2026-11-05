@@ -34,9 +34,9 @@ public class OrderController {
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
-    Order order = orderService.createOrder(request.getConsumerId(),
-            request.getRestaurantId(),
-            request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
+    Order order = orderService.createOrder(request.consumerId(),
+            request.restaurantId(),
+            request.lineItems().stream().map(x -> new MenuItemIdAndQuantity(x.menuItemId(), x.quantity())).collect(toList())
     );
     return new CreateOrderResponse(order.getId());
   }
@@ -95,7 +95,7 @@ public class OrderController {
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
     try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.revisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -104,7 +104,7 @@ public class OrderController {
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
   public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
+    orderService.accept(orderId, orderAcceptance.readyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 

@@ -1,15 +1,14 @@
 dependencies {
-    compile project(":common-swagger")
-    compile project(":ftgo-consumer-service-api")
-    compile project(":ftgo-domain")
+    api project(":common-swagger")
+    api project(":ftgo-consumer-service-api")
+    api project(":ftgo-domain")
 
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    api libs.spring.jpa
+    api libs.spring.web
+    api libs.spring.actuator
 
-    compile 'javax.el:javax.el-api:2.2.5'
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    testImplementation libs.spring.test
+    testImplementation libs.rest.assured
+    testImplementation libs.json.path
 }

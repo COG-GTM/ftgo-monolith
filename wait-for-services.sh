@@ -2,12 +2,12 @@
 
 done=false
 
-host=$DOCKER_HOST_IP
+host=${DOCKER_HOST_IP:-localhost}
 ports="8081"
 
 while [[ "$done" = false ]]; do
 	for port in $ports; do
-		curl -q http://${host}:${port}/health >& /dev/null
+		curl -fsS http://${host}:${port}/actuator/health >& /dev/null
 		if [[ "$?" -eq "0" ]]; then
 			done=true
 		else

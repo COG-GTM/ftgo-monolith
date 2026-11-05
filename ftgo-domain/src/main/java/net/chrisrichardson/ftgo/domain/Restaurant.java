@@ -3,7 +3,7 @@ package net.chrisrichardson.ftgo.domain;
 import net.chrisrichardson.ftgo.common.Address;
 import org.hibernate.annotations.DynamicUpdate;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +24,7 @@ public class Restaurant {
 
   @Embedded
   @ElementCollection
-  @CollectionTable(name = "restaurant_menu_items")
+  @CollectionTable(name = "restaurant_menu_items", joinColumns = @JoinColumn(name = "restaurant_id"))
   private List<MenuItem> menuItems;
 
   public Restaurant() {

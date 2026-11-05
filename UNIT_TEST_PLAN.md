@@ -1,5 +1,18 @@
 # Unit Test Plan — FTGO Monolith
 
+## Test Stack
+
+All Gradle `Test` tasks use JUnit Platform, including integration tests. Jupiter API and
+engine versions are managed by Spring Boot 2.7.18. REST Assured, json-path and
+spring-mock-mvc use 5.5.7 (Java 8 compatible); asynchronous assertions use Awaitility
+4.2.2 with bounded waits. JUnit 4 and Vintage are excluded from runtime classpaths.
+
+Mockito 5 (`mockito-core`, inline mock maker by default) and Byte Buddy are managed by
+Spring Boot 3.5. Each test task preloads the Byte Buddy agent resolved from its runtime
+classpath, avoiding dynamic attachment warnings on JDK 21.
+
+Run Gradle with JDK 21; every module compiles with `--release 21`.
+
 ## Current Coverage
 
 | Module | Existing Tests | Classes Covered |
@@ -15,7 +28,7 @@
 
 ## Phase 1 — Domain Model (Pure Logic, No Mocks Needed)
 
-> Module: `ftgo-domain` · Test framework: JUnit 4 (already in `build.gradle`)
+> Module: `ftgo-domain` · Test framework: JUnit 5 (Jupiter) (already in `build.gradle`)
 
 ### 1.1 `OrderTest`
 **File:** `ftgo-domain/src/test/java/.../domain/OrderTest.java`
@@ -73,7 +86,7 @@
 
 ## Phase 2 — Common Module (Value Objects, Utilities)
 
-> Module: `ftgo-common` · Test framework: JUnit 4 + Spring Test (already available)
+> Module: `ftgo-common` · Test framework: JUnit 5 (Jupiter) + Spring Test (already available)
 
 ### 2.1 `AddressTest`
 **File:** `ftgo-common/src/test/java/.../common/AddressTest.java`
@@ -105,7 +118,7 @@
 ## Phase 3 — Service Layer (Requires Mockito)
 
 > Modules: `ftgo-order-service`, `ftgo-consumer-service`, `ftgo-courier-service`  
-> Add `testCompile "org.mockito:mockito-core:2.23.4"` where not already present via spring-boot-starter-test.
+> Mockito inline is supplied centrally by the root build.
 
 ### 3.1 `OrderServiceTest`
 **File:** `ftgo-order-service/src/test/java/.../domain/OrderServiceTest.java`
@@ -243,14 +256,11 @@ Phase 4  →  MockMvc + RestAssured (already in build.gradle)
 Phase 5  →  Mock HttpServletRequest/Response (spring-test)
 ```
 
-### Suggested build.gradle additions
+### Dependency management
 
-**`ftgo-domain/build.gradle`** — add Mockito for Phase 1 helper tests:
-```groovy
-testCompile "org.mockito:mockito-core:2.23.4"
-```
+Mockito inline is already supplied to every module by the root build.
 
-No other dependency changes needed — the other modules already pull in `spring-boot-starter-test` which includes JUnit 4, Mockito, Hamcrest, and Spring Test.
+No other dependency changes needed — the other modules already pull in `spring-boot-starter-test` which includes JUnit 5 (Jupiter), Mockito, Hamcrest, and Spring Test.
 
 ---
 

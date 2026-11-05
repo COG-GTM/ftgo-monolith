@@ -1,0 +1,9 @@
+{
+  "orderId": 3,
+  "state": "APPROVED",
+  "orderTotal": "24.68",
+  "restaurantName": "Golden Kitchen",
+  "assignedCourier": null,
+  "courierActions": null,
+  "estimatedDeliveryTime": null
+}

@@ -1,10 +1,10 @@
 package net.chrisrichardson.ftgo.domain;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Embeddable
@@ -12,7 +12,7 @@ import java.util.List;
 public class RestaurantMenu {
   @Embedded
   @ElementCollection
-  @CollectionTable(name = "restaurant_menu_items")
+  @CollectionTable(name = "restaurant_menu_items", joinColumns = @JoinColumn(name = "restaurant_id"))
   private List<MenuItem> menuItems;
 
   private RestaurantMenu() {

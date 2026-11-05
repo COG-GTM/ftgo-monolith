@@ -1,0 +1,15 @@
+{
+  "name": {
+    "firstName": "Ada",
+    "lastName": "Lovelace"
+  },
+  "address": {
+    "street1": "1 Main St",
+    "street2": null,
+    "city": "Oakland",
+    "state": "CA",
+    "zip": "94619",
+    "latitude": 37.8,
+    "longitude": -122.2
+  }
+}

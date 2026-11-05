@@ -1,0 +1,41 @@
+[versions]
+spring-boot = "3.5.16"
+dependency-management = "1.1.7"
+versions = "0.52.0"
+flyway-plugin = "10.22.0"
+springdoc = "2.10.0"
+rest-assured = "5.5.7"
+awaitility = "4.2.2"
+json-path = "2.3.0"
+mysql-connector-j = "8.4.0"
+commons-lang3 = "3.18.0"
+
+[libraries]
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
+commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+springdoc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-mvc = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
+rest-assured-json = { module = "io.rest-assured:json-path", version.ref = "rest-assured" }
+json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path" }
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+junit = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core" }
+byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+dependency-management = { id = "io.spring.dependency-management", version.ref = "dependency-management" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway-plugin" }

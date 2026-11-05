@@ -1,0 +1,1304 @@
+{
+  "basePath": "/",
+  "definitions": {
+    "Action": {
+      "properties": {
+        "time": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "PICKUP",
+            "DROPOFF"
+          ],
+          "type": "string"
+        }
+      },
+      "title": "Action",
+      "type": "object"
+    },
+    "Address": {
+      "properties": {
+        "city": {
+          "type": "string"
+        },
+        "latitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "longitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "state": {
+          "type": "string"
+        },
+        "street1": {
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "zip": {
+          "type": "string"
+        }
+      },
+      "title": "Address",
+      "type": "object"
+    },
+    "ApiRequestLog": {
+      "properties": {
+        "correlationId": {
+          "type": "string"
+        },
+        "durationMs": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "httpMethod": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "queryString": {
+          "type": "string"
+        },
+        "remoteAddr": {
+          "type": "string"
+        },
+        "requestTimestamp": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "requestUri": {
+          "type": "string"
+        },
+        "responseStatus": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      },
+      "title": "ApiRequestLog",
+      "type": "object"
+    },
+    "Courier": {
+      "properties": {
+        "activeDeliveryCount": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "currentLatitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "currentLongitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "lastLocationUpdate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/PersonName"
+        },
+        "plan": {
+          "$ref": "#/definitions/Plan"
+        }
+      },
+      "title": "Courier",
+      "type": "object"
+    },
+    "CourierAvailability": {
+      "properties": {
+        "available": {
+          "type": "boolean"
+        }
+      },
+      "title": "CourierAvailability",
+      "type": "object"
+    },
+    "CourierLocationUpdate": {
+      "properties": {
+        "latitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "longitude": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "title": "CourierLocationUpdate",
+      "type": "object"
+    },
+    "CourierWorkloadResponse": {
+      "properties": {
+        "activeDeliveries": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "courierId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "currentLatitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "currentLongitude": {
+          "format": "double",
+          "type": "number"
+        },
+        "lastLocationUpdate": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "title": "CourierWorkloadResponse",
+      "type": "object"
+    },
+    "CreateConsumerRequest": {
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/PersonName"
+        }
+      },
+      "title": "CreateConsumerRequest",
+      "type": "object"
+    },
+    "CreateConsumerResponse": {
+      "properties": {
+        "consumerId": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "CreateConsumerResponse",
+      "type": "object"
+    },
+    "CreateCourierRequest": {
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "name": {
+          "$ref": "#/definitions/PersonName"
+        }
+      },
+      "title": "CreateCourierRequest",
+      "type": "object"
+    },
+    "CreateCourierResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "CreateCourierResponse",
+      "type": "object"
+    },
+    "CreateOrderRequest": {
+      "properties": {
+        "consumerId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "lineItems": {
+          "items": {
+            "$ref": "#/definitions/LineItem"
+          },
+          "type": "array"
+        },
+        "restaurantId": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "CreateOrderRequest",
+      "type": "object"
+    },
+    "CreateOrderResponse": {
+      "properties": {
+        "orderId": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "CreateOrderResponse",
+      "type": "object"
+    },
+    "CreateRestaurantRequest": {
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "menu": {
+          "$ref": "#/definitions/RestaurantMenuDTO"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "title": "CreateRestaurantRequest",
+      "type": "object"
+    },
+    "CreateRestaurantResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "CreateRestaurantResponse",
+      "type": "object"
+    },
+    "GetConsumerResponse": {
+      "properties": {
+        "consumerId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "$ref": "#/definitions/PersonName"
+        }
+      },
+      "title": "GetConsumerResponse",
+      "type": "object"
+    },
+    "GetOrderResponse": {
+      "properties": {
+        "assignedCourier": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "courierActions": {
+          "items": {
+            "$ref": "#/definitions/Action"
+          },
+          "type": "array"
+        },
+        "estimatedDeliveryTime": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "orderId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "orderTotal": {
+          "$ref": "#/definitions/Money"
+        },
+        "restaurantName": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "title": "GetOrderResponse",
+      "type": "object"
+    },
+    "GetRestaurantResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "title": "GetRestaurantResponse",
+      "type": "object"
+    },
+    "LineItem": {
+      "properties": {
+        "menuItemId": {
+          "type": "string"
+        },
+        "quantity": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "title": "LineItem",
+      "type": "object"
+    },
+    "MenuItemDTO": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Money"
+        }
+      },
+      "title": "MenuItemDTO",
+      "type": "object"
+    },
+    "Money": {
+      "title": "Money",
+      "type": "object"
+    },
+    "OrderAcceptance": {
+      "properties": {
+        "readyBy": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "title": "OrderAcceptance",
+      "type": "object"
+    },
+    "PersonName": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "title": "PersonName",
+      "type": "object"
+    },
+    "Plan": {
+      "properties": {
+        "actions": {
+          "items": {
+            "$ref": "#/definitions/Action"
+          },
+          "type": "array"
+        }
+      },
+      "title": "Plan",
+      "type": "object"
+    },
+    "RestaurantMenuDTO": {
+      "properties": {
+        "menuItemDTOs": {
+          "items": {
+            "$ref": "#/definitions/MenuItemDTO"
+          },
+          "type": "array"
+        }
+      },
+      "title": "RestaurantMenuDTO",
+      "type": "object"
+    },
+    "ReviseOrderRequest": {
+      "properties": {
+        "revisedLineItemQuantities": {
+          "additionalProperties": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "object"
+        }
+      },
+      "title": "ReviseOrderRequest",
+      "type": "object"
+    }
+  },
+  "host": "localhost:8081",
+  "info": {
+    "contact": {},
+    "description": "Api Documentation",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "termsOfService": "urn:tos",
+    "title": "Api Documentation",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/tracking/logs": {
+      "get": {
+        "operationId": "getRecentLogsUsingGET",
+        "parameters": [
+          {
+            "default": 60,
+            "description": "minutesBack",
+            "format": "int32",
+            "in": "query",
+            "name": "minutesBack",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/ApiRequestLog"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "summary": "getRecentLogs",
+        "tags": [
+          "api-tracking-controller"
+        ]
+      }
+    },
+    "/api/tracking/logs/errors": {
+      "get": {
+        "operationId": "getErrorsUsingGET",
+        "parameters": [
+          {
+            "default": 60,
+            "description": "minutesBack",
+            "format": "int32",
+            "in": "query",
+            "name": "minutesBack",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/ApiRequestLog"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "summary": "getErrors",
+        "tags": [
+          "api-tracking-controller"
+        ]
+      }
+    },
+    "/api/tracking/logs/search": {
+      "get": {
+        "operationId": "searchByUriUsingGET",
+        "parameters": [
+          {
+            "description": "uri",
+            "in": "query",
+            "name": "uri",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/ApiRequestLog"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "summary": "searchByUri",
+        "tags": [
+          "api-tracking-controller"
+        ]
+      }
+    },
+    "/api/tracking/logs/{correlationId}": {
+      "get": {
+        "operationId": "getByCorrelationIdUsingGET",
+        "parameters": [
+          {
+            "description": "correlationId",
+            "in": "path",
+            "name": "correlationId",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ApiRequestLog"
+            }
+          }
+        },
+        "summary": "getByCorrelationId",
+        "tags": [
+          "api-tracking-controller"
+        ]
+      }
+    },
+    "/api/tracking/stats": {
+      "get": {
+        "operationId": "getStatsUsingGET",
+        "parameters": [
+          {
+            "default": 60,
+            "description": "minutesBack",
+            "format": "int32",
+            "in": "query",
+            "name": "minutesBack",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "additionalProperties": {
+                "type": "object"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "getStats",
+        "tags": [
+          "api-tracking-controller"
+        ]
+      }
+    },
+    "/config/sentry": {
+      "get": {
+        "operationId": "sentryConfigUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "summary": "sentryConfig",
+        "tags": [
+          "sentry-config-controller"
+        ]
+      }
+    },
+    "/consumers": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "createUsingPOST",
+        "parameters": [
+          {
+            "description": "request",
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateConsumerRequest"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateConsumerResponse"
+            }
+          }
+        },
+        "summary": "create",
+        "tags": [
+          "consumer-controller"
+        ]
+      }
+    },
+    "/consumers/{consumerId}": {
+      "get": {
+        "operationId": "getUsingGET",
+        "parameters": [
+          {
+            "description": "consumerId",
+            "format": "int64",
+            "in": "path",
+            "name": "consumerId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetConsumerResponse"
+            }
+          }
+        },
+        "summary": "get",
+        "tags": [
+          "consumer-controller"
+        ]
+      }
+    },
+    "/couriers": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "createUsingPOST_1",
+        "parameters": [
+          {
+            "description": "request",
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCourierRequest"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateCourierResponse"
+            }
+          }
+        },
+        "summary": "create",
+        "tags": [
+          "courier-controller"
+        ]
+      }
+    },
+    "/couriers/{courierId}": {
+      "get": {
+        "operationId": "getUsingGET_1",
+        "parameters": [
+          {
+            "description": "courierId",
+            "format": "int64",
+            "in": "path",
+            "name": "courierId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Courier"
+            }
+          }
+        },
+        "summary": "get",
+        "tags": [
+          "courier-controller"
+        ]
+      }
+    },
+    "/couriers/{courierId}/availability": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "updateCourierLocationUsingPOST",
+        "parameters": [
+          {
+            "description": "courierId",
+            "format": "int64",
+            "in": "path",
+            "name": "courierId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "availability",
+            "in": "body",
+            "name": "availability",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CourierAvailability"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "updateCourierLocation",
+        "tags": [
+          "courier-controller"
+        ]
+      }
+    },
+    "/couriers/{courierId}/location": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "updateLocationUsingPOST",
+        "parameters": [
+          {
+            "description": "courierId",
+            "format": "int64",
+            "in": "path",
+            "name": "courierId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "locationUpdate",
+            "in": "body",
+            "name": "locationUpdate",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CourierLocationUpdate"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "updateLocation",
+        "tags": [
+          "courier-controller"
+        ]
+      }
+    },
+    "/couriers/{courierId}/workload": {
+      "get": {
+        "operationId": "getWorkloadUsingGET",
+        "parameters": [
+          {
+            "description": "courierId",
+            "format": "int64",
+            "in": "path",
+            "name": "courierId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CourierWorkloadResponse"
+            }
+          }
+        },
+        "summary": "getWorkload",
+        "tags": [
+          "courier-controller"
+        ]
+      }
+    },
+    "/orders": {
+      "get": {
+        "operationId": "getOrdersUsingGET",
+        "parameters": [
+          {
+            "description": "consumerId",
+            "format": "int64",
+            "in": "query",
+            "name": "consumerId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/GetOrderResponse"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "summary": "getOrders",
+        "tags": [
+          "order-controller"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "createUsingPOST_2",
+        "parameters": [
+          {
+            "description": "request",
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateOrderRequest"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateOrderResponse"
+            }
+          }
+        },
+        "summary": "create",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}": {
+      "get": {
+        "operationId": "getOrderUsingGET",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetOrderResponse"
+            }
+          }
+        },
+        "summary": "getOrder",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/accept": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "acceptUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "orderAcceptance",
+            "in": "body",
+            "name": "orderAcceptance",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrderAcceptance"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "accept",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/cancel": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "cancelUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetOrderResponse"
+            }
+          }
+        },
+        "summary": "cancel",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/delivered": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "deliveredUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "delivered",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/pickedup": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "pickedupUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "pickedup",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/preparing": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "preparingUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "preparing",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/ready": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "readyUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "summary": "ready",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/orders/{orderId}/revise": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "reviseUsingPOST",
+        "parameters": [
+          {
+            "description": "orderId",
+            "format": "int64",
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "request",
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReviseOrderRequest"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetOrderResponse"
+            }
+          }
+        },
+        "summary": "revise",
+        "tags": [
+          "order-controller"
+        ]
+      }
+    },
+    "/restaurants": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "createUsingPOST_3",
+        "parameters": [
+          {
+            "description": "request",
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateRestaurantRequest"
+            }
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateRestaurantResponse"
+            }
+          }
+        },
+        "summary": "create",
+        "tags": [
+          "restaurant-controller"
+        ]
+      }
+    },
+    "/restaurants/{restaurantId}": {
+      "get": {
+        "operationId": "getUsingGET_2",
+        "parameters": [
+          {
+            "description": "restaurantId",
+            "format": "int64",
+            "in": "path",
+            "name": "restaurantId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetRestaurantResponse"
+            }
+          }
+        },
+        "summary": "get",
+        "tags": [
+          "restaurant-controller"
+        ]
+      }
+    }
+  },
+  "swagger": "2.0",
+  "tags": [
+    {
+      "description": "Api Tracking Controller",
+      "name": "api-tracking-controller"
+    },
+    {
+      "description": "Consumer Controller",
+      "name": "consumer-controller"
+    },
+    {
+      "description": "Courier Controller",
+      "name": "courier-controller"
+    },
+    {
+      "description": "Order Controller",
+      "name": "order-controller"
+    },
+    {
+      "description": "Restaurant Controller",
+      "name": "restaurant-controller"
+    },
+    {
+      "description": "Sentry Config Controller",
+      "name": "sentry-config-controller"
+    }
+  ]
+}

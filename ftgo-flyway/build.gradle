@@ -1,10 +1,38 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath libs.flyway.mysql
+    }
+}
+
 plugins {
-    id "org.flywaydb.flyway" version "6.0.0"
+    alias(libs.plugins.flyway)
 }
 
 flyway {
-    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false"
+    url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false&allowPublicKeyRetrieval=true"
     user = 'root'
     password = 'rootpassword'
     schemas = ['ftgo']
+}
+
+sourceSets {
+    legacyMigration
+}
+
+dependencies {
+    legacyMigrationImplementation 'org.flywaydb:flyway-core:6.0.0'
+    legacyMigrationRuntimeOnly libs.mysql
+}
+
+tasks.register('legacyFlywayMigrate', JavaExec) {
+    group = 'verification'
+    description = 'Creates real Flyway 6 history on a disposable compatibility database.'
+    classpath = sourceSets.legacyMigration.runtimeClasspath
+    mainClass = 'LegacyMigration'
+    args System.getProperty('flyway.url', flyway.url),
+            file('src/main/resources/db/migration').absolutePath,
+            flyway.user, flyway.password
 }

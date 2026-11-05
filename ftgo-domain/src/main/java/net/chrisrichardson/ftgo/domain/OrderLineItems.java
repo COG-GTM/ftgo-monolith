@@ -2,9 +2,10 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.ElementCollection;
-import javax.persistence.Embeddable;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.JoinColumn;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OrderLineItems {
 
   @ElementCollection
-  @CollectionTable(name = "order_line_items")
+  @CollectionTable(name = "order_line_items", joinColumns = @JoinColumn(name = "order_id"))
   private List<OrderLineItem> lineItems;
 
   private OrderLineItems() {

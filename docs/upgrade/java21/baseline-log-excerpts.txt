@@ -1,0 +1,45 @@
+Base revision: 1fb9c78da64bd0bf7a1562abc990e660f2f0c544 (before any AB-563 changes)
+JDK: openjdk version "1.8.0_504"; Gradle: 4.10.2
+
+$ DOCKER_COMPOSE='docker compose' ./build-and-test-all.sh --keep-running
+First attempt: failed to bind host port 0.0.0.0:3306/tcp: address already in use
+Retry after sudo systemctl stop mysql:
+> Task :ftgo-flyway:flywayMigrate
+BUILD SUCCESSFUL in 0s
+net.chrisrichardson.ftgo.FtgoApplicationTest > shouldDeliverOrder FAILED
+net.chrisrichardson.ftgo.FtgoApplicationTest > shouldCreateReviseAndCancelOrder FAILED
+2 tests completed, 2 failed
+Execution failed for task ':ftgo-application:test'.
+BUILD FAILED in 8s
+
+$ ./gradlew --continue -x :ftgo-end-to-end-tests:test build integrationTest
+18 unit/controller tests passed (all methods listed in test-baseline.csv).
+2 FtgoApplicationTest methods failed as above.
+:ftgo-order-service:integrationTest NO-SOURCE
+BUILD FAILED in 11s
+
+$ DOCKER_HOST_IP=localhost java -Xms64m -Xmx192m -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081
+2026-11-05 19:07:19.177 INFO 11014 --- [main] n.c.ftgo.FtgoApplicationMain : Started FtgoApplicationMain in 4.318 seconds (JVM running for 4.657)
+
+$ DOCKER_HOST_IP=localhost ./run-end-to-end-tests.sh
+net.chrisrichardson.ftgo.endtoendtests.EndToEndTests > shouldDeliverOrder FAILED
+net.chrisrichardson.ftgo.endtoendtests.EndToEndTests > shouldCreateReviseAndCancelOrder FAILED
+Expected status code <200> doesn't match actual status code <500>.
+2 tests completed, 2 failed
+BUILD FAILED in 2s
+
+Runtime evidence from the unchanged application during these tests:
+2026-11-05 19:07:22.343 ERROR 11014 --- [nio-8081-exec-7] o.h.engine.jdbc.spi.SqlExceptionHelper : Unknown column 'latitude' in 'field list'
+2026-11-05 19:07:22.351 ERROR 11014 --- [nio-8081-exec-7] n.c.ftgo.GlobalExceptionHandler : Unhandled exception on POST /orders: could not execute statement; SQL [n/a]; nested exception is org.hibernate.exception.SQLGrammarException: could not execute statement
+Caused by: java.sql.SQLSyntaxErrorException: Unknown column 'latitude' in 'field list'
+
+Post-change verification:
+$ ./gradlew :ftgo-application:clean :ftgo-application:test --tests '*GoldenTest'
+36 new tests passed. BUILD SUCCESSFUL in 5s
+$ SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:1/no_database?connectTimeout=1000' ./gradlew :ftgo-application:cleanTest :ftgo-application:test --tests '*GoldenTest'
+36 new tests passed. BUILD SUCCESSFUL in 4s
+$ ./gradlew --continue cleanTest -x :ftgo-end-to-end-tests:test build integrationTest
+54 passed, 2 known FtgoApplicationTest failures. BUILD FAILED in 12s
+$ ./run-end-to-end-tests.sh
+2 known EndToEndTests failures. BUILD FAILED in 1s
+Combined: 54 passed, 4 known failures (verification.json lists each method).
