@@ -2,8 +2,8 @@
   "totalRequests": 1,
   "periodMinutes": 10,
   "errorCount": 1,
-  "errorRate": 1,
-  "avgDurationMs": 25,
+  "errorRate": 1.0,
+  "avgDurationMs": 25.0,
   "p95DurationMs": 25,
   "statusCodeDistribution": {
     "500": 1

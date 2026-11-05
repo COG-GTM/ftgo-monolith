@@ -2,8 +2,8 @@
   "totalRequests": 0,
   "periodMinutes": 60,
   "errorCount": 0,
-  "errorRate": 0,
-  "avgDurationMs": 0,
+  "errorRate": 0.0,
+  "avgDurationMs": 0.0,
   "p95DurationMs": 0,
   "statusCodeDistribution": {},
   "topEndpoints": {}

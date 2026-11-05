@@ -339,8 +339,9 @@ public class ApiGoldenTest {
   }
 
   private void golden(MockHttpServletRequestBuilder request, String name) throws Exception {
-    mvc.perform(request).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(content().json(fixture(name), true));
+    MvcResult result = mvc.perform(request).andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)).andReturn();
+    assertThat(mapper.readTree(result.getResponse().getContentAsString())).isEqualTo(mapper.readTree(fixture(name)));
   }
 
   private void empty(MockHttpServletRequestBuilder request) throws Exception {
