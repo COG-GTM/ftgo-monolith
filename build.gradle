@@ -18,6 +18,10 @@ subprojects {
     targetCompatibility = '1.8'
     group = "net.chrisrichardson.ftgo"
 
+    // Keep io.spring.dependency-management in line with the catalog overrides of Boot-managed versions
+    ext['mysql.version'] = libs.versions.mysql.connector.j.get()
+    ext['commons-lang3.version'] = libs.versions.commons.lang3.get()
+
     repositories {
         mavenCentral()
     }
