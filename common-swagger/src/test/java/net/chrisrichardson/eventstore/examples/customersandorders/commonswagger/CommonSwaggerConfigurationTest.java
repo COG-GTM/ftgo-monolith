@@ -1,12 +1,12 @@
 package net.chrisrichardson.eventstore.examples.customersandorders.commonswagger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class CommonSwaggerConfigurationTest {
     private final BeanPostProcessor processor = CommonSwaggerConfiguration.antPathHandlerMappings();
