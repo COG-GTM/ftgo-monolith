@@ -1,0 +1,23 @@
+class,test,result,seconds,failure
+net.chrisrichardson.ftgo.FtgoApplicationTest,shouldDeliverOrder,FAIL,0.76,java.lang.AssertionError: 1 expectation failed.\nExpected status code <200> doesn't match actual status code <500>.
+net.chrisrichardson.ftgo.FtgoApplicationTest,shouldCreateReviseAndCancelOrder,FAIL,0.064,java.lang.AssertionError: 1 expectation failed.\nExpected status code <200> doesn't match actual status code <500>.
+net.chrisrichardson.ftgo.common.MoneySerializationTest,shouldSer,PASS,0.02,
+net.chrisrichardson.ftgo.common.MoneySerializationTest,shouldFailToDe,PASS,0.013,
+net.chrisrichardson.ftgo.common.MoneySerializationTest,shouldDe,PASS,0.002,
+net.chrisrichardson.ftgo.common.MoneyTest,shouldAdd,PASS,0.0,
+net.chrisrichardson.ftgo.common.MoneyTest,shouldMultiply,PASS,0.0,
+net.chrisrichardson.ftgo.common.MoneyTest,shouldReturnAsString,PASS,0.0,
+net.chrisrichardson.ftgo.common.MoneyTest,shouldCompare,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldSkipCouriersAtMaxCapacity,PASS,0.036,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldAssignClosestCourier,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldCalculateHaversineDistanceCorrectly,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldPreferLessLoadedCourierWhenDistanceSimilar,PASS,0.001,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldFallbackToLoadBalancingWhenNoLocations,PASS,0.003,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldAssignAmongMixOfLocatedAndUnlocated,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldHandleSingleCourier,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldThrowWhenNoCouriersAvailable,PASS,0.0,
+net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest,shouldEstimateDeliveryMinutesCorrectly,PASS,0.0,
+net.chrisrichardson.ftgo.endtoendtests.EndToEndTests,shouldDeliverOrder,FAIL,0.815,java.lang.AssertionError: 1 expectation failed.\nExpected status code <200> doesn't match actual status code <500>.
+net.chrisrichardson.ftgo.endtoendtests.EndToEndTests,shouldCreateReviseAndCancelOrder,FAIL,0.06,java.lang.AssertionError: 1 expectation failed.\nExpected status code <200> doesn't match actual status code <500>.
+net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest,shouldFindNotOrder,PASS,1.022,
+net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest,shouldFindOrder,PASS,0.317,

@@ -1,0 +1,18 @@
+{
+  "orderId": 3,
+  "state": "APPROVED",
+  "orderTotal": "24.68",
+  "restaurantName": "Golden Kitchen",
+  "assignedCourier": 4,
+  "courierActions": [
+    {
+      "type": "PICKUP",
+      "time": "2026-01-02T03:04:05"
+    },
+    {
+      "type": "DROPOFF",
+      "time": "2026-01-02T03:24:05"
+    }
+  ],
+  "estimatedDeliveryTime": "2026-01-02T03:24:05"
+}

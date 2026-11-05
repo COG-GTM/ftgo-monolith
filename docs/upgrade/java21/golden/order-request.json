@@ -1,0 +1,10 @@
+{
+  "consumerId": 1,
+  "restaurantId": 2,
+  "lineItems": [
+    {
+      "menuItemId": "1",
+      "quantity": 2
+    }
+  ]
+}

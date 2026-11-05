@@ -1,0 +1,28 @@
+{
+  "base_revision": "1fb9c78da64bd0bf7a1562abc990e660f2f0c544",
+  "captured_on": "2026-11-05",
+  "startup_log_timestamp_utc": "2026-11-05T19:07:19.177Z",
+  "jdk": "OpenJDK 1.8.0_504 (25.504-b01)",
+  "spring_boot": "2.0.3.RELEASE",
+  "gradle": "4.10.2",
+  "database": "MySQL 5.7.13 (repository Dockerfile, V1 and V2 migrations)",
+  "application_command": "DOCKER_HOST_IP=localhost java -Xms64m -Xmx192m -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081",
+  "startup_reported_seconds": 4.318,
+  "jvm_uptime_at_started_seconds": 4.657,
+  "jar_size_bytes": 47342837,
+  "heap_max_bytes": 201326592,
+  "heap_initial_bytes": 67108864,
+  "heap_used_after_warmup_and_gc_bytes_approx": 38931763,
+  "heap_committed_bytes": 144179200,
+  "gc": "ParallelGC",
+  "warmup": "After original DB-backed tests/e2e attempts, 100 sequential rounds of GET /config/sentry, /api/tracking/stats, /consumers/1, /restaurants/1 (400 HTTP 200 responses); then jcmd PID GC.run and jstat -gc PID 1000 1",
+  "jstat_gc_raw": [
+    "S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT   ",
+    "6656.0 7168.0  0.0    0.0   51200.0   585.6    75776.0    37433.7   75736.0 71814.0 9984.0 9332.0     80    0.265   4      0.356    0.620"
+  ],
+  "measurement_notes": [
+    "One local VM sample, not a load/performance assertion.",
+    "Heap usage is estimated from jstat KiB values, not RSS; jstat is taken immediately after a requested full GC.",
+    "Use the same heap flags, database and warmup for AB-573 comparisons."
+  ]
+}
