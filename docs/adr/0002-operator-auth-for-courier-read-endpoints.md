@@ -26,8 +26,10 @@ for an API surface).
 ## Decision
 
 We will add `spring-boot-starter-security` to `ftgo-application` with a stateless HTTP Basic configuration
-(`SecurityConfiguration`) that requires `ROLE_OPERATOR` for `GET /couriers/**` and leaves every other
-request unchanged (`permitAll`). The single operator account is configured through
+(`SecurityConfiguration`) scoped via `requestMatcher` to `/couriers/**` (every method, so HEAD/OPTIONS are
+covered) minus the three public POST writes, requiring `ROLE_OPERATOR` there; requests outside that matcher
+pass through no security filters, so they behave exactly as before (including when they carry stale Basic
+headers). The single operator account is configured through
 `FTGO_OPERATOR_USERNAME` / `FTGO_OPERATOR_PASSWORD`; with no password set, no account exists and the
 courier read endpoints are unreachable (fail closed). `GET /couriers/{id}` now returns a
 `CourierDetailsResponse` DTO instead of the entity, and unknown courier IDs return 404 instead of 500.
@@ -49,12 +51,12 @@ C4Container
     Person(operator, "Operator / internal tool")
     Person(anon, "Unauthenticated caller")
     System_Boundary(b, "FTGO monolith") {
-        Container(sec, "Spring Security filter chain", "Spring Security 5.0 / HTTP Basic", "GET /couriers/** requires ROLE_OPERATOR; all else permitAll")
+        Container(sec, "Spring Security filter chain", "Spring Security 5.0 / HTTP Basic", "/couriers/** except public POST writes requires ROLE_OPERATOR; other requests bypass the chain")
         Container(app, "ftgo-application", "Spring Boot 2.0 / Java 8", "CourierController returns CourierDetailsResponse DTO")
         ContainerDb(db, "ftgo MySQL", "MySQL", "courier table (unchanged)")
     }
     Rel(operator, sec, "HTTP, Basic auth (operator credentials)")
-    Rel(anon, sec, "HTTP, no credentials -> 401 on GET /couriers/**")
+    Rel(anon, sec, "HTTP, no credentials -> 401 on GET/HEAD /couriers/**")
     Rel(sec, app, "In-process")
     Rel(app, db, "JDBC (unchanged)")
 ```
@@ -64,7 +66,7 @@ C4Container
 | NFR | Target | How met |
 | --- | --- | --- |
 | Availability SLO | Unchanged | In-process filter chain, no new dependency at runtime |
-| p95 latency | Negligible change (one password hash check per protected request) | BCrypt via delegating encoder; only on `GET /couriers/**` |
+| p95 latency | Negligible change (one password hash check per protected request) | BCrypt via delegating encoder; only on protected courier reads |
 | RPO / RTO | N/A — no new data store | |
 | Peak load | TBD — owner to confirm before ARB | |
 | Scaling model | Stateless (no HTTP session) | `SessionCreationPolicy.STATELESS` |
@@ -75,7 +77,7 @@ C4Container
 - **Data classification:** courier name, home address, live location — PII; now restricted to operators.
 - **Encryption at rest:** N/A — no change.
 - **Encryption in transit:** HTTP Basic sends credentials in every request; TLS must terminate in front of the app in any non-local deployment (TBD — owner to confirm ingress).
-- **AuthN / AuthZ:** HTTP Basic, in-memory single operator account, `ROLE_OPERATOR` on `GET /couriers/**`; 401 unauthenticated, 403 wrong role.
+- **AuthN / AuthZ:** HTTP Basic, in-memory single operator account, `ROLE_OPERATOR` on `/couriers/**` except `POST /couriers`, `/couriers/*/availability`, `/couriers/*/location`; 401 unauthenticated, 403 wrong role.
 - **Secrets:** operator password from `FTGO_OPERATOR_PASSWORD` env var; never committed; no default value.
 - **Audit logging:** none added — TBD.
 - **Data residency / regions:** N/A.
