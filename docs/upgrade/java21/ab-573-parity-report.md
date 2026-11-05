@@ -182,3 +182,12 @@ Used heap sums S0U+S1U+EU+OU in KiB × 1024 (approximate); committed sums S0C+S1
 - No code fix in AB-573: observed baseline SQL failures already repaired by AB-570; Docker runtime upgrade remains AB-571.
 - No PR or Jira changes. No browser/visual verification in this step. App and MySQL intentionally left up.
 - Raw logs and capture scripts are persistent local evidence under `/home/ubuntu/ab-573-evidence/`; portable responses/methods/runtime are committed in the JSON report.
+
+## Browser smoke (dashboard)
+
+Run in Chrome against the same Java 21 host jar on 8081 + MySQL 8.4, recorded (recording attached to AB-573 / PR).
+
+- The dashboard (`static/js/app.js`) runs CRUD and order lifecycle on in-browser mock/localStorage data: API tracking recorded no browser POSTs. Its **Add Consumer / Add Restaurant / Add Courier** buttons don't open a form. `static/` is unchanged since the AB-563 base `1fb9c78d`, so this is **pre-existing UI behaviour, not a Java 21 regression**. Because of it, the full flow could not be driven from the dashboard.
+- Real REST flow instead (the browser showed each persisted result): consumer 7, restaurant 6, courier 19, order 8 (total 24.68). accept → preparing → ready → pickedup → delivered each returned 200, and GETs confirmed `APPROVED → ACCEPTED → PREPARING → READY_FOR_PICKUP → PICKED_UP → DELIVERED` with courier 19 assigned. The API tracking page lists every lifecycle POST, including `/orders/8/delivered` 200.
+- `GET /consumers/7` returns the right name but `consumerId: 0`. This was already the case before the upgrade (noted during AB-566); it is not a regression.
+- `/swagger-ui.html` → 302 → `/swagger-ui/index.html` 200 (renders). `/nope.js` → 404. `/config/sentry` → 200 (`dsn: ""`, `environment: demo`), and the Sentry SDK + `sentry-init.js` load. With an empty DSN the feedback widget is disabled by design, so submitting feedback was not exercised.
