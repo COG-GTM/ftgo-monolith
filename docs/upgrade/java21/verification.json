@@ -1,0 +1,312 @@
+{
+  "base_revision": "1fb9c78da64bd0bf7a1562abc990e660f2f0c544",
+  "jdk": "OpenJDK 1.8.0_504",
+  "gradle": "4.10.2",
+  "baseline": {
+    "passed": 18,
+    "failed": 4,
+    "test_classes": 6
+  },
+  "after_change": {
+    "passed": 54,
+    "failed": 4,
+    "tests": [
+      {
+        "class": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldDeliverOrder",
+        "result": "FAIL"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "result": "FAIL"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierGet",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "legacyNotFoundResponsesHaveNoBody",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderHistoryAndTrailingSlash",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderAcceptParsesIsoTime",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierWorkload",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Restaurant",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderGetUnassigned",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "restaurantGet",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "consumerCreate",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderGetAssignedUsesIsoTimeAndStringMoney",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierAvailability",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "consumerGet",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingEmptyStats",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderPreparing",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error500DoesNotExposeException",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Courier",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierLocation",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "sentryConfig",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingCorrelation",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderDelivered",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Order",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderReady",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierCreate",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderPickedUp",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderCancel",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderCreate",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error400",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error409",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error503",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderRevise",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingErrors",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingStats",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "restaurantCreate",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingRecent",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingSearch",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgobaseline.StaticPathGoldenTest",
+        "test": "unknownStaticPathUsesContainerErrorDispatch",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldSer",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldFailToDe",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldDe",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldAdd",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldMultiply",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldReturnAsString",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldCompare",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldSkipCouriersAtMaxCapacity",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldAssignClosestCourier",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldCalculateHaversineDistanceCorrectly",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldPreferLessLoadedCourierWhenDistanceSimilar",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldFallbackToLoadBalancingWhenNoLocations",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldAssignAmongMixOfLocatedAndUnlocated",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldHandleSingleCourier",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldThrowWhenNoCouriersAvailable",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldEstimateDeliveryMinutesCorrectly",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldDeliverOrder",
+        "result": "FAIL"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "result": "FAIL"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest",
+        "test": "shouldFindNotOrder",
+        "result": "PASS"
+      },
+      {
+        "class": "net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest",
+        "test": "shouldFindOrder",
+        "result": "PASS"
+      }
+    ]
+  },
+  "no_database_check": {
+    "command": "SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:1/no_database?connectTimeout=1000' ./gradlew :ftgo-application:cleanTest :ftgo-application:test --tests '*GoldenTest'",
+    "passed": 36,
+    "failed": 0
+  },
+  "integrationTest": "NO-SOURCE (no tests defined)"
+}

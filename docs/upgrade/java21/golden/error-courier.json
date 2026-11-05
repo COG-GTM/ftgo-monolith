@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-01-02T03:04:05",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Courier not found: 4",
+  "path": "/couriers/4",
+  "correlationId": "golden-correlation"
+}

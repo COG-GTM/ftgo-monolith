@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-01-02T03:04:05",
+  "status": 409,
+  "error": "State Transition Error",
+  "message": "current state: APPROVED",
+  "path": "/orders/3/preparing",
+  "correlationId": "golden-correlation"
+}
