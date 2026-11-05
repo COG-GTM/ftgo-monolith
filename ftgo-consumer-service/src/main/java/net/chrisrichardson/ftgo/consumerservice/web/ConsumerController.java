@@ -6,6 +6,7 @@ import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class ConsumerController {
   }
 
   @RequestMapping(method= RequestMethod.GET,  path="/{consumerId}")
+  @PreAuthorize("hasRole('ADMIN') or authentication.name == T(String).valueOf(#consumerId)")
   public ResponseEntity<GetConsumerResponse> get(@PathVariable long consumerId) {
     return consumerService.findById(consumerId)
             .map(consumer -> new ResponseEntity<>(new GetConsumerResponse(consumer.getName()), HttpStatus.OK))
