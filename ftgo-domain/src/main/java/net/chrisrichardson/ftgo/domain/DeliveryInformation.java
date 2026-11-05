@@ -3,7 +3,7 @@ package net.chrisrichardson.ftgo.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Embeddable

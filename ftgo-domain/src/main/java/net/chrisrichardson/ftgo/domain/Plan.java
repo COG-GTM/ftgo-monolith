@@ -1,8 +1,8 @@
 package net.chrisrichardson.ftgo.domain;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.CollectionTable;
-import javax.persistence.JoinColumn;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.JoinColumn;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;

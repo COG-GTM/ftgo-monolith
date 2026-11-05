@@ -6,8 +6,8 @@ import org.slf4j.MDC;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
@@ -39,7 +39,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     ApiRequestLog logEntry = new ApiRequestLog(
             correlationId,
             request.getMethod(),
-            request.getRequestURI(),
+            OriginalRequestUri.of(request),
             request.getQueryString(),
             request.getRemoteAddr(),
             request.getHeader("User-Agent")
@@ -47,7 +47,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
 
     request.setAttribute(LOG_ENTRY_ATTR, logEntry);
 
-    logger.info("[{}] {} {} started", correlationId, request.getMethod(), request.getRequestURI());
+    logger.info("[{}] {} {} started", correlationId, request.getMethod(), OriginalRequestUri.of(request));
 
     return true;
   }
@@ -78,7 +78,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
 
       String correlationId = logEntry.getCorrelationId();
       logger.info("[{}] {} {} completed: status={} duration={}ms",
-              correlationId, request.getMethod(), request.getRequestURI(),
+              correlationId, request.getMethod(), OriginalRequestUri.of(request),
               response.getStatus(), durationMs);
     }
 
