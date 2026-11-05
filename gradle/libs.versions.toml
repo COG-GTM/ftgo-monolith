@@ -3,7 +3,7 @@ spring-boot = "2.7.18"
 dependency-management = "1.1.7"
 versions = "0.52.0"
 flyway-plugin = "6.0.0"
-springfox = "2.8.0"
+springdoc = "1.8.0"
 rest-assured = "5.5.7"
 awaitility = "4.2.2"
 byte-buddy = "1.14.19"
@@ -20,8 +20,7 @@ jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 mysql = { module = "com.mysql:mysql-connector-j" }
 commons-lang = { module = "org.apache.commons:commons-lang3" }
-springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox" }
-springfox-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox" }
+springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
 rest-assured-mvc = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
