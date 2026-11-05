@@ -13,7 +13,7 @@ done by hand.
 
 | Spring 6 / Boot 3 change | Handling |
 |---|---|
-| Trailing-slash match removed | `UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest()` (Q6): `/orders/` == `/orders` |
+| Trailing-slash match removed | `UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest()` (Q6): `/orders/` == `/orders`; `originalRequestUriFilter` keeps the client URI (`OriginalRequestUri`) for API tracking logs and error `path` |
 | Unknown static path raises `NoResourceFoundException` | Still dispatched to `/error` with the AB-563 body (`"message": "No message available"`) |
 | Spring MVC exceptions (bad/missing parameter, unreadable body, 405, 415, ...) | `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler`; 4xx status with the FTGO `ErrorResponse` body (previously the catch-all 500) |
 | `org.springframework.web.ErrorResponse` name clash | FTGO body is always `net.chrisrichardson.ftgo.common.ErrorResponse` (explicit import); Spring's type is referenced fully qualified |
@@ -43,8 +43,8 @@ All other names (`http_server_requests_seconds_*`, `hikaricp_*`, `jvm_memory_*`,
 ## Verification (JDK 21, MySQL 8.4, app on port 8081)
 
 ```text
-./gradlew build -x :ftgo-end-to-end-tests:test     BUILD SUCCESSFUL (62 tests, 0 failures)
-  ApiGoldenTest 36/36, StaticPathGoldenTest 1/1, OpenApiDocumentationTest 1/1,
+./gradlew build -x :ftgo-end-to-end-tests:test     BUILD SUCCESSFUL (65 tests, 0 failures)
+  ApiGoldenTest 37/37, ApiTrackingInterceptorTest 2/2, StaticPathGoldenTest 1/1, OpenApiDocumentationTest 1/1,
   JpaSchemaValidationTest 2/2 (ddl-auto=validate on Hibernate 6.6), MySqlDateTimeTest 1/1, FtgoApplicationTest 2/2
 ./run-end-to-end-tests.sh                           EndToEndTests 2/2
 python3 docs/upgrade/java21/compare-openapi.py v3-api-docs.json
