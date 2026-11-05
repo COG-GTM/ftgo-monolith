@@ -2,7 +2,7 @@
 spring-boot = "2.7.18"
 dependency-management = "1.1.7"
 versions = "0.52.0"
-flyway-plugin = "6.0.0"
+flyway-plugin = "10.22.0"
 springdoc = "1.8.0"
 rest-assured = "5.5.7"
 awaitility = "4.2.2"
@@ -21,6 +21,7 @@ jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
 commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
