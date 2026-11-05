@@ -22,7 +22,8 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    int boundedMinutesBack = clampMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -30,13 +31,17 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getErrors(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    int boundedMinutesBack = clampMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
+    if (uri.trim().isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -53,12 +58,13 @@ public class ApiTrackingController {
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    int boundedMinutesBack = clampMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", minutesBack);
+    stats.put("periodMinutes", boundedMinutesBack);
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -101,5 +107,9 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  private static int clampMinutesBack(int minutesBack) {
+    return Math.max(1, Math.min(1440, minutesBack));
   }
 }
