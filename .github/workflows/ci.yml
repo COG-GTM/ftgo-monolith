@@ -115,7 +115,7 @@ jobs:
           done
           if [ "$ready" != true ]; then cat app.log; exit 1; fi
           curl --fail http://localhost:8081/swagger-ui.html > /dev/null
-          curl --fail http://localhost:8081/v2/api-docs > /dev/null
+          curl --fail http://localhost:8081/v3/api-docs > /dev/null
           ./run-end-to-end-tests.sh
       - uses: actions/upload-artifact@v4
         if: always()

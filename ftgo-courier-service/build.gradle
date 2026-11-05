@@ -8,7 +8,6 @@ dependencies {
     api libs.spring.actuator
     api libs.prometheus
     api libs.spring.web
-    api libs.javax.el
 
     testImplementation libs.spring.test
 

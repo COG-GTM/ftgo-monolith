@@ -13,7 +13,8 @@ import javax.persistence.*;
 public class Consumer {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "consumer_id")
+  @SequenceGenerator(name = "consumer_id", sequenceName = "hibernate_sequence", allocationSize = 1)
   private Long id;
 
   @Embedded

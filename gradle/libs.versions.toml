@@ -3,14 +3,13 @@ spring-boot = "2.7.18"
 dependency-management = "1.1.7"
 versions = "0.52.0"
 flyway-plugin = "10.22.0"
-mysql = "8.0.33"
-commons-lang = "2.6"
-springfox = "2.8.0"
-rest-assured-legacy = "2.9.0"
+springdoc = "1.8.0"
+rest-assured = "5.5.7"
+awaitility = "4.2.2"
+byte-buddy = "1.14.19"
 json-path = "2.3.0"
-eventuate-util = "0.9.0.RELEASE"
-javax-el = "2.2.5"
-junit = "4.13.2"
+mysql-connector-j = "8.4.0"
+commons-lang3 = "3.18.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -21,20 +20,19 @@ spring-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
-mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
+mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
-commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
-springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox" }
-springfox-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox" }
+commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
-rest-assured-legacy = { module = "com.jayway.restassured:rest-assured", version.ref = "rest-assured-legacy" }
-rest-assured = { module = "io.rest-assured:rest-assured" }
-rest-assured-mvc = { module = "io.rest-assured:spring-mock-mvc" }
-rest-assured-json = { module = "io.rest-assured:json-path" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-mvc = { module = "io.rest-assured:spring-mock-mvc", version.ref = "rest-assured" }
+rest-assured-json = { module = "io.rest-assured:json-path", version.ref = "rest-assured" }
 json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path" }
-eventuate-test = { module = "io.eventuate.util:eventuate-util-test", version.ref = "eventuate-util" }
-javax-el = { module = "javax.el:javax.el-api", version.ref = "javax-el" }
-junit = { module = "junit:junit", version.ref = "junit" }
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+junit = { module = "org.junit.jupiter:junit-jupiter" }
+mockito-inline = { module = "org.mockito:mockito-inline" }
+byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
