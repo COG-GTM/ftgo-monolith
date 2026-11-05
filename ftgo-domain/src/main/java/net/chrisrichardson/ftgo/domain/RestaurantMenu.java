@@ -12,7 +12,7 @@ import java.util.List;
 public class RestaurantMenu {
   @Embedded
   @ElementCollection
-  @CollectionTable(name = "restaurant_menu_items")
+  @CollectionTable(name = "restaurant_menu_items", joinColumns = @JoinColumn(name = "restaurant_id"))
   private List<MenuItem> menuItems;
 
   private RestaurantMenu() {

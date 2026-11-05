@@ -12,7 +12,7 @@ public interface ApiRequestLogRepository extends CrudRepository<ApiRequestLog, L
   @Query("SELECT a FROM ApiRequestLog a WHERE a.requestTimestamp >= :since ORDER BY a.requestTimestamp DESC")
   List<ApiRequestLog> findRecentLogs(@Param("since") LocalDateTime since);
 
-  @Query("SELECT a FROM ApiRequestLog a WHERE a.requestUri LIKE %:uri% ORDER BY a.requestTimestamp DESC")
+  @Query("SELECT a FROM ApiRequestLog a WHERE a.requestUri LIKE CONCAT('%', :uri, '%') ORDER BY a.requestTimestamp DESC")
   List<ApiRequestLog> findByRequestUri(@Param("uri") String uri);
 
   @Query("SELECT a FROM ApiRequestLog a WHERE a.correlationId = :correlationId")
