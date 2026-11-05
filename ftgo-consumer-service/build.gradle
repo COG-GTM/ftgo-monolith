@@ -9,6 +9,6 @@ dependencies {
 
 
     testImplementation libs.spring.test
-    testImplementation libs.rest.assured.legacy
+    testImplementation libs.rest.assured
     testImplementation libs.json.path
 }
