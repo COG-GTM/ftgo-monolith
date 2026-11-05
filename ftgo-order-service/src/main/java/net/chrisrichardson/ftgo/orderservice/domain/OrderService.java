@@ -1,6 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import net.chrisrichardson.ftgo.common.security.AccessDeniedException;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedPrincipal;
+import net.chrisrichardson.ftgo.common.security.PrincipalType;
+import net.chrisrichardson.ftgo.common.security.UnauthenticatedException;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
@@ -46,8 +50,10 @@ public class OrderService {
   }
 
   @Transactional
-  public Order createOrder(long consumerId, long restaurantId,
+  public Order createOrder(AuthenticatedPrincipal caller, long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    requirePrincipal(caller);
+    requireRole(caller, PrincipalType.CONSUMER, consumerId);
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
@@ -77,23 +83,26 @@ public class OrderService {
   }
 
   @Transactional
-  public Order cancel(Long orderId) {
+  public Order cancel(AuthenticatedPrincipal caller, Long orderId) {
     Order order = tryToFindOrder(orderId);
 
+    requireRole(caller, PrincipalType.CONSUMER, order.getConsumerId());
     order.cancel();
 
     return order;
   }
 
   @Transactional
-  public Order reviseOrder(long orderId, OrderRevision orderRevision) {
+  public Order reviseOrder(AuthenticatedPrincipal caller, long orderId, OrderRevision orderRevision) {
     Order order = tryToFindOrder(orderId);
+    requireRole(caller, PrincipalType.CONSUMER, order.getConsumerId());
     order.revise(orderRevision);
     return order;
   }
 
-  public void accept(long orderId, LocalDateTime readyBy) {
+  public void accept(AuthenticatedPrincipal caller, long orderId, LocalDateTime readyBy) {
     Order order = tryToFindOrder(orderId);
+    requireRole(caller, PrincipalType.RESTAURANT, order.getRestaurant().getId());
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
   }
@@ -141,26 +150,52 @@ public class OrderService {
   }
 
   @Transactional
-  public void notePreparing(long orderId) {
+  public void notePreparing(AuthenticatedPrincipal caller, long orderId) {
     Order order = tryToFindOrder(orderId);
+    requireRole(caller, PrincipalType.RESTAURANT, order.getRestaurant().getId());
     order.notePreparing();
   }
 
   @Transactional
-  public void noteReadyForPickup(long orderId) {
+  public void noteReadyForPickup(AuthenticatedPrincipal caller, long orderId) {
     Order order = tryToFindOrder(orderId);
+    requireRole(caller, PrincipalType.RESTAURANT, order.getRestaurant().getId());
     order.noteReadyForPickup();
   }
 
   @Transactional
-  public void notePickedUp(long orderId) {
+  public void notePickedUp(AuthenticatedPrincipal caller, long orderId) {
     Order order = tryToFindOrder(orderId);
+    requireAssignedCourier(caller, order);
     order.notePickedUp();
   }
 
   @Transactional
-  public void noteDelivered(long orderId) {
+  public void noteDelivered(AuthenticatedPrincipal caller, long orderId) {
     Order order = tryToFindOrder(orderId);
+    requireAssignedCourier(caller, order);
     order.noteDelivered();
+  }
+
+  private void requireAssignedCourier(AuthenticatedPrincipal caller, Order order) {
+    requirePrincipal(caller);
+    Courier assignedCourier = order.getAssignedCourier();
+    if (caller.getType() != PrincipalType.COURIER || assignedCourier == null ||
+            caller.getId() != assignedCourier.getId()) {
+      throw new AccessDeniedException("Only the assigned courier may update this order");
+    }
+  }
+
+  private void requireRole(AuthenticatedPrincipal caller, PrincipalType type, long id) {
+    requirePrincipal(caller);
+    if (caller.getType() != type || caller.getId() != id) {
+      throw new AccessDeniedException("The authenticated principal is not authorized for this order");
+    }
+  }
+
+  private void requirePrincipal(AuthenticatedPrincipal caller) {
+    if (caller == null) {
+      throw new UnauthenticatedException("A valid Bearer token is required");
+    }
   }
 }

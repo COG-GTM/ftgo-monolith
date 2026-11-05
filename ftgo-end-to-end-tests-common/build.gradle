@@ -1,4 +1,5 @@
 dependencies {
+    compile project(":ftgo-common")
     compile project(":ftgo-consumer-service-api")
     compile project(":ftgo-restaurant-service-api")
     compile project(":ftgo-order-service-api")
