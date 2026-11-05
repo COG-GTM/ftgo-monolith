@@ -1,5 +1,8 @@
 # JDK 8 behaviour baseline (AB-563)
 
+For current developer setup and operator procedures, see
+[Java 21 upgrade and rollback](UPGRADE.md).
+
 For the current Java 21 container, Compose v2 commands and measured heap
 comparison, see [runtime-container.md](runtime-container.md) (AB-571).
 The legacy CircleCI configuration and its setup scripts have been retired in
