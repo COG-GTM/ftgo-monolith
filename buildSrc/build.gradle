@@ -3,6 +3,5 @@ repositories {
 }
 
 dependencies {
-    implementation libs.mysql
-    implementation libs.commons.lang
+    implementation 'com.mysql:mysql-connector-j:8.0.33'
 }
