@@ -1,10 +1,10 @@
 dependencies {
-    compile ("io.springfox:springfox-swagger2:2.8.0") {
+    api (libs.springfox.swagger2) {
         exclude group: "org.springframework"
     }
-    compile ("io.springfox:springfox-swagger-ui:2.8.0"){
+    api (libs.springfox.ui){
         exclude group: "org.springframework"
     }
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    api libs.spring.web
 
 }

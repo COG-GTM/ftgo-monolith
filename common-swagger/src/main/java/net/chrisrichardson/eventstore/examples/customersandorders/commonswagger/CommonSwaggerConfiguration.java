@@ -2,10 +2,12 @@ package net.chrisrichardson.eventstore.examples.customersandorders.commonswagger
 
 import com.fasterxml.classmate.TypeResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.schema.WildcardType;
 import springfox.documentation.spi.DocumentationType;
@@ -19,6 +21,19 @@ import static springfox.documentation.schema.AlternateTypeRules.newRule;
 @Configuration
 @EnableSwagger2
 public class CommonSwaggerConfiguration {
+
+    @Bean
+    public static BeanPostProcessor antPathHandlerMappings() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) {
+                if (bean instanceof RequestMappingInfoHandlerMapping) {
+                    ((RequestMappingInfoHandlerMapping) bean).setPatternParser(null);
+                }
+                return bean;
+            }
+        };
+    }
 
     @Bean
     public Docket api() {

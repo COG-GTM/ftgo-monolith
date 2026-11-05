@@ -1,43 +1,35 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:$springDependencyManagementPluginVersion"
-    }
-
-    apply plugin: WaitForMySqlPlugin
-}
-
 plugins {
-    id "com.github.ben-manes.versions" version "0.20.0"
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.dependency.management) apply false
+    alias(libs.plugins.versions)
 }
 
+apply plugin: WaitForMySqlPlugin
 
 subprojects {
+    apply plugin: "java-library"
 
-    apply plugin: "java"
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
-
     group = "net.chrisrichardson.ftgo"
 
     repositories {
         mavenCentral()
-        jcenter()
-
-        // Commenting out problematic repositories that require authentication or are no longer available
-        // eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
-
-        // maven {
-        //     url 'https://repo.spring.io/libs-milestone'
-        // }
-
-        maven {
-            url "${project.rootDir}/build/repo"
-        }
-
     }
 
+    dependencies {
+        api platform(libs.spring.boot.bom)
+        testImplementation libs.junit
+    }
+
+    tasks.withType(Test).configureEach {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(providers.gradleProperty('testJavaVersion').getOrElse('8'))
+        }
+    }
 }
