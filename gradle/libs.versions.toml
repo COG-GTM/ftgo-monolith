@@ -8,6 +8,8 @@ rest-assured = "5.5.7"
 awaitility = "4.2.2"
 byte-buddy = "1.14.19"
 json-path = "2.3.0"
+mysql-connector-j = "8.4.0"
+commons-lang3 = "3.18.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -18,8 +20,8 @@ spring-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
-mysql = { module = "com.mysql:mysql-connector-j", version = "8.4.0" }
-commons-lang = { module = "org.apache.commons:commons-lang3" }
+mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
+commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
