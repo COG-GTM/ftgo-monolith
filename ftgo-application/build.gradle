@@ -14,3 +14,9 @@ dependencies {
     testImplementation project(":ftgo-end-to-end-tests-common")
 }
 tasks.named('bootJar') { archiveFileName = 'ftgo-application.jar' }
+
+processTestResources {
+    from("${rootDir}/docs/upgrade/java21/golden") {
+        into 'golden'
+    }
+}

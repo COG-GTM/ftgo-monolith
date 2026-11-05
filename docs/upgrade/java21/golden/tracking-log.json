@@ -1,0 +1,13 @@
+{
+  "id": 5,
+  "correlationId": "golden-correlation",
+  "httpMethod": "GET",
+  "requestUri": "/orders/3",
+  "queryString": "consumerId=1",
+  "responseStatus": 500,
+  "durationMs": 25,
+  "remoteAddr": "127.0.0.1",
+  "userAgent": "golden-client",
+  "errorMessage": "example failure",
+  "requestTimestamp": "2026-01-02T03:04:05"
+}

@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-01-02T03:04:05",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "invalid location",
+  "path": "/couriers/4/location",
+  "correlationId": "golden-correlation"
+}
