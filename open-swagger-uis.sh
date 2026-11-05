@@ -2,5 +2,9 @@
 
 
 for port in 8081 ; do
-    open http://${DOCKER_HOST_IP?}:$port/swagger-ui.html
+    if command -v xdg-open > /dev/null ; then
+        xdg-open http://${DOCKER_HOST_IP:-localhost}:$port/swagger-ui.html
+    else
+        open http://${DOCKER_HOST_IP:-localhost}:$port/swagger-ui.html
+    fi
 done

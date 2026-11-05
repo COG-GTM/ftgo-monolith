@@ -1,5 +1,4 @@
 #!/bin/bash -e
 
-docker-compose up -d --build $* mysql
-
+docker compose up -d --build $* mysql
 
