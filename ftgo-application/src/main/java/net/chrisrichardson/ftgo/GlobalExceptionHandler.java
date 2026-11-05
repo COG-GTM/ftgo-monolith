@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
+import net.chrisrichardson.ftgo.common.security.AccessDeniedException;
+import net.chrisrichardson.ftgo.common.security.UnauthenticatedException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,6 +23,26 @@ import javax.servlet.http.HttpServletRequest;
 public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  @ExceptionHandler(UnauthenticatedException.class)
+  public ResponseEntity<ErrorResponse> handleUnauthenticated(
+          UnauthenticatedException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(), "Unauthorized", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .body(error);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDenied(
+          AccessDeniedException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
 
   @ExceptionHandler(OrderNotFoundException.class)
   public ResponseEntity<ErrorResponse> handleOrderNotFound(

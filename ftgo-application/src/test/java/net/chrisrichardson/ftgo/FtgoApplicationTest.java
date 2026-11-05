@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.consumerservice.main.ConsumerServiceConfiguration;
+import net.chrisrichardson.ftgo.common.security.AuthTokenService;
 import net.chrisrichardson.ftgo.endtoendtests.common.AbstractEndToEndTests;
 import net.chrisrichardson.ftgo.orderservice.main.OrderServiceConfiguration;
 import net.chrisrichardson.ftgo.restaurantservice.RestaurantServiceConfiguration;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -30,6 +32,9 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @LocalServerPort
   private int port;
 
+  @Autowired
+  private AuthTokenService authTokenService;
+
   @Override
   public String getHost() {
     return "localhost";
@@ -38,5 +43,10 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @Override
   public int getApplicationPort() {
     return port;
+  }
+
+  @Override
+  protected AuthTokenService getAuthTokenService() {
+    return authTokenService;
   }
 }

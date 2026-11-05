@@ -11,6 +11,8 @@ import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.common.security.AuthTokenService;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedPrincipal;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
@@ -24,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.Collections;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -45,6 +48,7 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+  private int assignedCourierId;
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -122,6 +126,47 @@ public abstract class AbstractEndToEndTests {
 
   }
 
+  @Test
+  public void shouldRejectUnauthenticatedOrderWrites() {
+    createOrder();
+
+    String createRequest = createOrderRequest(consumerId, restaurantId);
+    for (String authorization : new String[]{null, "Bearer garbage"}) {
+      assertEquals(401, postOrder("", createRequest, authorization));
+      for (String action : new String[]{"cancel", "revise", "accept", "preparing", "ready", "pickedup", "delivered"}) {
+        assertEquals(action, 401, postOrder(orderId + "/" + action, bodyForOrderAction(action), authorization));
+      }
+    }
+
+    assertOrderState(orderId, "APPROVED");
+  }
+
+  @Test
+  public void shouldRejectOrderWritesByWrongPrincipal() {
+    consumerId = createConsumer();
+    int otherConsumerId = createConsumer();
+    restaurantId = createRestaurant();
+    orderId = createOrder(consumerId, restaurantId);
+
+    assertEquals(403, postOrder(orderId + "/cancel", "{}", token(AuthenticatedPrincipal.consumer(otherConsumerId))));
+    assertEquals(403, postOrder(orderId + "/revise",
+            "{\"revisedLineItemQuantities\":{\"1\":4}}", token(AuthenticatedPrincipal.consumer(otherConsumerId))));
+    assertEquals(403, postOrder("", createOrderRequest(otherConsumerId, restaurantId),
+            token(AuthenticatedPrincipal.consumer(consumerId))));
+    assertEquals(403, postOrder(orderId + "/accept", acceptanceRequest(),
+            token(AuthenticatedPrincipal.restaurant(restaurantId + 1000000))));
+    assertEquals(403, postOrder(orderId + "/accept", acceptanceRequest(),
+            token(AuthenticatedPrincipal.consumer(consumerId))));
+    assertOrderState(orderId, "APPROVED");
+
+    createCourier();
+    noteCourierAvailable();
+    acceptOrder();
+    assignedCourierId = readAssignedCourierId(orderId);
+    assertEquals(403, postOrder(orderId + "/pickedup", "{}", token(AuthenticatedPrincipal.courier(999999999L))));
+    assertEquals(403, postOrder(orderId + "/delivered", "{}", token(AuthenticatedPrincipal.courier(999999999L))));
+  }
+
   private void reviseOrder() {
     reviseOrder(orderId);
     verifyOrderRevised(orderId);
@@ -152,6 +197,7 @@ public abstract class AbstractEndToEndTests {
 
   private void reviseOrder(int orderId) {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.consumer(consumerId))).
             body(new ReviseOrderRequest(Collections.singletonMap(CHICKED_VINDALOO_MENU_ITEM_ID, revisedQuantityOfChickenVindaloo)))
             .contentType("application/json").
             when().
@@ -197,6 +243,7 @@ public abstract class AbstractEndToEndTests {
 
   private void cancelOrder(int orderId) {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.consumer(consumerId))).
             body("{}").
             contentType("application/json").
             when().
@@ -252,6 +299,7 @@ public abstract class AbstractEndToEndTests {
   private int createOrder(int consumerId, int restaurantId) {
     Integer orderId =
             given().
+                    header("Authorization", "Bearer " + token(AuthenticatedPrincipal.consumer(consumerId))).
                     body(new CreateOrderRequest(consumerId, restaurantId, Collections.singletonList(new CreateOrderRequest.LineItem(CHICKED_VINDALOO_MENU_ITEM_ID, 5)))).
                     contentType("application/json").
                     when().
@@ -316,6 +364,7 @@ public abstract class AbstractEndToEndTests {
 
   private void acceptOrder() {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.restaurant(restaurantId))).
             body(new OrderAcceptance(LocalDateTime.now().plusHours(9))).
             contentType("application/json").
             when().
@@ -325,23 +374,11 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void assertOrderAssignedToCourier() {
-    int courierId = Eventually.eventuallyReturning(() -> {
-      int assignedCourier = given().
-              when().
-              get(orderBaseUrl(Long.toString(orderId))).
-              then().
-              statusCode(200)
-              .body("courierActions[0].type", equalTo("PICKUP"))
-              .body("courierActions[1].type", equalTo("DROPOFF"))
-              .extract()
-              .path("assignedCourier");
-      assertThat(assignedCourier).isGreaterThan(0);
-      return assignedCourier;
-    });
+    assignedCourierId = Eventually.eventuallyReturning(() -> readAssignedCourierId(orderId));
 
     given().
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(assignedCourierId))).
             then().
             statusCode(200)
             .body("plan.actions[0].type", equalTo("PICKUP"))
@@ -351,6 +388,7 @@ public abstract class AbstractEndToEndTests {
 
   private void startPreparingOrder() {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.restaurant(restaurantId))).
             when().
             post(orderBaseUrl(Long.toString(orderId), "preparing")).
             then().
@@ -359,6 +397,7 @@ public abstract class AbstractEndToEndTests {
 
   private void orderReadyforPickup() {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.restaurant(restaurantId))).
             when().
             post(orderBaseUrl(Long.toString(orderId), "ready")).
             then().
@@ -367,6 +406,7 @@ public abstract class AbstractEndToEndTests {
 
   private void pickupOrder() {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.courier(assignedCourierId))).
             when().
             post(orderBaseUrl(Long.toString(orderId), "pickedup")).
             then().
@@ -375,13 +415,74 @@ public abstract class AbstractEndToEndTests {
 
   private void deliverOrder() {
     given().
+            header("Authorization", "Bearer " + token(AuthenticatedPrincipal.courier(assignedCourierId))).
             when().
             post(orderBaseUrl(Long.toString(orderId), "delivered")).
             then().
             statusCode(200);
   }
 
+  private int readAssignedCourierId(int orderId) {
+    int assignedCourier = given().
+            when().
+            get(orderBaseUrl(Integer.toString(orderId))).
+            then().
+            statusCode(200)
+            .body("courierActions[0].type", equalTo("PICKUP"))
+            .body("courierActions[1].type", equalTo("DROPOFF"))
+            .extract()
+            .path("assignedCourier");
+    assertThat(assignedCourier).isGreaterThan(0);
+    return assignedCourier;
+  }
+
+  private void assertOrderState(int orderId, String expectedState) {
+    given().
+            when().
+            get(orderBaseUrl(Integer.toString(orderId))).
+            then().
+            statusCode(200)
+            .body("state", equalTo(expectedState));
+  }
+
+  private int postOrder(String path, String body, String authorization) {
+    com.jayway.restassured.specification.RequestSpecification request = given()
+            .contentType("application/json")
+            .body(body);
+    if (authorization != null) {
+      request.header("Authorization", authorization.startsWith("Bearer ")
+              ? authorization : "Bearer " + authorization);
+    }
+    String url = orderBaseUrl() + (path.isEmpty() ? "" : "/" + path);
+    return request.when().post(url).then().extract().statusCode();
+  }
+
+  private String createOrderRequest(int consumerId, int restaurantId) {
+    return "{\"consumerId\":" + consumerId + ",\"restaurantId\":" + restaurantId +
+            ",\"lineItems\":[{\"menuItemId\":\"" + CHICKED_VINDALOO_MENU_ITEM_ID + "\",\"quantity\":5}]}";
+  }
+
+  private String bodyForOrderAction(String action) {
+    if ("revise".equals(action)) {
+      return "{\"revisedLineItemQuantities\":{\"1\":4}}";
+    }
+    if ("accept".equals(action)) {
+      return acceptanceRequest();
+    }
+    return "{}";
+  }
+
+  private String acceptanceRequest() {
+    return "{\"readyBy\":\"" + LocalDateTime.now().plusHours(9) + "\"}";
+  }
+
+  private String token(AuthenticatedPrincipal principal) {
+    return getAuthTokenService().issue(principal, Duration.ofHours(2));
+  }
+
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  protected abstract AuthTokenService getAuthTokenService();
 }

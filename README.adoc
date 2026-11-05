@@ -8,3 +8,12 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+== Order write authentication
+
+Order write endpoints require an `Authorization: Bearer <token>` header. Consumer principals may
+create, revise, and cancel their own orders; restaurant principals may accept, prepare, and mark
+their own orders ready for pickup; and courier principals may mark an order picked up or delivered
+only when assigned to it. Configure `FTGO_AUTH_TOKEN_SECRET` with at least 32 bytes. Tokens are
+minted with `AuthTokenService.issue(...)` by the identity provider or operations tooling; this
+application intentionally has no token-issuance endpoint.

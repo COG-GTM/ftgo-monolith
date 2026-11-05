@@ -1,6 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedPrincipal;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
@@ -10,6 +11,7 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,8 +35,9 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
-    Order order = orderService.createOrder(request.getConsumerId(),
+  public CreateOrderResponse create(@RequestBody CreateOrderRequest request, @ApiIgnore AuthenticatedPrincipal caller) {
+    long consumerId = request.getConsumerId() == 0 ? caller.getId() : request.getConsumerId();
+    Order order = orderService.createOrder(caller, consumerId,
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
     );
@@ -83,9 +86,9 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId, @ApiIgnore AuthenticatedPrincipal caller) {
     try {
-      Order order = orderService.cancel(orderId);
+      Order order = orderService.cancel(caller, orderId);
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -93,9 +96,11 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request,
+                                                  @ApiIgnore AuthenticatedPrincipal caller) {
     try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+      Order order = orderService.reviseOrder(caller, orderId,
+              new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,32 +108,33 @@ public class OrderController {
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
+  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance,
+                                       @ApiIgnore AuthenticatedPrincipal caller) {
+    orderService.accept(caller, orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
-    orderService.notePreparing(orderId);
+  public ResponseEntity<String> preparing(@PathVariable long orderId, @ApiIgnore AuthenticatedPrincipal caller) {
+    orderService.notePreparing(caller, orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
-    orderService.noteReadyForPickup(orderId);
+  public ResponseEntity<String> ready(@PathVariable long orderId, @ApiIgnore AuthenticatedPrincipal caller) {
+    orderService.noteReadyForPickup(caller, orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
-    orderService.notePickedUp(orderId);
+  public ResponseEntity<String> pickedup(@PathVariable long orderId, @ApiIgnore AuthenticatedPrincipal caller) {
+    orderService.notePickedUp(caller, orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
-    orderService.noteDelivered(orderId);
+  public ResponseEntity<String> delivered(@PathVariable long orderId, @ApiIgnore AuthenticatedPrincipal caller) {
+    orderService.noteDelivered(caller, orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
