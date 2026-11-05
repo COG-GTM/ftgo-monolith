@@ -11,6 +11,7 @@ import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.common.security.ConsumerTokenService;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
@@ -23,6 +24,7 @@ import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
@@ -122,6 +124,15 @@ public abstract class AbstractEndToEndTests {
 
   }
 
+  @Test
+  public void shouldRequireAuthenticationForOrderQueries() {
+    given().
+            when().
+            get(orderBaseUrl() + "?consumerId=").
+            then().
+            statusCode(401);
+  }
+
   private void reviseOrder() {
     reviseOrder(orderId);
     verifyOrderRevised(orderId);
@@ -130,6 +141,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderRevised(int orderId) {
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
       String orderTotal = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(baseUrl(getApplicationPort(), "orders", Integer.toString(orderId))).
               then().
@@ -140,6 +152,7 @@ public abstract class AbstractEndToEndTests {
     });
     Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
       String state = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -184,6 +197,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderCancelled(int orderId) {
     Eventually.eventually(String.format("verifyOrderCancelled %s", orderId), () -> {
       String state = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -268,6 +282,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderAuthorized(int orderId) {
     Eventually.eventually(String.format("verifyOrderApproved %s", orderId), () -> {
       String state = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
               then().
@@ -281,6 +296,7 @@ public abstract class AbstractEndToEndTests {
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
     Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
       String state = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
               then().
@@ -290,6 +306,11 @@ public abstract class AbstractEndToEndTests {
                       path("[0].state");
       assertNotNull(state);
     });
+  }
+
+  private String orderAuthorizationHeader(int consumerId) {
+    return "Bearer " + new ConsumerTokenService(System.getenv("FTGO_CONSUMER_TOKEN_SECRET"))
+            .issue(consumerId, Duration.ofMinutes(30));
   }
 
   private void createCourier() {
@@ -327,6 +348,7 @@ public abstract class AbstractEndToEndTests {
   private void assertOrderAssignedToCourier() {
     int courierId = Eventually.eventuallyReturning(() -> {
       int assignedCourier = given().
+              header("Authorization", orderAuthorizationHeader(consumerId)).
               when().
               get(orderBaseUrl(Long.toString(orderId))).
               then().
