@@ -1,6 +1,6 @@
 if [ -z "$DOCKER_HOST_IP" ] ; then
     if [ -z "$DOCKER_HOST" ] ; then
-      export DOCKER_HOST_IP=`hostname`
+      export DOCKER_HOST_IP=localhost
     else
       echo using ${DOCKER_HOST?}
       XX=${DOCKER_HOST%\:*}
@@ -9,4 +9,3 @@ if [ -z "$DOCKER_HOST_IP" ] ; then
 fi
 
 echo DOCKER_HOST_IP is $DOCKER_HOST_IP
-export COMPOSE_HTTP_TIMEOUT=240

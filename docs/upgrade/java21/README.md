@@ -1,5 +1,8 @@
 # JDK 8 behaviour baseline (AB-563)
 
+For current developer setup and operator procedures, see
+[Java 21 upgrade and rollback](UPGRADE.md).
+
 Captured on 2026-11-05 from `1fb9c78da64bd0bf7a1562abc990e660f2f0c544`.
 At capture time this was both `origin/master` and `origin/devin/ab-561-java21`.
 No production code, schema, dependency version or existing test was changed.
