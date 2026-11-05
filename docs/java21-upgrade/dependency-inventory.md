@@ -68,9 +68,9 @@ Abbreviations: **common** = `ftgo-common`; **consumer**, **courier**, **order**,
 | `io.rest-assured:spring-mock-mvc` | **3.0.6**; courier, order; testCompile | NP for Java 21 alone; Spring 7 integration in 6.0.x [RA] | **4.5.1**, BOM | **6.0.1**, explicit | Keep in lockstep with REST Assured; do not allow old transitive Spring 5 into Boot 4 tests. |
 | `io.rest-assured:json-path` | **3.0.6**; courier, order; testCompile | NP; follows REST Assured/Groovy compatibility | **4.5.1**, BOM | **6.0.1**, explicit | This is REST Assured's JSON path implementation, **not** Jayway JsonPath. |
 | `com.jayway.jsonpath:json-path` | **2.3.0**; consumer, restaurant (testCompile), e2e-common (compile) | NP; selected Boot BOM supplies stack-aligned version | **2.7.0**, BOM | **2.10.0**, BOM | Separate coordinate and DSL from REST Assured's `json-path`. Retain only if actually needed after test migration. |
-| `junit:junit` | **4.12**; domain, test-util; testCompile | NP; **4.13.2** is last JUnit 4 release, not a Java 21 certification claim | **4.13.2**, BOM, plus **`org.junit.vintage:junit-vintage-engine:5.8.2`** when using JUnit Platform | Port to **`org.junit.jupiter:junit-jupiter:6.0.3`**, BOM | Boot 4 target is JUnit 6/Jupiter, not JUnit 4 or a new JUnit 4 version. Shared test utilities using `org.junit.Assert` also need migration. |
+| `junit:junit` | **4.12**; domain, test-util; testCompile | NP; **4.13.2** is last JUnit 4 release, not a Java 21 certification claim | **4.13.2**, BOM, plus **`org.junit.vintage:junit-vintage-engine:5.8.2`** when using JUnit Platform | Port to **`org.junit.jupiter:junit-jupiter:6.0.3`**, BOM | Boot 4 target is JUnit 6/Jupiter, not JUnit 4. Also migrate JUnit 4 imports in common, order, app, e2e tests, and e2e-common's **main** source set; preserve the latter's compile-time access to assertions. |
 | `io.micrometer:micrometer-registry-prometheus` | **1.0.4** via property; courier, order; compile | NP for first Java 21 release; use stack BOM | **1.9.17**, BOM | **1.17.2**, BOM | Remove `micrometerVersion` override; app's Boot 2.0.3 BOM has Micrometer 1.0.5, so declared and resolved versions may differ. Check scrape names/output after upgrade. |
-| `io.eventuate.util:eventuate-util-test` | **0.1.0.RELEASE** via property; e2e-common; compile | **Unknown**: no established Java 21 support matrix, artifact unavailable from Central | **Remove**; replace sole `Eventually` usage with bounded JDK polling or a separately reviewed test utility | Same | Do not guess a newer Eventuate version. Original Bintray repository is disabled/dead; `build/repo` is another configured fallback. This is a baseline dependency-resolution risk. |
+| `io.eventuate.util:eventuate-util-test` | **0.1.0.RELEASE** in repo property; e2e-common; compile. This VM overrides it to **0.9.0.RELEASE** | **Unknown**: no established Java 21 support matrix; 0.1.0 POM unavailable from Central mirror | **Remove**; replace `Eventually` in the one importing class with bounded JDK polling or a separately reviewed test utility | Same | Seven call sites in `AbstractEndToEndTests`: six `eventually` calls and one `eventuallyReturning` for a courier ID. Preserve assertion retry, timeout, and returned-value semantics. VM override is not a repository fix or Java 21 certification. |
 
 ## BOM-managed components that change the migration
 
@@ -137,10 +137,26 @@ same build, not external Java 21 version candidates.
 **BOM caveat:** Boot/dependency-management is not uniformly applied across
 subprojects today. For example, explicitly pinned versions in common are not
 automatically replaced by the app's BOM when compiling common itself. Conversely,
-the app/order module may resolve newer BOM-selected versions than those declared
-in libraries. Do not label this table a resolved SBOM; capture
-`dependencies` / `dependencyInsight` per configuration after repository resolution
-is repaired. The target columns assume consistent BOM imports in all modules.
+the app/order module may resolve different BOM-selected versions than those
+declared in libraries, including **downgrading** explicit Jackson pins. The
+target columns assume consistent BOM imports in all modules. These selected
+reports are not a complete resolved SBOM.
+
+### Observed resolution in this VM
+
+The following Gradle dependency reports completed successfully on JDK 8.
+The pre-existing user-home Gradle init script redirects Central/JCenter to
+Google's Central mirror; user-home `gradle.properties` sets
+`eventuateUtilVersion=0.9.0.RELEASE`. Neither change is tracked in this repo.
+Reproducing this VM's baseline therefore requires acknowledging these inputs,
+not assuming the checked-in 0.1.0 artifact suddenly became available.
+
+| Configuration | Observed declaration → resolved selection |
+| --- | --- |
+| `:ftgo-common:compileClasspath` | Jackson core/databind **2.9.7** retained; no app-level BOM downgrade at this compile boundary. |
+| `:ftgo-application:runtimeClasspath` | Jackson core/databind **2.9.7 → 2.9.6**; Jackson annotations **2.9.0**; Micrometer registry/core **1.0.4 → 1.0.5**; Hibernate **5.2.17.Final**; MySQL old coordinate relocates to **com.mysql:mysql-connector-j:8.0.33**. |
+| `:ftgo-application:testRuntimeClasspath` | Eventuate **0.9.0.RELEASE** (user-home override); Jayway REST Assured **2.9.0**; Jayway JsonPath **2.3.0 → 2.4.0**; Groovy **2.4.15**; JAXB API **2.2.11 → 2.3.0**. |
+| `:ftgo-order-service:testRuntimeClasspath` | `io.rest-assured` family **3.0.6**, Groovy **2.4.12**, Prometheus registry **1.0.4**, JAXB API **2.2.11 → 2.2.12**. Different from the app's graph. |
 
 **Sentry:** no Java SDK coordinate or Java SDK import is present.
 `ftgo-application/.../SentryConfigController.java` only reads `sentry.dsn`,
@@ -213,7 +229,8 @@ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew --version
 DOCKER_HOST_IP=localhost ./gradlew -x :ftgo-end-to-end-tests:test test --console=plain
-# After resolution works, capture each relevant module/configuration, e.g.:
+DOCKER_HOST_IP=localhost ./gradlew -x :ftgo-end-to-end-tests:test test --continue --console=plain
+# Capture each relevant module/configuration, e.g.:
 ./gradlew :ftgo-application:dependencies --configuration runtimeClasspath
 ./gradlew :ftgo-common:dependencies --configuration compileClasspath
 ./gradlew :ftgo-order-service:dependencyInsight --dependency byte-buddy --configuration testRuntimeClasspath
@@ -222,11 +239,24 @@ DOCKER_HOST_IP=localhost ./gradlew -x :ftgo-end-to-end-tests:test test --console
 ## Verification boundary
 
 The JDK 8 wrapper version command succeeded: Gradle **4.10.2**, JVM
-**1.8.0_504**, embedded Groovy **2.4.15**. Source scans and declaration coverage
-were checked against tracked files. Baseline test execution is recorded in the PR;
-this inventory does not replace the separate baseline ticket's module/test/e2e
-report. No Java 21 runtime compatibility, schema upgrade, or UI flow is claimed
-by this documentation-only change.
+**1.8.0_504**, embedded Groovy **2.4.15**. Source scans, all 22 declaration/config
+files, all 26 external library/buildscript coordinates, and Markdown table widths
+were checked against tracked files. No dedicated lint/typecheck task is configured
+for this Markdown-only artifact; the suite also compiled the Java sources.
+
+The non-e2e `test --continue` command ran **20 tests: 18 passed, 2 failed,
+0 skipped**. Both failures are `FtgoApplicationTest` context startup failures;
+the captured cause is MySQL **`Access denied for user 'mysqluser'@'localhost'`**,
+followed by Hibernate's missing `DialectResolutionInfo`. The host MySQL listener
+is present, but the compose test database was not running. Snapshot build logs
+also report the repository setup did not finish at its old MySQL image step.
+No database credentials, host service state, or checked-in image were changed to
+force a passing result. Test output and dependency reports are recorded with the
+PR. End-to-end tests and Java 21 execution were **not run** for this inventory.
+
+This does not replace the separate baseline ticket's module/test/e2e report.
+No Java 21 runtime compatibility, schema upgrade, or UI flow is claimed by this
+documentation-only change.
 
 ## Upstream evidence
 
