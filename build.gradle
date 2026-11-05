@@ -25,9 +25,38 @@ subprojects {
     dependencies {
         api platform(libs.spring.boot.bom)
         testImplementation libs.junit
+        testImplementation libs.mockito.inline
+        testRuntimeOnly libs.byte.buddy.agent
+    }
+
+    configurations.configureEach {
+        exclude group: "junit", module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+    }
+
+    afterEvaluate {
+        configurations.configureEach { configuration ->
+            resolutionStrategy.eachDependency {
+                if (requested.group == 'io.rest-assured') {
+                    useVersion libs.versions.rest.assured.get()
+                } else if (requested.group == 'org.awaitility') {
+                    useVersion libs.versions.awaitility.get()
+                } else if (requested.group == 'net.bytebuddy' && configuration.name.toLowerCase().contains('test')) {
+                    useVersion libs.versions.byte.buddy.get()
+                }
+            }
+        }
     }
 
     tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        doFirst {
+            def agent = classpath.files.find { it.name.startsWith("byte-buddy-agent-") }
+            if (agent == null) {
+                throw new GradleException("Byte Buddy agent missing from ${path} runtime classpath")
+            }
+            jvmArgs "-javaagent:${agent.absolutePath}"
+        }
         javaLauncher = javaToolchains.launcherFor {
             languageVersion = JavaLanguageVersion.of(providers.gradleProperty('testJavaVersion').getOrElse('8'))
         }
