@@ -29,8 +29,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
   private static final RequestMatcher PUBLIC_COURIER_WRITES = new OrRequestMatcher(
           new AntPathRequestMatcher("/couriers", "POST"),
+          new AntPathRequestMatcher("/couriers/", "POST"),
           new AntPathRequestMatcher("/couriers/*/availability", "POST"),
-          new AntPathRequestMatcher("/couriers/*/location", "POST"));
+          new AntPathRequestMatcher("/couriers/*/availability/", "POST"),
+          new AntPathRequestMatcher("/couriers/*/location", "POST"),
+          new AntPathRequestMatcher("/couriers/*/location/", "POST"));
   static final RequestMatcher PROTECTED_COURIER_REQUESTS = new AndRequestMatcher(
           new AntPathRequestMatcher("/couriers/**"),
           new NegatedRequestMatcher(PUBLIC_COURIER_WRITES));

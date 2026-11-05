@@ -170,6 +170,31 @@ public class CourierEndpointSecurityTest {
             .andExpect(status().isOk());
   }
 
+  @Test
+  public void trailingSlashWritesRemainPublicAndReadsRequireAuthentication() throws Exception {
+    mockMvc.perform(get("/couriers/1/"))
+            .andExpect(status().isUnauthorized());
+
+    Courier courier = mock(Courier.class);
+    when(courier.getId()).thenReturn(1L);
+    when(courierService.createCourier(any(PersonName.class), any(Address.class))).thenReturn(courier);
+
+    mockMvc.perform(post("/couriers/")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":{\"firstName\":\"Taylor\",\"lastName\":\"Courier\"},"
+                            + "\"address\":{\"street1\":\"1 Main Street\",\"city\":\"Oakland\","
+                            + "\"state\":\"CA\",\"zip\":\"94619\"}}"))
+            .andExpect(status().isOk());
+    mockMvc.perform(post("/couriers/1/availability/")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"available\":true}"))
+            .andExpect(status().isOk());
+    mockMvc.perform(post("/couriers/1/location/")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"latitude\":1.0,\"longitude\":2.0}"))
+            .andExpect(status().isOk());
+  }
+
   @Configuration
   @EnableAutoConfiguration(exclude = {
           DataSourceAutoConfiguration.class,
