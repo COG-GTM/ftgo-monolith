@@ -5,7 +5,7 @@ versions = "0.52.0"
 flyway-plugin = "6.0.0"
 mysql = "8.0.33"
 commons-lang = "2.6"
-springfox = "2.8.0"
+springdoc = "1.8.0"
 rest-assured-legacy = "2.9.0"
 json-path = "2.3.0"
 eventuate-util = "0.9.0.RELEASE"
@@ -23,8 +23,7 @@ jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
 commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
-springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox" }
-springfox-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox" }
+springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 rest-assured-legacy = { module = "com.jayway.restassured:rest-assured", version.ref = "rest-assured-legacy" }
 rest-assured = { module = "io.rest-assured:rest-assured" }

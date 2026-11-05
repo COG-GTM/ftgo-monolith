@@ -1,10 +1,5 @@
 dependencies {
-    api (libs.springfox.swagger2) {
-        exclude group: "org.springframework"
-    }
-    api (libs.springfox.ui){
-        exclude group: "org.springframework"
-    }
+    api libs.springdoc.ui
     api libs.spring.web
 
 }
