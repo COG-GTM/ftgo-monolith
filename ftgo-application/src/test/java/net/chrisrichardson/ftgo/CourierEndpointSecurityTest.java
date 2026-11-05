@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,6 +55,14 @@ public class CourierEndpointSecurityTest {
   @Test
   public void courierDetailsRequireAuthenticationWithoutCallingService() throws Exception {
     mockMvc.perform(get("/couriers/1"))
+            .andExpect(status().isUnauthorized());
+
+    verifyZeroInteractions(courierService);
+  }
+
+  @Test
+  public void headCourierDetailsRequireAuthenticationWithoutCallingService() throws Exception {
+    mockMvc.perform(head("/couriers/1"))
             .andExpect(status().isUnauthorized());
 
     verifyZeroInteractions(courierService);
@@ -120,6 +129,44 @@ public class CourierEndpointSecurityTest {
                     .content("{\"name\":{\"firstName\":\"Taylor\",\"lastName\":\"Courier\"},"
                             + "\"address\":{\"street1\":\"1 Main Street\",\"city\":\"Oakland\","
                             + "\"state\":\"CA\",\"zip\":\"94619\"}}"))
+            .andExpect(status().isOk());
+  }
+
+  @Test
+  public void postCourierRemainsPublicWithInvalidBasicCredentials() throws Exception {
+    Courier courier = mock(Courier.class);
+    when(courier.getId()).thenReturn(1L);
+    when(courierService.createCourier(any(PersonName.class), any(Address.class))).thenReturn(courier);
+
+    mockMvc.perform(post("/couriers")
+                    .with(httpBasic("operator", "wrong-password"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":{\"firstName\":\"Taylor\",\"lastName\":\"Courier\"},"
+                            + "\"address\":{\"street1\":\"1 Main Street\",\"city\":\"Oakland\","
+                            + "\"state\":\"CA\",\"zip\":\"94619\"}}"))
+            .andExpect(status().isOk());
+  }
+
+  @Test
+  public void courierWriteEndpointsRemainPublicWithoutCredentialsOrWithInvalidBasicCredentials() throws Exception {
+    mockMvc.perform(post("/couriers/1/availability")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"available\":true}"))
+            .andExpect(status().isOk());
+    mockMvc.perform(post("/couriers/1/availability")
+                    .with(httpBasic("operator", "wrong-password"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"available\":true}"))
+            .andExpect(status().isOk());
+
+    mockMvc.perform(post("/couriers/1/location")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"latitude\":1.0,\"longitude\":2.0}"))
+            .andExpect(status().isOk());
+    mockMvc.perform(post("/couriers/1/location")
+                    .with(httpBasic("operator", "wrong-password"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"latitude\":1.0,\"longitude\":2.0}"))
             .andExpect(status().isOk());
   }
 

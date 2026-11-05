@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -15,6 +14,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
 @Configuration
@@ -22,6 +26,14 @@ import org.springframework.util.StringUtils;
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
   private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
+
+  private static final RequestMatcher PUBLIC_COURIER_WRITES = new OrRequestMatcher(
+          new AntPathRequestMatcher("/couriers", "POST"),
+          new AntPathRequestMatcher("/couriers/*/availability", "POST"),
+          new AntPathRequestMatcher("/couriers/*/location", "POST"));
+  static final RequestMatcher PROTECTED_COURIER_REQUESTS = new AndRequestMatcher(
+          new AntPathRequestMatcher("/couriers/**"),
+          new NegatedRequestMatcher(PUBLIC_COURIER_WRITES));
 
   @Value("${ftgo.security.operator.username:operator}")
   private String username;
@@ -31,12 +43,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    http.csrf().disable()
+    http.requestMatcher(PROTECTED_COURIER_REQUESTS)
+            .csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .httpBasic().and()
             .authorizeRequests()
-            .antMatchers(HttpMethod.GET, "/couriers/**").hasRole("OPERATOR")
-            .anyRequest().permitAll();
+            .anyRequest().hasRole("OPERATOR");
   }
 
   @Bean
