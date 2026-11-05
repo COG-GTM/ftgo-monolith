@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_HOST_IP: localhost
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-java: ['8', '21']
+    services:
+      mysql:
+        image: mysql:5.7.13
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_USER: mysqluser
+          MYSQL_PASSWORD: mysqlpw
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Migrate database
+        run: ./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+      - name: Build Java 8 bytecode and test on JDK ${{ matrix.test-java }}
+        run: ./gradlew build -x :ftgo-end-to-end-tests:test -PtestJavaVersion=${{ matrix.test-java }} -Dorg.gradle.java.installations.paths="$JAVA_HOME_8_X64,$JAVA_HOME_21_X64"
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7.13
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_USER: mysqluser
+          MYSQL_PASSWORD: mysqlpw
+          MYSQL_DATABASE: ftgo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Migrate database and build app
+        run: ./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-application:bootJar
+      - name: Run app and end-to-end tests
+        shell: bash
+        run: |
+          java -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081 > app.log 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" || true' EXIT
+          ready=false
+          for attempt in {1..90}; do
+            if curl --fail --silent http://localhost:8081/ > /dev/null; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$app_pid" 2>/dev/null; then
+              cat app.log
+              exit 1
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then cat app.log; exit 1; fi
+          curl --fail http://localhost:8081/swagger-ui.html > /dev/null
+          curl --fail http://localhost:8081/v2/api-docs > /dev/null
+          ./run-end-to-end-tests.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            app.log
+            ftgo-end-to-end-tests/build/reports/tests/

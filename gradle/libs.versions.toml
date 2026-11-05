@@ -1,0 +1,42 @@
+[versions]
+spring-boot = "2.7.18"
+dependency-management = "1.1.7"
+versions = "0.52.0"
+flyway-plugin = "6.0.0"
+mysql = "8.0.33"
+commons-lang = "2.6"
+springfox = "2.8.0"
+rest-assured-legacy = "2.9.0"
+json-path = "2.3.0"
+eventuate-util = "0.9.0.RELEASE"
+javax-el = "2.2.5"
+junit = "4.13.2"
+
+[libraries]
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
+commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
+springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox" }
+springfox-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox" }
+prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+rest-assured-legacy = { module = "com.jayway.restassured:rest-assured", version.ref = "rest-assured-legacy" }
+rest-assured = { module = "io.rest-assured:rest-assured" }
+rest-assured-mvc = { module = "io.rest-assured:spring-mock-mvc" }
+rest-assured-json = { module = "io.rest-assured:json-path" }
+json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path" }
+eventuate-test = { module = "io.eventuate.util:eventuate-util-test", version.ref = "eventuate-util" }
+javax-el = { module = "javax.el:javax.el-api", version.ref = "javax-el" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+dependency-management = { id = "io.spring.dependency-management", version.ref = "dependency-management" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway-plugin" }
