@@ -24,12 +24,12 @@ not something caused by the upgrade.
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 PATH=$JAVA_HOME/bin:$PATH DOCKER_HOST_IP=localhost
 sudo systemctl stop mysql
-docker compose up -d --build mysql                       # 10.7s
-./gradlew waitForMySql :ftgo-flyway:flywayMigrate         # BUILD SUCCESSFUL, 19.7s (includes daemon start)
+docker compose up -d --build mysql
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate         # BUILD SUCCESSFUL in 19s (includes daemon start)
 ./gradlew clean
-./gradlew -x :ftgo-end-to-end-tests:test build --profile --continue   # BUILD FAILED, 39.6s
+./gradlew -x :ftgo-end-to-end-tests:test build --profile --continue   # BUILD FAILED in 39s (profile: 39.493s)
 java -jar ftgo-application/build/libs/ftgo-application.jar --server.port=8081
-./run-end-to-end-tests.sh                                 # BUILD FAILED, 3.0s
+./run-end-to-end-tests.sh                                 # BUILD FAILED in 2s
 ```
 
 `--continue` was added so that one failing module would not hide the results of the others; `--profile`
@@ -66,7 +66,7 @@ Times are from the Gradle profile report (clean build, warm daemon, warm depende
 
 ## End-to-end result
 
-`./run-end-to-end-tests.sh` against the jar on :8081: **2 run, 0 passed, 2 failed, 0 skipped** (3.0s).
+`./run-end-to-end-tests.sh` against the jar on :8081: **2 run, 0 passed, 2 failed, 0 skipped** (Gradle: 2s).
 
 | Test | Result |
 |---|---|
