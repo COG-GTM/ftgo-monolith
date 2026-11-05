@@ -76,7 +76,7 @@ arm64 JVM/Gradle test. No platform override is needed on a native arm64 host.
 ### DATETIME / Connector-J
 
 `MySqlDateTimeTest` uses the real Hibernate mapping for `Courier.lastLocationUpdate`,
-Connector/J 8.0.33, and a migrated MySQL database. It flushes, checks the literal
+Connector/J 8.4.0 (the AB-567 catalog version), and a migrated MySQL database. It flushes, checks the literal
 stored SQL `DATETIME`, clears the persistence context, and reloads the entity.
 It covers winter/summer, both sides of the DST gap, and the autumn overlap, with
 session time zones UTC, +05:30 and -08:00. Run on UTC and non-UTC JVMs:

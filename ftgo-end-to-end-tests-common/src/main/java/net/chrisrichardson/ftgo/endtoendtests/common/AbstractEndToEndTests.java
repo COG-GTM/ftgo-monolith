@@ -3,10 +3,10 @@ package net.chrisrichardson.ftgo.endtoendtests.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.ObjectMapperConfig;
-import com.jayway.restassured.config.RestAssuredConfig;
-import io.eventuate.util.test.async.Eventually;
+import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
+import org.awaitility.Awaitility;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
@@ -20,17 +20,19 @@ import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public abstract class AbstractEndToEndTests {
 
@@ -47,7 +49,7 @@ public abstract class AbstractEndToEndTests {
   private int courierId;
 
   private String baseUrl(int port, String path, String... pathElements) {
-    assertNotNull("host", getHost());
+    assertNotNull(getHost(), "host");
     StringBuilder sb = new StringBuilder("http://");
     sb.append(getHost());
     sb.append(":");
@@ -76,7 +78,7 @@ public abstract class AbstractEndToEndTests {
     return baseUrl(getApplicationPort(), "orders", pathElements);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void initialize() {
     objectMapper.registerModule(new MoneyModule());
     objectMapper.registerModule(new JavaTimeModule());
@@ -128,7 +130,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void verifyOrderRevised(int orderId) {
-    Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
+    Awaitility.await(String.format("verifyOrderRevised state %s", orderId)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       String orderTotal = given().
               when().
               get(baseUrl(getApplicationPort(), "orders", Integer.toString(orderId))).
@@ -138,7 +140,7 @@ public abstract class AbstractEndToEndTests {
                       path("orderTotal");
       assertEquals(priceOfChickenVindaloo.multiply(revisedQuantityOfChickenVindaloo).asString(), orderTotal);
     });
-    Eventually.eventually(String.format("verifyOrderRevised state %s", orderId), () -> {
+    Awaitility.await(String.format("verifyOrderRevised state %s", orderId)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       String state = given().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
@@ -182,7 +184,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void verifyOrderCancelled(int orderId) {
-    Eventually.eventually(String.format("verifyOrderCancelled %s", orderId), () -> {
+    Awaitility.await(String.format("verifyOrderCancelled %s", orderId)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       String state = given().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
@@ -241,7 +243,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void verifyRestaurantCreated(int restaurantId) {
-    Eventually.eventually(String.format("verifyRestaurantCreated %s", restaurantId), () ->
+    Awaitility.await(String.format("verifyRestaurantCreated %s", restaurantId)).atMost(Duration.ofSeconds(10)).untilAsserted(() ->
             given().
                     when().
                     get(restaurantBaseUrl(Integer.toString(restaurantId))).
@@ -266,7 +268,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void verifyOrderAuthorized(int orderId) {
-    Eventually.eventually(String.format("verifyOrderApproved %s", orderId), () -> {
+    Awaitility.await(String.format("verifyOrderApproved %s", orderId)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       String state = given().
               when().
               get(orderBaseUrl(Integer.toString(orderId))).
@@ -279,7 +281,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void verifyOrderHistoryUpdated(int orderId, int consumerId) {
-    Eventually.eventually(String.format("verifyOrderHistoryUpdated %s", orderId), () -> {
+    Awaitility.await(String.format("verifyOrderHistoryUpdated %s", orderId)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       String state = given().
               when().
               get(orderBaseUrl() + "?consumerId=" + consumerId).
@@ -325,7 +327,8 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void assertOrderAssignedToCourier() {
-    int courierId = Eventually.eventuallyReturning(() -> {
+    AtomicInteger assignedCourierId = new AtomicInteger();
+    Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       int assignedCourier = given().
               when().
               get(orderBaseUrl(Long.toString(orderId))).
@@ -336,12 +339,12 @@ public abstract class AbstractEndToEndTests {
               .extract()
               .path("assignedCourier");
       assertThat(assignedCourier).isGreaterThan(0);
-      return assignedCourier;
+      assignedCourierId.set(assignedCourier);
     });
 
     given().
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            get(baseUrl(getApplicationPort(), "couriers", Integer.toString(assignedCourierId.get()))).
             then().
             statusCode(200)
             .body("plan.actions[0].type", equalTo("PICKUP"))
