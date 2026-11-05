@@ -5,6 +5,9 @@ import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
+
+import java.util.Optional;
+
 import org.springframework.transaction.annotation.Transactional;
 
 public class CourierService {
@@ -24,18 +27,29 @@ public class CourierService {
   }
 
   @Transactional
-  public Courier createCourier(PersonName name, Address address) {
+  public CreatedCourier createCourier(PersonName name, Address address) {
+    String accessToken = CourierAccessTokens.generate();
     Courier courier = new Courier(name, address);
+    courier.assignAccessTokenHash(CourierAccessTokens.hash(accessToken));
     courierRepository.save(courier);
-    return courier;
+    return new CreatedCourier(courier, accessToken);
+  }
+
+  public Optional<Long> findCourierIdByAccessToken(String accessToken) {
+    return courierRepository.findByAccessTokenHash(CourierAccessTokens.hash(accessToken))
+            .map(Courier::getId);
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
