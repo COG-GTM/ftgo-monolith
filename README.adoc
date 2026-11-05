@@ -8,3 +8,7 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+## Authenticating order queries
+
+Order read endpoints require a bearer token signed with HS256. Set `FTGO_CONSUMER_TOKEN_SECRET` to a secret of at least 32 UTF-8 bytes. Tokens must include `sub` as the consumer ID and a future `exp` claim; send them as `Authorization: Bearer <token>`. Missing or invalid tokens return 401, querying another consumer's history returns 403, and reading another consumer's order returns 404.

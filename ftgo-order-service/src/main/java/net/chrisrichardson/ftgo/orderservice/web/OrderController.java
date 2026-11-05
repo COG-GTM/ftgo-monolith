@@ -1,12 +1,14 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.common.security.AuthenticatedConsumer;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import springfox.documentation.annotations.ApiIgnore;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,14 +45,22 @@ public class OrderController {
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
-  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
+  public ResponseEntity<GetOrderResponse> getOrder(@ApiIgnore AuthenticatedConsumer caller, @PathVariable long orderId) {
     Optional<Order> order = orderRepository.findById(orderId);
-    return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    return order
+            .filter(o -> o.getConsumerId() != null && o.getConsumerId().longValue() == caller.getConsumerId())
+            .map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK))
+            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@ApiIgnore AuthenticatedConsumer caller,
+                                                          @RequestParam(required = false) Long consumerId) {
+    if (consumerId != null && consumerId.longValue() != caller.getConsumerId()) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+
+    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(caller.getConsumerId())
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
