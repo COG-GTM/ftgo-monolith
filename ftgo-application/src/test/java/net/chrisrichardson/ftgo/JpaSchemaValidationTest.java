@@ -5,21 +5,18 @@ import net.chrisrichardson.ftgo.common.tracking.ApiRequestLog;
 import net.chrisrichardson.ftgo.common.tracking.ApiRequestLogRepository;
 import net.chrisrichardson.ftgo.domain.Consumer;
 import net.chrisrichardson.ftgo.domain.ConsumerRepository;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = FtgoApplicationTest.Config.class,
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     properties = {
