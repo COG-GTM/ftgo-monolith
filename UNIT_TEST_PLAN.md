@@ -7,14 +7,11 @@ engine versions are managed by Spring Boot 2.7.18. REST Assured, json-path and
 spring-mock-mvc use 5.5.7 (Java 8 compatible); asynchronous assertions use Awaitility
 4.2.2 with bounded waits. JUnit 4 and Vintage are excluded from runtime classpaths.
 
-Mockito inline 4.5.1 is managed by Boot (Mockito 5 requires Java 11). Each test task
-preloads the Byte Buddy agent resolved from its runtime classpath; Mockito inline
-reuses that instrumentation, avoiding dynamic attachment warnings on JDK 21.
-Mockito 4 core/inline jars are not startup agents. Mockito 5 core-as-agent is deferred
-until after the JDK 21 cut-over. Test classpaths pin Byte Buddy core and agent to
-1.14.19 for JDK 21 instrumentation support; production dependencies are unchanged.
+Mockito 5 (`mockito-core`, inline mock maker by default) and Byte Buddy are managed by
+Spring Boot 3.5. Each test task preloads the Byte Buddy agent resolved from its runtime
+classpath, avoiding dynamic attachment warnings on JDK 21.
 
-Run Gradle with JDK 8; select the test runtime with `-PtestJavaVersion=21`.
+Run Gradle with JDK 21; every module compiles with `--release 21`.
 
 ## Current Coverage
 

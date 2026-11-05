@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.chrisrichardson.ftgo.GlobalExceptionHandler;
 import net.chrisrichardson.ftgo.SentryConfigController;
+import net.chrisrichardson.ftgo.WebCompatibilityConfiguration;
 import net.chrisrichardson.ftgo.common.*;
 import net.chrisrichardson.ftgo.common.tracking.*;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -59,7 +60,7 @@ public class ApiGoldenTest {
   @Configuration
   @Import({ConsumerController.class, RestaurantController.class, OrderController.class,
           CourierController.class, ApiTrackingController.class, SentryConfigController.class,
-          GlobalExceptionHandler.class, CommonJsonMapperInitializer.class})
+          GlobalExceptionHandler.class, CommonJsonMapperInitializer.class, WebCompatibilityConfiguration.class})
   static class Config {
     @Bean
     ObjectMapper objectMapper() {
@@ -73,12 +74,12 @@ public class ApiGoldenTest {
 
   @Autowired private MockMvc mvc;
   @Autowired private ObjectMapper mapper;
-  @MockBean private ConsumerService consumers;
-  @MockBean private RestaurantService restaurants;
-  @MockBean private OrderService orders;
-  @MockBean private OrderRepository orderRepository;
-  @MockBean private CourierService couriers;
-  @MockBean private ApiRequestLogRepository logs;
+  @MockitoBean private ConsumerService consumers;
+  @MockitoBean private RestaurantService restaurants;
+  @MockitoBean private OrderService orders;
+  @MockitoBean private OrderRepository orderRepository;
+  @MockitoBean private CourierService couriers;
+  @MockitoBean private ApiRequestLogRepository logs;
 
   private Order order;
   private Courier courier;
@@ -168,6 +169,29 @@ public class ApiGoldenTest {
   public void orderHistoryAndTrailingSlash() throws Exception {
     golden(get("/orders").param("consumerId", "1"), "order-history");
     golden(get("/orders/").param("consumerId", "1"), "order-history");
+    golden(get("/orders/3/"), "order");
+    golden(get("/consumers/1/"), "consumer");
+    golden(post("/orders/").contentType(MediaType.APPLICATION_JSON).content(fixture("order-request")), "order-created");
+  }
+
+  @Test
+  public void springMvcExceptionsAreClientErrors() throws Exception {
+    springMvcError(get("/orders"), 400, "Bad Request");
+    springMvcError(get("/orders/not-a-number"), 400, "Bad Request");
+    springMvcError(post("/consumers").contentType(MediaType.APPLICATION_JSON).content("{not json"), 400, "Bad Request");
+    springMvcError(delete("/orders/3"), 405, "Method Not Allowed");
+    springMvcError(post("/consumers").contentType(MediaType.TEXT_PLAIN).content("x"), 415, "Unsupported Media Type");
+  }
+
+  private void springMvcError(MockHttpServletRequestBuilder request, int status, String error) throws Exception {
+    MvcResult result = mvc.perform(request).andExpect(status().is(status))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)).andReturn();
+    JsonNode body = mapper.readTree(result.getResponse().getContentAsString());
+    assertThat(body.get("status").asInt()).isEqualTo(status);
+    assertThat(body.get("error").asText()).isEqualTo(error);
+    assertThat(body.get("message").asText()).isNotEmpty();
+    assertThat(body.has("path")).isTrue();
+    assertThat(body.has("timestamp")).isTrue();
   }
 
   @Test

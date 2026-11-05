@@ -13,9 +13,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        test-java: ['8', '21']
     services:
       mysql:
         image: mysql:8.4
@@ -36,27 +33,19 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Migrate database
         run: ./gradlew waitForMySql :ftgo-flyway:flywayMigrate :ftgo-flyway:flywayValidate
-      - name: Build Java 8 bytecode and test on JDK ${{ matrix.test-java }}
-        run: ./gradlew build -x :ftgo-end-to-end-tests:test -PtestJavaVersion=${{ matrix.test-java }} -Dorg.gradle.java.installations.paths="$JAVA_HOME_8_X64,$JAVA_HOME_21_X64"
+      - name: Build and test on JDK 21
+        run: ./gradlew build -x :ftgo-end-to-end-tests:test
       - name: Verify local datetime storage in a non-UTC JVM
-        run: ./gradlew :ftgo-application:test --tests '*MySqlDateTimeTest' -PtestTimeZone=America/Los_Angeles -PtestJavaVersion=${{ matrix.test-java }}
+        run: ./gradlew :ftgo-application:test --tests '*MySqlDateTimeTest' -PtestTimeZone=America/Los_Angeles
 
   flyway-compatibility:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '8'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -87,10 +76,6 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Migrate database and build app
@@ -116,6 +101,8 @@ jobs:
           if [ "$ready" != true ]; then cat app.log; exit 1; fi
           curl --fail http://localhost:8081/swagger-ui.html > /dev/null
           curl --fail http://localhost:8081/v3/api-docs > /dev/null
+          curl --fail http://localhost:8081/actuator/health > /dev/null
+          curl --fail http://localhost:8081/actuator/prometheus > /dev/null
           ./run-end-to-end-tests.sh
       - uses: actions/upload-artifact@v4
         if: always()

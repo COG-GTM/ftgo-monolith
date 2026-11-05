@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.chrisrichardson.ftgo.GlobalExceptionHandler;
+import net.chrisrichardson.ftgo.WebCompatibilityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -30,7 +31,7 @@ public class StaticPathGoldenTest {
   @Configuration
   @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class,
           HibernateJpaAutoConfiguration.class, JpaRepositoriesAutoConfiguration.class})
-  @Import(GlobalExceptionHandler.class)
+  @Import({GlobalExceptionHandler.class, WebCompatibilityConfiguration.class})
   static class Config {
   }
 

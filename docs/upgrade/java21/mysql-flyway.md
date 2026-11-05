@@ -84,7 +84,6 @@ session time zones UTC, +05:30 and -08:00. Run on UTC and non-UTC JVMs:
 ```bash
 ./gradlew :ftgo-application:test --tests '*MySqlDateTimeTest'
 ./gradlew :ftgo-application:test --tests '*MySqlDateTimeTest' -PtestTimeZone=America/Los_Angeles
-# Also supported during the bridge: -PtestJavaVersion=21
 ```
 
 Valid local wall-clock values retain their exact stored/reloaded value; no
