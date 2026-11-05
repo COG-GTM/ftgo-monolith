@@ -46,6 +46,27 @@ On port 8081, open http://localhost:8081/swagger-ui.html (springdoc redirects to
 The OpenAPI 3 specification is at http://localhost:8081/v3/api-docs.
 The application uses Spring Boot 3.5 and springdoc 2.x.
 
+## Container runtime
+
+Use JDK 21 and Docker Compose v2 (`docker compose`). CI runs in GitHub Actions;
+the legacy CircleCI configuration and setup scripts have been retired.
+MySQL initialization creates the database and grants only; run Flyway before
+starting the application:
+
+[source,shell]
+----
+export DOCKER_HOST_IP=localhost
+./gradlew :ftgo-application:bootJar
+docker compose up -d --build mysql
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+docker compose up -d --build --wait
+./run-end-to-end-tests.sh
+docker compose down -v
+----
+
+The non-root Temurin 21 JRE container serves port 8081 on the host. It has a
+512 MiB memory limit and sets the JVM maximum heap to 75% of available memory.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

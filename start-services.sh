@@ -3,7 +3,6 @@
 docker compose up -d --build mysql
 
 ./wait-for-mysql.sh
-
 ./gradlew :ftgo-flyway:flywayMigrate
 
 docker compose up -d --build

@@ -12,10 +12,10 @@ Docker and the Compose v2 plugin (`docker compose`) are required locally.
 Sources: `git diff origin/master...HEAD`, `build.gradle`,
 `gradle/libs.versions.toml`, [cut-over notes](ab-570-cutover.md),
 [API comparison](ab-566-spec-diff.md), [MySQL/Flyway notes](mysql-flyway.md).
-The production base image moves from `openjdk:8u171-jre-alpine` to
-`eclipse-temurin:21-jre` in **AB-571**, not this ticket. Until that lands,
-the checked-in application Dockerfile cannot run the Java 21 jar; use the host
-command below or the explicit Temurin container used in the rehearsal.
+The production base image moved from `openjdk:8u171-jre-alpine` to
+`eclipse-temurin:21-jre-alpine` in **AB-571** (non-root, `-XX:MaxRAMPercentage=75`,
+512 MiB compose limit); see [runtime-container.md](runtime-container.md).
+The rehearsal below predates that change and used an explicit Temurin container.
 
 ## Configuration and monitoring
 

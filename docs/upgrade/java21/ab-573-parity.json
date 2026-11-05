@@ -1,0 +1,1964 @@
+{
+  "ticket": "AB-573",
+  "source_revision": "6285695255541ebb4dccb40b4f36588c40bcabbb",
+  "jdk": "21.0.12.1",
+  "database": "MySQL 8.4.13",
+  "tests": {
+    "counts": {
+      "PASS": 67
+    },
+    "methods": [
+      {
+        "module": "common-swagger",
+        "class_": "net.chrisrichardson.eventstore.examples.customersandorders.commonswagger.CommonSwaggerConfigurationTest",
+        "test": "describesFtgoApi",
+        "result": "PASS",
+        "seconds": 0.01
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldDeliverOrder",
+        "result": "PASS",
+        "seconds": 1.82
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "result": "PASS",
+        "seconds": 0.799
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.JpaSchemaValidationTest",
+        "test": "shouldUseAndAdvanceTheExistingSequenceValueByOne",
+        "result": "PASS",
+        "seconds": 0.033
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.JpaSchemaValidationTest",
+        "test": "shouldSearchRequestUrisWithPortableJpql",
+        "result": "PASS",
+        "seconds": 0.037
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.OpenApiDocumentationTest",
+        "test": "unwrapsResponseAndAsyncContainers",
+        "result": "PASS",
+        "seconds": 0.27
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierGet",
+        "result": "PASS",
+        "seconds": 0.092
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "legacyNotFoundResponsesHaveNoBody",
+        "result": "PASS",
+        "seconds": 0.023
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderHistoryAndTrailingSlash",
+        "result": "PASS",
+        "seconds": 0.018
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderAcceptParsesIsoTime",
+        "result": "PASS",
+        "seconds": 0.012
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierWorkload",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Restaurant",
+        "result": "PASS",
+        "seconds": 0.01
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderGetUnassigned",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "restaurantGet",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "consumerCreate",
+        "result": "PASS",
+        "seconds": 0.008
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderGetAssignedUsesIsoTimeAndStringMoney",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierAvailability",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "consumerGet",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingEmptyStats",
+        "result": "PASS",
+        "seconds": 0.014
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "springMvcExceptionsAreClientErrors",
+        "result": "PASS",
+        "seconds": 0.019
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderPreparing",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "errorPathKeepsTrailingSlash",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error500DoesNotExposeException",
+        "result": "PASS",
+        "seconds": 0.011
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Courier",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierLocation",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "sentryConfig",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingCorrelation",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderDelivered",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error404Order",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderReady",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "courierCreate",
+        "result": "PASS",
+        "seconds": 0.012
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderPickedUp",
+        "result": "PASS",
+        "seconds": 0.006
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderCancel",
+        "result": "PASS",
+        "seconds": 0.003
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderCreate",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error400",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error409",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "error503",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "orderRevise",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingErrors",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingStats",
+        "result": "PASS",
+        "seconds": 0.004
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "restaurantCreate",
+        "result": "PASS",
+        "seconds": 0.009
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingRecent",
+        "result": "PASS",
+        "seconds": 0.003
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "trackingSearch",
+        "result": "PASS",
+        "seconds": 0.003
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.MySqlDateTimeTest",
+        "test": "shouldPreserveLocalDateTimeInStoredDatetimeAcrossSessionTimeZones",
+        "result": "PASS",
+        "seconds": 0.055
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.StaticPathGoldenTest",
+        "test": "unknownStaticPathUsesContainerErrorDispatch",
+        "result": "PASS",
+        "seconds": 0.068
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldSer",
+        "result": "PASS",
+        "seconds": 0.028
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldFailToDe",
+        "result": "PASS",
+        "seconds": 0.012
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneySerializationTest",
+        "test": "shouldDe",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldAdd",
+        "result": "PASS",
+        "seconds": 0.0
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldMultiply",
+        "result": "PASS",
+        "seconds": 0.0
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldReturnAsString",
+        "result": "PASS",
+        "seconds": 0.0
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.MoneyTest",
+        "test": "shouldCompare",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.tracking.ApiTrackingInterceptorTest",
+        "test": "recordsRequestUriOtherwise",
+        "result": "PASS",
+        "seconds": 0.054
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.tracking.ApiTrackingInterceptorTest",
+        "test": "recordsOriginalUriWhenRequestWasRewritten",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldSkipCouriersAtMaxCapacity",
+        "result": "PASS",
+        "seconds": 0.038
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldAssignClosestCourier",
+        "result": "PASS",
+        "seconds": 0.0
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldCalculateHaversineDistanceCorrectly",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldPreferLessLoadedCourierWhenDistanceSimilar",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldFallbackToLoadBalancingWhenNoLocations",
+        "result": "PASS",
+        "seconds": 0.002
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldAssignAmongMixOfLocatedAndUnlocated",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldHandleSingleCourier",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldThrowWhenNoCouriersAvailable",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-domain",
+        "class_": "net.chrisrichardson.ftgo.domain.CourierAssignmentStrategyTest",
+        "test": "shouldEstimateDeliveryMinutesCorrectly",
+        "result": "PASS",
+        "seconds": 0.001
+      },
+      {
+        "module": "ftgo-end-to-end-tests",
+        "class_": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldDeliverOrder",
+        "result": "PASS",
+        "seconds": 2.309
+      },
+      {
+        "module": "ftgo-end-to-end-tests",
+        "class_": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "result": "PASS",
+        "seconds": 0.85
+      },
+      {
+        "module": "ftgo-order-service",
+        "class_": "net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest",
+        "test": "shouldFindNotOrder",
+        "result": "PASS",
+        "seconds": 1.094
+      },
+      {
+        "module": "ftgo-order-service",
+        "class_": "net.chrisrichardson.ftgo.orderservice.web.OrderControllerTest",
+        "test": "shouldFindOrder",
+        "result": "PASS",
+        "seconds": 0.28
+      }
+    ],
+    "changed": [
+      {
+        "class_": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldDeliverOrder",
+        "before": "FAIL",
+        "after": "PASS"
+      },
+      {
+        "class_": "net.chrisrichardson.ftgo.FtgoApplicationTest",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "before": "FAIL",
+        "after": "PASS"
+      },
+      {
+        "class_": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldDeliverOrder",
+        "before": "FAIL",
+        "after": "PASS"
+      },
+      {
+        "class_": "net.chrisrichardson.ftgo.endtoendtests.EndToEndTests",
+        "test": "shouldCreateReviseAndCancelOrder",
+        "before": "FAIL",
+        "after": "PASS"
+      }
+    ],
+    "new": [
+      {
+        "module": "common-swagger",
+        "class_": "net.chrisrichardson.eventstore.examples.customersandorders.commonswagger.CommonSwaggerConfigurationTest",
+        "test": "describesFtgoApi",
+        "result": "PASS",
+        "seconds": 0.01
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.JpaSchemaValidationTest",
+        "test": "shouldUseAndAdvanceTheExistingSequenceValueByOne",
+        "result": "PASS",
+        "seconds": 0.033
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.JpaSchemaValidationTest",
+        "test": "shouldSearchRequestUrisWithPortableJpql",
+        "result": "PASS",
+        "seconds": 0.037
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgo.OpenApiDocumentationTest",
+        "test": "unwrapsResponseAndAsyncContainers",
+        "result": "PASS",
+        "seconds": 0.27
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "springMvcExceptionsAreClientErrors",
+        "result": "PASS",
+        "seconds": 0.019
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.ApiGoldenTest",
+        "test": "errorPathKeepsTrailingSlash",
+        "result": "PASS",
+        "seconds": 0.005
+      },
+      {
+        "module": "ftgo-application",
+        "class_": "net.chrisrichardson.ftgobaseline.MySqlDateTimeTest",
+        "test": "shouldPreserveLocalDateTimeInStoredDatetimeAcrossSessionTimeZones",
+        "result": "PASS",
+        "seconds": 0.055
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.tracking.ApiTrackingInterceptorTest",
+        "test": "recordsRequestUriOtherwise",
+        "result": "PASS",
+        "seconds": 0.054
+      },
+      {
+        "module": "ftgo-common",
+        "class_": "net.chrisrichardson.ftgo.common.tracking.ApiTrackingInterceptorTest",
+        "test": "recordsOriginalUriWhenRequestWasRewritten",
+        "result": "PASS",
+        "seconds": 0.001
+      }
+    ],
+    "missing": [],
+    "original_methods": 22
+  },
+  "openapi": {
+    "paths": 24,
+    "operations": 25,
+    "schemas": 26,
+    "request_bodies": 8,
+    "response_schemas": 25,
+    "result": "PASS"
+  },
+  "golden": [
+    {
+      "file": "consumer-created.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.consumerId",
+          "baseline": 1,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "consumer-request.json",
+      "verification": "strict golden test; live request",
+      "differences": null,
+      "explanation": "Request fixture sent unchanged to the live POST endpoint."
+    },
+    {
+      "file": "consumer.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [],
+      "explanation": "Exact live match."
+    },
+    {
+      "file": "courier-created.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.id",
+          "baseline": 4,
+          "live": 18
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "courier-request.json",
+      "verification": "strict golden test; live request",
+      "differences": null,
+      "explanation": "Request fixture sent unchanged to the live POST endpoint."
+    },
+    {
+      "file": "courier-workload.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.courierId",
+          "baseline": 4,
+          "live": 18
+        },
+        {
+          "field": "$.lastLocationUpdate",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:14"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "courier.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.id",
+          "baseline": 4,
+          "live": 18
+        },
+        {
+          "field": "$.lastLocationUpdate",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:14"
+        },
+        {
+          "field": "$.plan.actions[0].time",
+          "baseline": "2026-01-02T03:04:05",
+          "live": null
+        },
+        {
+          "field": "$.plan.actions[1].time",
+          "baseline": "2026-01-02T03:24:05",
+          "live": "2026-11-06T12:15:00"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields. Action.makePickup constructs a null time; dropoff time derives from the live readyBy."
+    },
+    {
+      "file": "error-bad-request.json",
+      "verification": "strict golden test; no direct live fixture comparison",
+      "differences": null,
+      "explanation": "Strict golden test passes; invalid-location exception is mocked and was not independently reproduced live."
+    },
+    {
+      "file": "error-conflict.json",
+      "verification": "live + strict golden test",
+      "status": 409,
+      "differences": [
+        {
+          "field": "$.path",
+          "baseline": "/orders/3/preparing",
+          "live": "/orders/5/preparing"
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13.399428262"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "error-courier.json",
+      "verification": "live + strict golden test",
+      "status": 500,
+      "differences": [
+        {
+          "field": "$.error",
+          "baseline": "Not Found",
+          "live": "Internal Server Error"
+        },
+        {
+          "field": "$.message",
+          "baseline": "Courier not found: 4",
+          "live": "An unexpected error occurred"
+        },
+        {
+          "field": "$.path",
+          "baseline": "/couriers/4",
+          "live": "/couriers/999999999"
+        },
+        {
+          "field": "$.status",
+          "baseline": 404,
+          "live": 500
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13.46647122"
+        }
+      ],
+      "explanation": "Existing Optional.get() in CourierService.findCourierById throws NoSuchElementException and maps to 500; identical source at AB-563, not a Java 21 regression. Fixture mocks CourierNotFoundException -> 404."
+    },
+    {
+      "file": "error-internal.json",
+      "verification": "live + strict golden test",
+      "status": 500,
+      "differences": [
+        {
+          "field": "$.path",
+          "baseline": "/couriers/4",
+          "live": "/couriers/999999999"
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13.46647122"
+        }
+      ],
+      "explanation": "The real unknown-courier failure exercises the internal-error contract; only generated timestamp and requested courier ID/path differ."
+    },
+    {
+      "file": "error-order.json",
+      "verification": "live + strict golden test",
+      "status": 404,
+      "differences": [
+        {
+          "field": "$.message",
+          "baseline": "Order not found3",
+          "live": "Order not found999999999"
+        },
+        {
+          "field": "$.path",
+          "baseline": "/orders/3/preparing",
+          "live": "/orders/999999999/preparing"
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13.419748282"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "error-restaurant.json",
+      "verification": "live + strict golden test",
+      "status": 404,
+      "differences": [
+        {
+          "field": "$.message",
+          "baseline": "Restaurant not found with id 2",
+          "live": "Restaurant not found with id 999999999"
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13.448319931"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "error-unavailable.json",
+      "verification": "live + strict golden test",
+      "status": 503,
+      "differences": [
+        {
+          "field": "$.path",
+          "baseline": "/orders/3/ready",
+          "live": "/orders/7/accept"
+        },
+        {
+          "field": "$.timestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:25.313439978"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields. Real assignment failure occurs at /accept, not the mocked /ready fixture."
+    },
+    {
+      "file": "order-assigned.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.assignedCourier",
+          "baseline": 4,
+          "live": 18
+        },
+        {
+          "field": "$.courierActions[0].time",
+          "baseline": "2026-01-02T03:04:05",
+          "live": null
+        },
+        {
+          "field": "$.courierActions[1].time",
+          "baseline": "2026-01-02T03:24:05",
+          "live": "2026-11-06T12:15:00"
+        },
+        {
+          "field": "$.estimatedDeliveryTime",
+          "baseline": "2026-01-02T03:24:05",
+          "live": "2026-11-06T12:15:00"
+        },
+        {
+          "field": "$.orderId",
+          "baseline": 3,
+          "live": 6
+        },
+        {
+          "field": "$.state",
+          "baseline": "APPROVED",
+          "live": "ACCEPTED"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields. Real assignment requires ACCEPTED, unlike the mocked APPROVED fixture. Action.makePickup constructs a null time; DROPOFF is calculated from readyBy/location."
+    },
+    {
+      "file": "order-cancelled.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.orderId",
+          "baseline": 3,
+          "live": 7
+        },
+        {
+          "field": "$.orderTotal",
+          "baseline": "24.68",
+          "live": "37.02"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields. Total is 37.02 because this order was revised to quantity 3 before cancellation; fixture cancels quantity 2."
+    },
+    {
+      "file": "order-created.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.orderId",
+          "baseline": 3,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "order-history.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$[0].orderId",
+          "baseline": 3,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "order-request.json",
+      "verification": "strict golden test; live request",
+      "differences": null,
+      "explanation": "Request sent live with generated consumer/restaurant IDs replacing 1/2."
+    },
+    {
+      "file": "order-revised.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.orderId",
+          "baseline": 3,
+          "live": 7
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "order.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.orderId",
+          "baseline": 3,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "restaurant-created.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.id",
+          "baseline": 2,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "restaurant-request.json",
+      "verification": "strict golden test; live request",
+      "differences": null,
+      "explanation": "Request fixture sent unchanged to the live POST endpoint."
+    },
+    {
+      "file": "restaurant.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.id",
+          "baseline": 2,
+          "live": 5
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "sentry.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [],
+      "explanation": "Exact live match."
+    },
+    {
+      "file": "static-not-found.json",
+      "verification": "live + strict golden test",
+      "status": 404,
+      "differences": [
+        {
+          "field": "$.timestamp",
+          "baseline": "<timestamp>",
+          "live": "2026-11-05T21:34:13.437+0000"
+        }
+      ],
+      "explanation": "IDs and timestamps reflect live persisted data; see individual fields."
+    },
+    {
+      "file": "tracking-empty-stats.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.periodMinutes",
+          "baseline": 60,
+          "live": 0
+        }
+      ],
+      "explanation": "Empty live window selected with minutesBack=0 instead of mocked empty 60-minute window; periodMinutes is the only difference."
+    },
+    {
+      "file": "tracking-log.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.correlationId",
+          "baseline": "golden-correlation",
+          "live": "ab573-unique"
+        },
+        {
+          "field": "$.durationMs",
+          "baseline": 25,
+          "live": 1
+        },
+        {
+          "field": "$.errorMessage",
+          "baseline": "example failure",
+          "live": null
+        },
+        {
+          "field": "$.id",
+          "baseline": 5,
+          "live": 395
+        },
+        {
+          "field": "$.queryString",
+          "baseline": "consumerId=1",
+          "live": null
+        },
+        {
+          "field": "$.requestTimestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:25"
+        },
+        {
+          "field": "$.requestUri",
+          "baseline": "/orders/3",
+          "live": "/config/sentry"
+        },
+        {
+          "field": "$.responseStatus",
+          "baseline": 500,
+          "live": 200
+        },
+        {
+          "field": "$.userAgent",
+          "baseline": "golden-client",
+          "live": "curl/7.81.0"
+        }
+      ],
+      "explanation": "Live traffic, IDs, correlation, paths, timings, user agent and request counts differ from the synthetic single-failed-request fixture; exact field differences below."
+    },
+    {
+      "file": "tracking-logs.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$[0].durationMs",
+          "baseline": 25,
+          "live": 1
+        },
+        {
+          "field": "$[0].errorMessage",
+          "baseline": "example failure",
+          "live": null
+        },
+        {
+          "field": "$[0].id",
+          "baseline": 5,
+          "live": 369
+        },
+        {
+          "field": "$[0].queryString",
+          "baseline": "consumerId=1",
+          "live": null
+        },
+        {
+          "field": "$[0].requestTimestamp",
+          "baseline": "2026-01-02T03:04:05",
+          "live": "2026-11-05T21:34:13"
+        },
+        {
+          "field": "$[0].requestUri",
+          "baseline": "/orders/3",
+          "live": "/orders/999999999"
+        },
+        {
+          "field": "$[0].responseStatus",
+          "baseline": 500,
+          "live": 404
+        },
+        {
+          "field": "$[0].userAgent",
+          "baseline": "golden-client",
+          "live": "curl/7.81.0"
+        },
+        {
+          "field": "$[1]",
+          "baseline": "<missing>",
+          "live": {
+            "id": 370,
+            "correlationId": "golden-correlation",
+            "httpMethod": "POST",
+            "requestUri": "/orders/999999999/preparing",
+            "queryString": null,
+            "responseStatus": 404,
+            "durationMs": 1,
+            "remoteAddr": "127.0.0.1",
+            "userAgent": "curl/7.81.0",
+            "errorMessage": null,
+            "requestTimestamp": "2026-11-05T21:34:13"
+          }
+        }
+      ],
+      "explanation": "Live traffic, IDs, correlation, paths, timings, user agent and request counts differ from the synthetic single-failed-request fixture; exact field differences below."
+    },
+    {
+      "file": "tracking-stats.json",
+      "verification": "live + strict golden test",
+      "status": 200,
+      "differences": [
+        {
+          "field": "$.avgDurationMs",
+          "baseline": 25.0,
+          "live": 6.08
+        },
+        {
+          "field": "$.errorCount",
+          "baseline": 1,
+          "live": 12
+        },
+        {
+          "field": "$.errorRate",
+          "baseline": 1.0,
+          "live": 0.031007751937984496
+        },
+        {
+          "field": "$.p95DurationMs",
+          "baseline": 25,
+          "live": 14
+        },
+        {
+          "field": "$.statusCodeDistribution.200",
+          "baseline": "<missing>",
+          "live": 373
+        },
+        {
+          "field": "$.statusCodeDistribution.302",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.statusCodeDistribution.404",
+          "baseline": "<missing>",
+          "live": 7
+        },
+        {
+          "field": "$.statusCodeDistribution.409",
+          "baseline": "<missing>",
+          "live": 3
+        },
+        {
+          "field": "$.statusCodeDistribution.500",
+          "baseline": 1,
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.GET /config/sentry",
+          "baseline": "<missing>",
+          "live": 101
+        },
+        {
+          "field": "$.topEndpoints.GET /consumers/1",
+          "baseline": "<missing>",
+          "live": 100
+        },
+        {
+          "field": "$.topEndpoints.GET /consumers/5",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /couriers/1",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /couriers/17",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /couriers/18",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /couriers/18/workload",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /couriers/999999999",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /health",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.GET /orders",
+          "baseline": "<missing>",
+          "live": 4
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/1",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/2",
+          "baseline": "<missing>",
+          "live": 4
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/3",
+          "baseline": 1,
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/4",
+          "baseline": "<missing>",
+          "live": 4
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/5/",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/6",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /orders/999999999",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /restaurants/1",
+          "baseline": "<missing>",
+          "live": 101
+        },
+        {
+          "field": "$.topEndpoints.GET /restaurants/2",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /restaurants/3",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /restaurants/4",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /restaurants/5",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /swagger-ui.html",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /swagger-ui/index.html",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.GET /this-static-path-does-not-exist.js",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.GET /v3/api-docs",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.HEAD /swagger-ui.html",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /consumers",
+          "baseline": "<missing>",
+          "live": 5
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers",
+          "baseline": "<missing>",
+          "live": 3
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers/1/availability",
+          "baseline": "<missing>",
+          "live": 2
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers/17/availability",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers/18/availability",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers/18/location",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /couriers/2/availability",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders",
+          "baseline": "<missing>",
+          "live": 6
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/1/accept",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/1/delivered",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/1/pickedup",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/1/preparing",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/1/ready",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/2/cancel",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/2/revise",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/3/accept",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/3/delivered",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/3/pickedup",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/3/preparing",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/3/ready",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/4/cancel",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/4/revise",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/5/accept",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/5/cancel",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/5/preparing",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/5/revise",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/6/accept",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /orders/999999999/preparing",
+          "baseline": "<missing>",
+          "live": 1
+        },
+        {
+          "field": "$.topEndpoints.POST /restaurants",
+          "baseline": "<missing>",
+          "live": 5
+        },
+        {
+          "field": "$.totalRequests",
+          "baseline": 1,
+          "live": 387
+        }
+      ],
+      "explanation": "Live traffic, IDs, correlation, paths, timings, user agent and request counts differ from the synthetic single-failed-request fixture; exact field differences below."
+    }
+  ],
+  "live_responses": {
+    "consumer-created": {
+      "path": "/consumers",
+      "status": 200,
+      "body": {
+        "consumerId": 5
+      }
+    },
+    "consumer": {
+      "path": "/consumers/5",
+      "status": 200,
+      "body": {
+        "consumerId": 0,
+        "name": {
+          "firstName": "Ada",
+          "lastName": "Lovelace"
+        }
+      }
+    },
+    "restaurant-created": {
+      "path": "/restaurants",
+      "status": 200,
+      "body": {
+        "id": 5
+      }
+    },
+    "restaurant": {
+      "path": "/restaurants/5",
+      "status": 200,
+      "body": {
+        "id": 5,
+        "name": "Golden Kitchen"
+      }
+    },
+    "order-created": {
+      "path": "/orders/",
+      "status": 200,
+      "body": {
+        "orderId": 5
+      }
+    },
+    "order": {
+      "path": "/orders/5/",
+      "status": 200,
+      "body": {
+        "orderId": 5,
+        "state": "APPROVED",
+        "orderTotal": "24.68",
+        "restaurantName": "Golden Kitchen",
+        "assignedCourier": null,
+        "courierActions": null,
+        "estimatedDeliveryTime": null
+      }
+    },
+    "order-history": {
+      "path": "/orders/?consumerId=5",
+      "status": 200,
+      "body": [
+        {
+          "orderId": 5,
+          "state": "APPROVED",
+          "orderTotal": "24.68",
+          "restaurantName": "Golden Kitchen",
+          "assignedCourier": null,
+          "courierActions": null,
+          "estimatedDeliveryTime": null
+        }
+      ]
+    },
+    "error-conflict": {
+      "path": "/orders/5/preparing",
+      "status": 409,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.399428262",
+        "status": 409,
+        "error": "State Transition Error",
+        "message": "current state: APPROVED",
+        "path": "/orders/5/preparing",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "unknown-order": {
+      "path": "/orders/999999999",
+      "status": 404,
+      "body": ""
+    },
+    "error-order": {
+      "path": "/orders/999999999/preparing",
+      "status": 404,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.419748282",
+        "status": 404,
+        "error": "Not Found",
+        "message": "Order not found999999999",
+        "path": "/orders/999999999/preparing",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "static-not-found": {
+      "path": "/this-static-path-does-not-exist.js",
+      "status": 404,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.437+0000",
+        "status": 404,
+        "error": "Not Found",
+        "message": "No message available",
+        "path": "/this-static-path-does-not-exist.js"
+      }
+    },
+    "error-restaurant": {
+      "path": "/orders",
+      "status": 404,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.448319931",
+        "status": 404,
+        "error": "Not Found",
+        "message": "Restaurant not found with id 999999999",
+        "path": "/orders",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "error-courier": {
+      "path": "/couriers/999999999",
+      "status": 500,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.46647122",
+        "status": 500,
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred",
+        "path": "/couriers/999999999",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "disable-e2e-courier": {
+      "path": "/couriers/1/availability",
+      "status": 200,
+      "body": ""
+    },
+    "disable-e2e-courier-2": {
+      "path": "/couriers/2/availability",
+      "status": 500,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.499241516",
+        "status": 500,
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred",
+        "path": "/couriers/2/availability",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "error-unavailable": {
+      "path": "/orders/7/accept",
+      "status": 503,
+      "body": {
+        "timestamp": "2026-11-05T21:34:25.313439978",
+        "status": 503,
+        "error": "No Courier Available",
+        "message": "No courier available for assignment",
+        "path": "/orders/7/accept",
+        "correlationId": "golden-correlation"
+      }
+    },
+    "order-revised": {
+      "path": "/orders/7/revise",
+      "status": 200,
+      "body": {
+        "orderId": 7,
+        "state": "APPROVED",
+        "orderTotal": "37.02",
+        "restaurantName": "Golden Kitchen",
+        "assignedCourier": null,
+        "courierActions": null,
+        "estimatedDeliveryTime": null
+      }
+    },
+    "order-cancelled": {
+      "path": "/orders/7/cancel",
+      "status": 200,
+      "body": {
+        "orderId": 7,
+        "state": "CANCELLED",
+        "orderTotal": "37.02",
+        "restaurantName": "Golden Kitchen",
+        "assignedCourier": null,
+        "courierActions": null,
+        "estimatedDeliveryTime": null
+      }
+    },
+    "courier-created": {
+      "path": "/couriers",
+      "status": 200,
+      "body": {
+        "id": 18
+      }
+    },
+    "courier-location": {
+      "path": "/couriers/18/location",
+      "status": 200,
+      "body": ""
+    },
+    "courier-available": {
+      "path": "/couriers/18/availability",
+      "status": 200,
+      "body": ""
+    },
+    "second-order": {
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "orderId": 6
+      }
+    },
+    "accept": {
+      "path": "/orders/6/accept",
+      "status": 200,
+      "body": ""
+    },
+    "order-assigned": {
+      "path": "/orders/6",
+      "status": 200,
+      "body": {
+        "orderId": 6,
+        "state": "ACCEPTED",
+        "orderTotal": "24.68",
+        "restaurantName": "Golden Kitchen",
+        "assignedCourier": 18,
+        "courierActions": [
+          {
+            "type": "PICKUP",
+            "time": null
+          },
+          {
+            "type": "DROPOFF",
+            "time": "2026-11-06T12:15:00"
+          }
+        ],
+        "estimatedDeliveryTime": "2026-11-06T12:15:00"
+      }
+    },
+    "courier": {
+      "path": "/couriers/18",
+      "status": 200,
+      "body": {
+        "id": 18,
+        "name": {
+          "firstName": "Ada",
+          "lastName": "Lovelace"
+        },
+        "address": {
+          "street1": "1 Main St",
+          "street2": null,
+          "city": "Oakland",
+          "state": "CA",
+          "zip": "94619",
+          "latitude": 37.8,
+          "longitude": -122.2
+        },
+        "plan": {
+          "actions": [
+            {
+              "type": "PICKUP",
+              "time": null
+            },
+            {
+              "type": "DROPOFF",
+              "time": "2026-11-06T12:15:00"
+            }
+          ]
+        },
+        "available": true,
+        "currentLatitude": 37.8,
+        "currentLongitude": -122.2,
+        "lastLocationUpdate": "2026-11-05T21:34:14",
+        "activeDeliveryCount": 1
+      }
+    },
+    "courier-workload": {
+      "path": "/couriers/18/workload",
+      "status": 200,
+      "body": {
+        "courierId": 18,
+        "activeDeliveries": 1,
+        "available": true,
+        "currentLatitude": 37.8,
+        "currentLongitude": -122.2,
+        "lastLocationUpdate": "2026-11-05T21:34:14"
+      }
+    },
+    "sentry": {
+      "path": "/config/sentry",
+      "status": 200,
+      "body": {
+        "dsn": "",
+        "environment": "demo",
+        "sendDefaultPii": true
+      }
+    },
+    "tracking-stats": {
+      "path": "/api/tracking/stats?minutesBack=10",
+      "status": 200,
+      "body": {
+        "topEndpoints": {
+          "POST /orders/5/accept": 1,
+          "POST /orders/6/accept": 1,
+          "GET /couriers/1": 1,
+          "POST /orders/3/accept": 1,
+          "POST /couriers/2/availability": 1,
+          "GET /swagger-ui/index.html": 1,
+          "GET /orders": 4,
+          "GET /v3/api-docs": 2,
+          "POST /orders/999999999/preparing": 1,
+          "POST /orders/5/cancel": 1,
+          "POST /couriers/18/location": 1,
+          "POST /orders/3/preparing": 1,
+          "POST /restaurants": 5,
+          "GET /couriers/18/workload": 1,
+          "POST /orders/3/ready": 1,
+          "POST /orders/2/revise": 1,
+          "GET /health": 2,
+          "HEAD /swagger-ui.html": 1,
+          "POST /orders/": 1,
+          "POST /consumers": 5,
+          "POST /orders/4/revise": 1,
+          "POST /orders/1/delivered": 1,
+          "POST /couriers": 3,
+          "POST /orders/3/pickedup": 1,
+          "GET /orders/5/": 1,
+          "GET /swagger-ui.html": 1,
+          "POST /orders/1/pickedup": 1,
+          "GET /orders/6": 1,
+          "GET /couriers/999999999": 1,
+          "GET /consumers/1": 100,
+          "GET /restaurants/1": 101,
+          "GET /restaurants/5": 1,
+          "GET /consumers/5": 1,
+          "GET /restaurants/4": 1,
+          "GET /config/sentry": 101,
+          "POST /orders/5/revise": 1,
+          "GET /restaurants/3": 1,
+          "POST /couriers/1/availability": 2,
+          "GET /restaurants/2": 1,
+          "POST /orders/3/delivered": 1,
+          "POST /orders/1/ready": 1,
+          "GET /orders/4": 4,
+          "GET /orders/3": 2,
+          "GET /orders/2": 4,
+          "GET /orders/1": 2,
+          "GET /this-static-path-does-not-exist.js": 2,
+          "POST /orders/1/preparing": 1,
+          "POST /couriers/17/availability": 1,
+          "POST /couriers/18/availability": 1,
+          "POST /orders": 6,
+          "GET /orders/": 1,
+          "GET /orders/999999999": 1,
+          "POST /orders/1/accept": 1,
+          "POST /orders/2/cancel": 1,
+          "POST /orders/4/cancel": 1,
+          "POST /orders/5/preparing": 1,
+          "GET /couriers/18": 1,
+          "GET /couriers/17": 1
+        },
+        "p95DurationMs": 14,
+        "avgDurationMs": 6.08,
+        "statusCodeDistribution": {
+          "200": 373,
+          "302": 2,
+          "500": 2,
+          "404": 7,
+          "409": 3
+        },
+        "totalRequests": 387,
+        "errorRate": 0.031007751937984496,
+        "periodMinutes": 10,
+        "errorCount": 12
+      }
+    },
+    "tracking-logs": {
+      "path": "/api/tracking/logs/search?uri=/orders/999999999",
+      "status": 200,
+      "body": [
+        {
+          "id": 369,
+          "correlationId": "golden-correlation",
+          "httpMethod": "GET",
+          "requestUri": "/orders/999999999",
+          "queryString": null,
+          "responseStatus": 404,
+          "durationMs": 1,
+          "remoteAddr": "127.0.0.1",
+          "userAgent": "curl/7.81.0",
+          "errorMessage": null,
+          "requestTimestamp": "2026-11-05T21:34:13"
+        },
+        {
+          "id": 370,
+          "correlationId": "golden-correlation",
+          "httpMethod": "POST",
+          "requestUri": "/orders/999999999/preparing",
+          "queryString": null,
+          "responseStatus": 404,
+          "durationMs": 1,
+          "remoteAddr": "127.0.0.1",
+          "userAgent": "curl/7.81.0",
+          "errorMessage": null,
+          "requestTimestamp": "2026-11-05T21:34:13"
+        }
+      ]
+    },
+    "tracking-log": {
+      "path": "/api/tracking/logs/ab573-unique",
+      "status": 200,
+      "body": {
+        "id": 395,
+        "correlationId": "ab573-unique",
+        "httpMethod": "GET",
+        "requestUri": "/config/sentry",
+        "queryString": null,
+        "responseStatus": 200,
+        "durationMs": 1,
+        "remoteAddr": "127.0.0.1",
+        "userAgent": "curl/7.81.0",
+        "errorMessage": null,
+        "requestTimestamp": "2026-11-05T21:34:25"
+      }
+    },
+    "disable-17": {
+      "path": "/couriers/17/availability",
+      "status": 200,
+      "body": ""
+    },
+    "disable-18": {
+      "path": "/couriers/18/availability",
+      "status": 200,
+      "body": ""
+    },
+    "retry-order": {
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "orderId": 7
+      }
+    },
+    "tracking-empty-stats": {
+      "path": "/api/tracking/stats?minutesBack=0",
+      "status": 200,
+      "body": {
+        "topEndpoints": {},
+        "p95DurationMs": 0,
+        "avgDurationMs": 0.0,
+        "statusCodeDistribution": {},
+        "totalRequests": 0,
+        "errorRate": 0.0,
+        "periodMinutes": 0,
+        "errorCount": 0
+      }
+    },
+    "error-internal": {
+      "path": "/couriers/999999999",
+      "status": 500,
+      "body": {
+        "timestamp": "2026-11-05T21:34:13.46647122",
+        "status": 500,
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred",
+        "path": "/couriers/999999999",
+        "correlationId": "golden-correlation"
+      }
+    }
+  },
+  "runtime": {
+    "startup_reported_seconds": {
+      "baseline": 4.318,
+      "current": 5.12,
+      "delta": 0.8020000000000005,
+      "percent": 18.57
+    },
+    "jvm_uptime_at_started_seconds": {
+      "baseline": 4.657,
+      "current": 5.542,
+      "delta": 0.8849999999999998,
+      "percent": 19.0
+    },
+    "jar_size_bytes": {
+      "baseline": 47342837,
+      "current": 63784734,
+      "delta": 16441897,
+      "percent": 34.73
+    },
+    "heap_used_after_warmup_and_gc_bytes_approx": {
+      "baseline": 38931763,
+      "current": 42043904,
+      "delta": 3112141,
+      "percent": 7.99
+    },
+    "heap_committed_bytes": {
+      "baseline": 144179200,
+      "current": 110624768,
+      "delta": -33554432,
+      "percent": -23.27
+    }
+  },
+  "jstat_gc_raw": "    S0C         S1C         S0U         S1U          EC           EU           OC           OU          MC         MU       CCSC      CCSU     YGC     YGCT     FGC    FGCT     CGC    CGCT       GCT   \n     5120.0      4608.0         0.0         0.0      53760.0        202.4      44544.0      40856.1   102272.0   101140.3   14016.0   13510.5     31     0.144     5     0.358     -         -     0.502\n",
+  "open_items": [
+    "AB-571: Docker application image still runs Java 8 and cannot run this jar; full script completed only after starting Java 21 host jar.",
+    "Single local runtime sample: startup, heap used and jar size increases need repeated comparable measurements.",
+    "Live unknown courier returns preexisting 500 rather than mocked 404.",
+    "Reused correlation ID causes preexisting single-result query failure; unique correlation tested successfully.",
+    "Mock-only error-bad-request not directly reproduced live; empty tracking stats checked with zero-minute window."
+  ]
+}

@@ -11,7 +11,8 @@ docker compose build
 docker compose down -v
 docker compose up -d --build mysql
 
-./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+./gradlew waitForMySql
+./gradlew :ftgo-flyway:flywayMigrate
 
 docker compose up -d
 
