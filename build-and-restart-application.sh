@@ -1,5 +1,9 @@
 #! /bin/bash -e
 
+. ./set-env.sh
+
+./gradlew waitForMySql :ftgo-flyway:flywayMigrate
+
 for SN in ftgo-application ; do
 
     ./gradlew :${SN?}:assemble
