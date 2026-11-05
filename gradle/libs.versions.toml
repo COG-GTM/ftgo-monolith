@@ -2,7 +2,7 @@
 spring-boot = "2.7.18"
 dependency-management = "1.1.7"
 versions = "0.52.0"
-flyway-plugin = "6.0.0"
+flyway-plugin = "10.22.0"
 mysql = "8.0.33"
 commons-lang = "2.6"
 springfox = "2.8.0"
@@ -22,6 +22,7 @@ jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
 commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
 springfox-swagger2 = { module = "io.springfox:springfox-swagger2", version.ref = "springfox" }
 springfox-ui = { module = "io.springfox:springfox-swagger-ui", version.ref = "springfox" }

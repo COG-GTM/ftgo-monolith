@@ -27,10 +27,8 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: ftgo-mysql
-          image: msapatterns/mysql:latest
+          image: mysql:8.4
           imagePullPolicy: Always
-          args:
-              - "--ignore-db-dir=lost+found"
           ports:
               - containerPort: 3306
           env:

@@ -20,3 +20,7 @@ processTestResources {
         into 'golden'
     }
 }
+
+tasks.named('test') {
+    systemProperty 'user.timezone', providers.gradleProperty('testTimeZone').getOrElse('UTC')
+}
