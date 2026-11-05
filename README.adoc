@@ -3,6 +3,14 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## API documentation
+
+On port 8081, open http://localhost:8081/swagger-ui.html (springdoc redirects to
+`/swagger-ui/index.html`). Existing Swagger UI scripts remain valid.
+The specification has moved from `/v2/api-docs` (Swagger 2) to `/v3/api-docs`
+(OpenAPI 3). Specification consumers must use the new URL.
+This Boot 2.7 bridge uses springdoc 1.8.0; Boot 3 / springdoc 2.x is AB-570.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

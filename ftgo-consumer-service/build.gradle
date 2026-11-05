@@ -7,9 +7,8 @@ dependencies {
     api libs.spring.web
     api libs.spring.actuator
 
-    api libs.javax.el
 
     testImplementation libs.spring.test
-    testImplementation libs.rest.assured.legacy
+    testImplementation libs.rest.assured
     testImplementation libs.json.path
 }

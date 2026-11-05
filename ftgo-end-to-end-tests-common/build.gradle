@@ -3,11 +3,11 @@ dependencies {
     api project(":ftgo-restaurant-service-api")
     api project(":ftgo-order-service-api")
     api project(":ftgo-courier-service-api")
-    api libs.eventuate.test
+    api libs.awaitility
 
 
     api libs.spring.test
     api libs.junit
-    api libs.rest.assured.legacy
+    api libs.rest.assured
     api libs.json.path
 }
