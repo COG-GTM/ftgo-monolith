@@ -9,6 +9,6 @@ You can learn more by reading the https://microservices.io/refactoring/index.htm
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
 
-## Courier API authentication
+== Courier API authentication
 
 Set `FTGO_COURIER_OPERATOR_TOKEN` when starting the application to enable operator access. `POST /couriers` requires this operator bearer token and returns a per-courier access token once. `POST /couriers/{courierId}/availability` and `POST /couriers/{courierId}/location` accept either the operator token or that courier's token. Existing couriers without a token can only be managed by an operator. Missing or invalid credentials return 401; an authenticated principal without permission returns 403. Courier coordinates must use latitude in [-90, 90] and longitude in [-180, 180].
