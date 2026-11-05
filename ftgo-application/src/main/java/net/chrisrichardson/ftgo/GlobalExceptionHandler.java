@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo;
 
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
+import net.chrisrichardson.ftgo.common.tracking.OriginalRequestUri;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
@@ -58,15 +59,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     String error = status != null ? status.getReasonPhrase() : String.valueOf(statusCode.value());
     String message;
     if (statusCode.is5xxServerError()) {
-      logger.error("Spring MVC exception on {} {}: {}", servletRequest.getMethod(), servletRequest.getRequestURI(), ex.getMessage(), ex);
+      logger.error("Spring MVC exception on {} {}: {}", servletRequest.getMethod(), OriginalRequestUri.of(servletRequest), ex.getMessage(), ex);
       message = "An unexpected error occurred";
     } else {
-      logger.warn("Spring MVC exception on {} {}: {}", servletRequest.getMethod(), servletRequest.getRequestURI(), ex.getMessage());
+      logger.warn("Spring MVC exception on {} {}: {}", servletRequest.getMethod(), OriginalRequestUri.of(servletRequest), ex.getMessage());
       message = ex instanceof org.springframework.web.ErrorResponse springError && springError.getBody().getDetail() != null
               ? springError.getBody().getDetail() : ex.getMessage();
     }
     ErrorResponse errorBody = new ErrorResponse(statusCode.value(), error, message,
-            servletRequest.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(servletRequest), MDC.get("correlationId"));
     return new ResponseEntity<>(errorBody, headers, statusCode);
   }
 
@@ -75,7 +76,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
           OrderNotFoundException ex, HttpServletRequest request) {
     ErrorResponse error = new ErrorResponse(
             HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
   }
 
@@ -84,7 +85,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
           RestaurantNotFoundException ex, HttpServletRequest request) {
     ErrorResponse error = new ErrorResponse(
             HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
   }
 
@@ -93,7 +94,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
           CourierNotFoundException ex, HttpServletRequest request) {
     ErrorResponse error = new ErrorResponse(
             HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
   }
 
@@ -103,7 +104,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     logger.warn("Invalid state transition: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.CONFLICT.value(), "State Transition Error", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 
@@ -113,7 +114,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     logger.warn("No courier available: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.SERVICE_UNAVAILABLE.value(), "No Courier Available", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
   }
 
@@ -123,18 +124,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     logger.warn("Bad request: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(
           Exception ex, HttpServletRequest request) {
-    logger.error("Unhandled exception on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage(), ex);
+    logger.error("Unhandled exception on {} {}: {}", request.getMethod(), OriginalRequestUri.of(request), ex.getMessage(), ex);
     ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error",
             "An unexpected error occurred",
-            request.getRequestURI(), MDC.get("correlationId"));
+            OriginalRequestUri.of(request), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

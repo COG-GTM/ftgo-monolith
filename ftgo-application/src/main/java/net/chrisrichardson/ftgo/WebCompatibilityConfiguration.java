@@ -1,5 +1,8 @@
 package net.chrisrichardson.ftgo;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
+import net.chrisrichardson.ftgo.common.tracking.OriginalRequestUri;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
@@ -17,6 +20,22 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class WebCompatibilityConfiguration {
 
   /**
+   * Records the client's request URI before {@link #trailingSlashUrlHandlerFilter()} rewrites it, so API
+   * tracking logs and error bodies keep reporting e.g. "/orders/".
+   */
+  @Bean
+  public FilterRegistrationBean<Filter> originalRequestUriFilter() {
+    FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>((request, response, chain) -> {
+      if (request.getAttribute(OriginalRequestUri.ATTRIBUTE) == null && request instanceof HttpServletRequest http) {
+        request.setAttribute(OriginalRequestUri.ATTRIBUTE, http.getRequestURI());
+      }
+      chain.doFilter(request, response);
+    });
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return registration;
+  }
+
+  /**
    * Spring Framework 6 no longer matches "/orders/" to "/orders": strip the trailing slash before
    * dispatch (AB-561 decision Q6).
    */
@@ -24,7 +43,7 @@ public class WebCompatibilityConfiguration {
   public FilterRegistrationBean<UrlHandlerFilter> trailingSlashUrlHandlerFilter() {
     FilterRegistrationBean<UrlHandlerFilter> registration =
             new FilterRegistrationBean<>(UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build());
-    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
     return registration;
   }
 

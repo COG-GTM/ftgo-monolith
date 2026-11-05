@@ -183,6 +183,13 @@ public class ApiGoldenTest {
     springMvcError(post("/consumers").contentType(MediaType.TEXT_PLAIN).content("x"), 415, "Unsupported Media Type");
   }
 
+  @Test
+  public void errorPathKeepsTrailingSlash() throws Exception {
+    MvcResult result = mvc.perform(get("/orders/not-a-number/")).andExpect(status().isBadRequest()).andReturn();
+    assertThat(mapper.readTree(result.getResponse().getContentAsString()).get("path").asText())
+            .isEqualTo("/orders/not-a-number/");
+  }
+
   private void springMvcError(MockHttpServletRequestBuilder request, int status, String error) throws Exception {
     MvcResult result = mvc.perform(request).andExpect(status().is(status))
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)).andReturn();
