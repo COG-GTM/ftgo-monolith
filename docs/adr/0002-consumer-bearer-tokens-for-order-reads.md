@@ -69,6 +69,7 @@ C4Container
 - **AuthN:** HS256 JWT; `alg` must be exactly `HS256` (no `none`/alg confusion); constant-time signature compare; `exp` required, `nbf` honoured.
 - **AuthZ:** order ownership check on reads; non-owner single-order reads return 404 (no existence oracle).
 - **Secrets:** `FTGO_CONSUMER_TOKEN_SECRET` via environment only; never committed. CI scripts generate a random per-run value.
+- **Transport:** bearer tokens are replayable until `exp`; the app serves plain HTTP, so production must terminate TLS in front of it (load balancer/ingress) and issuers should keep token TTLs short.
 - **Out of scope:** mutating `/orders` endpoints and other controllers remain unauthenticated (separate findings).
 
 ## Cost

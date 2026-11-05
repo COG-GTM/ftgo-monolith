@@ -45,7 +45,7 @@ public class OrderController {
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
-  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId, @ApiIgnore AuthenticatedConsumer caller) {
+  public ResponseEntity<GetOrderResponse> getOrder(@ApiIgnore AuthenticatedConsumer caller, @PathVariable long orderId) {
     Optional<Order> order = orderRepository.findById(orderId);
     return order
             .filter(o -> o.getConsumerId() != null && o.getConsumerId().longValue() == caller.getConsumerId())
@@ -54,8 +54,8 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam(required = false) Long consumerId,
-                                                          @ApiIgnore AuthenticatedConsumer caller) {
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@ApiIgnore AuthenticatedConsumer caller,
+                                                          @RequestParam(required = false) Long consumerId) {
     if (consumerId != null && consumerId.longValue() != caller.getConsumerId()) {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }

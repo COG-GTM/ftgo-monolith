@@ -91,6 +91,28 @@ public class OrderControllerTest {
   }
 
   @Test
+  public void shouldAuthenticateBeforeParsingOrderId() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders/abc").
+    then().
+            statusCode(401).
+            header("WWW-Authenticate", equalTo("Bearer"));
+  }
+
+  @Test
+  public void shouldAuthenticateBeforeParsingConsumerId() {
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders?consumerId=abc").
+    then().
+            statusCode(401).
+            header("WWW-Authenticate", equalTo("Bearer"));
+  }
+
+  @Test
   public void shouldRejectInvalidOrderReadToken() {
     ConsumerTokenService otherService = new ConsumerTokenService("abcdef0123456789abcdef0123456789",
             Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC));
