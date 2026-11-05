@@ -343,6 +343,13 @@ public abstract class AbstractEndToEndTests {
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().
+            statusCode(401);
+
+    given().
+            auth().preemptive().basic(getOperatorUsername(), getOperatorPassword()).
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            then().
             statusCode(200)
             .body("plan.actions[0].type", equalTo("PICKUP"))
             .body("plan.actions[1].type", equalTo("DROPOFF"));
@@ -384,4 +391,13 @@ public abstract class AbstractEndToEndTests {
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  protected String getOperatorUsername() {
+    String username = System.getenv("FTGO_OPERATOR_USERNAME");
+    return username == null ? "operator" : username;
+  }
+
+  protected String getOperatorPassword() {
+    return System.getenv("FTGO_OPERATOR_PASSWORD");
+  }
 }

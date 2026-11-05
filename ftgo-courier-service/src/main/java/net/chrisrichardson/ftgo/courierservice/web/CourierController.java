@@ -1,7 +1,10 @@
 package net.chrisrichardson.ftgo.courierservice.web;
 
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
+import net.chrisrichardson.ftgo.courierservice.api.CourierActionResponse;
+import net.chrisrichardson.ftgo.courierservice.api.CourierDetailsResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
+import net.chrisrichardson.ftgo.courierservice.api.CourierPlanResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
@@ -10,6 +13,8 @@ import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.stream.Collectors;
 
 @RestController
 public class CourierController {
@@ -33,9 +38,9 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
-  public ResponseEntity<Courier> get(@PathVariable long courierId) {
+  public ResponseEntity<CourierDetailsResponse> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
-    return new ResponseEntity<>(courier, HttpStatus.OK);
+    return new ResponseEntity<>(toDetailsResponse(courier), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
@@ -56,6 +61,23 @@ public class CourierController {
             courier.getLastLocationUpdate()
     );
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  private CourierDetailsResponse toDetailsResponse(Courier courier) {
+    CourierPlanResponse plan = new CourierPlanResponse(courier.getPlan().getActions().stream()
+            .map(action -> new CourierActionResponse(action.getType().name(), action.getTime()))
+            .collect(Collectors.toList()));
+    return new CourierDetailsResponse(
+            courier.getId(),
+            courier.getName(),
+            courier.getAddress(),
+            courier.isAvailable(),
+            courier.getActiveDeliveryCount(),
+            courier.getCurrentLatitude(),
+            courier.getCurrentLongitude(),
+            courier.getLastLocationUpdate(),
+            plan
+    );
   }
 
 }
