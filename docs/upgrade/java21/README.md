@@ -19,6 +19,7 @@ No production code, schema, dependency version or existing test was changed.
 | `verification.json` | Original and post-change counts, post-change per-method results, and database-unavailable verification. |
 | `runtime-baseline.json` | Startup, post-warmup heap, raw `jstat` sample and jar size for AB-573. |
 | `baseline-log-excerpts.txt` | Relevant original command results and failure evidence, without environment dumps. |
+| [ab-573-parity-report.md](ab-573-parity-report.md) / [ab-573-parity.json](ab-573-parity.json) | Java 21 / Boot 3.5 / MySQL 8.4 runtime parity results, live response differences and per-method comparison against this baseline. |
 
 ## Results and known failures
 
