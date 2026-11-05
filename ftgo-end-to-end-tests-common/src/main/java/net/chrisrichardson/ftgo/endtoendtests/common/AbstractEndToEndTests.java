@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.response.Response;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -45,6 +46,7 @@ public abstract class AbstractEndToEndTests {
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
+  private String courierAccessToken;
 
   private String baseUrl(int port, String path, String... pathElements) {
     assertNotNull("host", getHost());
@@ -293,19 +295,33 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    String operatorToken = System.getenv("FTGO_COURIER_OPERATOR_TOKEN");
+    assertNotNull("FTGO_COURIER_OPERATOR_TOKEN", operatorToken);
+    Response response = given().
+            header("Authorization", "Bearer " + operatorToken).
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
             post(baseUrl(getApplicationPort(), "couriers")).
             then().
-            statusCode(200)
-            .extract()
-            .path("id");
+            statusCode(200).
+            extract().
+            response();
+    courierId = response.path("id");
+    courierAccessToken = response.path("accessToken");
   }
 
   private void noteCourierAvailable() {
     given().
+            body(new CourierAvailability(true)).
+            contentType("application/json").
+            when().
+            post(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "availability")).
+            then().
+            statusCode(401);
+
+    given().
+            header("Authorization", "Bearer " + courierAccessToken).
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().

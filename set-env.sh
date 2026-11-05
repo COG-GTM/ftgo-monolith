@@ -10,3 +10,7 @@ fi
 
 echo DOCKER_HOST_IP is $DOCKER_HOST_IP
 export COMPOSE_HTTP_TIMEOUT=240
+
+if [ -z "${FTGO_COURIER_OPERATOR_TOKEN+x}" ]; then
+  export FTGO_COURIER_OPERATOR_TOKEN=$(openssl rand -hex 32)
+fi

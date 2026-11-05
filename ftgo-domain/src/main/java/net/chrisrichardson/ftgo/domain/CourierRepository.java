@@ -4,8 +4,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CourierRepository extends CrudRepository<Courier, Long> {
+
+  Optional<Courier> findByAccessTokenHash(String accessTokenHash);
 
   @Query("SELECT c FROM Courier c WHERE c.available = true")
   List<Courier> findAllAvailable();

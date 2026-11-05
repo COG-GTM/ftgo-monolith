@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
@@ -25,6 +26,10 @@ public class Courier {
 
   @Embedded
   private Plan plan = new Plan();
+
+  @JsonIgnore
+  @Column(name = "access_token_hash")
+  private String accessTokenHash;
 
   private Boolean available;
 
@@ -98,9 +103,18 @@ public class Courier {
   }
 
   public void updateLocation(double latitude, double longitude) {
+    if (!Double.isFinite(latitude) || latitude < -90 || latitude > 90
+            || !Double.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      throw new IllegalArgumentException(
+              "Latitude must be finite and between -90 and 90, and longitude must be finite and between -180 and 180");
+    }
     this.currentLatitude = latitude;
     this.currentLongitude = longitude;
     this.lastLocationUpdate = LocalDateTime.now();
+  }
+
+  public void assignAccessTokenHash(String hash) {
+    this.accessTokenHash = hash;
   }
 
   public int getActiveDeliveryCount() {
