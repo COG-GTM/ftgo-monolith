@@ -146,36 +146,27 @@ public class Order {
   }
 
   public void notePreparing() {
-    switch (orderState) {
-      case ACCEPTED:
-        this.orderState = orderState.PREPARING;
-        this.preparingTime = LocalDateTime.now();
-        return;
-      default:
-        throw new UnsupportedStateTransitionException(orderState);
-    }
+    this.orderState = switch (orderState) {
+      case ACCEPTED -> PREPARING;
+      default -> throw new UnsupportedStateTransitionException(orderState);
+    };
+    this.preparingTime = LocalDateTime.now();
   }
 
   public void noteReadyForPickup() {
-    switch (orderState) {
-      case PREPARING:
-        this.orderState = OrderState.READY_FOR_PICKUP;
-        this.readyForPickupTime = LocalDateTime.now();
-        return;
-      default:
-        throw new UnsupportedStateTransitionException(orderState);
-    }
+    this.orderState = switch (orderState) {
+      case PREPARING -> READY_FOR_PICKUP;
+      default -> throw new UnsupportedStateTransitionException(orderState);
+    };
+    this.readyForPickupTime = LocalDateTime.now();
   }
 
   public void notePickedUp() {
-    switch (orderState) {
-      case READY_FOR_PICKUP:
-        this.orderState = OrderState.PICKED_UP;
-        this.pickedUpTime = LocalDateTime.now();
-        return;
-      default:
-        throw new UnsupportedStateTransitionException(orderState);
-    }
+    this.orderState = switch (orderState) {
+      case READY_FOR_PICKUP -> PICKED_UP;
+      default -> throw new UnsupportedStateTransitionException(orderState);
+    };
+    this.pickedUpTime = LocalDateTime.now();
   }
 
   public void schedule(Courier assignedCourier) {
@@ -187,14 +178,10 @@ public class Order {
   }
 
   public void noteDelivered() {
-    switch (orderState) {
-      case PICKED_UP:
-        this.orderState = OrderState.DELIVERED;
-        this.deliveredTime = LocalDateTime.now();
-        return;
-      default:
-        throw new UnsupportedStateTransitionException(orderState);
-    }
+    this.orderState = switch (orderState) {
+      case PICKED_UP -> DELIVERED;
+      default -> throw new UnsupportedStateTransitionException(orderState);
+    };
+    this.deliveredTime = LocalDateTime.now();
   }
 }
-

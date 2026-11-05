@@ -22,13 +22,13 @@ public class CourierController {
 
   @RequestMapping(path="/couriers", method= RequestMethod.POST)
   public ResponseEntity<CreateCourierResponse> create(@RequestBody CreateCourierRequest request) {
-    Courier courier = courierService.createCourier(request.getName(), request.getAddress());
+    Courier courier = courierService.createCourier(request.name(), request.address());
     return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
   public ResponseEntity<String> updateCourierLocation(@PathVariable long courierId, @RequestBody CourierAvailability availability) {
-    courierService.updateAvailability(courierId, availability.isAvailable());
+    courierService.updateAvailability(courierId, availability.available());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -40,7 +40,7 @@ public class CourierController {
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
   public ResponseEntity<String> updateLocation(@PathVariable long courierId, @RequestBody CourierLocationUpdate locationUpdate) {
-    courierService.updateLocation(courierId, locationUpdate.getLatitude(), locationUpdate.getLongitude());
+    courierService.updateLocation(courierId, locationUpdate.latitude(), locationUpdate.longitude());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
