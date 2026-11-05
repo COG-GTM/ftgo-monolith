@@ -20,9 +20,8 @@ import net.chrisrichardson.ftgo.orderservice.web.OrderController;
 import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
 import net.chrisrichardson.ftgo.restaurantservice.web.RestaurantController;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -34,7 +33,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -53,7 +51,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringRunner.class)
 @WebMvcTest
 @TestPropertySource(properties = {"sentry.dsn=", "sentry.environment=demo", "sentry.send-default-pii=true"})
 @ContextConfiguration(classes = ApiGoldenTest.Config.class)
@@ -87,7 +84,7 @@ public class ApiGoldenTest {
   private Courier courier;
   private ApiRequestLog log;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     Consumer consumer = new Consumer(NAME);
     ReflectionTestUtils.setField(consumer, "id", 1L);
