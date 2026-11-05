@@ -20,8 +20,8 @@ spring-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
-flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
 mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
 commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 springdoc-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
