@@ -8,8 +8,10 @@ dependencies {
 
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
 
     runtime 'mysql:mysql-connector-java:8.0.33'
 
     testCompile project(":ftgo-end-to-end-tests-common")
+    testCompile "org.springframework.security:spring-security-test"
 }
