@@ -9,6 +9,7 @@ import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.Courier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,30 +21,35 @@ public class CourierController {
     this.courierService = courierService;
   }
 
+  @PreAuthorize("hasRole('DISPATCHER')")
   @RequestMapping(path="/couriers", method= RequestMethod.POST)
   public ResponseEntity<CreateCourierResponse> create(@RequestBody CreateCourierRequest request) {
     Courier courier = courierService.createCourier(request.getName(), request.getAddress());
     return new ResponseEntity<>(new CreateCourierResponse(courier.getId()), HttpStatus.OK);
   }
 
+  @PreAuthorize("hasRole('DISPATCHER') or @courierAccess.isCourier(authentication, #courierId)")
   @RequestMapping(path="/couriers/{courierId}/availability", method= RequestMethod.POST)
   public ResponseEntity<String> updateCourierLocation(@PathVariable long courierId, @RequestBody CourierAvailability availability) {
     courierService.updateAvailability(courierId, availability.isAvailable());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
+  @PreAuthorize("hasRole('DISPATCHER') or @courierAccess.isCourier(authentication, #courierId)")
   @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
   public ResponseEntity<Courier> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
     return new ResponseEntity<>(courier, HttpStatus.OK);
   }
 
+  @PreAuthorize("@courierAccess.isCourier(authentication, #courierId)")
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
   public ResponseEntity<String> updateLocation(@PathVariable long courierId, @RequestBody CourierLocationUpdate locationUpdate) {
     courierService.updateLocation(courierId, locationUpdate.getLatitude(), locationUpdate.getLongitude());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
+  @PreAuthorize("hasRole('DISPATCHER') or @courierAccess.isCourier(authentication, #courierId)")
   @RequestMapping(path="/couriers/{courierId}/workload", method= RequestMethod.GET)
   public ResponseEntity<CourierWorkloadResponse> getWorkload(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
