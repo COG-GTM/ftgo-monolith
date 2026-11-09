@@ -25,6 +25,7 @@ services:
       SPRING_SLEUTH_ENABLED: "true"
       SPRING_SLEUTH_SAMPLER_PROBABILITY: 1
       SPRING_ZIPKIN_BASE_URL: http://zipkin:9411/
+      FTGO_RESTAURANT_SERVICE_URL: http://ftgo-restaurant-service:8080
   ftgo-restaurant-service:
     build: ./ftgo-restaurant-service
     ports:
