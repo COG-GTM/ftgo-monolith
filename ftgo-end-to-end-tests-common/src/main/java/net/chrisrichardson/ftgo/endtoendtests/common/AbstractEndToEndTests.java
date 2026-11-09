@@ -1,11 +1,9 @@
 package net.chrisrichardson.ftgo.endtoendtests.common;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.ObjectMapperConfig;
-import com.jayway.restassured.config.RestAssuredConfig;
+import io.restassured.RestAssured;
+import io.restassured.common.mapper.factory.Jackson3ObjectMapperFactory;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -22,11 +20,13 @@ import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -43,7 +43,7 @@ public abstract class AbstractEndToEndTests {
   private int restaurantId;
   private int orderId;
   private final Money priceOfChickenVindaloo = new Money("12.34");
-  private static ObjectMapper objectMapper = new ObjectMapper();
+  private static ObjectMapper objectMapper;
   private int courierId;
 
   private String baseUrl(int port, String path, String... pathElements) {
@@ -78,12 +78,12 @@ public abstract class AbstractEndToEndTests {
 
   @BeforeClass
   public static void initialize() {
-    objectMapper.registerModule(new MoneyModule());
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    objectMapper = JsonMapper.builder()
+            .addModule(new MoneyModule())
+            .build();
 
-    RestAssured.config = RestAssuredConfig.config().objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory(
-            (aClass, s) -> objectMapper
+    RestAssured.config = RestAssuredConfig.config().objectMapperConfig(new ObjectMapperConfig().jackson3ObjectMapperFactory(
+            (Jackson3ObjectMapperFactory) (aClass, s) -> objectMapper
     ));
 
   }

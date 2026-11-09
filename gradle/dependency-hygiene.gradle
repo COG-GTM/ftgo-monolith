@@ -1,0 +1,57 @@
+// Fails the build if any project resolves artifacts from a decommissioned or
+// insecure repository (e.g. the sunset Bintray/JCenter hosts), or if the
+// Spring Boot baseline drops below a supported release line.
+
+def sunsetRepositoryHosts = ["bintray.com", "jcenter.io"]
+def minimumSpringBootVersion = "4.0.0"
+def problems = []
+
+def verifyRepositories = { String owner, RepositoryHandler repositories ->
+    repositories.withType(MavenArtifactRepository).each { repo ->
+        URI uri = repo.url
+        String host = uri.host ?: ""
+        if (sunsetRepositoryHosts.any { host == it || host.endsWith(".${it}") }) {
+            problems << "${owner}: repository '${repo.name}' uses sunset host ${uri}"
+        }
+        if (uri.scheme == "http") {
+            problems << "${owner}: repository '${repo.name}' uses insecure http ${uri}"
+        }
+    }
+}
+
+def compareVersions = { String a, String b ->
+    def pa = a.tokenize('.-').collect { it.isInteger() ? it.toInteger() : 0 }
+    def pb = b.tokenize('.-').collect { it.isInteger() ? it.toInteger() : 0 }
+    for (int i = 0; i < 3; i++) {
+        int c = (pa[i] ?: 0) <=> (pb[i] ?: 0)
+        if (c != 0) return c
+    }
+    0
+}
+
+gradle.projectsEvaluated {
+    allprojects.each { p ->
+        verifyRepositories("${p.path} (buildscript)", p.buildscript.repositories)
+        verifyRepositories(p.path, p.repositories)
+    }
+    String bootVersion = rootProject.property("springBootVersion")
+    if (compareVersions(bootVersion, minimumSpringBootVersion) < 0) {
+        problems << "springBootVersion=${bootVersion} is below the supported minimum ${minimumSpringBootVersion}"
+    }
+}
+
+def verifyDependencyRepositories = tasks.register("verifyDependencyRepositories") {
+    group = "verification"
+    description = "Fails if the build uses sunset/insecure repositories or an unsupported Spring Boot version."
+    doLast {
+        if (!problems.isEmpty()) {
+            throw new GradleException("Dependency hygiene check failed:\n  " + problems.unique().join("\n  "))
+        }
+    }
+}
+
+subprojects {
+    plugins.withType(JavaPlugin).configureEach {
+        tasks.named("check") { dependsOn(verifyDependencyRepositories) }
+    }
+}

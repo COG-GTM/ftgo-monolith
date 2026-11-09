@@ -29,7 +29,7 @@ public class WaitForMySql extends DefaultTask {
     try {
       System.out.println("Trying to initialize driver");
 
-      String datasourceDriverClassName = getenv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "com.mysql.jdbc.Driver");
+      String datasourceDriverClassName = getenv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "com.mysql.cj.jdbc.Driver");
       Class.forName(datasourceDriverClassName);
 
       System.out.println("Initialization succeed");
