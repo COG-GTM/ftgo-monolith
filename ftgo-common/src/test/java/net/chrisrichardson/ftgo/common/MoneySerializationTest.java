@@ -1,26 +1,27 @@
 package net.chrisrichardson.ftgo.common;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.util.Assert;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class MoneySerializationTest {
 
-  private static ObjectMapper objectMapper = new ObjectMapper();
+  private static ObjectMapper objectMapper;
 
   @BeforeClass
   public static void initialize() {
-    objectMapper.registerModule(new MoneyModule());
+    objectMapper = JsonMapper.builder().addModule(new MoneyModule()).build();
   }
 
 
@@ -76,14 +77,14 @@ public class MoneySerializationTest {
 
   @Test
   public void shouldFailToDe() throws IOException  {
-    JsonMappingException jsonMappingException = null;
+    DatabindException jsonMappingException = null;
     try {
       objectMapper.readValue("{\"price\": { \"amount\" : \"12.34\"} }", MoneyContainer.class);
       fail("expected exception");
-    } catch (JsonMappingException e) {
+    } catch (DatabindException e) {
       jsonMappingException = e;
     }
-    Assert.notNull(jsonMappingException);
+    assertNotNull(jsonMappingException);
   }
 
 

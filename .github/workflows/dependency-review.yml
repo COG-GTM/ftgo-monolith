@@ -1,0 +1,37 @@
+name: Dependency vulnerability scan
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Enforce dependency hygiene (no sunset repositories, supported Spring Boot)
+        run: ./gradlew verifyDependencyRepositories
+
+  # Only runs on trusted master code: submits the resolved Gradle dependency graph so
+  # GitHub Dependabot alerts cover every resolved (including transitive) artifact.
+  dependency-submission:
+    if: github.event_name == 'push'
+    needs: dependency-hygiene
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/dependency-submission@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
