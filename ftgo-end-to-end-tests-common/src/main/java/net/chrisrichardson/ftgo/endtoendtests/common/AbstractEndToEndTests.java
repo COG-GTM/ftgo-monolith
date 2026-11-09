@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
+import com.jayway.restassured.specification.RequestSpecification;
 import io.eventuate.util.test.async.Eventually;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
@@ -62,6 +63,20 @@ public abstract class AbstractEndToEndTests {
     String s = sb.toString();
     System.out.println("url=" + s);
     return s;
+  }
+
+  protected String getDispatcherUsername() {
+    return System.getenv("FTGO_DISPATCHER_USERNAME");
+  }
+
+  protected String getDispatcherPassword() {
+    return System.getenv("FTGO_DISPATCHER_PASSWORD");
+  }
+
+  private RequestSpecification givenDispatcher() {
+    assertNotNull("dispatcher username", getDispatcherUsername());
+    assertNotNull("dispatcher password", getDispatcherPassword());
+    return given().auth().preemptive().basic(getDispatcherUsername(), getDispatcherPassword());
   }
 
   private String consumerBaseUrl(String... pathElements) {
@@ -293,7 +308,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    courierId = givenDispatcher().
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
@@ -305,7 +320,7 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void noteCourierAvailable() {
-    given().
+    givenDispatcher().
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().
@@ -339,7 +354,7 @@ public abstract class AbstractEndToEndTests {
       return assignedCourier;
     });
 
-    given().
+    givenDispatcher().
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().
