@@ -23,6 +23,8 @@ subprojects {
 
     group = "net.chrisrichardson.ftgo"
 
+    ext['tomcat.version'] = tomcatVersion
+
     repositories {
         mavenCentral()
         jcenter()
