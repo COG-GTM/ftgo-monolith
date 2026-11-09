@@ -16,4 +16,10 @@ public class EndToEndTests extends AbstractEndToEndTests  {
   public int getApplicationPort() {
     return applicationPort;
   }
+
+  @Override
+  protected int getRestaurantServicePort() {
+    String port = System.getenv("FTGO_RESTAURANT_SERVICE_PORT");
+    return port == null || port.isEmpty() ? applicationPort : Integer.parseInt(port);
+  }
 }

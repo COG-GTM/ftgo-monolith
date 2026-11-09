@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.restaurantservice.web;
+package net.chrisrichardson.ftgo.restaurantservice.api.web;
 
 public class CreateRestaurantResponse {
   private long id;
