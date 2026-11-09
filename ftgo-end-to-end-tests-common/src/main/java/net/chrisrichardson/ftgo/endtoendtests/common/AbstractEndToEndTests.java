@@ -64,12 +64,16 @@ public abstract class AbstractEndToEndTests {
     return s;
   }
 
+  protected int getRestaurantServicePort() {
+    return getApplicationPort();
+  }
+
   private String consumerBaseUrl(String... pathElements) {
     return baseUrl(getApplicationPort(), "consumers", pathElements);
   }
 
   private String restaurantBaseUrl(String... pathElements) {
-    return baseUrl(getApplicationPort(), "restaurants", pathElements);
+    return baseUrl(getRestaurantServicePort(), "restaurants", pathElements);
   }
 
   private String orderBaseUrl(String... pathElements) {

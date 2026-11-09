@@ -1,7 +1,16 @@
+apply plugin: FtgoServicePlugin
+
+configurations {
+    // Only on the standalone service's classpath, never on the monolith's.
+    standalone
+    testRuntime.extendsFrom standalone
+}
+
 dependencies {
     compile project(":common-swagger")
+    compile project(":ftgo-common")
+    compile project(":ftgo-common-jpa")
     compile project(":ftgo-restaurant-service-api")
-    compile project(":ftgo-domain")
 
     compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
@@ -9,7 +18,19 @@ dependencies {
 
     compile 'javax.el:javax.el-api:2.2.5'
 
+    standalone "org.flywaydb:flyway-core"
+    standalone "mysql:mysql-connector-java:8.0.33"
+
     testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-    testCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
-    testCompile "com.jayway.jsonpath:json-path:2.3.0"
+    testRuntime "com.h2database:h2"
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    classifier = 'boot'
+    mainClassName = 'net.chrisrichardson.ftgo.restaurantservice.main.RestaurantServiceMain'
+    classpath configurations.standalone
 }

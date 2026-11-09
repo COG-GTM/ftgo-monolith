@@ -29,8 +29,8 @@ public class Order {
 
   private Long consumerId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  private Restaurant restaurant;
+  @Embedded
+  private RestaurantSnapshot restaurant;
 
   @Embedded
   private OrderLineItems orderLineItems;
@@ -58,7 +58,7 @@ public class Order {
   private Order() {
   }
 
-  public Order(long consumerId, Restaurant restaurant, List<OrderLineItem> orderLineItems) {
+  public Order(long consumerId, RestaurantSnapshot restaurant, List<OrderLineItem> orderLineItems) {
     this.consumerId = consumerId;
     this.restaurant = restaurant;
     this.orderLineItems = new OrderLineItems(orderLineItems);
@@ -125,7 +125,7 @@ public class Order {
     return orderState;
   }
 
-  public Restaurant getRestaurant() {
+  public RestaurantSnapshot getRestaurant() {
     return restaurant;
   }
 

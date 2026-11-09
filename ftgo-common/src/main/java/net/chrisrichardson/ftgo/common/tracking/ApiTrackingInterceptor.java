@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import net.chrisrichardson.ftgo.common.web.CorrelationIdFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -28,7 +29,10 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     long startTime = System.currentTimeMillis();
     request.setAttribute(START_TIME_ATTR, startTime);
 
-    String correlationId = request.getHeader(CORRELATION_ID_HEADER);
+    String correlationId = MDC.get(CorrelationIdFilter.MDC_KEY);
+    if (correlationId == null || correlationId.isEmpty()) {
+      correlationId = request.getHeader(CORRELATION_ID_HEADER);
+    }
     if (correlationId == null || correlationId.isEmpty()) {
       correlationId = UUID.randomUUID().toString();
     }
