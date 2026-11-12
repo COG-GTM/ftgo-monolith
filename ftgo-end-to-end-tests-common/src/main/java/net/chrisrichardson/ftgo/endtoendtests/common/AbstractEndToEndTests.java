@@ -91,7 +91,11 @@ public abstract class AbstractEndToEndTests {
 
   @Before
   public void setUpAuthentication() {
-    RestAssured.authentication = RestAssured.preemptive().basic(getAdminUsername(), getAdminPassword());
+    String adminPassword = getAdminPassword();
+    if (adminPassword == null || adminPassword.isEmpty()) {
+      throw new IllegalStateException("FTGO_ADMIN_PASSWORD must be set to the application's admin password");
+    }
+    RestAssured.authentication = RestAssured.preemptive().basic(getAdminUsername(), adminPassword);
   }
 
   public String getAdminUsername() {

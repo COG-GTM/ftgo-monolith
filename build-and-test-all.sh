@@ -27,6 +27,7 @@ done
 echo KEEP_RUNNING=$KEEP_RUNNING
 
 . ./set-env.sh
+export FTGO_ADMIN_PASSWORD="${FTGO_ADMIN_PASSWORD:-$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')}"
 
 # TODO Temporarily
 

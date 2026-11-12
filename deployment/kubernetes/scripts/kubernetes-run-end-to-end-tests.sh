@@ -1,6 +1,7 @@
 #! /bin/bash
 
 set -e
+: "${FTGO_ADMIN_PASSWORD:?Set FTGO_ADMIN_PASSWORD to the deployed application's admin password}"
 
 ./deployment/kubernetes/scripts/kubernetes-wait-for-ready-pods.sh $(kubectl get pod -l application=ftgo  -o=jsonpath='{.items[*].metadata.name}')
 
