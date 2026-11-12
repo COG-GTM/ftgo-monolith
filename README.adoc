@@ -3,6 +3,19 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Authentication
+
+Set `FTGO_OPERATOR_PASSWORD` to bootstrap an operator account at startup. Operators can provision accounts using `POST /accounts`, for example:
+
+[source,bash]
+----
+curl -u operator:<operator-password> -H 'Content-Type: application/json' \
+  -d '{"username":"consumer1","password":"<password-at-least-8-characters>","role":"CONSUMER","entityId":1}' \
+  http://localhost:8081/accounts
+----
+
+Consumers can create, read, revise, and cancel their own orders; restaurants can read their orders and advance their state; assigned couriers can read their orders and mark them picked up or delivered. Couriers can manage their own availability, location, and workload. Operators can access all orders and couriers, create couriers, and provision accounts. Other application routes remain unauthenticated.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]

@@ -31,19 +31,30 @@ public class CourierService {
   }
 
   void noteAvailable(long courierId) {
-    courierRepository.findById(courierId).get().noteAvailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteAvailable();
   }
 
   void noteUnavailable(long courierId) {
-    courierRepository.findById(courierId).get().noteUnavailable();
+    courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .noteUnavailable();
   }
 
   public Courier findCourierById(long courierId) {
-    return courierRepository.findById(courierId).get();
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId));
   }
 
   @Transactional
   public void updateLocation(long courierId, double latitude, double longitude) {
+    if (Double.isNaN(latitude) || Double.isInfinite(latitude) || latitude < -90 || latitude > 90) {
+      throw new IllegalArgumentException("Latitude must be between -90 and 90");
+    }
+    if (Double.isNaN(longitude) || Double.isInfinite(longitude) || longitude < -180 || longitude > 180) {
+      throw new IllegalArgumentException("Longitude must be between -180 and 180");
+    }
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);

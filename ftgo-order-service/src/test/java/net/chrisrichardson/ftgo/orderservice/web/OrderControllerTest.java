@@ -4,15 +4,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.domain.OrderRepository;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import net.chrisrichardson.ftgo.security.FtgoUser;
+import net.chrisrichardson.ftgo.security.Role;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER;
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER_TOTAL;
@@ -30,7 +39,11 @@ public class OrderControllerTest {
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    orderController = new OrderController(orderService, orderRepository);
+    orderController = new OrderController(orderService, orderRepository, new OrderAccessPolicy());
+    FtgoUser user = new FtgoUser("consumer", "hash", Role.CONSUMER, OrderDetailsMother.CONSUMER_ID);
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities()));
+    SecurityContextHolder.setContext(context);
   }
 
 
@@ -55,20 +68,36 @@ public class OrderControllerTest {
   public void shouldFindNotOrder() {
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
-    given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
-    when().
-            get("/orders/1").
-    then().
-            statusCode(404)
-    ;
+    assertThatThrownBy(() -> given()
+            .standaloneSetup(configureControllers(orderController))
+            .when()
+            .get("/orders/1"))
+            .hasRootCauseInstanceOf(OrderNotFoundException.class);
+  }
+
+  @Test
+  public void anotherConsumerCannotReadOrder() {
+    when(orderRepository.findById(OrderDetailsMother.ORDER_ID)).thenReturn(Optional.of(CHICKEN_VINDALOO_ORDER));
+    FtgoUser anotherConsumer = new FtgoUser("other", "hash", Role.CONSUMER, OrderDetailsMother.CONSUMER_ID + 1);
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(new UsernamePasswordAuthenticationToken(
+            anotherConsumer, anotherConsumer.getPassword(), anotherConsumer.getAuthorities()));
+    SecurityContextHolder.setContext(context);
+
+    assertThatThrownBy(() -> given()
+            .standaloneSetup(configureControllers(orderController))
+            .when()
+            .get("/orders/" + OrderDetailsMother.ORDER_ID))
+            .hasRootCauseInstanceOf(AccessDeniedException.class);
   }
 
   private StandaloneMockMvcBuilder configureControllers(Object... controllers) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new MoneyModule());
     MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
-    return MockMvcBuilders.standaloneSetup(controllers).setMessageConverters(converter);
+    return MockMvcBuilders.standaloneSetup(controllers)
+            .setMessageConverters(converter)
+            .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver());
   }
 
 }

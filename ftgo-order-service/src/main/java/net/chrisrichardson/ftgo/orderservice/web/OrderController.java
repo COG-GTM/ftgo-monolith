@@ -7,9 +7,14 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import net.chrisrichardson.ftgo.security.FtgoUser;
+import net.chrisrichardson.ftgo.security.Role;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,16 +30,33 @@ public class OrderController {
   private OrderService orderService;
 
   private OrderRepository orderRepository;
+  private OrderAccessPolicy orderAccessPolicy;
 
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  public OrderController(OrderService orderService, OrderRepository orderRepository, OrderAccessPolicy orderAccessPolicy) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.orderAccessPolicy = orderAccessPolicy;
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
-    Order order = orderService.createOrder(request.getConsumerId(),
+  public CreateOrderResponse create(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                    @RequestBody CreateOrderRequest request) {
+    long consumerId;
+    if (caller.getRole() == Role.CONSUMER) {
+      consumerId = caller.getEntityId();
+      if (request.getConsumerId() != 0 && request.getConsumerId() != consumerId) {
+        throw new AccessDeniedException("Consumers may only create orders for themselves");
+      }
+    } else if (caller.isOperator()) {
+      if (request.getConsumerId() == 0) {
+        throw new IllegalArgumentException("Consumer id is required for operators");
+      }
+      consumerId = request.getConsumerId();
+    } else {
+      throw new AccessDeniedException("Only consumers and operators can create orders");
+    }
+    Order order = orderService.createOrder(consumerId,
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
     );
@@ -43,13 +65,28 @@ public class OrderController {
 
 
   @RequestMapping(path = "/{orderId}", method = RequestMethod.GET)
-  public ResponseEntity<GetOrderResponse> getOrder(@PathVariable long orderId) {
-    Optional<Order> order = orderRepository.findById(orderId);
-    return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  public ResponseEntity<GetOrderResponse> getOrder(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                                   @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkCanRead(caller, order);
+    return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                                          @RequestParam(required = false) Long consumerId) {
+    if (caller.getRole() == Role.CONSUMER) {
+      if (consumerId != null && !caller.isConsumer(consumerId)) {
+        throw new AccessDeniedException("Consumers may only list their own orders");
+      }
+      consumerId = caller.getEntityId();
+    } else if (caller.isOperator()) {
+      if (consumerId == null) {
+        throw new IllegalArgumentException("Consumer id is required for operators");
+      }
+    } else {
+      throw new AccessDeniedException("Only consumers and operators can list orders");
+    }
     List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
             .stream()
             .map(this::makeGetOrderResponse)
@@ -83,53 +120,65 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> cancel(@PathVariable long orderId) {
-    try {
-      Order order = orderService.cancel(orderId);
-      return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
-    } catch (OrderNotFoundException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+  public ResponseEntity<GetOrderResponse> cancel(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                                 @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsConsumer(caller, order);
+    order = orderService.cancel(orderId);
+    return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
-    try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
-      return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
-    } catch (OrderNotFoundException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+  public ResponseEntity<GetOrderResponse> revise(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                                 @PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsConsumer(caller, order);
+    order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+    return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+  public ResponseEntity<String> accept(@ApiIgnore @AuthenticationPrincipal FtgoUser caller,
+                                       @PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsRestaurant(caller, order);
     orderService.accept(orderId, orderAcceptance.getReadyBy());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
+  public ResponseEntity<String> preparing(@ApiIgnore @AuthenticationPrincipal FtgoUser caller, @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsRestaurant(caller, order);
     orderService.notePreparing(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
+  public ResponseEntity<String> ready(@ApiIgnore @AuthenticationPrincipal FtgoUser caller, @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsRestaurant(caller, order);
     orderService.noteReadyForPickup(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
+  public ResponseEntity<String> pickedup(@ApiIgnore @AuthenticationPrincipal FtgoUser caller, @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsAssignedCourier(caller, order);
     orderService.notePickedUp(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
+  public ResponseEntity<String> delivered(@ApiIgnore @AuthenticationPrincipal FtgoUser caller, @PathVariable long orderId) {
+    Order order = findOrder(orderId);
+    orderAccessPolicy.checkIsAssignedCourier(caller, order);
     orderService.noteDelivered(orderId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
+  private Order findOrder(long orderId) {
+    return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+  }
 }

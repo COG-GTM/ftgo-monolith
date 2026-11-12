@@ -46,4 +46,8 @@ public class Action {
     return time;
   }
 
+  public Long getOrderId() {
+    return order == null ? null : order.getId();
+  }
+
 }
