@@ -3,6 +3,17 @@
 suffix="$$-$RANDOM"
 allowed_pod="ftgo-mysql-policy-allowed-$suffix"
 blocked_pod="ftgo-mysql-policy-blocked-$suffix"
+probe_timeout=${MYSQL_POLICY_PROBE_TIMEOUT:-180}
+
+if ! [[ "$probe_timeout" =~ ^[0-9]+$ ]]; then
+  echo "MYSQL_POLICY_PROBE_TIMEOUT must be a positive integer" >&2
+  exit 1
+fi
+probe_timeout=$((10#$probe_timeout))
+if (( probe_timeout <= 0 )); then
+  echo "MYSQL_POLICY_PROBE_TIMEOUT must be a positive integer" >&2
+  exit 1
+fi
 
 cleanup() {
   kubectl delete pod "$allowed_pod" "$blocked_pod" --ignore-not-found --wait=true --timeout=30s >/dev/null 2>&1 || true
@@ -51,12 +62,25 @@ EOF
 
 kubectl wait --for=condition=Ready "pod/$allowed_pod" "pod/$blocked_pod" --timeout=180s
 
-allowed_output=$(kubectl exec "$allowed_pod" -- mysql --connect-timeout=5 --host=ftgo-mysql --port=3306 --user=mysqluser --batch --skip-column-names --execute='SELECT 1')
-if [ "$allowed_output" != "1" ]; then
-  printf 'Labeled probe returned unexpected output: %s\n' "$allowed_output" >&2
-  exit 1
-fi
-printf 'Labeled probe connected to ftgo-mysql:3306\n'
+probe_deadline=$((SECONDS + probe_timeout))
+last_output=
+while true; do
+  if out=$(kubectl exec "$allowed_pod" -- mysql --connect-timeout=5 --host=ftgo-mysql --port=3306 --user=mysqluser --batch --skip-column-names --execute='SELECT 1' 2>&1); then
+    if [ "$out" = "1" ]; then
+      printf 'Labeled probe connected to ftgo-mysql:3306\n'
+      break
+    fi
+    last_output="Unexpected output from labeled probe: $out"
+  else
+    last_output=$out
+  fi
+  if (( SECONDS >= probe_deadline )); then
+    printf 'Labeled probe did not return 1 within %s seconds; last error output:\n%s\n' "$probe_timeout" "$last_output" >&2
+    exit 1
+  fi
+  printf 'Labeled probe not ready; retrying in 3 seconds\n'
+  sleep 3
+done
 
 set +e
 blocked_output=$(kubectl exec "$blocked_pod" -- mysql --connect-timeout=5 --host=ftgo-mysql --port=3306 --user=mysqluser --batch --skip-column-names --execute='SELECT 1' 2>&1)
