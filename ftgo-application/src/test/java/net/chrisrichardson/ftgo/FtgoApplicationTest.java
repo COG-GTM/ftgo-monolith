@@ -15,7 +15,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=FtgoApplicationTest.Config.class,
-        properties = "ftgo.security.operator.password=" + FtgoApplicationTest.OPERATOR_PASSWORD,
+        properties = {
+                "ftgo.security.operator.username=ftgo-application-test-operator",
+                "ftgo.security.operator.password=" + FtgoApplicationTest.OPERATOR_PASSWORD
+        },
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FtgoApplicationTest extends AbstractEndToEndTests {
 
@@ -46,7 +49,7 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
 
   @Override
   public String getOperatorUsername() {
-    return "operator";
+    return "ftgo-application-test-operator";
   }
 
   @Override
