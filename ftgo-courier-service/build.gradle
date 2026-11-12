@@ -1,5 +1,6 @@
 dependencies {
     compile project(":ftgo-courier-service-api")
+    compile project(":ftgo-security")
 
     compile project(":common-swagger")
     compile project(":ftgo-domain")
