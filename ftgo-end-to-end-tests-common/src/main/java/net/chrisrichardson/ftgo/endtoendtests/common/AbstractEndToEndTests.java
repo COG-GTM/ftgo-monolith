@@ -218,6 +218,9 @@ public abstract class AbstractEndToEndTests {
             .when().post(courierBaseUrl(Integer.toString(courierAId), "location")).then().statusCode(200);
 
     operator().when().get(courierBaseUrl("999999999")).then().statusCode(404);
+    operator().when().get(orderBaseUrl("999999999")).then().statusCode(404);
+    operator().body("{}").contentType("application/json")
+            .when().post(orderBaseUrl("999999999", "cancel")).then().statusCode(404);
   }
 
   private void createConsumerAndRestaurant() {
