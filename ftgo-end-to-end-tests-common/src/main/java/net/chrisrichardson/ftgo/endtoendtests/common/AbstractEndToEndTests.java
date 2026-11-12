@@ -21,6 +21,7 @@ import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest
 import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.restaurantservice.events.RestaurantMenuDTO;
 import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
@@ -86,6 +87,24 @@ public abstract class AbstractEndToEndTests {
             (aClass, s) -> objectMapper
     ));
 
+  }
+
+  @Before
+  public void setUpAuthentication() {
+    RestAssured.authentication = RestAssured.preemptive().basic(getAdminUsername(), getAdminPassword());
+  }
+
+  public String getAdminUsername() {
+    String username = System.getProperty("FTGO_ADMIN_USERNAME");
+    if (username == null) {
+      username = System.getenv("FTGO_ADMIN_USERNAME");
+    }
+    return username == null ? "admin" : username;
+  }
+
+  public String getAdminPassword() {
+    String password = System.getProperty("FTGO_ADMIN_PASSWORD");
+    return password == null ? System.getenv("FTGO_ADMIN_PASSWORD") : password;
   }
 
   @Test
