@@ -116,6 +116,14 @@ public abstract class AbstractEndToEndTests {
     noteCourierAvailable(courierId, courierUsername, courierPassword);
     acceptOrder(orderId, restaurantUsername, restaurantPassword);
     assertOrderAssignedToCourier(orderId, courierId);
+    int otherCourierId = createCourier();
+    String otherCourierUsername = uniqueUsername("other-courier");
+    String otherCourierPassword = ENTITY_PASSWORD;
+    createAccount(otherCourierUsername, otherCourierPassword, Role.COURIER, otherCourierId);
+    auth(otherCourierUsername, otherCourierPassword).when()
+            .post(orderBaseUrl(Integer.toString(orderId), "pickedup")).then().statusCode(403);
+    auth(otherCourierUsername, otherCourierPassword).when()
+            .post(orderBaseUrl(Integer.toString(orderId), "delivered")).then().statusCode(403);
     startPreparingOrder(orderId, restaurantUsername, restaurantPassword);
     orderReadyForPickup(orderId, restaurantUsername, restaurantPassword);
     pickupOrder(orderId, courierUsername, courierPassword);
