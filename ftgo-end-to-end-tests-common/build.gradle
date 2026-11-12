@@ -3,6 +3,7 @@ dependencies {
     compile project(":ftgo-restaurant-service-api")
     compile project(":ftgo-order-service-api")
     compile project(":ftgo-courier-service-api")
+    compile project(":ftgo-security")
     compile "io.eventuate.util:eventuate-util-test:$eventuateUtilVersion"
 
 

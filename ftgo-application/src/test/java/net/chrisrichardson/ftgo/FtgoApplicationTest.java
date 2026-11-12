@@ -14,8 +14,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes=FtgoApplicationTest.Config.class,
+        properties = "ftgo.security.operator.password=" + FtgoApplicationTest.OPERATOR_PASSWORD,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FtgoApplicationTest extends AbstractEndToEndTests {
+
+  static final String OPERATOR_PASSWORD = "e2e-operator-password";
 
   @Configuration
   @EnableAutoConfiguration
@@ -38,5 +42,15 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @Override
   public int getApplicationPort() {
     return port;
+  }
+
+  @Override
+  public String getOperatorUsername() {
+    return "operator";
+  }
+
+  @Override
+  public String getOperatorPassword() {
+    return OPERATOR_PASSWORD;
   }
 }
