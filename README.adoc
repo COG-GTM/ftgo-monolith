@@ -67,6 +67,16 @@ docker compose down -v
 The non-root Temurin 21 JRE container serves port 8081 on the host. It has a
 512 MiB memory limit and sets the JVM maximum heap to 75% of available memory.
 
+## Microservices decomposition
+
+Epic AB-585 is splitting the monolith into consumer, restaurant, courier and order
+services behind an API gateway (strangler-fig, database-per-service). The monolith
+stays the default target for every route until each context is cut over.
+
+* link:docs/adr/0003-microservices-decomposition.md[ADR 0003: microservices decomposition] (Proposed, ARB required)
+* link:docs/microservices/README.md[Decomposition guide]: context map, data ownership, routes, ports, cut-over order
+* link:docs/microservices/arb-submission.md[ARB submission]
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
