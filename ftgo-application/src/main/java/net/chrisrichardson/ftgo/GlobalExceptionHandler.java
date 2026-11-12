@@ -82,15 +82,18 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(RequestBodyTooLargeException.class)
+  public ResponseEntity<ErrorResponse> handleRequestBodyTooLarge(
+          RequestBodyTooLargeException ex, HttpServletRequest request) {
+    return payloadTooLarge(ex, request);
+  }
+
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ErrorResponse> handleMessageNotReadable(
           HttpMessageNotReadableException ex, HttpServletRequest request) {
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
       if (cause instanceof RequestBodyTooLargeException) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.PAYLOAD_TOO_LARGE.value(), "Payload Too Large", cause.getMessage(),
-                request.getRequestURI(), MDC.get("correlationId"));
-        return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
+        return payloadTooLarge(cause, request);
       }
     }
 
@@ -98,6 +101,14 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(), "Bad Request", "Malformed request body",
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  private ResponseEntity<ErrorResponse> payloadTooLarge(
+          Throwable cause, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.PAYLOAD_TOO_LARGE.value(), "Payload Too Large", cause.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
