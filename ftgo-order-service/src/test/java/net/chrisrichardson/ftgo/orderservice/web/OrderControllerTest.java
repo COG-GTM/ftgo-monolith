@@ -148,7 +148,25 @@ public class OrderControllerTest {
   @Test
   public void restaurantCannotPerformCourierActions() {
     authenticate(FtgoRole.RESTAURANT, RESTAURANT_ID);
-    assertStatus("POST", orderPath("pickedup"), "{}", 403);
+    for (String action : new String[]{"pickedup", "delivered"}) {
+      assertStatus("POST", orderPath(action), "{}", 403);
+    }
+    verifyZeroInteractions(orderService);
+  }
+
+  @Test
+  public void restaurantCannotCancelOrder() {
+    authenticate(FtgoRole.RESTAURANT, RESTAURANT_ID);
+    when(orderService.cancel(ORDER_ID)).thenReturn(order);
+    assertStatus("POST", orderPath("cancel"), "{}", 403);
+    verifyZeroInteractions(orderService);
+  }
+
+  @Test
+  public void restaurantCannotReviseOrder() {
+    authenticate(FtgoRole.RESTAURANT, RESTAURANT_ID);
+    when(orderService.reviseOrder(eq(ORDER_ID), any())).thenReturn(order);
+    assertStatus("POST", orderPath("revise"), validReviseOrderRequest(), 403);
     verifyZeroInteractions(orderService);
   }
 
@@ -159,6 +177,31 @@ public class OrderControllerTest {
     assertStatus("POST", orderPath("delivered"), "{}", 200);
     verify(orderService).notePickedUp(ORDER_ID);
     verify(orderService).noteDelivered(ORDER_ID);
+  }
+
+  @Test
+  public void courierCannotPerformRestaurantActions() {
+    authenticate(FtgoRole.COURIER, COURIER_ID);
+    for (String action : new String[]{"accept", "preparing", "ready"}) {
+      assertStatus("POST", orderPath(action), "{}", 403);
+    }
+    verifyZeroInteractions(orderService);
+  }
+
+  @Test
+  public void courierCannotCancelOrder() {
+    authenticate(FtgoRole.COURIER, COURIER_ID);
+    when(orderService.cancel(ORDER_ID)).thenReturn(order);
+    assertStatus("POST", orderPath("cancel"), "{}", 403);
+    verifyZeroInteractions(orderService);
+  }
+
+  @Test
+  public void courierCannotReviseOrder() {
+    authenticate(FtgoRole.COURIER, COURIER_ID);
+    when(orderService.reviseOrder(eq(ORDER_ID), any())).thenReturn(order);
+    assertStatus("POST", orderPath("revise"), validReviseOrderRequest(), 403);
+    verifyZeroInteractions(orderService);
   }
 
   @Test
@@ -226,6 +269,12 @@ public class OrderControllerTest {
 
   private String orderPath(String action) {
     return "/orders/" + ORDER_ID + (action == null ? "" : "/" + action);
+  }
+
+  private String validReviseOrderRequest() {
+    return "{\"revisedLineItemQuantities\":{\""
+            + OrderDetailsMother.CHICKEN_VINDALOO_MENU_ITEM_AND_QUANTITY.getMenuItemId()
+            + "\":1}}";
   }
 
   private void assertStatus(String method, String path, String body, int status) {
