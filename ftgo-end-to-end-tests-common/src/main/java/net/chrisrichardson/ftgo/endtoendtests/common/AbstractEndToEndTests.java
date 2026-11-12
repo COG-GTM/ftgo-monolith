@@ -457,7 +457,8 @@ public abstract class AbstractEndToEndTests {
   public abstract int getApplicationPort();
 
   protected String getOperatorUsername() {
-    return "operator";
+    String username = System.getenv("FTGO_OPERATOR_USERNAME");
+    return username == null || username.trim().isEmpty() ? "operator" : username;
   }
 
   protected String getOperatorPassword() {
