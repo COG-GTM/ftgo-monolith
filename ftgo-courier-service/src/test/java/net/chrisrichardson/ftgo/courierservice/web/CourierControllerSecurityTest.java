@@ -137,6 +137,24 @@ public class CourierControllerSecurityTest {
   }
 
   @Test
+  public void shouldDenyCourierCredentialProvisioningWithTrailingSlash() throws Exception {
+    assertCourierCredentialPathDenied("/couriers/2/credentials/");
+  }
+
+  @Test
+  public void shouldDenyCourierCredentialProvisioningWithSuffix() throws Exception {
+    assertCourierCredentialPathDenied("/couriers/2/credentials.json");
+  }
+
+  private void assertCourierCredentialPathDenied(String path) throws Exception {
+    String request = "{\"username\":\"new-courier\",\"password\":\"a-long-password\"}";
+    mockMvc.perform(put(path).with(httpBasic("carol", CAROL_PASSWORD))
+                    .contentType(MediaType.APPLICATION_JSON).content(request))
+            .andExpect(status().isForbidden());
+    verifyZeroInteractions(courierService);
+  }
+
+  @Test
   public void shouldLeaveCourierPostEndpointsOutsideSecurityFilterChain() throws Exception {
     String createCourier = "{\"name\":{\"firstName\":\"Carol\",\"lastName\":\"Courier\"},"
             + "\"address\":{\"street1\":\"1 Main Street\",\"city\":\"Oakland\",\"state\":\"CA\",\"zip\":\"94619\"}}";

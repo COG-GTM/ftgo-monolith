@@ -75,7 +75,9 @@ public class CourierController {
 
   @RequestMapping(path="/couriers/{courierId}/credentials", method = RequestMethod.PUT)
   public ResponseEntity<Void> setCredentials(@PathVariable long courierId,
-                                             @RequestBody CourierCredentialsRequest request) {
+                                             @RequestBody CourierCredentialsRequest request,
+                                             Authentication authentication) {
+    courierAccessPolicy.checkIsOperator(authentication);
     courierService.setCredentials(courierId, request.getUsername(), request.getPassword());
     return new ResponseEntity<>(HttpStatus.OK);
   }

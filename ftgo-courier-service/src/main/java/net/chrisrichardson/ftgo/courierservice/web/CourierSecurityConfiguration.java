@@ -43,7 +43,8 @@ public class CourierSecurityConfiguration extends WebSecurityConfigurerAdapter {
             .httpBasic()
             .and()
             .authorizeRequests()
-            .antMatchers(HttpMethod.PUT, "/couriers/*/credentials").hasRole("OPERATOR")
+            .mvcMatchers(HttpMethod.PUT, "/couriers/{courierId}/credentials").hasRole("OPERATOR")
+            .antMatchers(HttpMethod.PUT, "/couriers/*/credentials.*").hasRole("OPERATOR")
             .anyRequest().authenticated();
   }
 }

@@ -9,10 +9,7 @@ import org.springframework.stereotype.Component;
 public class CourierAccessPolicy {
 
   public void checkCanRead(Authentication authentication, long courierId) {
-    boolean operator = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch("ROLE_OPERATOR"::equals);
-    if (operator) {
+    if (isOperator(authentication)) {
       return;
     }
 
@@ -23,5 +20,17 @@ public class CourierAccessPolicy {
       return;
     }
     throw new AccessDeniedException("Access denied");
+  }
+
+  public void checkIsOperator(Authentication authentication) {
+    if (!isOperator(authentication)) {
+      throw new AccessDeniedException("Access denied");
+    }
+  }
+
+  private boolean isOperator(Authentication authentication) {
+    return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_OPERATOR"::equals);
   }
 }
