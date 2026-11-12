@@ -3,5 +3,5 @@
 
 export DOCKER_HOST_IP=$(hostname -I | sed -e 's/ .*//g')
 export TERM=dumb
-
+export FTGO_OPERATOR_PASSWORD=$(openssl rand -hex 16)
 

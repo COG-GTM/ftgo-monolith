@@ -13,6 +13,7 @@ import net.chrisrichardson.ftgo.common.MoneyModule;
 import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
+import net.chrisrichardson.ftgo.courierservice.api.CourierCredentialsRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
@@ -25,6 +26,8 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,6 +114,8 @@ public abstract class AbstractEndToEndTests {
     acceptOrder();
 
     assertOrderAssignedToCourier();
+
+    assertCourierReadAuthorization();
 
     startPreparingOrder();
 
@@ -302,6 +307,16 @@ public abstract class AbstractEndToEndTests {
             statusCode(200)
             .extract()
             .path("id");
+    given().
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            then().
+            statusCode(401);
+    given().
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "workload")).
+            then().
+            statusCode(401);
   }
 
   private void noteCourierAvailable() {
@@ -340,6 +355,7 @@ public abstract class AbstractEndToEndTests {
     });
 
     given().
+            auth().preemptive().basic(getOperatorUsername(), getOperatorPassword()).
             when().
             get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
             then().
@@ -347,6 +363,60 @@ public abstract class AbstractEndToEndTests {
             .body("plan.actions[0].type", equalTo("PICKUP"))
             .body("plan.actions[1].type", equalTo("DROPOFF"));
 
+  }
+
+  private void assertCourierReadAuthorization() {
+    String courierPassword = UUID.randomUUID().toString() + UUID.randomUUID();
+    String courierUsername = "courier-" + courierId + "-" + System.nanoTime();
+    provisionCourierCredentials(courierId, courierUsername, courierPassword);
+
+    Map<String, Object> details = given().
+            auth().preemptive().basic(courierUsername, courierPassword).
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            then().
+            statusCode(200)
+            .body("plan.actions[0].type", equalTo("PICKUP"))
+            .extract().as(Map.class);
+    assertThat(details).doesNotContainKey("address");
+    assertThat(details).doesNotContainKey("currentLatitude");
+    given().
+            auth().preemptive().basic(courierUsername, courierPassword).
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "workload")).
+            then().
+            statusCode(200);
+
+    int secondCourierId = given().
+            body(new CreateCourierRequest(new PersonName("Dave", "Courier"),
+                    new Address("2 Scenic Drive", null, "Oakland", "CA", "94555"))).
+            contentType("application/json").
+            when().
+            post(baseUrl(getApplicationPort(), "couriers")).
+            then().
+            statusCode(200)
+            .extract().path("id");
+    String secondUsername = "courier-" + secondCourierId + "-" + System.nanoTime();
+    String secondPassword = UUID.randomUUID().toString() + UUID.randomUUID();
+    provisionCourierCredentials(secondCourierId, secondUsername, secondPassword);
+
+    given().
+            auth().preemptive().basic(secondUsername, secondPassword).
+            when().
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            then().
+            statusCode(403);
+  }
+
+  private void provisionCourierCredentials(int courierId, String username, String password) {
+    given().
+            auth().preemptive().basic(getOperatorUsername(), getOperatorPassword()).
+            body(new CourierCredentialsRequest(username, password)).
+            contentType("application/json").
+            when().
+            put(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "credentials")).
+            then().
+            statusCode(200);
   }
 
   private void startPreparingOrder() {
@@ -384,4 +454,16 @@ public abstract class AbstractEndToEndTests {
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  protected String getOperatorUsername() {
+    return "operator";
+  }
+
+  protected String getOperatorPassword() {
+    String password = System.getenv("FTGO_OPERATOR_PASSWORD");
+    if (password == null || password.trim().isEmpty()) {
+      throw new IllegalStateException("FTGO_OPERATOR_PASSWORD must be set to run courier end-to-end tests");
+    }
+    return password;
+  }
 }

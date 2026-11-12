@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo;
 import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierUsernameTakenException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.RestaurantNotFoundException;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -76,6 +78,24 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDenied(
+          AccessDeniedException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(), "Forbidden", "Access denied",
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
+
+  @ExceptionHandler(CourierUsernameTakenException.class)
+  public ResponseEntity<ErrorResponse> handleCourierUsernameTaken(
+          CourierUsernameTakenException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(Exception.class)
