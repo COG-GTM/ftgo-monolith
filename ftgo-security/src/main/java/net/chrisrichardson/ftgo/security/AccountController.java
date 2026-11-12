@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.security;
 import net.chrisrichardson.ftgo.domain.ConsumerRepository;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import net.chrisrichardson.ftgo.domain.RestaurantRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,9 +57,14 @@ public class AccountController {
       throw new UsernameTakenException(request.getUsername());
     }
 
-    UserAccount account = userAccountRepository.save(new UserAccount(
-            request.getUsername(), passwordEncoder.encode(request.getPassword()),
-            request.getRole(), request.getEntityId()));
+    UserAccount account;
+    try {
+      account = userAccountRepository.save(new UserAccount(
+              request.getUsername(), passwordEncoder.encode(request.getPassword()),
+              request.getRole(), request.getEntityId()));
+    } catch (DataIntegrityViolationException exception) {
+      throw new UsernameTakenException(request.getUsername());
+    }
     return new CreateAccountResponse(account.getId(), account.getUsername(), account.getRole(), account.getEntityId());
   }
 
