@@ -41,7 +41,11 @@ public class OperatorAccountInitializer implements ApplicationRunner {
     try {
       userAccountRepository.save(new UserAccount(username, passwordEncoder.encode(password), Role.OPERATOR, null));
     } catch (DataIntegrityViolationException exception) {
-      logger.info("Operator account {} already exists; skipping bootstrap", username);
+      if (userAccountRepository.findByUsername(username).isPresent()) {
+        logger.info("Operator account {} already exists; skipping bootstrap", username);
+        return;
+      }
+      throw exception;
     }
   }
 }
