@@ -4,6 +4,7 @@ import net.chrisrichardson.ftgo.common.ErrorResponse;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.domain.NoCourierAvailableException;
+import net.chrisrichardson.ftgo.web.RequestBodyTooLargeException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.RestaurantNotFoundException;
 import org.slf4j.Logger;
@@ -11,10 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -74,6 +78,47 @@ public class GlobalExceptionHandler {
     logger.warn("Bad request: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(RequestBodyTooLargeException.class)
+  public ResponseEntity<ErrorResponse> handleRequestBodyTooLarge(
+          RequestBodyTooLargeException ex, HttpServletRequest request) {
+    return payloadTooLarge(ex, request);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+          HttpMessageNotReadableException ex, HttpServletRequest request) {
+    for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+      if (cause instanceof RequestBodyTooLargeException) {
+        return payloadTooLarge(cause, request);
+      }
+    }
+
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), "Bad Request", "Malformed request body",
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  private ResponseEntity<ErrorResponse> payloadTooLarge(
+          Throwable cause, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.PAYLOAD_TOO_LARGE.value(), "Payload Too Large", cause.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+          MethodArgumentNotValidException ex, HttpServletRequest request) {
+    String message = ex.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), "Bad Request", message,
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }

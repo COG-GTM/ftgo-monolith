@@ -7,10 +7,13 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +24,9 @@ import static java.util.stream.Collectors.toList;
 @RestController
 @RequestMapping(path = "/orders")
 public class OrderController {
+
+  public static final int DEFAULT_PAGE_SIZE = 20;
+  public static final int MAX_PAGE_SIZE = 100;
 
   private OrderService orderService;
 
@@ -33,7 +39,7 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+  public CreateOrderResponse create(@Valid @RequestBody CreateOrderRequest request) {
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
@@ -49,8 +55,16 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(
+          @RequestParam long consumerId,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
+    if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
+      return ResponseEntity.badRequest().build();
+    }
+
+    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId,
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
