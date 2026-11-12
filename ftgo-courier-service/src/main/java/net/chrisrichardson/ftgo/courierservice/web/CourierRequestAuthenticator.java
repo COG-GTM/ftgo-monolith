@@ -33,10 +33,10 @@ public class CourierRequestAuthenticator {
   }
 
   public CourierPrincipal authenticate(String authorizationHeader) {
-    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+    if (authorizationHeader == null || !authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
       throw new CourierAuthenticationException();
     }
-    String token = authorizationHeader.substring("Bearer ".length());
+    String token = authorizationHeader.substring(7);
     if (token.isEmpty() || !token.equals(token.trim())) {
       throw new CourierAuthenticationException();
     }

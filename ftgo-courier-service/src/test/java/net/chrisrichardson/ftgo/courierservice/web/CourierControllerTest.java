@@ -101,6 +101,14 @@ public class CourierControllerTest {
   }
 
   @Test
+  public void shouldAcceptLowercaseBearerScheme() throws Exception {
+    postWithAuthorization("/couriers/1/availability", "bearer " + COURIER_A_TOKEN, "{\"available\":true}")
+            .andExpect(status().isOk());
+
+    assertTrue(courierA.isAvailable());
+  }
+
+  @Test
   public void shouldAllowOperatorToUpdateAnyCourier() throws Exception {
     post("/couriers/1/availability", OPERATOR_TOKEN, "{\"available\":true}")
             .andExpect(status().isOk());
@@ -150,11 +158,16 @@ public class CourierControllerTest {
 
   private org.springframework.test.web.servlet.ResultActions post(String path, String token, String body)
           throws Exception {
+    return postWithAuthorization(path, token == null ? null : "Bearer " + token, body);
+  }
+
+  private org.springframework.test.web.servlet.ResultActions postWithAuthorization(
+          String path, String authorization, String body) throws Exception {
     MockHttpServletRequestBuilder request = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path)
             .contentType(MediaType.APPLICATION_JSON)
             .content(body);
-    if (token != null) {
-      request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+    if (authorization != null) {
+      request.header(HttpHeaders.AUTHORIZATION, authorization);
     }
     return mockMvc.perform(request);
   }
