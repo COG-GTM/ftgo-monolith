@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.restaurantservice.web;
 import net.chrisrichardson.ftgo.domain.Restaurant;
 import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
 import net.chrisrichardson.ftgo.restaurantservice.events.CreateRestaurantRequest;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ public class RestaurantController {
   private RestaurantService restaurantService;
 
   @RequestMapping(method = RequestMethod.POST)
-  public CreateRestaurantResponse create(@RequestBody CreateRestaurantRequest request) {
+  public CreateRestaurantResponse create(@Valid @RequestBody CreateRestaurantRequest request) {
     Restaurant r = restaurantService.create(request);
     return new CreateRestaurantResponse(r.getId());
   }

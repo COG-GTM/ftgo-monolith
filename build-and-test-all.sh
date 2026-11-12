@@ -28,6 +28,17 @@ echo KEEP_RUNNING=$KEEP_RUNNING
 
 . ./set-env.sh
 
+if [ -z "$FTGO_OPERATOR_PASSWORD_HASH" ] ; then
+  export FTGO_OPERATOR_USERNAME=${FTGO_OPERATOR_USERNAME:-operator}
+  export FTGO_OPERATOR_PASSWORD=${FTGO_OPERATOR_PASSWORD:-$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')}
+  FTGO_OPERATOR_PASSWORD_HASH=$(docker run --rm httpd:2.4-alpine htpasswd -nbBC 10 "" "$FTGO_OPERATOR_PASSWORD" | tr -d ':\n' | sed 's/^\$2y/\$2a/')
+  if ! [[ "$FTGO_OPERATOR_PASSWORD_HASH" =~ ^\$2a\$[0-9]{2}\$[./0-9A-Za-z]{53}$ ]] ; then
+    echo "Failed to generate a BCrypt hash for the operator password" >&2
+    exit 1
+  fi
+  export FTGO_OPERATOR_PASSWORD_HASH
+fi
+
 # TODO Temporarily
 
 ./gradlew testClasses

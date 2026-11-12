@@ -3,17 +3,29 @@ package net.chrisrichardson.ftgo.common;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Size;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class Address {
 
+  @Size(max = 255)
   private String street1;
+  @Size(max = 255)
   private String street2;
+  @Size(max = 255)
   private String city;
+  @Size(max = 255)
   private String state;
+  @Size(max = 255)
   private String zip;
+  @DecimalMin("-90")
+  @DecimalMax("90")
   private Double latitude;
+  @DecimalMin("-180")
+  @DecimalMax("180")
   private Double longitude;
 
   public Address() {
