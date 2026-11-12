@@ -10,6 +10,7 @@ include "ftgo-common-jpa"
 
 include "ftgo-domain"
 
+include "ftgo-security"
 
 include "ftgo-order-service"
 include "ftgo-order-service-api"
@@ -27,4 +28,3 @@ include "ftgo-application"
 
 include "ftgo-end-to-end-tests-common"
 include "ftgo-end-to-end-tests"
-
