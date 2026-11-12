@@ -5,6 +5,9 @@ Create the `ftgo-db-secret` Secret before deployment with
 `username`, and `password`; the script reads `MYSQL_ROOT_PASSWORD`, `MYSQL_USER`
 (default `mysqluser`), and `MYSQL_PASSWORD` from the environment and generates
 missing passwords. It leaves an existing Secret unchanged.
+If an existing Secret is missing a key, treat its Git-committed values as
+compromised; delete and recreate the Secret, then rotate the MySQL accounts on
+the existing volume.
 
 The MySQL StatefulSet reads those keys through `secretKeyRef`. Application pods
 must carry the label `svc: ftgo-application` and read the database username and
