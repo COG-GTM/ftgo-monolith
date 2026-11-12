@@ -4,8 +4,11 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
+@UniqueMenuItemIds
 public class RestaurantMenuDTO {
   private List<MenuItemDTO> menuItems;
 
@@ -22,6 +25,8 @@ public class RestaurantMenuDTO {
     return HashCodeBuilder.reflectionHashCode(this);
   }
 
+  @NotEmpty
+  @Valid
   public List<MenuItemDTO> getMenuItemDTOs() {
     return menuItems;
   }

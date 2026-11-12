@@ -8,13 +8,23 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class MenuItemDTO {
 
+  @NotBlank
+  @Size(max = 255)
   private String id;
+
+  @NotBlank
+  @Size(max = 255)
   private String name;
+
+  @NotNull
   private Money price;
 
   private MenuItemDTO() {
@@ -57,6 +67,7 @@ public class MenuItemDTO {
     this.name = name;
   }
 
+  @ValidMenuItemPrice
   public Money getPrice() {
     return price;
   }

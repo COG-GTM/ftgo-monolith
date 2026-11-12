@@ -8,3 +8,28 @@ It's used to illustrate how to refactor a monolithic application to services.
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
 image::http://microservices.io/i/Microservices-Patterns-Cover.png[width=50%]
+
+== Authentication
+
+The API uses stateless HTTP Basic authentication for protected routes. `OPERATOR` users can
+create consumers, read any consumer, and create restaurants. `RESTAURANT_OWNER` users can
+create restaurants. `CONSUMER` users can read only their own consumer record; configure their
+`consumer-id` to match the consumer ID.
+
+Configure accounts with indexed properties such as
+`ftgo.security.users[0].username`, `ftgo.security.users[0].password-hash`,
+`ftgo.security.users[0].role`, and, for consumers,
+`ftgo.security.users[0].consumer-id`. Environment variables use the corresponding indexed names,
+for example `FTGO_SECURITY_USERS_0_USERNAME` and
+`FTGO_SECURITY_USERS_0_PASSWORD_HASH`. Passwords must be BCrypt hashes, not plaintext. One way
+to create a compatible `$2a$` hash is:
+
+[source,shell]
+----
+htpasswd -bnBC 10 "" "$PW" | tr -d ':\n' | sed 's/^\$2y/\$2a/'
+----
+
+The `ftgo-application` service in Docker Compose reads the operator username from
+`FTGO_OPERATOR_USERNAME` (default `operator`) and the BCrypt hash from
+`FTGO_OPERATOR_PASSWORD_HASH`. Set the hash before starting the service. The end-to-end tests
+use `FTGO_OPERATOR_PASSWORD` for the operator's plaintext test password.

@@ -12,9 +12,15 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.TestPropertySource;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=FtgoApplicationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "ftgo.security.users[0].username=operator",
+        "ftgo.security.users[0].password-hash=$2a$04$MujfuO4VqzMgeLfEbTg92uqwnrFuXaVu3tpnZ.l4jMnJJTaG1.Cya",
+        "ftgo.security.users[0].role=OPERATOR"
+})
 public class FtgoApplicationTest extends AbstractEndToEndTests {
 
   @Configuration
@@ -38,5 +44,15 @@ public class FtgoApplicationTest extends AbstractEndToEndTests {
   @Override
   public int getApplicationPort() {
     return port;
+  }
+
+  @Override
+  protected String operatorUsername() {
+    return "operator";
+  }
+
+  @Override
+  protected String operatorPassword() {
+    return "test-password";
   }
 }

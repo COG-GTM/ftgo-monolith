@@ -209,6 +209,7 @@ public abstract class AbstractEndToEndTests {
   private Integer createConsumer() {
     Integer consumerId =
             given().
+                    auth().preemptive().basic(operatorUsername(), operatorPassword()).
                     body(new CreateConsumerRequest(new PersonName("John", "Doe"))).
                     contentType("application/json").
                     when().
@@ -225,6 +226,7 @@ public abstract class AbstractEndToEndTests {
   private int createRestaurant() {
     Integer restaurantId =
             given().
+                    auth().preemptive().basic(operatorUsername(), operatorPassword()).
                     body(new CreateRestaurantRequest(RESTAURANT_NAME,
                             RESTAURANT_ADDRESS,
                             new RestaurantMenuDTO(Collections.singletonList(new MenuItemDTO(CHICKED_VINDALOO_MENU_ITEM_ID, "Chicken Vindaloo", priceOfChickenVindaloo))))).
@@ -238,6 +240,33 @@ public abstract class AbstractEndToEndTests {
 
     assertNotNull(restaurantId);
     return restaurantId;
+  }
+
+  @Test
+  public void shouldRejectAnonymousConsumerAndRestaurantAccess() {
+    given().
+            body(new CreateConsumerRequest(new PersonName("Anonymous", "Consumer"))).
+            contentType("application/json").
+            when().
+            post(consumerBaseUrl()).
+            then().
+            statusCode(401);
+
+    given().
+            when().
+            get(consumerBaseUrl("1")).
+            then().
+            statusCode(401);
+
+    given().
+            body(new CreateRestaurantRequest(RESTAURANT_NAME,
+                    RESTAURANT_ADDRESS,
+                    new RestaurantMenuDTO(Collections.singletonList(new MenuItemDTO(CHICKED_VINDALOO_MENU_ITEM_ID, "Chicken Vindaloo", priceOfChickenVindaloo))))).
+            contentType("application/json").
+            when().
+            post(restaurantBaseUrl()).
+            then().
+            statusCode(401);
   }
 
   private void verifyRestaurantCreated(int restaurantId) {
@@ -384,4 +413,12 @@ public abstract class AbstractEndToEndTests {
   public abstract String getHost();
 
   public abstract int getApplicationPort();
+
+  protected String operatorUsername() {
+    return System.getenv().getOrDefault("FTGO_OPERATOR_USERNAME", "operator");
+  }
+
+  protected String operatorPassword() {
+    return System.getenv().getOrDefault("FTGO_OPERATOR_PASSWORD", "");
+  }
 }

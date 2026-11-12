@@ -11,10 +11,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -74,6 +77,34 @@ public class GlobalExceptionHandler {
     logger.warn("Bad request: {}", ex.getMessage());
     ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(),
+            request.getRequestURI(), MDC.get("correlationId"));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+          MethodArgumentNotValidException ex, HttpServletRequest request) {
+    String message = ex.getBindingResult().getAllErrors().stream()
+            .map(error -> {
+              if (error instanceof org.springframework.validation.FieldError) {
+                org.springframework.validation.FieldError fieldError = (org.springframework.validation.FieldError) error;
+                return fieldError.getField() + ": " + fieldError.getDefaultMessage();
+              }
+              return error.getObjectName() + ": " + error.getDefaultMessage();
+            })
+            .collect(Collectors.joining("; "));
+    return badRequest(message, request);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+          HttpMessageNotReadableException ex, HttpServletRequest request) {
+    return badRequest("Malformed request body", request);
+  }
+
+  private ResponseEntity<ErrorResponse> badRequest(String message, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), "Bad Request", message,
             request.getRequestURI(), MDC.get("correlationId"));
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
