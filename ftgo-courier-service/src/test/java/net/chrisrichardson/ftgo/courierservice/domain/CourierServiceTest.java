@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
@@ -80,5 +81,14 @@ public class CourierServiceTest {
     assertTrue(passwordEncoder.matches("a-long-password", captor.getValue().getPasswordHash()));
     assertFalse("a-long-password".equals(captor.getValue().getPasswordHash()));
     verify(entityManager).flush();
+  }
+
+  @Test(expected = CourierUsernameTakenException.class)
+  public void shouldTranslatePersistenceExceptionWhenFlushingCredentials() {
+    when(credentialsRepository.findByUsername("carol")).thenReturn(Optional.empty());
+    when(credentialsRepository.findById(1L)).thenReturn(Optional.empty());
+    doThrow(new PersistenceException("username collision")).when(entityManager).flush();
+
+    courierService.setCredentials(1L, "carol", "a-long-password");
   }
 }

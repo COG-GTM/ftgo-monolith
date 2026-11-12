@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 
 public class CourierService {
 
@@ -88,7 +89,7 @@ public class CourierService {
     try {
       courierCredentialsRepository.save(credentials);
       entityManager.flush();
-    } catch (DataIntegrityViolationException e) {
+    } catch (DataIntegrityViolationException | PersistenceException e) {
       throw new CourierUsernameTakenException(username);
     }
   }
