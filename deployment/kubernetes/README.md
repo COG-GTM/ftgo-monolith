@@ -17,3 +17,4 @@ NetworkPolicy.
 The `ftgo-mysql` NetworkPolicy permits ingress to MySQL only from pods labelled
 `svc: ftgo-application`. The cluster CNI must enforce Kubernetes NetworkPolicies
 for this restriction to take effect.
+Run `./deployment/kubernetes/scripts/kubernetes-verify-mysql-network-policy.sh` to verify MySQL NetworkPolicy enforcement.
