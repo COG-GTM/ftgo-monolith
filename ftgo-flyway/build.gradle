@@ -4,7 +4,15 @@ plugins {
 
 flyway {
     url = "jdbc:mysql://${System.getenv('DOCKER_HOST_IP') ?: 'localhost'}/ftgo?useSSL=false"
-    user = 'root'
-    password = 'rootpassword'
+    user = System.getenv('FLYWAY_USER') ?: 'root'
+    password = System.getenv('FLYWAY_PASSWORD') ?: System.getenv('MYSQL_ROOT_PASSWORD')
     schemas = ['ftgo']
+}
+
+tasks.matching { it.name.startsWith('flyway') }.all { task ->
+    task.doFirst {
+        if (!flyway.password) {
+            throw new GradleException("Set FLYWAY_PASSWORD or MYSQL_ROOT_PASSWORD before running Flyway tasks")
+        }
+    }
 }

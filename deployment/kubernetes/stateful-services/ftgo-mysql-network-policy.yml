@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ftgo-mysql
+spec:
+  podSelector:
+    matchLabels:
+      role: ftgo-mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              svc: ftgo-application
+      ports:
+        - protocol: TCP
+          port: 3306

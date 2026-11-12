@@ -22,6 +22,15 @@ import org.springframework.context.annotation.Import;
 public class FtgoApplicationMain {
 
   public static void main(String[] args) {
+    if (isEmpty(System.getenv("SPRING_DATASOURCE_PASSWORD"))
+        && isEmpty(System.getenv("MYSQL_PASSWORD"))) {
+      throw new IllegalStateException(
+          "MYSQL_PASSWORD or SPRING_DATASOURCE_PASSWORD must be set; run ./create-local-env.sh or export them");
+    }
     SpringApplication.run(FtgoApplicationMain.class, args);
+  }
+
+  private static boolean isEmpty(String value) {
+    return value == null || value.trim().isEmpty();
   }
 }
