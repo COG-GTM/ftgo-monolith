@@ -4,7 +4,9 @@ import net.chrisrichardson.ftgo.common.Address;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Entity
@@ -64,6 +66,14 @@ public class Restaurant {
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {
     return menuItems.stream().filter(mi -> mi.getId().equals(menuItemId)).findFirst();
+  }
+
+  public Map<String, MenuItem> menuItemsById() {
+    Map<String, MenuItem> itemsById = new LinkedHashMap<>();
+    for (MenuItem menuItem : menuItems) {
+      itemsById.putIfAbsent(menuItem.getId(), menuItem);
+    }
+    return itemsById;
   }
 
   public void reviseMenu(RestaurantMenu revisedMenu) {

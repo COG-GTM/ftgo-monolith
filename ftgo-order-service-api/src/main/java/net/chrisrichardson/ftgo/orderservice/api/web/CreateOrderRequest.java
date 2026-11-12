@@ -1,12 +1,25 @@
 package net.chrisrichardson.ftgo.orderservice.api.web;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 public class CreateOrderRequest {
 
+  public static final int MAX_LINE_ITEMS = 100;
+  public static final int MAX_QUANTITY_PER_LINE_ITEM = 100;
+
   private long restaurantId;
   private long consumerId;
-  private List<LineItem> lineItems;
+
+  @NotNull
+  @Size(min = 1, max = MAX_LINE_ITEMS)
+  @Valid
+  private List<@NotNull LineItem> lineItems;
 
   public CreateOrderRequest(long consumerId, long restaurantId, List<LineItem> lineItems) {
     this.restaurantId = restaurantId;
@@ -44,7 +57,11 @@ public class CreateOrderRequest {
 
   public static class LineItem {
 
+    @NotBlank
     private String menuItemId;
+
+    @Min(1)
+    @Max(MAX_QUANTITY_PER_LINE_ITEM)
     private int quantity;
 
     private LineItem() {
