@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import org.hibernate.annotations.DynamicUpdate;
@@ -32,13 +33,17 @@ public class Courier {
   private Double currentLongitude;
   private LocalDateTime lastLocationUpdate;
 
+  @JsonIgnore
+  private String accessTokenHash;
+
   public Courier() {
   }
 
   public Courier(PersonName name, Address address) {
     this.name = name;
     this.address = address;
-    if (address != null && address.getLatitude() != null) {
+    if (address != null && address.getLatitude() != null && address.getLongitude() != null) {
+      validateLocation(address.getLatitude(), address.getLongitude());
       this.currentLatitude = address.getLatitude();
       this.currentLongitude = address.getLongitude();
     }
@@ -98,9 +103,18 @@ public class Courier {
   }
 
   public void updateLocation(double latitude, double longitude) {
+    validateLocation(latitude, longitude);
     this.currentLatitude = latitude;
     this.currentLongitude = longitude;
     this.lastLocationUpdate = LocalDateTime.now();
+  }
+
+  public void assignAccessTokenHash(String accessTokenHash) {
+    this.accessTokenHash = accessTokenHash;
+  }
+
+  public boolean hasAccessTokenHash(String hash) {
+    return accessTokenHash != null && accessTokenHash.equals(hash);
   }
 
   public int getActiveDeliveryCount() {
@@ -114,5 +128,12 @@ public class Courier {
 
   public boolean hasLocation() {
     return currentLatitude != null && currentLongitude != null;
+  }
+
+  private static void validateLocation(double latitude, double longitude) {
+    if (!Double.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+            !Double.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      throw new IllegalArgumentException("Location coordinates are out of range");
+    }
   }
 }

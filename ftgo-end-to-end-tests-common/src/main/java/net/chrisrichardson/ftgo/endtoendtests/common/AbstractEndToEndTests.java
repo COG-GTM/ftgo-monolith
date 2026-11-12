@@ -7,6 +7,7 @@ import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.ObjectMapperConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
 import io.eventuate.util.test.async.Eventually;
+import com.jayway.restassured.response.Response;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.MoneyModule;
@@ -42,6 +43,7 @@ public abstract class AbstractEndToEndTests {
   private int consumerId;
   private int restaurantId;
   private int orderId;
+  private String courierAccessToken;
   private final Money priceOfChickenVindaloo = new Money("12.34");
   private static ObjectMapper objectMapper = new ObjectMapper();
   private int courierId;
@@ -74,6 +76,10 @@ public abstract class AbstractEndToEndTests {
 
   private String orderBaseUrl(String... pathElements) {
     return baseUrl(getApplicationPort(), "orders", pathElements);
+  }
+
+  protected String getOperatorToken() {
+    return System.getenv("FTGO_OPERATOR_TOKEN");
   }
 
   @BeforeClass
@@ -293,19 +299,22 @@ public abstract class AbstractEndToEndTests {
   }
 
   private void createCourier() {
-    courierId = given().
+    Response response = given().
+            header("Authorization", "Bearer " + getOperatorToken()).
             body(new CreateCourierRequest(new PersonName("John", "Doe"), new Address("1 Scenic Drive", null, "Oakland", "CA", "94555"))).
             contentType("application/json").
             when().
             post(baseUrl(getApplicationPort(), "couriers")).
             then().
-            statusCode(200)
-            .extract()
-            .path("id");
+            statusCode(200).
+            extract().response();
+    courierId = response.path("id");
+    courierAccessToken = response.path("accessToken");
   }
 
   private void noteCourierAvailable() {
     given().
+            header("Authorization", "Bearer " + courierAccessToken).
             body(new CourierAvailability(true)).
             contentType("application/json").
             when().

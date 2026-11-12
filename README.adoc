@@ -3,6 +3,12 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
+## Courier API authentication
+
+Set `FTGO_OPERATOR_TOKEN` before starting the application or Docker Compose. The operator token
+is required to create couriers and can update any courier. Each `POST /couriers` response includes
+a per-courier `accessToken`; use it as a Bearer token to update that courier's availability and location.
+
 ## Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
