@@ -20,10 +20,9 @@ public class CourierServiceConfiguration {
   public CourierService courierService(CourierRepository courierRepository,
                                        CourierCredentialsRepository courierCredentialsRepository,
                                        PasswordEncoder passwordEncoder,
-                                       @Value("${ftgo.security.operator.username:operator}") String operatorUsername,
-                                       javax.persistence.EntityManager entityManager) {
+                                       @Value("${ftgo.security.operator.username:operator}") String operatorUsername) {
     return new CourierService(courierRepository, courierCredentialsRepository, passwordEncoder,
-            operatorUsername, entityManager);
+            operatorUsername);
   }
 
 }

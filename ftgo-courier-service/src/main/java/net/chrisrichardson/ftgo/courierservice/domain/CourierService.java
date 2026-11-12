@@ -10,27 +10,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
-
 public class CourierService {
 
   private CourierRepository courierRepository;
   private CourierCredentialsRepository courierCredentialsRepository;
   private PasswordEncoder passwordEncoder;
   private String operatorUsername;
-  private EntityManager entityManager;
 
   public CourierService(CourierRepository courierRepository,
                         CourierCredentialsRepository courierCredentialsRepository,
                         PasswordEncoder passwordEncoder,
-                        String operatorUsername,
-                        EntityManager entityManager) {
+                        String operatorUsername) {
     this.courierRepository = courierRepository;
     this.courierCredentialsRepository = courierCredentialsRepository;
     this.passwordEncoder = passwordEncoder;
     this.operatorUsername = operatorUsername;
-    this.entityManager = entityManager;
   }
 
   @Transactional
@@ -87,9 +81,8 @@ public class CourierService {
             .orElse(new CourierCredentials(courierId));
     credentials.update(username, passwordEncoder.encode(rawPassword));
     try {
-      courierCredentialsRepository.save(credentials);
-      entityManager.flush();
-    } catch (DataIntegrityViolationException | PersistenceException e) {
+      courierCredentialsRepository.saveAndFlush(credentials);
+    } catch (DataIntegrityViolationException e) {
       throw new CourierUsernameTakenException(username);
     }
   }
