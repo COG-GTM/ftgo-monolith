@@ -2,7 +2,6 @@ package net.chrisrichardson.ftgo.security;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.UUID;
 
 import net.chrisrichardson.ftgo.common.security.FtgoRole;
 import net.chrisrichardson.ftgo.common.security.FtgoUser;
@@ -51,16 +50,17 @@ public class FtgoSecurityConfiguration extends WebSecurityConfigurerAdapter {
     Map<String, FtgoUser> users = new LinkedHashMap<>();
     String adminUsername = properties.getAdmin().getUsername();
     String adminPassword = properties.getAdmin().getPassword();
-    if (adminPassword == null || adminPassword.trim().isEmpty()) {
-      adminPassword = UUID.randomUUID().toString();
-      logger.warn("Using generated FTGO admin password: {} (set FTGO_ADMIN_PASSWORD to override)", adminPassword);
+    boolean adminAccountEnabled = adminPassword != null && !adminPassword.trim().isEmpty();
+    if (adminAccountEnabled) {
+      users.put(adminUsername, new FtgoUser(adminUsername, passwordEncoder.encode(adminPassword), FtgoRole.ADMIN, null));
+    } else {
+      logger.warn("FTGO_ADMIN_PASSWORD is not set; the admin account is disabled");
     }
-    users.put(adminUsername, new FtgoUser(adminUsername, passwordEncoder.encode(adminPassword), FtgoRole.ADMIN, null));
 
     for (Map.Entry<String, FtgoSecurityProperties.UserProperties> entry : properties.getUsers().entrySet()) {
       String username = entry.getKey();
       FtgoSecurityProperties.UserProperties userProperties = entry.getValue();
-      if (adminUsername.equals(username)) {
+      if (adminAccountEnabled && adminUsername.equals(username)) {
         throw new IllegalStateException("User username collides with admin username: " + username);
       }
 

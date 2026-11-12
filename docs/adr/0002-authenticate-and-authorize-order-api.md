@@ -23,8 +23,8 @@ API route), T8 (shared identity type `FtgoUser` added to `ftgo-common`, used acr
 
 We will add Spring Security (`spring-boot-starter-security`, managed by the existing Spring Boot 2.0.3
 BOM) with stateless HTTP Basic authentication. Identities come from configuration: an operator account
-(`ftgo.security.admin.*`, password from `FTGO_ADMIN_PASSWORD`, otherwise generated at startup and logged
-once) and optional consumer / restaurant-staff / courier accounts (`ftgo.security.users.<name>.*`, each bound
+(`ftgo.security.admin.*`, password from `FTGO_ADMIN_PASSWORD`; if unset, the admin account is disabled)
+and optional consumer / restaurant-staff / courier accounts (`ftgo.security.users.<name>.*`, each bound
 to exactly one consumer, restaurant, or courier ID). `OrderController` loads the order first and allows:
 the owning consumer to read, cancel and revise; staff of the order's restaurant to read, accept, and mark
 preparing/ready; the assigned courier to read and mark picked up/delivered; the operator everything.
