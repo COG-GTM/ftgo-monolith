@@ -113,9 +113,9 @@ public abstract class AbstractEndToEndTests {
 
     acceptOrder();
 
-    assertOrderAssignedToCourier();
+    int assignedCourierId = assertOrderAssignedToCourier();
 
-    assertCourierReadAuthorization();
+    assertCourierReadAuthorization(assignedCourierId);
 
     startPreparingOrder();
 
@@ -339,8 +339,8 @@ public abstract class AbstractEndToEndTests {
             statusCode(200);
   }
 
-  private void assertOrderAssignedToCourier() {
-    int courierId = Eventually.eventuallyReturning(() -> {
+  private int assertOrderAssignedToCourier() {
+    int assignedCourierId = Eventually.eventuallyReturning(() -> {
       int assignedCourier = given().
               when().
               get(orderBaseUrl(Long.toString(orderId))).
@@ -357,23 +357,24 @@ public abstract class AbstractEndToEndTests {
     given().
             auth().preemptive().basic(getOperatorUsername(), getOperatorPassword()).
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(assignedCourierId))).
             then().
             statusCode(200)
             .body("plan.actions[0].type", equalTo("PICKUP"))
             .body("plan.actions[1].type", equalTo("DROPOFF"));
 
+    return assignedCourierId;
   }
 
-  private void assertCourierReadAuthorization() {
+  private void assertCourierReadAuthorization(int assignedCourierId) {
     String courierPassword = UUID.randomUUID().toString() + UUID.randomUUID();
-    String courierUsername = "courier-" + courierId + "-" + System.nanoTime();
-    provisionCourierCredentials(courierId, courierUsername, courierPassword);
+    String courierUsername = "courier-" + assignedCourierId + "-" + System.nanoTime();
+    provisionCourierCredentials(assignedCourierId, courierUsername, courierPassword);
 
     Map<String, Object> details = given().
             auth().preemptive().basic(courierUsername, courierPassword).
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(assignedCourierId))).
             then().
             statusCode(200)
             .body("plan.actions[0].type", equalTo("PICKUP"))
@@ -383,7 +384,7 @@ public abstract class AbstractEndToEndTests {
     given().
             auth().preemptive().basic(courierUsername, courierPassword).
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId), "workload")).
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(assignedCourierId), "workload")).
             then().
             statusCode(200);
 
@@ -403,7 +404,7 @@ public abstract class AbstractEndToEndTests {
     given().
             auth().preemptive().basic(secondUsername, secondPassword).
             when().
-            get(baseUrl(getApplicationPort(), "couriers", Long.toString(courierId))).
+            get(baseUrl(getApplicationPort(), "couriers", Long.toString(assignedCourierId))).
             then().
             statusCode(403);
   }
