@@ -33,3 +33,7 @@ The `ftgo-application` service in Docker Compose reads the operator username fro
 `FTGO_OPERATOR_USERNAME` (default `operator`) and the BCrypt hash from
 `FTGO_OPERATOR_PASSWORD_HASH`. Set the hash before starting the service. The end-to-end tests
 use `FTGO_OPERATOR_PASSWORD` for the operator's plaintext test password.
+
+`build-and-test-all.sh` generates a throwaway operator password and hash (via the
+`httpd:2.4-alpine` image's `htpasswd`) when `FTGO_OPERATOR_PASSWORD_HASH` is unset, and exports
+both for Docker Compose and the end-to-end tests.

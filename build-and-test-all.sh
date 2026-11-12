@@ -28,6 +28,12 @@ echo KEEP_RUNNING=$KEEP_RUNNING
 
 . ./set-env.sh
 
+if [ -z "$FTGO_OPERATOR_PASSWORD_HASH" ] ; then
+  export FTGO_OPERATOR_USERNAME=${FTGO_OPERATOR_USERNAME:-operator}
+  export FTGO_OPERATOR_PASSWORD=${FTGO_OPERATOR_PASSWORD:-$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')}
+  export FTGO_OPERATOR_PASSWORD_HASH=$(docker run --rm httpd:2.4-alpine htpasswd -nbBC 10 "" "$FTGO_OPERATOR_PASSWORD" | tr -d ':\n' | sed 's/^\$2y/\$2a/')
+fi
+
 # TODO Temporarily
 
 ./gradlew testClasses
