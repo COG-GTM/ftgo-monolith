@@ -1,7 +1,6 @@
 
-# Host DNS name doesn't resolve in Docker alpine images
+./create-local-env.sh
 
-export DOCKER_HOST_IP=$(hostname -I | sed -e 's/ .*//g')
+export DOCKER_HOST_IP=localhost
 export TERM=dumb
-
 

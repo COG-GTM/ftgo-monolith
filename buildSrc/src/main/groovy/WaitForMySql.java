@@ -1,4 +1,5 @@
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
 import java.sql.Connection;
@@ -41,14 +42,20 @@ public class WaitForMySql extends DefaultTask {
   }
 
   private void waitForConnection() {
+    String datasourceUrl = getenv("SPRING_DATASOURCE_URL", () -> String.format("jdbc:mysql://%s/ftgo", getenv("DOCKER_HOST_IP", "localhost")));
+    String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", "mysqluser");
+    String datasourcePassword = getenv("SPRING_DATASOURCE_PASSWORD", (String) null);
+    if (datasourcePassword == null || datasourcePassword.isEmpty()) {
+      datasourcePassword = getenv("MYSQL_PASSWORD", (String) null);
+    }
+    if (datasourcePassword == null || datasourcePassword.isEmpty()) {
+      throw new GradleException("MYSQL_PASSWORD or SPRING_DATASOURCE_PASSWORD must be set; run ./create-local-env.sh or export them");
+    }
+
     while (true) {
       Connection connection = null;
       try {
         System.out.println("Trying to connect...");
-
-        String datasourceUrl = getenv("SPRING_DATASOURCE_URL", () -> String.format("jdbc:mysql://%s/ftgo", getenv("DOCKER_HOST_IP", "localhost")));
-        String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", "mysqluser");
-        String datasourcePassword = getenv("SPRING_DATASOURCE_PASSWORD", "mysqlpw");
 
         connection = DriverManager.getConnection(datasourceUrl, datasourceUsername, datasourcePassword);
 

@@ -12,13 +12,16 @@ spec:
   selector:
     role: ftgo-mysql
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ftgo-mysql
 spec:
   serviceName: "mysql"
   replicas: 1
+  selector:
+    matchLabels:
+      role: ftgo-mysql
   template:
     metadata:
       labels:
@@ -35,11 +38,20 @@ spec:
               - containerPort: 3306
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: rootpassword
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: root-password
             - name: MYSQL_USER
-              value: mysqluser
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: username
             - name: MYSQL_PASSWORD
-              value: mysqlpw
+              valueFrom:
+                secretKeyRef:
+                  name: ftgo-db-secret
+                  key: password
           volumeMounts:
             - name: ftgo-mysql-persistent-storage
               mountPath: /var/lib/mysql
