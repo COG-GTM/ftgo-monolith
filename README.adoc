@@ -5,12 +5,12 @@ It's used to illustrate how to refactor a monolithic application to services.
 
 ## Database credentials
 
-Run `./create-local-env.sh` to generate local MySQL credentials in the ignored
-`.env` file, or export `MYSQL_ROOT_PASSWORD` and `MYSQL_PASSWORD` (and optionally
-`MYSQL_USER`) before starting services. Docker Compose binds MySQL to loopback by
-default; set `MYSQL_HOST_BIND` to an appropriate address when using a remote
-Docker host. For Kubernetes secret setup and NetworkPolicy requirements, see
-`deployment/kubernetes/README.md`.
+Run `./create-local-env.sh` to generate local MySQL passwords in the ignored
+`.env` file, or export `MYSQL_ROOT_PASSWORD` and `MYSQL_PASSWORD` before starting
+services. The database username is fixed as `mysqluser`. Docker Compose binds
+MySQL to loopback by default; set `MYSQL_HOST_BIND` to an appropriate address
+when using a remote Docker host. For Kubernetes secret setup and NetworkPolicy
+requirements, see `deployment/kubernetes/README.md`.
 
 ## Learn more
 

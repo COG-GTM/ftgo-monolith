@@ -43,7 +43,7 @@ public class WaitForMySql extends DefaultTask {
 
   private void waitForConnection() {
     String datasourceUrl = getenv("SPRING_DATASOURCE_URL", () -> String.format("jdbc:mysql://%s/ftgo", getenv("DOCKER_HOST_IP", "localhost")));
-    String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", getenv("MYSQL_USER", "mysqluser"));
+    String datasourceUsername = getenv("SPRING_DATASOURCE_USERNAME", "mysqluser");
     String datasourcePassword = getenv("SPRING_DATASOURCE_PASSWORD", (String) null);
     if (datasourcePassword == null || datasourcePassword.isEmpty()) {
       datasourcePassword = getenv("MYSQL_PASSWORD", (String) null);

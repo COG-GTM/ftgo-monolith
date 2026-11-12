@@ -6,7 +6,7 @@ services:
       - "${MYSQL_HOST_BIND:-127.0.0.1}:3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set - run ./create-local-env.sh}"
-      MYSQL_USER: "${MYSQL_USER:-mysqluser}"
+      MYSQL_USER: mysqluser
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set - run ./create-local-env.sh}"
   ftgo-application:
     build: ./ftgo-application
@@ -16,7 +16,7 @@ services:
       - mysql
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-mysqluser}
+      SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: "${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set - run ./create-local-env.sh}"
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:9092

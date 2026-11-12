@@ -6,6 +6,6 @@ if [ -e .env ]; then
 fi
 
 umask 077
-printf 'MYSQL_ROOT_PASSWORD=%s\nMYSQL_USER=mysqluser\nMYSQL_PASSWORD=%s\n' \
+printf 'MYSQL_ROOT_PASSWORD=%s\nMYSQL_PASSWORD=%s\n' \
   "$(openssl rand -hex 24)" \
   "$(openssl rand -hex 24)" > .env

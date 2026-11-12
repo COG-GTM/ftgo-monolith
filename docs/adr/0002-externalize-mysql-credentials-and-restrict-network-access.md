@@ -26,8 +26,9 @@ independent random local credentials into a permission-restricted ignored `.env`
 file, and use Kubernetes Secrets created out of band. MySQL host publishing will
 default to loopback, and a Kubernetes NetworkPolicy will permit MySQL ingress
 only from pods labelled `svc: ftgo-application`. The application database user
-will receive only SELECT, INSERT, UPDATE, and DELETE on the `ftgo` schema; Flyway
-will authenticate as root or an explicitly configured migration user.
+is fixed as `mysqluser` and will receive only SELECT, INSERT, UPDATE, and DELETE
+on the `ftgo` schema; Flyway will authenticate as root or an explicitly
+configured migration user.
 
 ## Alternatives considered
 
