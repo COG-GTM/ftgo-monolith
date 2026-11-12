@@ -2,17 +2,27 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import net.chrisrichardson.ftgo.domain.DomainConfiguration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @Import(DomainConfiguration.class)
+@EntityScan
+@EnableJpaRepositories
 public class CourierServiceConfiguration {
 
   @Bean
-  public CourierService courierService(CourierRepository courierRepository) {
-    return new CourierService(courierRepository);
+  public CourierService courierService(CourierRepository courierRepository,
+                                       CourierCredentialsRepository courierCredentialsRepository,
+                                       PasswordEncoder passwordEncoder,
+                                       @Value("${ftgo.security.operator.username:operator}") String operatorUsername) {
+    return new CourierService(courierRepository, courierCredentialsRepository, passwordEncoder,
+            operatorUsername);
   }
 
 }
