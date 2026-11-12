@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +38,10 @@ public class OperatorAccountInitializer implements ApplicationRunner {
     if (userAccountRepository.findByUsername(username).isPresent()) {
       return;
     }
-    userAccountRepository.save(new UserAccount(username, passwordEncoder.encode(password), Role.OPERATOR, null));
+    try {
+      userAccountRepository.save(new UserAccount(username, passwordEncoder.encode(password), Role.OPERATOR, null));
+    } catch (DataIntegrityViolationException exception) {
+      logger.info("Operator account {} already exists; skipping bootstrap", username);
+    }
   }
 }
