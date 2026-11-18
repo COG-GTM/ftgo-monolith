@@ -102,34 +102,39 @@ public class OrderController {
     }
   }
 
-  @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return new ResponseEntity<>(HttpStatus.OK);
+  @RequestMapping(path = "/{orderId}/accept", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> accept(@PathVariable long orderId,
+                                                 @RequestBody(required = false) OrderAcceptance orderAcceptance) {
+    LocalDateTime readyBy = orderAcceptance == null ? null : orderAcceptance.getReadyBy();
+    if (readyBy == null || !readyBy.isAfter(LocalDateTime.now())) {
+      throw new IllegalArgumentException("readyBy must be in the future");
+    }
+    orderService.accept(orderId, readyBy);
+    return getOrder(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/preparing", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> preparing(@PathVariable long orderId) {
     orderService.notePreparing(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getOrder(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/ready", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> ready(@PathVariable long orderId) {
     orderService.noteReadyForPickup(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getOrder(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/pickedup", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> pickedup(@PathVariable long orderId) {
     orderService.notePickedUp(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getOrder(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/delivered", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> delivered(@PathVariable long orderId) {
     orderService.noteDelivered(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getOrder(orderId);
   }
 
 }
