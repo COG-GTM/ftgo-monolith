@@ -6,7 +6,6 @@ import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.domain.Action;
 import net.chrisrichardson.ftgo.domain.Courier;
 import net.chrisrichardson.ftgo.domain.CourierRepository;
 import org.junit.Before;
@@ -17,7 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.util.NestedServletException;
 
-import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -46,28 +45,10 @@ public class CourierControllerTest {
   }
 
   @Test
-  public void shouldPreserveEntityJsonWithEmptyPlan() throws Exception {
-    mvc.perform(get("/couriers/1")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.plan.actions").isEmpty());
+  public void shouldPreserveEntityJsonExceptPlan() throws Exception {
     assertResponseMatchesEntity();
     courier.noteAvailable();
     courier.updateLocation(37.8, -122.2);
-    assertResponseMatchesEntity();
-  }
-
-  @Test
-  public void shouldPreserveEntityJsonWithPlanActions() throws Exception {
-    courier.addAction(Action.makePickup(null));
-    courier.addAction(Action.makeDropoff(null, LocalDateTime.of(2026, 6, 1, 12, 30)));
-    mvc.perform(get("/couriers/1")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.plan.actions[0].type").value("PICKUP"))
-            .andExpect(jsonPath("$.plan.actions[1].type").value("DROPOFF"));
-    assertResponseMatchesEntity();
-  }
-
-  @Test
-  public void shouldPreserveEntityJsonWithNullPlan() throws Exception {
-    ReflectionTestUtils.setField(courier, "plan", null);
     assertResponseMatchesEntity();
   }
 
@@ -75,7 +56,15 @@ public class CourierControllerTest {
     JsonNode entity = mapper.readTree(mapper.writeValueAsString(courier));
     JsonNode response = mapper.readTree(mvc.perform(get("/couriers/1"))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
-    assertEquals(entity, response);
+    assertFalse(response.has("plan"));
+    Iterator<String> fields = entity.fieldNames();
+    while (fields.hasNext()) {
+      String field = fields.next();
+      if (!field.equals("plan")) {
+        assertTrue(field, response.has(field));
+        assertEquals(field, entity.get(field), response.get(field));
+      }
+    }
   }
 
   @Test

@@ -12,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.stream.Collectors;
-
 @RestController
 public class CourierController {
 
@@ -38,14 +36,9 @@ public class CourierController {
   @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
   public ResponseEntity<GetCourierResponse> get(@PathVariable long courierId) {
     Courier courier = courierService.findCourierById(courierId);
-    GetCourierResponse.PlanResponse plan = courier.getPlan() == null ? null :
-            new GetCourierResponse.PlanResponse(courier.getPlan().getActions().stream()
-                    .map(action -> new GetCourierResponse.ActionResponse(
-                            action.getType() == null ? null : action.getType().name(), action.getTime()))
-                    .collect(Collectors.toList()));
     return new ResponseEntity<>(new GetCourierResponse(courier.getId(), courier.getName(), courier.getAddress(),
             courier.isAvailable(), courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-            courier.getLastLocationUpdate(), courier.getActiveDeliveryCount(), plan), HttpStatus.OK);
+            courier.getLastLocationUpdate(), courier.getActiveDeliveryCount()), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
