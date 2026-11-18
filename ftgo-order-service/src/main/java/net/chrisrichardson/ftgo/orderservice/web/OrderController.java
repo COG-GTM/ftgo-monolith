@@ -7,6 +7,7 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -102,34 +103,44 @@ public class OrderController {
     }
   }
 
-  @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return new ResponseEntity<>(HttpStatus.OK);
+  @RequestMapping(path = "/{orderId}/accept", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> accept(@PathVariable long orderId,
+                                                 @RequestBody(required = false) OrderAcceptance orderAcceptance) {
+    LocalDateTime readyBy = orderAcceptance == null ? null : orderAcceptance.getReadyBy();
+    if (readyBy == null || !readyBy.isAfter(LocalDateTime.now())) {
+      throw new IllegalArgumentException("readyBy must be in the future");
+    }
+    orderService.accept(orderId, readyBy);
+    return getLifecycleOrderResponse(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/preparing", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> preparing(@PathVariable long orderId) {
     orderService.notePreparing(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getLifecycleOrderResponse(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/ready", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> ready(@PathVariable long orderId) {
     orderService.noteReadyForPickup(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getLifecycleOrderResponse(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/pickedup", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> pickedup(@PathVariable long orderId) {
     orderService.notePickedUp(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getLifecycleOrderResponse(orderId);
   }
 
-  @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
+  @RequestMapping(path = "/{orderId}/delivered", method = RequestMethod.POST)
+  public ResponseEntity<GetOrderResponse> delivered(@PathVariable long orderId) {
     orderService.noteDelivered(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return getLifecycleOrderResponse(orderId);
+  }
+
+  private ResponseEntity<GetOrderResponse> getLifecycleOrderResponse(long orderId) {
+    Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+    return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(makeGetOrderResponse(order));
   }
 
 }
