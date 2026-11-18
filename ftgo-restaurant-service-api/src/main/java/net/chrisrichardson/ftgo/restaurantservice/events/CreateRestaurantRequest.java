@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.restaurantservice.events;
 
 
 import net.chrisrichardson.ftgo.common.Address;
+import net.chrisrichardson.ftgo.common.Money;
 
 public class CreateRestaurantRequest {
 
@@ -17,6 +18,17 @@ public class CreateRestaurantRequest {
 
   public String getName() {
     return name;
+  }
+
+  public void validate() {
+    if (name == null || name.trim().isEmpty())
+      throw new IllegalArgumentException("Restaurant name must not be blank");
+    if (menu == null || menu.getMenuItemDTOs() == null || menu.getMenuItemDTOs().isEmpty())
+      throw new IllegalArgumentException("Restaurant menu must not be empty");
+    for (MenuItemDTO item : menu.getMenuItemDTOs()) {
+      if (item == null || item.getPrice() == null || Money.ZERO.isGreaterThanOrEqual(item.getPrice()))
+        throw new IllegalArgumentException("Menu item price must be positive");
+    }
   }
 
   public void setName(String name) {
