@@ -7,12 +7,18 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -48,14 +54,76 @@ public class OrderController {
     return order.map(o -> new ResponseEntity<>(makeGetOrderResponse(o), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
-  @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
-            .stream()
-            .map(this::makeGetOrderResponse)
-            .collect(Collectors.toList());
+  static final int DEFAULT_PAGE_SIZE = 20;
+  static final int MAX_PAGE_SIZE = 100;
 
-    return new ResponseEntity<>(orders, HttpStatus.OK);
+  @RequestMapping(method = RequestMethod.GET)
+  public ResponseEntity<?> getOrders(@RequestParam(required = false) String consumerId,
+                                     @RequestParam(required = false) String state,
+                                     @RequestParam(required = false) String page,
+                                     @RequestParam(required = false) String size) {
+    long consumer = parseConsumerId(consumerId);
+    OrderState orderState = parseState(state);
+    int pageSize = parseSize(size);
+
+    if (page == null) {
+      List<Order> orders = orderState == null
+              ? orderRepository.findAllByConsumerId(consumer)
+              : orderRepository.findAllByConsumerIdAndOrderState(consumer, orderState);
+      return new ResponseEntity<>(orders.stream().map(this::makeGetOrderResponse).collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    int pageNumber = parsePage(page);
+    Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
+    Page<Order> orders = orderState == null
+            ? orderRepository.findAllByConsumerId(consumer, pageable)
+            : orderRepository.findAllByConsumerIdAndOrderState(consumer, orderState, pageable);
+    List<GetOrderResponse> content = orders.getContent().stream().map(this::makeGetOrderResponse).collect(Collectors.toList());
+    return new ResponseEntity<>(new GetOrdersPageResponse(content, pageNumber, pageSize, orders.getTotalElements()), HttpStatus.OK);
+  }
+
+  private long parseConsumerId(String consumerId) {
+    if (consumerId == null || consumerId.trim().isEmpty())
+      throw new IllegalArgumentException("consumerId is required");
+    try {
+      return Long.parseLong(consumerId.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("consumerId must be a number: " + consumerId);
+    }
+  }
+
+  private OrderState parseState(String state) {
+    if (state == null)
+      return null;
+    try {
+      return OrderState.valueOf(state.trim().toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("state must be one of " + Arrays.toString(OrderState.values()) + ": " + state);
+    }
+  }
+
+  private int parsePage(String page) {
+    int value = parseInt("page", page);
+    if (value < 0)
+      throw new IllegalArgumentException("page must be >= 0: " + page);
+    return value;
+  }
+
+  private int parseSize(String size) {
+    if (size == null)
+      return DEFAULT_PAGE_SIZE;
+    int value = parseInt("size", size);
+    if (value < 1 || value > MAX_PAGE_SIZE)
+      throw new IllegalArgumentException("size must be between 1 and " + MAX_PAGE_SIZE + ": " + size);
+    return value;
+  }
+
+  private int parseInt(String name, String value) {
+    try {
+      return Integer.parseInt(value.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(name + " must be an integer: " + value);
+    }
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
