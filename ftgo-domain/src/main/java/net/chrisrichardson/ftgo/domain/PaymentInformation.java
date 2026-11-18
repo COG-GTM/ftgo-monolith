@@ -7,4 +7,8 @@ import javax.persistence.AccessType;
 public class PaymentInformation {
 
   private String paymentToken;
+
+  public String getPaymentToken() {
+    return paymentToken;
+  }
 }
