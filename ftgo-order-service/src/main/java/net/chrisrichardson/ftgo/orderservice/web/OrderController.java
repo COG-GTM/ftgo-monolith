@@ -105,31 +105,31 @@ public class OrderController {
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
     Order order = orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return ResponseEntity.ok(makeGetOrderResponse(order));
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> preparing(@PathVariable long orderId) {
     Order order = orderService.notePreparing(orderId);
-    return ResponseEntity.ok(makeGetOrderResponse(order));
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> ready(@PathVariable long orderId) {
     Order order = orderService.noteReadyForPickup(orderId);
-    return ResponseEntity.ok(makeGetOrderResponse(order));
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> pickedup(@PathVariable long orderId) {
     Order order = orderService.notePickedUp(orderId);
-    return ResponseEntity.ok(makeGetOrderResponse(order));
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> delivered(@PathVariable long orderId) {
     Order order = orderService.noteDelivered(orderId);
-    return ResponseEntity.ok(makeGetOrderResponse(order));
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(makeGetOrderResponse(order));
   }
 
 }
