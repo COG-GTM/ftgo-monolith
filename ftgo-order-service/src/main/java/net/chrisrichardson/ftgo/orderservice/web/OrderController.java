@@ -52,13 +52,13 @@ public class OrderController {
   public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
     List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
             .stream()
-            .map(this::makeGetOrderResponse)
+            .map(OrderController::makeGetOrderResponse)
             .collect(Collectors.toList());
 
     return new ResponseEntity<>(orders, HttpStatus.OK);
   }
 
-  private GetOrderResponse makeGetOrderResponse(Order order) {
+  static GetOrderResponse makeGetOrderResponse(Order order) {
     List<Action> courierActions = order.getAssignedCourier() == null
             ? null
             : order.getAssignedCourier().actionsForDelivery(order);
@@ -76,6 +76,9 @@ public class OrderController {
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
+            order.getConsumerId(),
+            order.getDeliveryInformation() == null ? null : order.getDeliveryInformation().getDeliveryAddress(),
+            order.getPaymentInformation() == null ? null : order.getPaymentInformation().getPaymentToken(),
             order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
             courierActions,
             estimatedDelivery

@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.domain.Action;
 
@@ -8,9 +9,12 @@ import java.util.List;
 
 public class GetOrderResponse {
   private long orderId;
-  private String state;
+  private String status;
   private Money orderTotal;
   private String restaurantName;
+  private Long consumerId;
+  private Address deliveryAddress;
+  private String paymentToken;
   private Long assignedCourier;
   private List<Action> courierActions;
   private LocalDateTime estimatedDeliveryTime;
@@ -18,32 +22,20 @@ public class GetOrderResponse {
   private GetOrderResponse() {
   }
 
-  public Long getAssignedCourier() {
-    return assignedCourier;
-  }
-
-  public void setAssignedCourier(Long assignedCourier) {
-    this.assignedCourier = assignedCourier;
-  }
-
-  public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
-                           Long assignedCourier, List<Action> courierActions,
-                           LocalDateTime estimatedDeliveryTime) {
+  public GetOrderResponse(long orderId, String status, Money orderTotal, String restaurantName,
+                          Long consumerId, Address deliveryAddress, String paymentToken,
+                          Long assignedCourier, List<Action> courierActions,
+                          LocalDateTime estimatedDeliveryTime) {
     this.orderId = orderId;
-    this.state = state;
+    this.status = status;
     this.orderTotal = orderTotal;
     this.restaurantName = restaurantName;
+    this.consumerId = consumerId;
+    this.deliveryAddress = deliveryAddress;
+    this.paymentToken = paymentToken;
     this.assignedCourier = assignedCourier;
     this.courierActions = courierActions;
     this.estimatedDeliveryTime = estimatedDeliveryTime;
-  }
-
-  public Money getOrderTotal() {
-    return orderTotal;
-  }
-
-  public void setOrderTotal(Money orderTotal) {
-    this.orderTotal = orderTotal;
   }
 
   public long getOrderId() {
@@ -54,16 +46,44 @@ public class GetOrderResponse {
     this.orderId = orderId;
   }
 
-  public String getState() {
-    return state;
+  public String getStatus() {
+    return status;
   }
 
-  public void setState(String state) {
-    this.state = state;
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public Money getOrderTotal() {
+    return orderTotal;
+  }
+
+  public void setOrderTotal(Money orderTotal) {
+    this.orderTotal = orderTotal;
   }
 
   public String getRestaurantName() {
     return restaurantName;
+  }
+
+  public Long getConsumerId() {
+    return consumerId;
+  }
+
+  public Address getDeliveryAddress() {
+    return deliveryAddress;
+  }
+
+  public String getPaymentToken() {
+    return paymentToken;
+  }
+
+  public Long getAssignedCourier() {
+    return assignedCourier;
+  }
+
+  public void setAssignedCourier(Long assignedCourier) {
+    this.assignedCourier = assignedCourier;
   }
 
   public List<Action> getCourierActions() {

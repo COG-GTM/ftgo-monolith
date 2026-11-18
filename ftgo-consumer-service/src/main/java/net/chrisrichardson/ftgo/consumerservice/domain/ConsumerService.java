@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.consumerservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.consumerservice.api.web.UpdateConsumerRequest;
 import net.chrisrichardson.ftgo.domain.Consumer;
 import net.chrisrichardson.ftgo.domain.ConsumerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,18 @@ public class ConsumerService {
   public Consumer create(PersonName name) {
     Consumer consumer = consumerRepository.save(new Consumer(name));
     return consumer;
+  }
+
+  public Optional<Consumer> update(long consumerId, UpdateConsumerRequest request) {
+    return consumerRepository.findById(consumerId).map(consumer -> {
+      if (request.getId() != null) {
+        consumer.setId(request.getId());
+      }
+      if (request.getName() != null) {
+        consumer.setName(request.getName());
+      }
+      return consumerRepository.save(consumer);
+    });
   }
 
   public Optional<Consumer> findById(long consumerId) {

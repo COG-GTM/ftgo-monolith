@@ -133,6 +133,14 @@ public class Order {
     return consumerId;
   }
 
+  public DeliveryInformation getDeliveryInformation() {
+    return deliveryInformation;
+  }
+
+  public PaymentInformation getPaymentInformation() {
+    return paymentInformation;
+  }
+
   public void acceptTicket(LocalDateTime readyBy) {
     if (orderState == APPROVED) {
       this.acceptTime = LocalDateTime.now();
