@@ -21,8 +21,25 @@ public class ConsumerService {
   }
 
   public Consumer create(PersonName name) {
+    validateName(name);
     Consumer consumer = consumerRepository.save(new Consumer(name));
     return consumer;
+  }
+
+  private void validateName(PersonName name) {
+    if (name == null) {
+      throw new IllegalArgumentException("name is required");
+    }
+    if (isBlank(name.getFirstName())) {
+      throw new IllegalArgumentException("name.firstName must not be blank");
+    }
+    if (isBlank(name.getLastName())) {
+      throw new IllegalArgumentException("name.lastName must not be blank");
+    }
+  }
+
+  private static boolean isBlank(String s) {
+    return s == null || s.trim().isEmpty();
   }
 
   public Optional<Consumer> findById(long consumerId) {
