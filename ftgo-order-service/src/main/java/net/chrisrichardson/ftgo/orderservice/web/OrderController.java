@@ -34,6 +34,11 @@ public class OrderController {
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+    if (request.getConsumerId() <= 0 || request.getRestaurantId() <= 0
+            || request.getLineItems() == null || request.getLineItems().isEmpty()
+            || request.getLineItems().stream().anyMatch(x -> x == null)) {
+      throw new IllegalArgumentException("Consumer, restaurant and line items are required");
+    }
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
@@ -94,6 +99,10 @@ public class OrderController {
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
   public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+    if (request.getRevisedLineItemQuantities() == null || request.getRevisedLineItemQuantities().isEmpty()
+            || request.getRevisedLineItemQuantities().values().stream().anyMatch(q -> q == null || q < 0)) {
+      throw new IllegalArgumentException("Revised quantities must be nonempty and nonnegative");
+    }
     try {
       Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
