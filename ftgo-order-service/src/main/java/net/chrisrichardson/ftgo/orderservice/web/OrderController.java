@@ -49,9 +49,27 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(
+          @RequestParam(required = false) String consumerId,
+          @RequestParam(required = false) String state,
+          @RequestParam(required = false) String page,
+          @RequestParam(required = false) String size) {
+    if (consumerId == null || consumerId.isEmpty()) {
+      throw new IllegalArgumentException("consumerId is required");
+    }
+    long parsedConsumerId = Long.parseLong(consumerId);
+    OrderState requestedState = state == null ? null : OrderState.valueOf(state);
+    int pageNumber = page == null ? 0 : Integer.parseInt(page);
+    int pageSize = size == null ? 20 : Integer.parseInt(size);
+    if (pageNumber < 0 || pageSize < 1 || pageSize > 100) {
+      throw new IllegalArgumentException("page must be non-negative and size must be between 1 and 100");
+    }
+    boolean paged = page != null || size != null;
+    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(parsedConsumerId)
             .stream()
+            .filter(order -> requestedState == null || order.getOrderState() == requestedState)
+            .skip(paged ? (long) pageNumber * pageSize : 0)
+            .limit(paged ? pageSize : Long.MAX_VALUE)
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
 
@@ -72,7 +90,7 @@ public class OrderController {
               .orElse(null);
     }
 
-    return new GetOrderResponse(order.getId(),
+    GetOrderResponse response = new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
             order.getRestaurant().getName(),
@@ -80,6 +98,11 @@ public class OrderController {
             courierActions,
             estimatedDelivery
     );
+    response.setConsumerId(order.getConsumerId());
+    response.setLineItems(order.getLineItems().stream()
+            .map(item -> new GetOrderResponse.LineItem(item.getMenuItemId(), item.getName(), item.getPrice(), item.getQuantity()))
+            .collect(toList()));
+    return response;
   }
 
   @RequestMapping(path = "/{orderId}/cancel", method = RequestMethod.POST)
