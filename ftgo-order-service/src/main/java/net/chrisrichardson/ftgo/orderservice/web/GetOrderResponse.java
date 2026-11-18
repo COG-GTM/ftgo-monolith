@@ -8,6 +8,8 @@ import java.util.List;
 
 public class GetOrderResponse {
   private long orderId;
+  private Long consumerId;
+  private List<LineItem> lineItems;
   private String state;
   private Money orderTotal;
   private String restaurantName;
@@ -16,6 +18,55 @@ public class GetOrderResponse {
   private LocalDateTime estimatedDeliveryTime;
 
   private GetOrderResponse() {
+  }
+
+  public Long getConsumerId() {
+    return consumerId;
+  }
+
+  public void setConsumerId(Long consumerId) {
+    this.consumerId = consumerId;
+  }
+
+  public List<LineItem> getLineItems() {
+    return lineItems;
+  }
+
+  public void setLineItems(List<LineItem> lineItems) {
+    this.lineItems = lineItems;
+  }
+
+  public static class LineItem {
+    private String menuItemId;
+    private String name;
+    private Money price;
+    private int quantity;
+
+    private LineItem() {
+    }
+
+    public LineItem(String menuItemId, String name, Money price, int quantity) {
+      this.menuItemId = menuItemId;
+      this.name = name;
+      this.price = price;
+      this.quantity = quantity;
+    }
+
+    public String getMenuItemId() {
+      return menuItemId;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public Money getPrice() {
+      return price;
+    }
+
+    public int getQuantity() {
+      return quantity;
+    }
   }
 
   public Long getAssignedCourier() {
