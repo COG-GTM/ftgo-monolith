@@ -103,33 +103,33 @@ public class OrderController {
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
+    Order order = orderService.accept(orderId, orderAcceptance.getReadyBy());
+    return ResponseEntity.ok(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
-    orderService.notePreparing(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> preparing(@PathVariable long orderId) {
+    Order order = orderService.notePreparing(orderId);
+    return ResponseEntity.ok(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
-    orderService.noteReadyForPickup(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> ready(@PathVariable long orderId) {
+    Order order = orderService.noteReadyForPickup(orderId);
+    return ResponseEntity.ok(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
-    orderService.notePickedUp(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> pickedup(@PathVariable long orderId) {
+    Order order = orderService.notePickedUp(orderId);
+    return ResponseEntity.ok(makeGetOrderResponse(order));
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
-    orderService.noteDelivered(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> delivered(@PathVariable long orderId) {
+    Order order = orderService.noteDelivered(orderId);
+    return ResponseEntity.ok(makeGetOrderResponse(order));
   }
 
 }
