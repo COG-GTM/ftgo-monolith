@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -48,6 +50,11 @@ public class OrderService {
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    if (consumerId <= 0 || restaurantId <= 0 || lineItems == null || lineItems.isEmpty()
+            || lineItems.stream().anyMatch(li -> li == null || li.getMenuItemId() == null
+            || li.getMenuItemId().trim().isEmpty() || li.getQuantity() <= 0)) {
+      throw new IllegalArgumentException("Valid consumer, restaurant and line items are required");
+    }
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
@@ -56,7 +63,11 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    try {
+      consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    } catch (net.chrisrichardson.ftgo.consumerservice.domain.ConsumerNotFoundException e) {
+      throw new IllegalArgumentException("Unknown consumer " + consumerId, e);
+    }
 
     // TODO - charge a credit card too
 
@@ -87,8 +98,24 @@ public class OrderService {
 
   @Transactional
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
+    if (orderRevision == null || orderRevision.getRevisedLineItemQuantities() == null
+            || orderRevision.getRevisedLineItemQuantities().isEmpty()
+            || orderRevision.getRevisedLineItemQuantities().values().stream().anyMatch(q -> q == null || q < 0)) {
+      throw new IllegalArgumentException("Revised quantities must be nonempty and nonnegative");
+    }
     Order order = tryToFindOrder(orderId);
-    order.revise(orderRevision);
+    orderRevision.getRevisedLineItemQuantities().keySet().forEach(id -> {
+      if (order.getLineItems().stream().noneMatch(li -> li.getMenuItemId().equals(id))) {
+        throw new InvalidMenuItemIdException(id);
+      }
+    });
+    Map<String, Integer> quantities = new HashMap<>(orderRevision.getRevisedLineItemQuantities());
+    order.getLineItems().forEach(li -> quantities.putIfAbsent(li.getMenuItemId(), li.getQuantity()));
+    try {
+      order.revise(new OrderRevision(orderRevision.getDeliveryInformation(), quantities));
+    } catch (OrderMinimumNotMetException e) {
+      throw new IllegalArgumentException("Order minimum not met", e);
+    }
     return order;
   }
 
