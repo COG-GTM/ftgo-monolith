@@ -92,10 +92,14 @@ public class OrderService {
     return order;
   }
 
-  public void accept(long orderId, LocalDateTime readyBy) {
+  public Order accept(long orderId, LocalDateTime readyBy) {
+    if (readyBy == null) {
+      throw new IllegalArgumentException("readyBy is required");
+    }
     Order order = tryToFindOrder(orderId);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
+    return order;
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
@@ -141,26 +145,30 @@ public class OrderService {
   }
 
   @Transactional
-  public void notePreparing(long orderId) {
+  public Order notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePreparing();
+    return order;
   }
 
   @Transactional
-  public void noteReadyForPickup(long orderId) {
+  public Order noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteReadyForPickup();
+    return order;
   }
 
   @Transactional
-  public void notePickedUp(long orderId) {
+  public Order notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePickedUp();
+    return order;
   }
 
   @Transactional
-  public void noteDelivered(long orderId) {
+  public Order noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteDelivered();
+    return order;
   }
 }
