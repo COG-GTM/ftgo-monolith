@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static net.chrisrichardson.ftgo.orderservice.RestaurantMother.*;
@@ -128,6 +129,21 @@ public class OrderValidationTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.orderTotal").value("123.40"));
     check("/orders/1/revise", revision("{\"1\":0}"), 200);
     assertEquals("0.00", order.getOrderTotal().asString());
+  }
+
+  @Test
+  public void partialRevisionKeepsOmittedItemQuantity() throws Exception {
+    order = new Order(1L, AJANTA_RESTAURANT, Arrays.asList(
+            new OrderLineItem("1", "Chicken", new Money("10.00"), 2),
+            new OrderLineItem("2", "Rice", new Money("5.00"), 3)));
+    order.setId(1L);
+    when(orders.findById(1L)).thenReturn(Optional.of(order));
+
+    mvc.perform(post("/orders/1/revise").contentType("application/json")
+            .content(revision("{\"1\":4}")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.orderTotal").value("55.00"));
+    assertEquals(4, order.getLineItems().get(0).getQuantity());
+    assertEquals(3, order.getLineItems().get(1).getQuantity());
   }
 
   @Test

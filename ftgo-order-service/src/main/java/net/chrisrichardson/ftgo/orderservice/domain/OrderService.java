@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -107,8 +109,10 @@ public class OrderService {
         throw new InvalidMenuItemIdException(id);
       }
     });
+    Map<String, Integer> quantities = new HashMap<>(orderRevision.getRevisedLineItemQuantities());
+    order.getLineItems().forEach(li -> quantities.putIfAbsent(li.getMenuItemId(), li.getQuantity()));
     try {
-      order.revise(orderRevision);
+      order.revise(new OrderRevision(orderRevision.getDeliveryInformation(), quantities));
     } catch (OrderMinimumNotMetException e) {
       throw new IllegalArgumentException("Order minimum not met", e);
     }
