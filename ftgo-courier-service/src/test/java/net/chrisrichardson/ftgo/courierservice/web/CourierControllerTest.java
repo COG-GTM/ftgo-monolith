@@ -3,6 +3,8 @@ package net.chrisrichardson.ftgo.courierservice.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailability;
+import net.chrisrichardson.ftgo.courierservice.api.CourierLocationUpdate;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierNotFoundException;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.domain.*;
@@ -21,6 +23,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class CourierControllerTest {
+  @Test
+  public void availabilitySerializesAndRoundTrips() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(new CourierAvailability(true));
+    assertEquals("{\"available\":true}", json);
+    assertEquals(Boolean.TRUE, mapper.readValue(json, CourierAvailability.class).isAvailable());
+  }
+
+  @Test
+  public void locationSerializesAndRoundTrips() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(new CourierLocationUpdate(37.8, -122.2));
+    assertEquals("{\"latitude\":37.8,\"longitude\":-122.2}", json);
+    CourierLocationUpdate location = mapper.readValue(json, CourierLocationUpdate.class);
+    assertEquals(Double.valueOf(37.8), location.getLatitude());
+    assertEquals(Double.valueOf(-122.2), location.getLongitude());
+  }
+
   private CourierRepository repository;
   private Courier courier;
   private MockMvc mvc;

@@ -15,6 +15,10 @@ public class CourierAvailability {
     return available;
   }
 
+  public Boolean getAvailable() {
+    return available;
+  }
+
   public void setAvailable(Boolean available) {
     this.available = available;
   }
