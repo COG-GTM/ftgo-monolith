@@ -2,8 +2,8 @@ package net.chrisrichardson.ftgo.courierservice.api;
 
 public class CourierLocationUpdate {
 
-  private double latitude;
-  private double longitude;
+  private Double latitude;
+  private Double longitude;
 
   public CourierLocationUpdate() {
   }
@@ -13,19 +13,19 @@ public class CourierLocationUpdate {
     this.longitude = longitude;
   }
 
-  public double getLatitude() {
+  public Double getLatitude() {
     return latitude;
   }
 
-  public void setLatitude(double latitude) {
+  public void setLatitude(Double latitude) {
     this.latitude = latitude;
   }
 
-  public double getLongitude() {
+  public Double getLongitude() {
     return longitude;
   }
 
-  public void setLongitude(double longitude) {
+  public void setLongitude(Double longitude) {
     this.longitude = longitude;
   }
 }
