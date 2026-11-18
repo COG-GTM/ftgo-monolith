@@ -2,20 +2,20 @@ package net.chrisrichardson.ftgo.courierservice.api;
 
 public class CourierAvailability {
 
-  private boolean available;
+  private Boolean available;
 
   public CourierAvailability() {
   }
 
-  public CourierAvailability(boolean available) {
+  public CourierAvailability(Boolean available) {
     this.available = available;
   }
 
-  public boolean isAvailable() {
+  public Boolean isAvailable() {
     return available;
   }
 
-  public void setAvailable(boolean available) {
+  public void setAvailable(Boolean available) {
     this.available = available;
   }
 }
