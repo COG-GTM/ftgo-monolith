@@ -6,6 +6,7 @@ import net.chrisrichardson.ftgo.domain.Consumer;
 import net.chrisrichardson.ftgo.domain.ConsumerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -21,6 +22,9 @@ public class ConsumerService {
   }
 
   public Consumer create(PersonName name) {
+    if (name == null || !StringUtils.hasText(name.getFirstName()) || !StringUtils.hasText(name.getLastName())) {
+      throw new IllegalArgumentException("Consumer first and last name are required");
+    }
     Consumer consumer = consumerRepository.save(new Consumer(name));
     return consumer;
   }
