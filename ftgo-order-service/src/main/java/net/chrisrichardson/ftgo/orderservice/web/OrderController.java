@@ -61,7 +61,7 @@ public class OrderController {
   private GetOrderResponse makeGetOrderResponse(Order order) {
     List<Action> courierActions = order.getAssignedCourier() == null
             ? null
-            : order.getAssignedCourier().actionsForDelivery(order);
+            : orderRepository.findCourierActionsForDelivery(order.getAssignedCourier(), order);
 
     LocalDateTime estimatedDelivery = null;
     if (courierActions != null) {

@@ -11,6 +11,12 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 
+import net.chrisrichardson.ftgo.domain.Action;
+import net.chrisrichardson.ftgo.domain.Courier;
+import net.chrisrichardson.ftgo.domain.Order;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
@@ -18,7 +24,11 @@ import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_V
 import static net.chrisrichardson.ftgo.orderservice.OrderDetailsMother.CHICKEN_VINDALOO_ORDER_TOTAL;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 public class OrderControllerTest {
 
@@ -49,6 +59,31 @@ public class OrderControllerTest {
             body("state", equalTo(OrderDetailsMother.CHICKEN_VINDALOO_ORDER_STATE.name())).
             body("orderTotal", equalTo(CHICKEN_VINDALOO_ORDER_TOTAL.asString()))
     ;
+  }
+
+  @Test
+  public void shouldReturnCourierActionsForAssignedOrderWithoutLoadingCourierPlan() {
+    Order order = spy(CHICKEN_VINDALOO_ORDER);
+    Courier courier = mock(Courier.class);
+    when(courier.getId()).thenReturn(7L);
+    when(order.getAssignedCourier()).thenReturn(courier);
+    LocalDateTime dropoff = LocalDateTime.of(2026, 1, 2, 12, 40);
+    when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+    when(orderRepository.findCourierActionsForDelivery(courier, order))
+            .thenReturn(Arrays.asList(Action.makePickup(order), Action.makeDropoff(order, dropoff)));
+
+    given().
+            standaloneSetup(configureControllers(orderController)).
+    when().
+            get("/orders/1").
+    then().
+            statusCode(200).
+            body("assignedCourier", equalTo(7)).
+            body("courierActions.type", equalTo(Arrays.asList("PICKUP", "DROPOFF"))).
+            body("estimatedDeliveryTime.hour", equalTo(12)).
+            body("estimatedDeliveryTime.minute", equalTo(40))
+    ;
+    verify(courier, never()).actionsForDelivery(any());
   }
 
   @Test
