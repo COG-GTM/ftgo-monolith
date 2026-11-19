@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import javax.persistence.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "restaurants")
@@ -60,6 +61,10 @@ public class Restaurant {
 
   public Address getAddress() {
     return address;
+  }
+
+  public Stream<MenuItem> streamMenuItems() {
+    return menuItems.stream();
   }
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {

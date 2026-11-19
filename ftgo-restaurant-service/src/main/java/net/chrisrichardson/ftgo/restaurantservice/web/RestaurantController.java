@@ -22,15 +22,10 @@ public class RestaurantController {
   }
 
   @RequestMapping(method = RequestMethod.GET, path = "/{restaurantId}")
-  public ResponseEntity<GetRestaurantResponse> get(@PathVariable long restaurantId) {
-    return restaurantService.findById(restaurantId)
-            .map(r -> new ResponseEntity<>(makeGetRestaurantResponse(r), HttpStatus.OK))
+  public ResponseEntity<GetRestaurantResponse> get(@PathVariable long restaurantId,
+                                                    @RequestParam(name = "includeMenu", required = false) String includeMenu) {
+    return restaurantService.findDetails(restaurantId, "true".equals(includeMenu))
+            .map(r -> ResponseEntity.ok(new GetRestaurantResponse(r.getId(), r.getName(), r.getMenu())))
             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
-
-  private GetRestaurantResponse makeGetRestaurantResponse(Restaurant r) {
-    return new GetRestaurantResponse(r.getId(), r.getName());
-  }
-
-
 }
