@@ -1,8 +1,18 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentConversionNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -14,6 +24,10 @@ import java.util.Map;
 public class ApiTrackingController {
 
   private final ApiRequestLogRepository apiRequestLogRepository;
+
+  @Autowired
+  @Qualifier("handlerExceptionResolver")
+  private HandlerExceptionResolver handlerExceptionResolver;
 
   public ApiTrackingController(ApiRequestLogRepository apiRequestLogRepository) {
     this.apiRequestLogRepository = apiRequestLogRepository;
@@ -101,5 +115,35 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  @ExceptionHandler(TypeMismatchException.class)
+  public void handleTypeMismatch(TypeMismatchException ex, HttpServletRequest request,
+                                 HttpServletResponse response) {
+    String name = null;
+    if (ex instanceof MethodArgumentTypeMismatchException) {
+      name = ((MethodArgumentTypeMismatchException) ex).getName();
+    } else if (ex instanceof MethodArgumentConversionNotSupportedException) {
+      name = ((MethodArgumentConversionNotSupportedException) ex).getName();
+    }
+    if (!"minutesBack".equals(name)) {
+      throw ex;
+    }
+    if (!resolveInvalidParameter(request, response, "minutesBack must be an integer")) {
+      throw ex;
+    }
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public void handleMissingParameter(MissingServletRequestParameterException ex, HttpServletRequest request,
+                                     HttpServletResponse response) throws MissingServletRequestParameterException {
+    if (!"uri".equals(ex.getParameterName()) || !resolveInvalidParameter(request, response, "uri is required")) {
+      throw ex;
+    }
+  }
+
+  private boolean resolveInvalidParameter(HttpServletRequest request, HttpServletResponse response, String message) {
+    return handlerExceptionResolver.resolveException(request, response, null,
+            new IllegalArgumentException(message)) != null;
   }
 }
