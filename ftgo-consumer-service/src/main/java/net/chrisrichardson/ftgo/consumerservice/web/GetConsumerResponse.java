@@ -4,14 +4,14 @@ import net.chrisrichardson.ftgo.common.PersonName;
 import net.chrisrichardson.ftgo.consumerservice.api.web.CreateConsumerResponse;
 
 public class GetConsumerResponse extends CreateConsumerResponse {
-  private PersonName name;
+  private final PersonName name;
 
   public PersonName getName() {
     return name;
   }
 
-  public GetConsumerResponse(PersonName name) {
-
+  public GetConsumerResponse(long consumerId, PersonName name) {
+    super(consumerId);
     this.name = name;
   }
 }
