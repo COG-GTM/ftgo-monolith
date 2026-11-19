@@ -1,0 +1,67 @@
+// FTGO monolith architecture (master). Render with ./render.sh
+digraph ftgo {
+  graph [rankdir=TB, fontname="DejaVu Sans", fontsize=18, labelloc=t, nodesep=0.35, ranksep=0.55, pad=0.3,
+         label="FTGO monolith: one Spring Boot 2.0 jar (ftgo-application) on Java 8, one MySQL schema"];
+  node  [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, fillcolor=white, color="#555555"];
+  edge  [fontname="DejaVu Sans", fontsize=13, color="#555555"];
+
+  browser   [label="Browser\nFTGO operations dashboard (SPA)\nindex.html + js/app.js\nmock data in localStorage", fillcolor="#FFF3E0"];
+  client    [label="API clients\nRestAssured end-to-end tests\nSwagger UI /swagger-ui.html", fillcolor="#FFF3E0"];
+  sentrycdn [label="browser.sentry-cdn.com\nSentry SDK 9.47.2 (SRI)", fillcolor="#ECEFF1"];
+  sentry    [label="Sentry SaaS\nerrors, replays, feedback", fillcolor="#ECEFF1"];
+
+  subgraph cluster_app {
+    label="ftgo-application  (:8080; :8081 via docker-compose)"; style="rounded"; color="#E85D04"; fontcolor="#E85D04"; fontsize=17;
+
+    static    [label="Static resources\n/  (index.html, css, js)", fillcolor="#FFE0B2"];
+    sentrycfg [label="SentryConfigController\nGET /config/sentry", fillcolor="#FFE0B2"];
+    tracking  [label="ApiTrackingInterceptor\nX-Correlation-ID, timing\n(all paths except /api/tracking/**, /actuator/**)", fillcolor="#E3F2FD"];
+    errors    [label="GlobalExceptionHandler\nErrorResponse JSON 400/404/409/503/500", fillcolor="#E3F2FD"];
+
+    subgraph cluster_web {
+      label="REST controllers (one *-service module each)"; style="rounded,dashed"; color="#888888"; fontcolor="#333333"; fontsize=15;
+      {rank=same; consumerc; restaurantc; orderc; courierc; trackc;}
+      consumerc   [label="ConsumerController\n/consumers"];
+      restaurantc [label="RestaurantController\n/restaurants"];
+      orderc      [label="OrderController\n/orders, /orders/{id}/accept ...\n/delivered"];
+      courierc    [label="CourierController\n/couriers, /availability\n/location, /workload"];
+      trackc      [label="ApiTrackingController\n/api/tracking/logs, /stats"];
+    }
+
+    subgraph cluster_svc {
+      label="Domain services"; style="rounded,dashed"; color="#888888"; fontcolor="#333333"; fontsize=15;
+      {rank=same; consumers; restaurants; orders; couriers;}
+      consumers   [label="ConsumerService\nvalidateOrderForConsumer"];
+      restaurants [label="RestaurantService"];
+      orders      [label="OrderService\ncreate, revise, cancel\naccept -> scheduleDelivery"];
+      couriers    [label="CourierService\navailability, location"];
+    }
+
+    strategy [label="DistanceOptimizedCourierAssignmentStrategy\nscore = 0.6 x distance + 0.4 x load (normalised)\nskips couriers at 5 active; least-loaded fallback", fillcolor="#E8F5E9"];
+    domain   [label="ftgo-domain: shared JPA entities + Spring Data repositories\nOrder, Restaurant, Consumer, Courier, Action; ApiRequestLog (ftgo-common)", fillcolor="#E8F5E9"];
+  }
+
+  mysql   [label="MySQL 5.7  schema ftgo\nconsumers, restaurants, restaurant_menu_items, orders,\norder_line_items, courier, courier_actions, api_request_log", shape=cylinder, fillcolor="#E1F5FE"];
+  flyway  [label="ftgo-flyway (Gradle)\nV1 create tables\nV2 courier geo + api_request_log", fillcolor="#F3E5F5"];
+  initsql [label="mysql/schema.sql\ncreate database + grants", fillcolor="#F3E5F5"];
+
+  browser -> static     [label="GET /"];
+  browser -> sentrycfg  [label="GET config/sentry"];
+  browser -> sentrycdn  [label="script"];
+  browser -> sentry     [label="envelopes (only if SENTRY_DSN set)", style=dashed];
+  client  -> tracking   [label="JSON over HTTP"];
+
+  tracking -> {consumerc restaurantc orderc courierc};
+  consumerc -> consumers;
+  restaurantc -> restaurants;
+  orderc -> orders;
+  courierc -> couriers;
+  orders -> consumers   [label="validate"];
+  orders -> strategy    [label="on accept"];
+  {consumers restaurants orders couriers strategy trackc} -> domain;
+  tracking -> domain    [label="save ApiRequestLog", style=dashed];
+  errors -> orderc      [dir=back, style=dotted, arrowtail=none, label="handles exceptions"];
+  domain -> mysql       [label="JDBC (Hibernate)"];
+  flyway -> mysql       [label="flywayMigrate"];
+  initsql -> mysql      [label="container init"];
+}
