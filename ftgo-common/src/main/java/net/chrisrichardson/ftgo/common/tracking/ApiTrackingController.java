@@ -1,10 +1,18 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.NumberUtils;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentConversionNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -17,31 +25,32 @@ public class ApiTrackingController {
 
   private final ApiRequestLogRepository apiRequestLogRepository;
 
+  @Autowired
+  @Qualifier("handlerExceptionResolver")
+  private HandlerExceptionResolver handlerExceptionResolver;
+
   public ApiTrackingController(ApiRequestLogRepository apiRequestLogRepository) {
     this.apiRequestLogRepository = apiRequestLogRepository;
   }
 
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
-          @RequestParam MultiValueMap<String, String> minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(parseMinutesBack(minutesBack));
+          @RequestParam(defaultValue = "60") int minutesBack) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getErrors(
-          @RequestParam MultiValueMap<String, String> minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(parseMinutesBack(minutesBack));
+          @RequestParam(defaultValue = "60") int minutesBack) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam(required = false) String uri) {
-    if (uri == null) {
-      throw new IllegalArgumentException("uri is required");
-    }
+  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -57,14 +66,13 @@ public class ApiTrackingController {
 
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
-          @RequestParam MultiValueMap<String, String> minutesBack) {
-    int periodMinutes = parseMinutesBack(minutesBack);
-    LocalDateTime since = LocalDateTime.now().minusMinutes(periodMinutes);
+          @RequestParam(defaultValue = "60") int minutesBack) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", periodMinutes);
+    stats.put("periodMinutes", minutesBack);
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -109,15 +117,33 @@ public class ApiTrackingController {
     return new ResponseEntity<>(stats, HttpStatus.OK);
   }
 
-  private int parseMinutesBack(MultiValueMap<String, String> parameters) {
-    String minutesBack = parameters.getFirst("minutesBack");
-    if (minutesBack == null || (minutesBack.isEmpty() && parameters.get("minutesBack").size() == 1)) {
-      return 60;
+  @ExceptionHandler(TypeMismatchException.class)
+  public void handleTypeMismatch(TypeMismatchException ex, HttpServletRequest request,
+                                 HttpServletResponse response) {
+    String name = null;
+    if (ex instanceof MethodArgumentTypeMismatchException) {
+      name = ((MethodArgumentTypeMismatchException) ex).getName();
+    } else if (ex instanceof MethodArgumentConversionNotSupportedException) {
+      name = ((MethodArgumentConversionNotSupportedException) ex).getName();
     }
-    try {
-      return NumberUtils.parseNumber(minutesBack, Integer.class);
-    } catch (NumberFormatException ex) {
-      throw new IllegalArgumentException("minutesBack must be an integer");
+    if (!"minutesBack".equals(name)) {
+      throw ex;
     }
+    if (!resolveInvalidParameter(request, response, "minutesBack must be an integer")) {
+      throw ex;
+    }
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public void handleMissingParameter(MissingServletRequestParameterException ex, HttpServletRequest request,
+                                     HttpServletResponse response) throws MissingServletRequestParameterException {
+    if (!"uri".equals(ex.getParameterName()) || !resolveInvalidParameter(request, response, "uri is required")) {
+      throw ex;
+    }
+  }
+
+  private boolean resolveInvalidParameter(HttpServletRequest request, HttpServletResponse response, String message) {
+    return handlerExceptionResolver.resolveException(request, response, null,
+            new IllegalArgumentException(message)) != null;
   }
 }

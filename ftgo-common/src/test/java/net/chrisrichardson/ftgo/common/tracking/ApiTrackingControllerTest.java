@@ -1,24 +1,33 @@
 package net.chrisrichardson.ftgo.common.tracking;
 
+import net.chrisrichardson.ftgo.common.ErrorResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.DispatcherServlet;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 public class ApiTrackingControllerTest {
 
@@ -33,7 +42,10 @@ public class ApiTrackingControllerTest {
     when(repository.findErrorsSince(any(LocalDateTime.class))).thenReturn(Collections.emptyList());
     when(repository.findByRequestUri(any(String.class))).thenReturn(Collections.emptyList());
     controller = new ApiTrackingController(repository);
-    mvc = MockMvcBuilders.standaloneSetup(controller).build();
+    mvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new TestAdvice()).build();
+    ReflectionTestUtils.setField(controller, "handlerExceptionResolver",
+            ((DispatcherServlet) ReflectionTestUtils.getField(mvc, "servlet"))
+                    .getWebApplicationContext().getBean("handlerExceptionResolver"));
   }
 
   @Test
@@ -67,32 +79,32 @@ public class ApiTrackingControllerTest {
   @Test
   public void repeatedMinutesUseFirstValue() throws Exception {
     mvc.perform(get("/api/tracking/stats").param("minutesBack", "30", "abc"))
-            .andExpect(status().isOk());
-    Map<String, Object> stats = controller.getStats(minutes("30", "abc")).getBody();
-    assertEquals(Integer.valueOf(30), stats.get("periodMinutes"));
+            .andExpect(status().isOk()).andExpect(jsonPath("$.periodMinutes").value(30));
+    assertEquals(Integer.valueOf(30), controller.getStats(30).getBody().get("periodMinutes"));
   }
 
   @Test
-  public void rejectsInvalidAndOverflowingMinutesBeforeQuerying() {
-    for (String input : new String[]{"abc", "1.5", "99999999999", "30,40"}) {
-      assertMinutesIllegalArgument(() -> controller.getRecentLogs(minutes(input)));
-      assertMinutesIllegalArgument(() -> controller.getErrors(minutes(input)));
-      assertMinutesIllegalArgument(() -> controller.getStats(minutes(input)));
+  public void rejectsInvalidAndOverflowingMinutesBeforeQuerying() throws Exception {
+    for (String endpoint : new String[]{"/logs", "/logs/errors", "/stats"}) {
+      for (String input : new String[]{"abc", "1.5", "99999999999", "30,40"}) {
+        assertBadMinutes(get("/api/tracking" + endpoint).param("minutesBack", input));
+      }
     }
     verifyZeroInteractions(repository);
   }
 
   @Test
-  public void repeatedEmptyFirstMinutesAreRejectedBeforeQuerying() {
-    assertMinutesIllegalArgument(() -> controller.getRecentLogs(minutes("", "2")));
-    assertMinutesIllegalArgument(() -> controller.getErrors(minutes("", "2")));
-    assertMinutesIllegalArgument(() -> controller.getStats(minutes("", "2")));
+  public void repeatedEmptyFirstMinutesAreRejectedBeforeQuerying() throws Exception {
+    for (String endpoint : new String[]{"/logs", "/logs/errors", "/stats"}) {
+      assertBadMinutes(get("/api/tracking" + endpoint).param("minutesBack", "", "2"));
+    }
     verifyZeroInteractions(repository);
   }
 
   @Test
-  public void missingUriIsRejectedBeforeQuerying() {
-    assertIllegalArgument(() -> controller.searchByUri(null));
+  public void missingUriIsRejectedBeforeQuerying() throws Exception {
+    mvc.perform(get("/api/tracking/logs/search")).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("uri is required"));
     verifyZeroInteractions(repository);
   }
 
@@ -115,29 +127,37 @@ public class ApiTrackingControllerTest {
     assertEquals(HttpStatus.NOT_FOUND, controller.getByCorrelationId("unknown").getStatusCode());
   }
 
-  private void assertIllegalArgument(Runnable action) {
-    try {
-      action.run();
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-      // Expected validation failure.
-    }
+  private void assertBadMinutes(MockHttpServletRequestBuilder request) throws Exception {
+    mvc.perform(request).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("minutesBack must be an integer"));
   }
 
-  private MultiValueMap<String, String> minutes(String... values) {
-    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    for (String value : values) {
-      parameters.add("minutesBack", value);
+  @Test
+  public void unhandledOrUnrelatedMismatchIsRethrown() {
+    HandlerExceptionResolver resolver = mock(HandlerExceptionResolver.class);
+    ReflectionTestUtils.setField(controller, "handlerExceptionResolver", resolver);
+    for (String name : new String[]{"minutesBack", "other"}) {
+      MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
+              "abc", int.class, name, null, new NumberFormatException());
+      try {
+        controller.handleTypeMismatch(ex, new MockHttpServletRequest(), new MockHttpServletResponse());
+        fail("Expected original exception");
+      } catch (MethodArgumentTypeMismatchException actual) {
+        assertSame(ex, actual);
+      }
     }
-    return parameters;
+    verify(resolver).resolveException(any(), any(), isNull(), any(IllegalArgumentException.class));
   }
 
-  private void assertMinutesIllegalArgument(Runnable action) {
-    try {
-      action.run();
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-      assertEquals("minutesBack must be an integer", expected.getMessage());
+  @ControllerAdvice
+  public static class TestAdvice {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
+                                                               HttpServletRequest request) {
+      return new ResponseEntity<>(new ErrorResponse(400, "Bad Request", ex.getMessage(),
+              request.getRequestURI(), null), HttpStatus.BAD_REQUEST);
     }
   }
 }
