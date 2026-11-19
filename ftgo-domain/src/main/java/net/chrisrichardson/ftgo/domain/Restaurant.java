@@ -5,6 +5,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -68,7 +69,10 @@ public class Restaurant {
   }
 
   public Optional<MenuItem> findMenuItem(String menuItemId) {
-    return menuItems.stream().filter(mi -> mi.getId().equals(menuItemId)).findFirst();
+    return streamMenuItems()
+            .filter(Objects::nonNull)
+            .filter(item -> item.getId() != null && item.getId().equals(menuItemId))
+            .findFirst();
   }
 
   public void reviseMenu(RestaurantMenu revisedMenu) {

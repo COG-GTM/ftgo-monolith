@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -124,6 +125,19 @@ public class RestaurantControllerTest {
             .andExpect(content().json("{\"id\":42,\"name\":\"Cafe\",\"menu\":{\"menuItemDTOs\":["
                     + "{\"id\":\"tea\",\"name\":\"Tea\",\"price\":\"3.50\"},"
                     + "{\"id\":null,\"name\":\"Legacy\",\"price\":null}]}}", true));
+  }
+
+  @Test
+  public void shouldSkipLegacyNullRowsAndIdsWhenFindingMenuItems() {
+    MenuItem dish = new MenuItem("dish", "Dish", new Money("4.00"));
+    Restaurant restaurant = new Restaurant(42L, "Cafe", new RestaurantMenu(Arrays.asList(
+            null,
+            new MenuItem(null, "Legacy only", null),
+            dish)));
+
+    assertEquals(Optional.of(dish), restaurant.findMenuItem("dish"));
+    assertEquals(Optional.empty(), restaurant.findMenuItem("missing"));
+    assertEquals(Optional.empty(), restaurant.findMenuItem(null));
   }
 
   @Test
