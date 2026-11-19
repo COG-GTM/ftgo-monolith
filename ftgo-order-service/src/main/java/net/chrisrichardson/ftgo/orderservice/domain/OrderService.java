@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerNotFoundException;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
@@ -56,7 +57,11 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    try {
+      consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    } catch (ConsumerNotFoundException e) {
+      throw new IllegalArgumentException("Invalid consumer id", e);
+    }
 
     // TODO - charge a credit card too
 
