@@ -2,6 +2,8 @@ package net.chrisrichardson.ftgo.common.tracking;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.NumberUtils;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,22 +23,25 @@ public class ApiTrackingController {
 
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
-          @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+          @RequestParam MultiValueMap<String, String> minutesBack) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(parseMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getErrors(
-          @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+          @RequestParam MultiValueMap<String, String> minutesBack) {
+    LocalDateTime since = LocalDateTime.now().minusMinutes(parseMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
-  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
+  public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam(required = false) String uri) {
+    if (uri == null) {
+      throw new IllegalArgumentException("uri is required");
+    }
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -52,13 +57,14 @@ public class ApiTrackingController {
 
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
-          @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+          @RequestParam MultiValueMap<String, String> minutesBack) {
+    int periodMinutes = parseMinutesBack(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(periodMinutes);
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", minutesBack);
+    stats.put("periodMinutes", periodMinutes);
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -101,5 +107,13 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  private int parseMinutesBack(MultiValueMap<String, String> parameters) {
+    String minutesBack = parameters.getFirst("minutesBack");
+    if (minutesBack == null || minutesBack.isEmpty()) {
+      return 60;
+    }
+    return NumberUtils.parseNumber(minutesBack, Integer.class);
   }
 }
