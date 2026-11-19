@@ -72,13 +72,20 @@ transition throws `UnsupportedStateTransitionException` (HTTP 409).
 `POST /orders` looks up the restaurant's menu items, builds line items, has `ConsumerService`
 validate the consumer and saves the order as `APPROVED` (payment is not implemented; the code has
 a `TODO - charge a credit card`). Accepting an order (`/accept` with a ready-by time) schedules
-delivery: `DistanceOptimizedCourierAssignmentStrategy` picks an available courier with fewer than
-5 active deliveries by scoring `0.6 × distance + 0.4 × load` (Haversine distance between the
-courier's current location and the restaurant address), records `PICKUP` and `DROPOFF` actions
-on the courier's plan and assigns the courier to the order. The drop-off ETA is the later of the
-ready-by time and the courier's arrival at the restaurant (5 min + 2 min per km), plus 15 min, or
-ready-by + 30 min when coordinates are missing. Without restaurant or courier coordinates the
-strategy falls back to the least-loaded courier; with no available courier the call fails with 503.
+delivery through `DistanceOptimizedCourierAssignmentStrategy`:
+
+- If the restaurant has no coordinates, it picks the least-loaded available courier.
+- Otherwise it skips couriers with 5 or more active deliveries and scores the rest, lowest wins:
+  `0.6 × min(distanceKm / 20, 1) + 0.4 × activeDeliveries / 5`, with Haversine distance from the
+  courier's current location to the restaurant. A courier without a location scores
+  `0.5 + 0.4 × activeDeliveries / 5`.
+- If every courier is at 5 deliveries, it falls back to the least-loaded one anyway.
+- With no available courier at all the call fails with 503.
+
+`OrderService` then records `PICKUP` and `DROPOFF` actions on the courier's plan and assigns the
+courier to the order. The drop-off ETA is the later of the ready-by time and the courier's arrival
+at the restaurant (5 min + 2 min per km), plus 15 min, or ready-by + 30 min when coordinates are
+missing.
 
 ## API request tracking
 
@@ -107,8 +114,9 @@ The app connects with `spring.datasource.*` from `application.properties`
 
 `index.html`, `css/style.css` and `js/app.js` form a vanilla-JS single-page app with a hash
 router (`#/`, `#/orders`, `#/orders/{id}`, `#/restaurants`, `#/consumers`, `#/couriers`). It shows
-an order pipeline, order lists and details, and forms to create orders, restaurants, consumers and
-couriers.
+an order pipeline, order lists and details, and per-entity actions such as courier availability.
+The create buttons call `openModal`, which adds the class `modal-open` to the backdrop, but
+`style.css` only shows `.modal-backdrop.active`, so the create forms never appear.
 
 **The dashboard does not call the REST API.** Its `api` object is a mock that seeds sample data
 and keeps all state in browser `localStorage` (key `ftgo_dashboard_state`); `refreshAll()` is a
@@ -129,8 +137,8 @@ feedback widget, all at 100% sampling.
 
 | Script | What it does |
 |--------|--------------|
-| `./gradlew build` | Compiles everything and runs unit tests plus `FtgoApplicationTest` (needs a migrated MySQL) |
+| `./gradlew build` | Compiles everything and runs unit tests, `FtgoApplicationTest` (needs a migrated MySQL) and `ftgo-end-to-end-tests` (needs the app already running on `$DOCKER_HOST_IP:8081`; skip with `-x :ftgo-end-to-end-tests:test`) |
 | `build-and-test-all.sh` | `testClasses` → start `mysql` → `waitForMySql` → `flywayMigrate` → `build` → `docker-compose up` → `wait-for-services.sh` → `ftgo-end-to-end-tests` → `docker-compose down` |
-| `build-and-run.sh` | Assemble, start MySQL, then the whole compose stack |
+| `build-and-run.sh` | Assemble, `docker-compose down -v` (drops the MySQL volume), start MySQL, then the whole compose stack; it does not run Flyway |
 | `.circleci/config.yml` | Runs `build-and-test-all.sh` with `setenv-circle-ci.sh` |
 | `deployment/kubernetes/` | Leftover scripts and a DB secret only; there are no manifests for the application |

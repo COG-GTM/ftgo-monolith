@@ -40,7 +40,8 @@ Then either run the jar directly (port 8080):
 java -jar ftgo-application/build/libs/ftgo-application.jar
 ----
 
-or, after `assemble`, run it in Docker with `docker-compose up -d --build` (port 8081); `./build-and-run.sh` does all of these steps except the migration.
+or, after `assemble`, run it in Docker with `docker-compose up -d --build` (port 8081).
+`./build-and-run.sh` also builds and starts the stack, but it first runs `docker-compose down -v`, which deletes the database, and it does not migrate; run `./gradlew :ftgo-flyway:flywayMigrate` after it.
 
 [cols="1,2"]
 |===
@@ -63,7 +64,7 @@ Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) to turn on Sentry monitor
 
 == Tests
 
-* `./gradlew build` runs the unit tests and `FtgoApplicationTest` (RestAssured scenarios against an in-process app); it needs the migrated MySQL above.
+* `./gradlew build` runs the unit tests, `FtgoApplicationTest` (RestAssured scenarios against an in-process app, needs the migrated MySQL above) and `ftgo-end-to-end-tests` (the same scenarios against an app already running on port 8081). Add `-x :ftgo-end-to-end-tests:test` when nothing is running there.
 * `./build-and-test-all.sh` runs the full pipeline: MySQL, migrations, build, `docker-compose up`, then `ftgo-end-to-end-tests` against port 8081.
 * `UNIT_TEST_PLAN.md` lists the planned unit test coverage.
 

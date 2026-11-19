@@ -37,7 +37,7 @@ digraph ftgo {
       couriers    [label="CourierService\navailability, location"];
     }
 
-    strategy [label="DistanceOptimizedCourierAssignmentStrategy\n0.6 x distance + 0.4 x load, max 5 active", fillcolor="#E8F5E9"];
+    strategy [label="DistanceOptimizedCourierAssignmentStrategy\nscore = 0.6 x distance + 0.4 x load (normalised)\nskips couriers at 5 active; least-loaded fallback", fillcolor="#E8F5E9"];
     domain   [label="ftgo-domain: shared JPA entities + Spring Data repositories\nOrder, Restaurant, Consumer, Courier, Action; ApiRequestLog (ftgo-common)", fillcolor="#E8F5E9"];
   }
 
