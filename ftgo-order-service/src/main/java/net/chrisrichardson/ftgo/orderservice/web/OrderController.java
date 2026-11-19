@@ -1,5 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -7,11 +9,18 @@ import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
 import net.chrisrichardson.ftgo.orderservice.api.web.ReviseOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderNotFoundException;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.NumberUtils;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,13 +58,46 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  @ApiImplicitParams({
+      @ApiImplicitParam(name = "consumerId", paramType = "query", dataType = "long", required = true),
+      @ApiImplicitParam(name = "state", paramType = "query", dataType = "string", value = "Order state enum name"),
+      @ApiImplicitParam(name = "page", paramType = "query", dataType = "long", value = "Zero-based page (default 0)"),
+      @ApiImplicitParam(name = "size", paramType = "query", dataType = "int", value = "Page size (default 20, max 100)")
+  })
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@ApiIgnore @RequestParam MultiValueMap<String, String> params) {
+    long consumerId = NumberUtils.parseNumber(params.getFirst("consumerId"), Long.class);
+    String stateParam = params.getFirst("state");
+    OrderState state = stateParam == null ? null : OrderState.valueOf(stateParam);
+    String pageParam = params.getFirst("page");
+    String sizeParam = params.getFirst("size");
+    List<Order> orders;
+    if (pageParam == null && sizeParam == null) {
+      orders = state == null ? orderRepository.findAllByConsumerId(consumerId)
+              : orderRepository.findAllByConsumerIdAndOrderState(consumerId, state);
+    } else {
+      orders = findOrderPage(consumerId, state, pageParam, sizeParam);
+    }
+    List<GetOrderResponse> response = orders
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
 
-    return new ResponseEntity<>(orders, HttpStatus.OK);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  private List<Order> findOrderPage(long consumerId, OrderState state, String pageParam, String sizeParam) {
+    long page = pageParam == null ? 0 : Long.parseLong(pageParam);
+    int size = sizeParam == null ? 20 : Integer.parseInt(sizeParam);
+    if (page < 0 || size < 1 || size > 100) {
+      throw new IllegalArgumentException("page must be non-negative and size must be between 1 and 100");
+    }
+    if (page > Integer.MAX_VALUE / size) {
+      return Collections.emptyList();
+    }
+
+    Pageable pageable = PageRequest.of((int) page, size, Sort.Direction.ASC, "id");
+    return state == null ? orderRepository.findAllByConsumerId(consumerId, pageable)
+            : orderRepository.findAllByConsumerIdAndOrderState(consumerId, state, pageable);
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
