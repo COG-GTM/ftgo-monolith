@@ -111,9 +111,13 @@ public class ApiTrackingController {
 
   private int parseMinutesBack(MultiValueMap<String, String> parameters) {
     String minutesBack = parameters.getFirst("minutesBack");
-    if (minutesBack == null || minutesBack.isEmpty()) {
+    if (minutesBack == null || (minutesBack.isEmpty() && parameters.get("minutesBack").size() == 1)) {
       return 60;
     }
-    return NumberUtils.parseNumber(minutesBack, Integer.class);
+    try {
+      return NumberUtils.parseNumber(minutesBack, Integer.class);
+    } catch (NumberFormatException ex) {
+      throw new IllegalArgumentException("minutesBack must be an integer");
+    }
   }
 }

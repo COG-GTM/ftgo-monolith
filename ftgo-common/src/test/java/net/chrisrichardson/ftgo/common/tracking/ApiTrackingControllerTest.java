@@ -70,16 +70,23 @@ public class ApiTrackingControllerTest {
             .andExpect(status().isOk());
     Map<String, Object> stats = controller.getStats(minutes("30", "abc")).getBody();
     assertEquals(Integer.valueOf(30), stats.get("periodMinutes"));
-    assertEquals(Integer.valueOf(60), controller.getStats(minutes("", "30")).getBody().get("periodMinutes"));
   }
 
   @Test
   public void rejectsInvalidAndOverflowingMinutesBeforeQuerying() {
     for (String input : new String[]{"abc", "1.5", "99999999999", "30,40"}) {
-      assertIllegalArgument(() -> controller.getRecentLogs(minutes(input)));
-      assertIllegalArgument(() -> controller.getErrors(minutes(input)));
-      assertIllegalArgument(() -> controller.getStats(minutes(input)));
+      assertMinutesIllegalArgument(() -> controller.getRecentLogs(minutes(input)));
+      assertMinutesIllegalArgument(() -> controller.getErrors(minutes(input)));
+      assertMinutesIllegalArgument(() -> controller.getStats(minutes(input)));
     }
+    verifyZeroInteractions(repository);
+  }
+
+  @Test
+  public void repeatedEmptyFirstMinutesAreRejectedBeforeQuerying() {
+    assertMinutesIllegalArgument(() -> controller.getRecentLogs(minutes("", "2")));
+    assertMinutesIllegalArgument(() -> controller.getErrors(minutes("", "2")));
+    assertMinutesIllegalArgument(() -> controller.getStats(minutes("", "2")));
     verifyZeroInteractions(repository);
   }
 
@@ -123,5 +130,14 @@ public class ApiTrackingControllerTest {
       parameters.add("minutesBack", value);
     }
     return parameters;
+  }
+
+  private void assertMinutesIllegalArgument(Runnable action) {
+    try {
+      action.run();
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("minutesBack must be an integer", expected.getMessage());
+    }
   }
 }
