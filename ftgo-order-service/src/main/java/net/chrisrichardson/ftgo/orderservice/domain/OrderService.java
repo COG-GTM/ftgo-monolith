@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -87,15 +88,27 @@ public class OrderService {
 
   @Transactional
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
+    Map<String, Integer> quantities = orderRevision.getRevisedLineItemQuantities();
+    if (quantities == null || quantities.isEmpty()) {
+      throw new IllegalArgumentException("revisedLineItemQuantities must not be empty");
+    }
+    if (quantities.values().stream().anyMatch(quantity -> quantity == null || quantity < 0)) {
+      throw new IllegalArgumentException("revisedLineItemQuantities must contain non-negative quantities");
+    }
     Order order = tryToFindOrder(orderId);
     order.revise(orderRevision);
     return order;
   }
 
-  public void accept(long orderId, LocalDateTime readyBy) {
+  @Transactional
+  public Order accept(long orderId, LocalDateTime readyBy) {
+    if (readyBy == null) {
+      throw new IllegalArgumentException("readyBy is required");
+    }
     Order order = tryToFindOrder(orderId);
     order.acceptTicket(readyBy);
     scheduleDelivery(order, readyBy);
+    return order;
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
@@ -141,26 +154,30 @@ public class OrderService {
   }
 
   @Transactional
-  public void notePreparing(long orderId) {
+  public Order notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePreparing();
+    return order;
   }
 
   @Transactional
-  public void noteReadyForPickup(long orderId) {
+  public Order noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteReadyForPickup();
+    return order;
   }
 
   @Transactional
-  public void notePickedUp(long orderId) {
+  public Order notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePickedUp();
+    return order;
   }
 
   @Transactional
-  public void noteDelivered(long orderId) {
+  public Order noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteDelivered();
+    return order;
   }
 }

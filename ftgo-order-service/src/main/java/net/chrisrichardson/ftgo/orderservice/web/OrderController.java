@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
+import io.swagger.annotations.ApiParam;
 import net.chrisrichardson.ftgo.domain.*;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
@@ -93,9 +94,9 @@ public class OrderController {
   }
 
   @RequestMapping(path = "/{orderId}/revise", method = RequestMethod.POST)
-  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @RequestBody ReviseOrderRequest request) {
+  public ResponseEntity<GetOrderResponse> revise(@PathVariable long orderId, @ApiParam(required = true) @RequestBody(required = false) ReviseOrderRequest request) {
     try {
-      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request.getRevisedLineItemQuantities()));
+      Order order = orderService.reviseOrder(orderId, new OrderRevision(Optional.empty(), request == null ? null : request.getRevisedLineItemQuantities()));
       return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
     } catch (OrderNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,33 +104,29 @@ public class OrderController {
   }
 
   @RequestMapping(path="/{orderId}/accept", method= RequestMethod.POST)
-  public ResponseEntity<String> accept(@PathVariable long orderId, @RequestBody OrderAcceptance orderAcceptance) {
-    orderService.accept(orderId, orderAcceptance.getReadyBy());
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> accept(@PathVariable long orderId, @ApiParam(required = true) @RequestBody(required = false) OrderAcceptance orderAcceptance) {
+    Order order = orderService.accept(orderId, orderAcceptance == null ? null : orderAcceptance.getReadyBy());
+    return new ResponseEntity<>(makeGetOrderResponse(order), HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/preparing", method= RequestMethod.POST)
-  public ResponseEntity<String> preparing(@PathVariable long orderId) {
-    orderService.notePreparing(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> preparing(@PathVariable long orderId) {
+    return new ResponseEntity<>(makeGetOrderResponse(orderService.notePreparing(orderId)), HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/ready", method= RequestMethod.POST)
-  public ResponseEntity<String> ready(@PathVariable long orderId) {
-    orderService.noteReadyForPickup(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> ready(@PathVariable long orderId) {
+    return new ResponseEntity<>(makeGetOrderResponse(orderService.noteReadyForPickup(orderId)), HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/pickedup", method= RequestMethod.POST)
-  public ResponseEntity<String> pickedup(@PathVariable long orderId) {
-    orderService.notePickedUp(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> pickedup(@PathVariable long orderId) {
+    return new ResponseEntity<>(makeGetOrderResponse(orderService.notePickedUp(orderId)), HttpStatus.OK);
   }
 
   @RequestMapping(path="/{orderId}/delivered", method= RequestMethod.POST)
-  public ResponseEntity<String> delivered(@PathVariable long orderId) {
-    orderService.noteDelivered(orderId);
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<GetOrderResponse> delivered(@PathVariable long orderId) {
+    return new ResponseEntity<>(makeGetOrderResponse(orderService.noteDelivered(orderId)), HttpStatus.OK);
   }
 
 }
