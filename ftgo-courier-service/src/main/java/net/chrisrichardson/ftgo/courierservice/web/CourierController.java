@@ -33,9 +33,8 @@ public class CourierController {
   }
 
   @RequestMapping(path="/couriers/{courierId}", method= RequestMethod.GET)
-  public ResponseEntity<Courier> get(@PathVariable long courierId) {
-    Courier courier = courierService.findCourierById(courierId);
-    return new ResponseEntity<>(courier, HttpStatus.OK);
+  public ResponseEntity<CourierResponse> get(@PathVariable long courierId) {
+    return new ResponseEntity<>(courierService.getCourier(courierId), HttpStatus.OK);
   }
 
   @RequestMapping(path="/couriers/{courierId}/location", method= RequestMethod.POST)
