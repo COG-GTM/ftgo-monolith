@@ -25,11 +25,19 @@ public class RestaurantController {
   public ResponseEntity<GetRestaurantResponse> get(@PathVariable long restaurantId) {
     return restaurantService.findById(restaurantId)
             .map(r -> new ResponseEntity<>(makeGetRestaurantResponse(r), HttpStatus.OK))
-            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
+  }
+
+  @ExceptionHandler(RestaurantNotFoundException.class)
+  public ResponseEntity<Void> restaurantNotFound(RestaurantNotFoundException exception) {
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
   private GetRestaurantResponse makeGetRestaurantResponse(Restaurant r) {
-    return new GetRestaurantResponse(r.getId(), r.getName());
+    GetRestaurantResponse response = new GetRestaurantResponse(r.getId(), r.getName());
+    response.setAddress(r.getAddress());
+    response.setMenuItems(restaurantService.findMenuItems(r.getId()));
+    return response;
   }
 
 
