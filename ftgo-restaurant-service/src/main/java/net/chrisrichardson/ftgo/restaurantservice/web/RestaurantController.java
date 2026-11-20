@@ -29,7 +29,10 @@ public class RestaurantController {
   }
 
   private GetRestaurantResponse makeGetRestaurantResponse(Restaurant r) {
-    return new GetRestaurantResponse(r.getId(), r.getName());
+    GetRestaurantResponse response = new GetRestaurantResponse(r.getId(), r.getName());
+    response.setAddress(r.getAddress());
+    response.setMenuItems(restaurantService.findMenuItems(r.getId()));
+    return response;
   }
 
 
