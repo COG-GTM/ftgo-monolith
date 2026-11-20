@@ -21,6 +21,15 @@ public class ConsumerService {
   }
 
   public Consumer create(PersonName name) {
+    if (name == null) {
+      throw new IllegalArgumentException("name is required");
+    }
+    if (name.getFirstName() == null || name.getFirstName().trim().isEmpty()) {
+      throw new IllegalArgumentException("name.firstName must not be blank");
+    }
+    if (name.getLastName() == null || name.getLastName().trim().isEmpty()) {
+      throw new IllegalArgumentException("name.lastName must not be blank");
+    }
     Consumer consumer = consumerRepository.save(new Consumer(name));
     return consumer;
   }
