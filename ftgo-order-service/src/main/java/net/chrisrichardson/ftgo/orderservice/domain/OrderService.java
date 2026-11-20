@@ -48,6 +48,9 @@ public class OrderService {
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
+    if (consumerId <= 0) {
+      throw new IllegalArgumentException("Consumer ID must be positive");
+    }
     Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
@@ -56,7 +59,11 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurant, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    try {
+      consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    } catch (net.chrisrichardson.ftgo.consumerservice.domain.ConsumerNotFoundException e) {
+      throw new IllegalArgumentException("Consumer not found");
+    }
 
     // TODO - charge a credit card too
 
@@ -70,8 +77,25 @@ public class OrderService {
   }
 
   private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+    if (lineItems == null || lineItems.isEmpty()) {
+      throw new IllegalArgumentException("Order must contain line items");
+    }
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      if (li == null) {
+        throw new IllegalArgumentException("Order line items must not be null");
+      }
+      if (li.getQuantity() <= 0) {
+        throw new IllegalArgumentException("Line item quantity must be positive");
+      }
+      if (li.getMenuItemId() == null) {
+        throw new InvalidMenuItemIdException(null);
+      }
+      MenuItem om;
+      try {
+        om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      } catch (NullPointerException e) {
+        throw new InvalidMenuItemIdException(li.getMenuItemId());
+      }
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
