@@ -34,6 +34,15 @@ public class OrderController {
 
   @RequestMapping(method = RequestMethod.POST)
   public CreateOrderResponse create(@RequestBody CreateOrderRequest request) {
+    if (request.getConsumerId() <= 0) {
+      throw new IllegalArgumentException("Consumer ID must be positive");
+    }
+    if (request.getLineItems() == null || request.getLineItems().isEmpty()) {
+      throw new IllegalArgumentException("Order must contain line items");
+    }
+    if (request.getLineItems().stream().anyMatch(x -> x == null)) {
+      throw new IllegalArgumentException("Order line items must not be null");
+    }
     Order order = orderService.createOrder(request.getConsumerId(),
             request.getRestaurantId(),
             request.getLineItems().stream().map(x -> new MenuItemIdAndQuantity(x.getMenuItemId(), x.getQuantity())).collect(toList())
