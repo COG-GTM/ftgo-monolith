@@ -107,7 +107,8 @@ public class OrderController {
             ? ((MissingServletRequestParameterException) exception).getParameterName()
             : ((MethodArgumentTypeMismatchException) exception).getName();
     boolean listParameter = "GET".equals(request.getMethod())
-            && "/orders".equals(request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE))
+            && Arrays.asList("/orders", "/orders/").contains(
+                    request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE))
             && Arrays.asList("consumerId", "state", "page", "size").contains(parameter);
     Exception translated = exception;
     if (listParameter) {

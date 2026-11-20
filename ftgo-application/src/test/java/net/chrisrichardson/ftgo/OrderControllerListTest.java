@@ -40,6 +40,14 @@ public class OrderControllerListTest {
   }
 
   @Test
+  public void validatesTrailingSlashParameters() throws Exception {
+    mvc.perform(get("/orders/")).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("consumerId is required"));
+    mvc.perform(get("/orders/?consumerId=1&page=abc")).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("page must be a valid integer"));
+  }
+
+  @Test
   public void preservesUnpagedArray() throws Exception {
     mvc.perform(get("/orders?consumerId=1")).andExpect(status().isOk())
             .andExpect(content().json("[]"));
