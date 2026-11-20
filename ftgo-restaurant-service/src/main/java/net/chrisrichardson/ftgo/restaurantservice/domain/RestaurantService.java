@@ -63,12 +63,13 @@ public class RestaurantService {
     return value == null || value.trim().isEmpty();
   }
 
+  @SuppressWarnings("unchecked")
   public List<MenuItemDTO> findMenuItems(long restaurantId) {
-    return entityManager.createQuery(
-            "select mi.id, mi.name, mi.price.amount from Restaurant r join r.menuItems mi where r.id = :id",
-            Object[].class)
+    List<Object[]> rows = entityManager.createNativeQuery(
+            "select id, name, price from restaurant_menu_items where restaurant_id = :id")
             .setParameter("id", restaurantId)
-            .getResultList().stream()
+            .getResultList();
+    return rows.stream()
             .filter(row -> row[0] != null || row[1] != null || row[2] != null)
             .map(row -> new MenuItemDTO((String) row[0], (String) row[1],
                     row[2] == null ? null : new Money((BigDecimal) row[2])))

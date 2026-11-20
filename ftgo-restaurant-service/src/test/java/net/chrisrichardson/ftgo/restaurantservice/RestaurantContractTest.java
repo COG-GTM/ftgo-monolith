@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.util.NestedServletException;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import javax.persistence.Query;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +37,7 @@ public class RestaurantContractTest {
   private RestaurantService service;
   private RestaurantRepository repository;
   private EntityManager entityManager;
-  private TypedQuery<Object[]> query;
+  private Query query;
   private MockMvc mvc;
 
   @Before
@@ -46,10 +46,10 @@ public class RestaurantContractTest {
     service = new RestaurantService();
     repository = mock(RestaurantRepository.class);
     entityManager = mock(EntityManager.class);
-    query = mock(TypedQuery.class);
+    query = mock(Query.class);
     ReflectionTestUtils.setField(service, "restaurantRepository", repository);
     ReflectionTestUtils.setField(service, "entityManager", entityManager);
-    when(entityManager.createQuery(anyString(), eq(Object[].class))).thenReturn(query);
+    when(entityManager.createNativeQuery(anyString())).thenReturn(query);
     when(query.setParameter(eq("id"), any(Object.class))).thenReturn(query);
     when(query.getResultList()).thenReturn(Collections.emptyList());
     RestaurantController controller = new RestaurantController();
@@ -142,8 +142,8 @@ public class RestaurantContractTest {
             .andExpect(jsonPath("$.menuItems[0].id").value("1"))
             .andExpect(jsonPath("$.menuItems[0].name").value("Item"))
             .andExpect(jsonPath("$.menuItems[0].price").value("12.34"));
-    verify(entityManager, times(2)).createQuery(
-            "select mi.id, mi.name, mi.price.amount from Restaurant r join r.menuItems mi where r.id = :id", Object[].class);
+    verify(entityManager, times(2)).createNativeQuery(
+            "select id, name, price from restaurant_menu_items where restaurant_id = :id");
   }
 
   @Test
