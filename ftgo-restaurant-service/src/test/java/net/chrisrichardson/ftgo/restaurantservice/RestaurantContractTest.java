@@ -154,7 +154,7 @@ public class RestaurantContractTest {
     mvc.perform(get("/restaurants/42")).andExpect(status().isOk()).andExpect(jsonPath("$.menuItems").isEmpty());
     when(repository.findById(99L)).thenReturn(Optional.empty());
     assertFalse(service.findById(99L).isPresent());
-    mvc.perform(get("/restaurants/99")).andExpect(status().isNotFound());
+    mvc.perform(get("/restaurants/99")).andExpect(status().isNotFound()).andExpect(content().string(""));
     verify(query, never()).setParameter("id", 99L);
   }
 }
