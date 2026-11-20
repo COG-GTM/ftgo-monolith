@@ -10,10 +10,23 @@ import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.HandlerMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Locale;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -25,6 +38,10 @@ public class OrderController {
   private OrderService orderService;
 
   private OrderRepository orderRepository;
+
+  @Autowired
+  @Qualifier("handlerExceptionResolver")
+  private HandlerExceptionResolver handlerExceptionResolver;
 
 
   public OrderController(OrderService orderService, OrderRepository orderRepository) {
@@ -49,13 +66,56 @@ public class OrderController {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId) {
-    List<GetOrderResponse> orders = orderRepository.findAllByConsumerId(consumerId)
+  public ResponseEntity<List<GetOrderResponse>> getOrders(@RequestParam long consumerId,
+          @RequestParam(required = false) String state,
+          @RequestParam(required = false) Integer page,
+          @RequestParam(required = false) Integer size) {
+    if (page != null && page < 0) {
+      throw new IllegalArgumentException("page must be greater than or equal to 0");
+    }
+    if (size != null && (size < 1 || size > 100)) {
+      throw new IllegalArgumentException("size must be between 1 and 100");
+    }
+    OrderState orderState = null;
+    if (state != null) {
+      try {
+        orderState = OrderState.valueOf(state.toUpperCase(Locale.ROOT));
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("state must be a valid OrderState name");
+      }
+    }
+    // A page alone uses size 20; a size alone selects page 0.
+    Pageable pageable = page == null && size == null ? Pageable.unpaged()
+            : PageRequest.of(page == null ? 0 : page, size == null ? 20 : size);
+    List<Order> found = state == null && page == null && size == null
+            ? orderRepository.findAllByConsumerId(consumerId)
+            : orderState == null
+              ? orderRepository.findAllByConsumerIdOrderByIdAsc(consumerId, pageable)
+              : orderRepository.findAllByConsumerIdAndOrderStateOrderByIdAsc(consumerId, orderState, pageable);
+    List<GetOrderResponse> orders = found
             .stream()
             .map(this::makeGetOrderResponse)
             .collect(Collectors.toList());
 
     return new ResponseEntity<>(orders, HttpStatus.OK);
+  }
+
+  @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+  public void handleListParameterException(Exception exception, HttpServletRequest request,
+          HttpServletResponse response) {
+    String parameter = exception instanceof MissingServletRequestParameterException
+            ? ((MissingServletRequestParameterException) exception).getParameterName()
+            : ((MethodArgumentTypeMismatchException) exception).getName();
+    boolean listParameter = "GET".equals(request.getMethod())
+            && Arrays.asList("/orders", "/orders/").contains(
+                    request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE))
+            && Arrays.asList("consumerId", "state", "page", "size").contains(parameter);
+    Exception translated = exception;
+    if (listParameter) {
+      translated = new IllegalArgumentException(exception instanceof MissingServletRequestParameterException
+              ? parameter + " is required" : parameter + " must be a valid integer");
+    }
+    handlerExceptionResolver.resolveException(request, response, null, translated);
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
