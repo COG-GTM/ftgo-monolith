@@ -3,7 +3,70 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Quickstart
+
+These steps were checked on a clean Linux machine with Docker 29 and Docker Compose v2.
+
+=== Prerequisites
+
+* JDK 8 (the Gradle 4.10.2 wrapper and Spring Boot 2.0 build target Java 8; set `JAVA_HOME` to a JDK 8 install)
+* Docker with Docker Compose. The helper scripts (`build-and-run.sh`, `start-services.sh`, ...) call the old `docker-compose` command; on Docker Compose v2 use `docker compose` as shown below.
+* On Docker 28 or later, first change the `FROM` line in `mysql/Dockerfile` from `mysql:5.7.13` to `mysql:5.7` locally. The `mysql:5.7.13` image uses an old manifest format that newer Docker no longer pulls, so step 2 fails with `invalid checksum digest format` and `waitForMySql` then retries forever.
+* `mysql:5.7` is published for amd64 only. On an ARM64 machine (for example Apple Silicon), enable amd64 emulation in Docker and run `export DOCKER_DEFAULT_PLATFORM=linux/amd64` before step 2.
+
+These steps are for local development only. Compose publishes MySQL (3306, with the passwords checked into `docker-compose.yml`) and the application (8081, no sign-in) on all network interfaces, so don't run them on a shared or public network.
+
+=== Build, migrate and run
+
+[source,bash]
+----
+# 1. Build the application jar.
+#    eventuate-util-test 0.1.0.RELEASE (the version in gradle.properties) is no longer published,
+#    so override it with a version that still resolves from Maven Central.
+./gradlew assemble -PeventuateUtilVersion=0.9.0.RELEASE
+
+# 2. Start MySQL and wait for it. DOCKER_HOST_IP defaults to this machine's hostname;
+#    if that name doesn't resolve, run `export DOCKER_HOST_IP=localhost` first.
+#    Run the remaining commands in this same shell.
+. ./set-env.sh
+docker compose up -d --build mysql
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE waitForMySql
+
+# 3. Create the schema. The application does not create tables itself.
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE :ftgo-flyway:flywayMigrate
+
+# 4. Build and start the application container and wait until it is healthy.
+#    --wait returns once the container health check passes, and fails after 180 seconds otherwise.
+docker compose up -d --build --wait --wait-timeout 180
+----
+
+If `waitForMySql` keeps printing `Connection failed` for more than a couple of minutes, it will not give up on its own: stop it with Ctrl+C and check `docker compose ps` and `docker compose logs mysql`.
+
+The application listens on port 8081:
+
+* Health: http://localhost:8081/actuator/health should return `{"status":"UP"}`
+* API docs: http://localhost:8081/swagger-ui.html
+* Smoke test: `curl -X POST localhost:8081/consumers -H 'Content-Type: application/json' -d '{"name":{"firstName":"Test","lastName":"User"}}'` returns a `consumerId`
+
+Stop the containers with `docker compose stop` and start them again with `docker compose start`; the database is kept.
+`docker compose down -v` removes the containers and permanently deletes the local database; after it, start again from step 2.
+
+=== Running the tests
+
+`./gradlew build` also runs `ftgo-end-to-end-tests`, which expect the application on port 8081, and the other tests need MySQL migrated as in steps 2 and 3.
+Run them in a shell where you ran `. ./set-env.sh` (the end-to-end tests read `DOCKER_HOST_IP`), and pass the same dependency override every time (an override on an earlier command does not carry over).
+At the moment both commands fail: `FtgoApplicationTest` and the end-to-end tests get HTTP 500 on order creation (`Unknown column 'latitude'`), because the `orders` table has no `latitude`/`longitude` columns for the delivery address.
+
+[source,bash]
+----
+# With MySQL up and migrated, skipping the end-to-end tests:
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE build -x :ftgo-end-to-end-tests:test
+
+# With the application also up (step 4), the end-to-end tests:
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE :ftgo-end-to-end-tests:cleanTest :ftgo-end-to-end-tests:test
+----
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
