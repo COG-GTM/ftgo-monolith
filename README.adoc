@@ -3,7 +3,50 @@
 This is the monolithic version of the https://github.com/microservices-patterns/ftgo-application[FTGO application] from my book https://microservices.io/book[Microservices patterns].
 It's used to illustrate how to refactor a monolithic application to services.
 
-## Learn more
+== Quickstart
+
+These steps were checked on a clean Linux machine with Docker 29 and Docker Compose v2.
+
+=== Prerequisites
+
+* JDK 8 (the Gradle 4.10.2 wrapper and Spring Boot 2.0 build target Java 8; set `JAVA_HOME` to a JDK 8 install)
+* Docker with Docker Compose. The helper scripts (`build-and-run.sh`, `start-services.sh`, ...) call the old `docker-compose` command; on Docker Compose v2 use `docker compose` as shown below.
+
+=== Build, migrate and run
+
+[source,bash]
+----
+# 1. Build the application jar.
+#    eventuate-util-test 0.1.0.RELEASE (the version in gradle.properties) is no longer published,
+#    so override it with a version that still resolves from Maven Central.
+./gradlew assemble -PeventuateUtilVersion=0.9.0.RELEASE
+
+# 2. Start MySQL and wait for it (DOCKER_HOST_IP defaults to this machine's hostname).
+. ./set-env.sh
+docker compose up -d --build mysql
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE waitForMySql
+
+# 3. Create the schema. The application does not create tables itself.
+./gradlew -PeventuateUtilVersion=0.9.0.RELEASE :ftgo-flyway:flywayMigrate
+
+# 4. Build and start the application container.
+docker compose up -d --build
+----
+
+The application listens on port 8081:
+
+* Health: http://localhost:8081/actuator/health should return `{"status":"UP"}`
+* API docs: http://localhost:8081/swagger-ui.html
+* Smoke test: `curl -X POST localhost:8081/consumers -H 'Content-Type: application/json' -d '{"name":{"firstName":"Test","lastName":"User"}}'` returns a `consumerId`
+
+Stop everything with `docker compose down -v`.
+
+=== Known issues
+
+* *`mysql` image fails to build on Docker 28 or later* with `invalid checksum digest format`: the `mysql:5.7.13` base image in `mysql/Dockerfile` uses an old manifest format newer Docker no longer pulls. Until the image is updated, change the `FROM` line in `mysql/Dockerfile` to `mysql:5.7` locally and rerun step 2.
+* *Running the tests*: `./gradlew build` also runs `ftgo-end-to-end-tests`, which expect the application on port 8081. Run it with the application up, or skip them with `-x :ftgo-end-to-end-tests:test`.
+
+== Learn more
 
 You can learn more by reading the https://microservices.io/refactoring/index.html[Refactoring section of microservices.io] or chapter 13 of my https://microservices.io/book[book]
 
