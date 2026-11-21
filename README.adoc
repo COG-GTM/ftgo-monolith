@@ -35,10 +35,12 @@ docker compose up -d --build mysql
 # 3. Create the schema. The application does not create tables itself.
 ./gradlew -PeventuateUtilVersion=0.9.0.RELEASE :ftgo-flyway:flywayMigrate
 
-# 4. Build and start the application container, then wait until it is healthy.
-docker compose up -d --build
-until curl -sf localhost:8081/actuator/health; do sleep 3; done
+# 4. Build and start the application container and wait until it is healthy.
+#    --wait returns once the container health check passes, and fails after 180 seconds otherwise.
+docker compose up -d --build --wait --wait-timeout 180
 ----
+
+If `waitForMySql` keeps printing `Connection failed` for more than a couple of minutes, it will not give up on its own: stop it with Ctrl+C and check `docker compose ps` and `docker compose logs mysql`.
 
 The application listens on port 8081:
 
