@@ -1,18 +1,24 @@
 package net.chrisrichardson.ftgo.courierservice.domain;
 
-
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
-import net.chrisrichardson.ftgo.domain.Courier;
-import net.chrisrichardson.ftgo.domain.CourierRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class CourierService {
 
-  private CourierRepository courierRepository;
+  private Logger logger = LoggerFactory.getLogger(getClass());
 
-  public CourierService(CourierRepository courierRepository) {
+  private CourierRepository courierRepository;
+  private CourierAssignmentStrategy courierAssignmentStrategy;
+
+  public CourierService(CourierRepository courierRepository, CourierAssignmentStrategy courierAssignmentStrategy) {
     this.courierRepository = courierRepository;
+    this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
   @Transactional
@@ -47,5 +53,39 @@ public class CourierService {
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
     courier.updateLocation(latitude, longitude);
+  }
+
+  @Transactional
+  public Courier assignCourierForDelivery(long orderId, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {
+    List<Courier> couriers = courierRepository.findAllAvailable();
+    Courier courier = courierAssignmentStrategy.assignCourier(couriers, pickupLatitude, pickupLongitude);
+
+    courier.addAction(Action.makePickup(orderId));
+    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, pickupLatitude, pickupLongitude, readyBy);
+    courier.addAction(Action.makeDropoff(orderId, estimatedDeliveryTime));
+
+    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
+            orderId, courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
+    return courier;
+  }
+
+  @Transactional(readOnly = true)
+  public List<Action> findDeliveryActions(long courierId, long orderId) {
+    return courierRepository.findById(courierId)
+            .orElseThrow(() -> new CourierNotFoundException(courierId))
+            .actionsForDelivery(orderId);
+  }
+
+  private LocalDateTime estimateDeliveryTime(Courier courier, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {
+    if (courier.hasLocation() && pickupLatitude != null && pickupLongitude != null) {
+      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
+              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
+              pickupLatitude, pickupLongitude);
+      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
+      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
+      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
+      return effectiveReadyTime.plusMinutes(15);
+    }
+    return readyBy.plusMinutes(30);
   }
 }

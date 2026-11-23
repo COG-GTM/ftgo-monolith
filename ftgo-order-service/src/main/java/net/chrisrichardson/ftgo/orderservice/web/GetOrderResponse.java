@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.domain.Action;
+import net.chrisrichardson.ftgo.courierservice.domain.Action;
 
 import java.time.LocalDateTime;
 import java.util.List;

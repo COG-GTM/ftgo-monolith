@@ -6,7 +6,7 @@ import net.chrisrichardson.ftgo.courierservice.api.CourierWorkloadResponse;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierRequest;
 import net.chrisrichardson.ftgo.courierservice.api.CreateCourierResponse;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.domain.Courier;
+import net.chrisrichardson.ftgo.courierservice.domain.Courier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,7 +1,9 @@
 package net.chrisrichardson.ftgo.orderservice;
 
 import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.orderservice.domain.Order;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderLineItem;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderState;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 
 import java.util.Collections;
@@ -33,7 +35,7 @@ public class OrderDetailsMother {
   public static final OrderState CHICKEN_VINDALOO_ORDER_STATE = OrderState.APPROVED;
 
   private static Order makeAjantaOrder() {
-    Order order = new Order(CONSUMER_ID, new Restaurant(AJANTA_ID, "", new RestaurantMenu(Collections.emptyList())), chickenVindalooLineItems());
+    Order order = new Order(CONSUMER_ID, AJANTA_ID, chickenVindalooLineItems());
     order.setId(ORDER_ID);
     return order;
   }

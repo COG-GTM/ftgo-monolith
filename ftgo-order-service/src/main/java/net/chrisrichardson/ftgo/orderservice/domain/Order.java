@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.domain;
+package net.chrisrichardson.ftgo.orderservice.domain;
 
 import net.chrisrichardson.ftgo.common.Money;
 import net.chrisrichardson.ftgo.common.UnsupportedStateTransitionException;
@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static net.chrisrichardson.ftgo.domain.OrderState.*;
+import static net.chrisrichardson.ftgo.orderservice.domain.OrderState.*;
 
 
 @Entity
@@ -29,8 +29,7 @@ public class Order {
 
   private Long consumerId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  private Restaurant restaurant;
+  private Long restaurantId;
 
   @Embedded
   private OrderLineItems orderLineItems;
@@ -52,15 +51,14 @@ public class Order {
   private LocalDateTime pickedUpTime;
   private LocalDateTime deliveredTime;
 
-  @ManyToOne
-  private Courier assignedCourier;
+  private Long assignedCourierId;
 
   private Order() {
   }
 
-  public Order(long consumerId, Restaurant restaurant, List<OrderLineItem> orderLineItems) {
+  public Order(long consumerId, long restaurantId, List<OrderLineItem> orderLineItems) {
     this.consumerId = consumerId;
-    this.restaurant = restaurant;
+    this.restaurantId = restaurantId;
     this.orderLineItems = new OrderLineItems(orderLineItems);
     this.orderState = APPROVED;
   }
@@ -125,8 +123,8 @@ public class Order {
     return orderState;
   }
 
-  public Restaurant getRestaurant() {
-    return restaurant;
+  public Long getRestaurantId() {
+    return restaurantId;
   }
 
   public Long getConsumerId() {
@@ -178,12 +176,12 @@ public class Order {
     }
   }
 
-  public void schedule(Courier assignedCourier) {
-    this.assignedCourier = assignedCourier;
+  public void schedule(long assignedCourierId) {
+    this.assignedCourierId = assignedCourierId;
   }
 
-  public Courier getAssignedCourier() {
-    return assignedCourier;
+  public Long getAssignedCourierId() {
+    return assignedCourierId;
   }
 
   public void noteDelivered() {

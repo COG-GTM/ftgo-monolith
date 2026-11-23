@@ -2,7 +2,12 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.common.Address;
+import net.chrisrichardson.ftgo.courierservice.domain.Courier;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
+import net.chrisrichardson.ftgo.restaurantservice.domain.MenuItem;
+import net.chrisrichardson.ftgo.restaurantservice.domain.Restaurant;
+import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,39 +27,36 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantService restaurantService;
 
   private Optional<MeterRegistry> meterRegistry;
 
   private ConsumerService consumerService;
-  private CourierRepository courierRepository;
-  private CourierAssignmentStrategy courierAssignmentStrategy;
+  private CourierService courierService;
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantService restaurantService,
                       Optional<MeterRegistry> meterRegistry,
                       ConsumerService consumerService,
-                      CourierRepository courierRepository,
-                      CourierAssignmentStrategy courierAssignmentStrategy) {
+                      CourierService courierService) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantService = restaurantService;
     this.meterRegistry = meterRegistry;
     this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
-    this.courierAssignmentStrategy = courierAssignmentStrategy;
+    this.courierService = courierService;
   }
 
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+    Restaurant restaurant = restaurantService.findById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
 
     List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
 
-    Order order = new Order(consumerId, restaurant, orderLineItems);
+    Order order = new Order(consumerId, restaurantId, orderLineItems);
 
     consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
@@ -99,42 +101,16 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
-
-    courier.addAction(Action.makePickup(order));
-
-    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, order, readyBy);
-    courier.addAction(Action.makeDropoff(order, estimatedDeliveryTime));
-
-    order.schedule(courier);
-
-    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
-            order.getId(), courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
-
+    Restaurant restaurant = restaurantService.findById(order.getRestaurantId())
+            .orElseThrow(() -> new RestaurantNotFoundException(order.getRestaurantId()));
+    Address address = restaurant.getAddress();
+    Courier courier = courierService.assignCourierForDelivery(order.getId(),
+            address == null ? null : address.getLatitude(),
+            address == null ? null : address.getLongitude(),
+            readyBy);
+    order.schedule(courier.getId());
     meterRegistry.ifPresent(mr -> mr.counter("courier_assignments").increment());
   }
-
-  private LocalDateTime estimateDeliveryTime(Courier courier, Order order, LocalDateTime readyBy) {
-    if (courier.hasLocation() && order.getRestaurant() != null
-            && order.getRestaurant().getAddress() != null
-            && order.getRestaurant().getAddress().getLatitude() != null) {
-
-      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
-              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-              order.getRestaurant().getAddress().getLatitude(),
-              order.getRestaurant().getAddress().getLongitude());
-
-      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
-      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
-      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
-
-      return effectiveReadyTime.plusMinutes(15);
-    }
-
-    return readyBy.plusMinutes(30);
-  }
-
 
   private Order tryToFindOrder(Long orderId) {
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));

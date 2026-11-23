@@ -2,9 +2,10 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
+import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
+import net.chrisrichardson.ftgo.domain.DomainConfiguration;
+import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -12,31 +13,20 @@ import org.springframework.context.annotation.Import;
 import java.util.Optional;
 
 @Configuration
+@EntityScan
 @Import(DomainConfiguration.class)
 public class OrderConfiguration {
-  // TODO move to framework
-  @Bean
-  public CourierAssignmentStrategy courierAssignmentStrategy() {
-    return new DistanceOptimizedCourierAssignmentStrategy();
-  }
 
   @Bean
-  public OrderService orderService(RestaurantRepository restaurantRepository,
-                                   OrderRepository orderRepository,
+  public OrderService orderService(OrderRepository orderRepository,
+                                   RestaurantService restaurantService,
                                    Optional<MeterRegistry> meterRegistry,
                                    ConsumerService consumerService,
-                                   CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   CourierService courierService) {
     return new OrderService(orderRepository,
-            restaurantRepository,
+            restaurantService,
             meterRegistry,
             consumerService,
-            courierRepository,
-            courierAssignmentStrategy);
-  }
-
-  @Bean
-  public MeterRegistryCustomizer meterRegistryCustomizer(@Value("${spring.application.name}") String serviceName) {
-    return registry -> registry.config().commonTags("service", serviceName);
+            courierService);
   }
 }
