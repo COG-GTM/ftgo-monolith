@@ -44,12 +44,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name:        Snyk Open Source (fails on fixable critical issues)
+          name:        Snyk Open Source (fails on critical issues not ignored in .snyk)
           command:     |
             if [ -z "$SNYK_TOKEN" ]; then echo "SNYK_TOKEN not set in the security-scanning context; skipping Snyk"; exit 0; fi
             curl -sSfL -o snyk https://static.snyk.io/cli/v1.1309.0/snyk-linux
             chmod +x snyk
-            ./snyk test --all-sub-projects --policy-path=.snyk --severity-threshold=critical --fail-on=upgradable
+            ./snyk test --all-sub-projects --policy-path=.snyk --severity-threshold=critical
 workflows:
   version:         2
   build-and-scan:
