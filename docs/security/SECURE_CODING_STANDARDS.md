@@ -1,13 +1,13 @@
 # Secure coding standards
 
-These rules apply to every change in this repository. The `security-scan` CI job enforces the automated ones.
+These rules apply to every change in this repository. The `semgrep` and `snyk` CircleCI jobs enforce the automated ones.
 
 ## Enforced in CI
 
 | Check | Tool | Fails the build when |
 |---|---|---|
 | Static analysis (SAST) | Semgrep `p/java`, `p/javascript`, `p/secrets`, `p/dockerfile` | any finding of severity `ERROR` |
-| Dependency vulnerabilities (SCA) | Snyk Open Source (`snyk test --all-sub-projects`) | any `critical` issue with an available fix (runs when `SNYK_TOKEN` is set in the CircleCI context) |
+| Dependency vulnerabilities (SCA) | Snyk Open Source (`snyk test --all-sub-projects`) | any `critical` issue with an available fix (runs when `SNYK_TOKEN` is set in the `security-scanning` CircleCI context; keep it out of project-level variables so other jobs can't read it) |
 
 Run them locally before opening a PR:
 
