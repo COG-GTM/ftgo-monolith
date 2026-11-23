@@ -68,13 +68,25 @@ subprojects {
 
     // Security baseline: minimum patched versions for vulnerable libraries.
     // See docs/security/SECURE_CODING_STANDARDS.md before lowering any of these.
+    def belowSecurityFloor = { String requested, String floor ->
+        def req = (requested ?: "").findAll(/\d+/)*.toInteger()
+        def min = floor.findAll(/\d+/)*.toInteger()
+        if (req.isEmpty()) return true
+        for (int i = 0; i < Math.max(req.size(), min.size()); i++) {
+            int r = i < req.size() ? req[i] : 0
+            int m = i < min.size() ? min[i] : 0
+            if (r != m) return r < m
+        }
+        return false
+    }
+
     configurations.all {
         resolutionStrategy {
             eachDependency { DependencyResolveDetails details ->
                 def group = details.requested.group
                 def name = details.requested.name
                 def securityVersion = securityVersions["${group}:${name}"] ?: securityGroupVersions[group]
-                if (securityVersion) {
+                if (securityVersion && belowSecurityFloor(details.requested.version, securityVersion)) {
                     details.useVersion securityVersion
                     details.because "security baseline"
                 }
