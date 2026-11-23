@@ -9,11 +9,14 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class ApiTrackingInterceptor implements HandlerInterceptor {
 
+  private static final Pattern VALID_CORRELATION_ID = Pattern.compile("[A-Za-z0-9._-]{1,64}");
+
   private static final Logger logger = LoggerFactory.getLogger(ApiTrackingInterceptor.class);
-  private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
+  static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   private static final String START_TIME_ATTR = "apiTracking.startTime";
   private static final String LOG_ENTRY_ATTR = "apiTracking.logEntry";
 
@@ -29,7 +32,7 @@ public class ApiTrackingInterceptor implements HandlerInterceptor {
     request.setAttribute(START_TIME_ATTR, startTime);
 
     String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-    if (correlationId == null || correlationId.isEmpty()) {
+    if (correlationId == null || !VALID_CORRELATION_ID.matcher(correlationId).matches()) {
       correlationId = UUID.randomUUID().toString();
     }
 

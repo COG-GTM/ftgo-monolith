@@ -13,6 +13,8 @@ import java.util.Map;
 @RequestMapping(path = "/api/tracking")
 public class ApiTrackingController {
 
+  static final int MAX_MINUTES_BACK = 24 * 60;
+
   private final ApiRequestLogRepository apiRequestLogRepository;
 
   public ApiTrackingController(ApiRequestLogRepository apiRequestLogRepository) {
@@ -22,7 +24,7 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getRecentLogs(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -30,13 +32,16 @@ public class ApiTrackingController {
   @RequestMapping(path = "/logs/errors", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> getErrors(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findErrorsSince(since);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
 
   @RequestMapping(path = "/logs/search", method = RequestMethod.GET)
   public ResponseEntity<List<ApiRequestLog>> searchByUri(@RequestParam String uri) {
+    if (uri.length() > 2048) {
+      throw new IllegalArgumentException("uri must be at most 2048 characters");
+    }
     List<ApiRequestLog> logs = apiRequestLogRepository.findByRequestUri(uri);
     return new ResponseEntity<>(logs, HttpStatus.OK);
   }
@@ -53,12 +58,12 @@ public class ApiTrackingController {
   @RequestMapping(path = "/stats", method = RequestMethod.GET)
   public ResponseEntity<Map<String, Object>> getStats(
           @RequestParam(defaultValue = "60") int minutesBack) {
-    LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
+    LocalDateTime since = LocalDateTime.now().minusMinutes(boundedMinutesBack(minutesBack));
     List<ApiRequestLog> logs = apiRequestLogRepository.findRecentLogs(since);
 
     Map<String, Object> stats = new HashMap<>();
     stats.put("totalRequests", logs.size());
-    stats.put("periodMinutes", minutesBack);
+    stats.put("periodMinutes", boundedMinutesBack(minutesBack));
 
     long errorCount = logs.stream()
             .filter(l -> l.getResponseStatus() != null && l.getResponseStatus() >= 400)
@@ -101,5 +106,12 @@ public class ApiTrackingController {
     stats.put("topEndpoints", endpointCounts);
 
     return new ResponseEntity<>(stats, HttpStatus.OK);
+  }
+
+  static int boundedMinutesBack(int minutesBack) {
+    if (minutesBack < 1 || minutesBack > MAX_MINUTES_BACK) {
+      throw new IllegalArgumentException("minutesBack must be between 1 and " + MAX_MINUTES_BACK);
+    }
+    return minutesBack;
   }
 }

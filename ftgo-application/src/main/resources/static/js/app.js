@@ -1513,7 +1513,7 @@ function renderConsumers(container) {
       <div class="entity-card">
         <div class="entity-card-header">
           <div class="entity-avatar" style="background:rgba(59,130,246,0.1);color:#3B82F6;">
-            ${initials}
+            ${escapeHtml(initials)}
           </div>
           <div class="entity-name">${escapeHtml(name)}</div>
         </div>
@@ -1606,7 +1606,7 @@ function renderCouriers(container) {
       <div class="entity-card">
         <div class="entity-card-header">
           <div class="entity-avatar" style="background:rgba(139,92,246,0.1);color:#8B5CF6;">
-            ${initials}
+            ${escapeHtml(initials)}
           </div>
           <div class="entity-name">${escapeHtml(name)}</div>
         </div>
@@ -1881,7 +1881,7 @@ function openCreateOrderModal() {
 
   const consumerOptions = consumers.map(([id, c]) => {
     const name = getFullName(c.name);
-    return `<option value="${id}">${name} (#${id})</option>`;
+    return `<option value="${escapeHtml(String(id))}">${escapeHtml(name)} (#${escapeHtml(String(id))})</option>`;
   }).join('');
 
   const restaurantOptions = restaurants.map(([id, r]) => {
