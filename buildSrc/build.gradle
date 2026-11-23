@@ -1,5 +1,9 @@
 test.enabled=false
 
+configurations.all {
+    resolutionStrategy.force 'com.google.protobuf:protobuf-java:3.25.5'
+}
+
 repositories {
     mavenCentral()
 }
