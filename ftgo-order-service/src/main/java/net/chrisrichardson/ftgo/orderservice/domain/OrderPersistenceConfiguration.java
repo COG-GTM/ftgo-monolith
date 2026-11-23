@@ -3,6 +3,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import net.chrisrichardson.ftgo.common.persistence.ServicePersistence;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -48,6 +49,7 @@ public class OrderPersistenceConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(prefix = "spring.jpa", name = "open-in-view", havingValue = "true", matchIfMissing = true)
   public WebMvcConfigurer orderOpenEntityManagerInView(@Qualifier("orderEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
     return ServicePersistence.openEntityManagerInView(entityManagerFactory);
   }
