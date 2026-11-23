@@ -16,10 +16,6 @@ services:
       - mysql
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql/ftgo
-      FTGO_CONSUMER_SERVICE_DATASOURCE_URL: jdbc:mysql://mysql/ftgo_consumer
-      FTGO_RESTAURANT_SERVICE_DATASOURCE_URL: jdbc:mysql://mysql/ftgo_restaurant
-      FTGO_COURIER_SERVICE_DATASOURCE_URL: jdbc:mysql://mysql/ftgo_courier
-      FTGO_ORDER_SERVICE_DATASOURCE_URL: jdbc:mysql://mysql/ftgo_order
       SPRING_DATASOURCE_USERNAME: mysqluser
       SPRING_DATASOURCE_PASSWORD: mysqlpw
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
