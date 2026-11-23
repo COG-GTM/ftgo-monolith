@@ -27,7 +27,7 @@ public class CourierService implements CourierAvailabilityApi {
     this.courierAssignmentStrategy = courierAssignmentStrategy;
   }
 
-  @Transactional
+  @Transactional(CourierPersistenceConfiguration.TRANSACTION_MANAGER)
   public void updateAvailability(long courierId, boolean available) {
     if (available)
       noteAvailable(courierId);
@@ -35,7 +35,7 @@ public class CourierService implements CourierAvailabilityApi {
       noteUnavailable(courierId);
   }
 
-  @Transactional
+  @Transactional(CourierPersistenceConfiguration.TRANSACTION_MANAGER)
   public Courier createCourier(PersonName name, Address address) {
     Courier courier = new Courier(name, address);
     courierRepository.save(courier);
@@ -54,7 +54,7 @@ public class CourierService implements CourierAvailabilityApi {
     return courierRepository.findById(courierId).get();
   }
 
-  @Transactional
+  @Transactional(CourierPersistenceConfiguration.TRANSACTION_MANAGER)
   public void updateLocation(long courierId, double latitude, double longitude) {
     Courier courier = courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId));
@@ -62,7 +62,7 @@ public class CourierService implements CourierAvailabilityApi {
   }
 
   @Override
-  @Transactional
+  @Transactional(CourierPersistenceConfiguration.TRANSACTION_MANAGER)
   public CourierAssignment assignCourierForDelivery(long orderId, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {
     List<Courier> couriers = courierRepository.findAllAvailable();
     Courier courier = courierAssignmentStrategy.assignCourier(couriers, pickupLatitude, pickupLongitude);
@@ -77,7 +77,7 @@ public class CourierService implements CourierAvailabilityApi {
   }
 
   @Override
-  @Transactional(readOnly = true)
+  @Transactional(transactionManager = CourierPersistenceConfiguration.TRANSACTION_MANAGER, readOnly = true)
   public List<DeliveryAction> findDeliveryActions(long courierId, long orderId) {
     return courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId))

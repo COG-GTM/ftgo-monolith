@@ -1,22 +1,3 @@
-use ftgo;
-
--- Add location tracking to courier table
-ALTER TABLE courier ADD COLUMN current_latitude DOUBLE NULL;
-ALTER TABLE courier ADD COLUMN current_longitude DOUBLE NULL;
-ALTER TABLE courier ADD COLUMN last_location_update DATETIME NULL;
-
--- Add lat/lng to courier address
-ALTER TABLE courier ADD COLUMN latitude DOUBLE NULL;
-ALTER TABLE courier ADD COLUMN longitude DOUBLE NULL;
-
--- Add lat/lng to restaurant address
-ALTER TABLE restaurants ADD COLUMN latitude DOUBLE NULL;
-ALTER TABLE restaurants ADD COLUMN longitude DOUBLE NULL;
-
--- Add lat/lng to delivery address on orders
-ALTER TABLE orders ADD COLUMN delivery_address_latitude DOUBLE NULL;
-ALTER TABLE orders ADD COLUMN delivery_address_longitude DOUBLE NULL;
-
 -- API request tracking table
 CREATE TABLE api_request_log
 (

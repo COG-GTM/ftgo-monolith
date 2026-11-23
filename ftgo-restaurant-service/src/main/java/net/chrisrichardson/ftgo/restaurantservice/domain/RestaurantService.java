@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Transactional
+@Transactional(RestaurantPersistenceConfiguration.TRANSACTION_MANAGER)
 public class RestaurantService implements RestaurantLookupApi {
 
   @Autowired
@@ -32,7 +32,7 @@ public class RestaurantService implements RestaurantLookupApi {
   }
 
   @Override
-  @Transactional(readOnly = true)
+  @Transactional(transactionManager = RestaurantPersistenceConfiguration.TRANSACTION_MANAGER, readOnly = true)
   public Optional<RestaurantDetails> findRestaurantById(long restaurantId) {
     return restaurantRepository.findById(restaurantId).map(this::toRestaurantDetails);
   }

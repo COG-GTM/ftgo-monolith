@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-@Transactional
+@Transactional(ConsumerPersistenceConfiguration.TRANSACTION_MANAGER)
 public class ConsumerService implements ConsumerValidationApi {
 
   @Autowired

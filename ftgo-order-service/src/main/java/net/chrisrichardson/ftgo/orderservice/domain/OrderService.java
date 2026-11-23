@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
-@Transactional
+@Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
 public class OrderService {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
@@ -47,7 +47,7 @@ public class OrderService {
     this.courierAvailabilityApi = courierAvailabilityApi;
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
     RestaurantDetails restaurant = restaurantLookupApi.findRestaurantById(restaurantId)
@@ -78,7 +78,7 @@ public class OrderService {
     }).collect(toList());
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order cancel(Long orderId) {
     Order order = tryToFindOrder(orderId);
 
@@ -87,7 +87,7 @@ public class OrderService {
     return order;
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
     Order order = tryToFindOrder(orderId);
     order.revise(orderRevision);
@@ -116,25 +116,25 @@ public class OrderService {
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePreparing();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteReadyForPickup();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePickedUp();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteDelivered();
