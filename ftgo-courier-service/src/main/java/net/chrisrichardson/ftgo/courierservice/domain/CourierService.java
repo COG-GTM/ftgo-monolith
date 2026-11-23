@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -80,8 +81,8 @@ public class CourierService implements CourierAvailabilityApi {
   @Transactional(transactionManager = CourierPersistenceConfiguration.TRANSACTION_MANAGER, readOnly = true)
   public List<DeliveryAction> findDeliveryActions(long courierId, long orderId) {
     return courierRepository.findById(courierId)
-            .orElseThrow(() -> new CourierNotFoundException(courierId))
-            .actionsForDelivery(orderId)
+            .map(courier -> courier.actionsForDelivery(orderId))
+            .orElse(Collections.emptyList())
             .stream()
             .map(a -> new DeliveryAction(DeliveryActionType.valueOf(a.getType().name()), a.getTime()))
             .collect(toList());
