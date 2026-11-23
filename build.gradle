@@ -41,6 +41,7 @@ ext {
         "com.fasterxml.jackson.core:jackson-databind"     : "2.18.12",
         "org.yaml:snakeyaml"                              : "1.33",
         "org.dom4j:dom4j"                                 : "2.1.4",
+        "com.google.protobuf:protobuf-java"               : "3.25.5",
         "org.hibernate.validator:hibernate-validator"     : "6.0.23.Final",
         "org.hibernate:hibernate-core"                    : "5.2.18.Final",
         "org.hibernate:hibernate-entitymanager"           : "5.2.18.Final",
