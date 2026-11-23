@@ -1,13 +1,13 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
+import net.chrisrichardson.ftgo.consumerservice.api.ConsumerValidationApi;
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.courierservice.api.CourierAssignment;
-import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.restaurantservice.domain.MenuItem;
-import net.chrisrichardson.ftgo.restaurantservice.domain.Restaurant;
-import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantDetails;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
+import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,30 +27,30 @@ public class OrderService {
 
   private OrderRepository orderRepository;
 
-  private RestaurantService restaurantService;
+  private RestaurantLookupApi restaurantLookupApi;
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
-  private CourierService courierService;
+  private ConsumerValidationApi consumerValidationApi;
+  private CourierAvailabilityApi courierAvailabilityApi;
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantService restaurantService,
+                      RestaurantLookupApi restaurantLookupApi,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService,
-                      CourierService courierService) {
+                      ConsumerValidationApi consumerValidationApi,
+                      CourierAvailabilityApi courierAvailabilityApi) {
 
     this.orderRepository = orderRepository;
-    this.restaurantService = restaurantService;
+    this.restaurantLookupApi = restaurantLookupApi;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
-    this.courierService = courierService;
+    this.consumerValidationApi = consumerValidationApi;
+    this.courierAvailabilityApi = courierAvailabilityApi;
   }
 
   @Transactional
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantService.findById(restaurantId)
+    RestaurantDetails restaurant = restaurantLookupApi.findRestaurantById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
 
@@ -58,7 +58,7 @@ public class OrderService {
 
     Order order = new Order(consumerId, restaurantId, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerValidationApi.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
@@ -71,9 +71,9 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, RestaurantDetails restaurant) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      MenuItemDTO om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
@@ -101,10 +101,10 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-    Restaurant restaurant = restaurantService.findById(order.getRestaurantId())
+    RestaurantDetails restaurant = restaurantLookupApi.findRestaurantById(order.getRestaurantId())
             .orElseThrow(() -> new RestaurantNotFoundException(order.getRestaurantId()));
     Address address = restaurant.getAddress();
-    CourierAssignment assignment = courierService.assignCourierForDelivery(order.getId(),
+    CourierAssignment assignment = courierAvailabilityApi.assignCourierForDelivery(order.getId(),
             address == null ? null : address.getLatitude(),
             address == null ? null : address.getLongitude(),
             readyBy);

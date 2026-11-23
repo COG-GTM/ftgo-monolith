@@ -2,9 +2,9 @@ package net.chrisrichardson.ftgo.orderservice.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.MoneyModule;
-import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderRepository;
-import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.junit.Before;
@@ -26,17 +26,17 @@ public class OrderControllerTest {
 
   private OrderService orderService;
   private OrderRepository orderRepository;
-  private RestaurantService restaurantService;
-  private CourierService courierService;
+  private RestaurantLookupApi restaurantLookupApi;
+  private CourierAvailabilityApi courierAvailabilityApi;
   private OrderController orderController;
 
   @Before
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    restaurantService = mock(RestaurantService.class);
-    courierService = mock(CourierService.class);
-    orderController = new OrderController(orderService, orderRepository, restaurantService, courierService);
+    restaurantLookupApi = mock(RestaurantLookupApi.class);
+    courierAvailabilityApi = mock(CourierAvailabilityApi.class);
+    orderController = new OrderController(orderService, orderRepository, restaurantLookupApi, courierAvailabilityApi);
   }
 
 
@@ -62,7 +62,7 @@ public class OrderControllerTest {
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
     given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository, restaurantService, courierService))).
+            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository, restaurantLookupApi, courierAvailabilityApi))).
     when().
             get("/orders/1").
     then().

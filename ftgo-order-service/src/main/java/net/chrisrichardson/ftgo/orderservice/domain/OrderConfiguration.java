@@ -1,10 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
-import net.chrisrichardson.ftgo.domain.DomainConfiguration;
-import net.chrisrichardson.ftgo.restaurantservice.domain.RestaurantService;
+import net.chrisrichardson.ftgo.common.CommonConfiguration;
+import net.chrisrichardson.ftgo.consumerservice.api.ConsumerValidationApi;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,19 +14,19 @@ import java.util.Optional;
 
 @Configuration
 @EntityScan
-@Import(DomainConfiguration.class)
+@Import(CommonConfiguration.class)
 public class OrderConfiguration {
 
   @Bean
   public OrderService orderService(OrderRepository orderRepository,
-                                   RestaurantService restaurantService,
+                                   RestaurantLookupApi restaurantLookupApi,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerService consumerService,
-                                   CourierService courierService) {
+                                   ConsumerValidationApi consumerValidationApi,
+                                   CourierAvailabilityApi courierAvailabilityApi) {
     return new OrderService(orderRepository,
-            restaurantService,
+            restaurantLookupApi,
             meterRegistry,
-            consumerService,
-            courierService);
+            consumerValidationApi,
+            courierAvailabilityApi);
   }
 }
