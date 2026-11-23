@@ -2,13 +2,11 @@
 
 include "common-swagger"
 
-include "ftgo-flyway"
 
 include "ftgo-test-util"
 include "ftgo-common"
 include "ftgo-common-jpa"
 
-include "ftgo-domain"
 
 
 include "ftgo-order-service"
