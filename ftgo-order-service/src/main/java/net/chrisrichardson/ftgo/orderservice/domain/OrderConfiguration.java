@@ -1,8 +1,10 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.common.CommonConfiguration;
+import net.chrisrichardson.ftgo.consumerservice.api.ConsumerValidationApi;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -12,27 +14,20 @@ import org.springframework.context.annotation.Import;
 import java.util.Optional;
 
 @Configuration
-@Import(DomainConfiguration.class)
+@Import({CommonConfiguration.class, OrderPersistenceConfiguration.class})
 public class OrderConfiguration {
-  // TODO move to framework
-  @Bean
-  public CourierAssignmentStrategy courierAssignmentStrategy() {
-    return new DistanceOptimizedCourierAssignmentStrategy();
-  }
 
   @Bean
-  public OrderService orderService(RestaurantRepository restaurantRepository,
-                                   OrderRepository orderRepository,
+  public OrderService orderService(OrderRepository orderRepository,
+                                   RestaurantLookupApi restaurantLookupApi,
                                    Optional<MeterRegistry> meterRegistry,
-                                   ConsumerService consumerService,
-                                   CourierRepository courierRepository,
-                                   CourierAssignmentStrategy courierAssignmentStrategy) {
+                                   ConsumerValidationApi consumerValidationApi,
+                                   CourierAvailabilityApi courierAvailabilityApi) {
     return new OrderService(orderRepository,
-            restaurantRepository,
+            restaurantLookupApi,
             meterRegistry,
-            consumerService,
-            courierRepository,
-            courierAssignmentStrategy);
+            consumerValidationApi,
+            courierAvailabilityApi);
   }
 
   @Bean

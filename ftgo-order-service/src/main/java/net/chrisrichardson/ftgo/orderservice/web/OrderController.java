@@ -1,6 +1,13 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryAction;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryActionType;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.orderservice.domain.Order;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderRepository;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderRevision;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantDetails;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderRequest;
 import net.chrisrichardson.ftgo.orderservice.api.web.CreateOrderResponse;
 import net.chrisrichardson.ftgo.orderservice.api.web.OrderAcceptance;
@@ -26,10 +33,16 @@ public class OrderController {
 
   private OrderRepository orderRepository;
 
+  private RestaurantLookupApi restaurantLookupApi;
 
-  public OrderController(OrderService orderService, OrderRepository orderRepository) {
+  private CourierAvailabilityApi courierAvailabilityApi;
+
+  public OrderController(OrderService orderService, OrderRepository orderRepository,
+                         RestaurantLookupApi restaurantLookupApi, CourierAvailabilityApi courierAvailabilityApi) {
     this.orderService = orderService;
     this.orderRepository = orderRepository;
+    this.restaurantLookupApi = restaurantLookupApi;
+    this.courierAvailabilityApi = courierAvailabilityApi;
   }
 
   @RequestMapping(method = RequestMethod.POST)
@@ -59,15 +72,15 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
-    List<Action> courierActions = order.getAssignedCourier() == null
+    List<DeliveryAction> courierActions = order.getAssignedCourierId() == null
             ? null
-            : order.getAssignedCourier().actionsForDelivery(order);
+            : courierAvailabilityApi.findDeliveryActions(order.getAssignedCourierId(), order.getId());
 
     LocalDateTime estimatedDelivery = null;
     if (courierActions != null) {
       estimatedDelivery = courierActions.stream()
-              .filter(a -> a.getType() == ActionType.DROPOFF)
-              .map(Action::getTime)
+              .filter(a -> a.getType() == DeliveryActionType.DROPOFF)
+              .map(DeliveryAction::getTime)
               .findFirst()
               .orElse(null);
     }
@@ -75,8 +88,8 @@ public class OrderController {
     return new GetOrderResponse(order.getId(),
             order.getOrderState().name(),
             order.getOrderTotal(),
-            order.getRestaurant().getName(),
-            order.getAssignedCourier() == null ? null : order.getAssignedCourier().getId(),
+            restaurantLookupApi.findRestaurantById(order.getRestaurantId()).map(RestaurantDetails::getName).orElse(null),
+            order.getAssignedCourierId(),
             courierActions,
             estimatedDelivery
     );

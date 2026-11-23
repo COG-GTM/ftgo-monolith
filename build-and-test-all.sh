@@ -39,7 +39,6 @@ ${DOCKER_COMPOSE?} up -d --build ${DATABASE_SERVICES?}
 
 echo mysql is started
 
-./gradlew :ftgo-flyway:flywayMigrate
 
 if [ -z "$ASSEMBLE_ONLY" ] ; then
 

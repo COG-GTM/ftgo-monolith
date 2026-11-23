@@ -2,7 +2,9 @@ package net.chrisrichardson.ftgo.orderservice.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.chrisrichardson.ftgo.common.MoneyModule;
-import net.chrisrichardson.ftgo.domain.OrderRepository;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.orderservice.domain.OrderRepository;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
 import net.chrisrichardson.ftgo.orderservice.OrderDetailsMother;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderService;
 import org.junit.Before;
@@ -24,13 +26,17 @@ public class OrderControllerTest {
 
   private OrderService orderService;
   private OrderRepository orderRepository;
+  private RestaurantLookupApi restaurantLookupApi;
+  private CourierAvailabilityApi courierAvailabilityApi;
   private OrderController orderController;
 
   @Before
   public void setUp() throws Exception {
     orderService = mock(OrderService.class);
     orderRepository = mock(OrderRepository.class);
-    orderController = new OrderController(orderService, orderRepository);
+    restaurantLookupApi = mock(RestaurantLookupApi.class);
+    courierAvailabilityApi = mock(CourierAvailabilityApi.class);
+    orderController = new OrderController(orderService, orderRepository, restaurantLookupApi, courierAvailabilityApi);
   }
 
 
@@ -56,7 +62,7 @@ public class OrderControllerTest {
     when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
     given().
-            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository))).
+            standaloneSetup(configureControllers(new OrderController(orderService, orderRepository, restaurantLookupApi, courierAvailabilityApi))).
     when().
             get("/orders/1").
     then().

@@ -1,8 +1,13 @@
 package net.chrisrichardson.ftgo.orderservice.domain;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
-import net.chrisrichardson.ftgo.domain.*;
+import net.chrisrichardson.ftgo.consumerservice.api.ConsumerValidationApi;
+import net.chrisrichardson.ftgo.common.Address;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignment;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantDetails;
+import net.chrisrichardson.ftgo.restaurantservice.api.RestaurantLookupApi;
+import net.chrisrichardson.ftgo.restaurantservice.events.MenuItemDTO;
 import net.chrisrichardson.ftgo.orderservice.web.MenuItemIdAndQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,48 +20,45 @@ import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toList;
 
-@Transactional
+@Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
 public class OrderService {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
 
   private OrderRepository orderRepository;
 
-  private RestaurantRepository restaurantRepository;
+  private RestaurantLookupApi restaurantLookupApi;
 
   private Optional<MeterRegistry> meterRegistry;
 
-  private ConsumerService consumerService;
-  private CourierRepository courierRepository;
-  private CourierAssignmentStrategy courierAssignmentStrategy;
+  private ConsumerValidationApi consumerValidationApi;
+  private CourierAvailabilityApi courierAvailabilityApi;
 
   public OrderService(OrderRepository orderRepository,
-                      RestaurantRepository restaurantRepository,
+                      RestaurantLookupApi restaurantLookupApi,
                       Optional<MeterRegistry> meterRegistry,
-                      ConsumerService consumerService,
-                      CourierRepository courierRepository,
-                      CourierAssignmentStrategy courierAssignmentStrategy) {
+                      ConsumerValidationApi consumerValidationApi,
+                      CourierAvailabilityApi courierAvailabilityApi) {
 
     this.orderRepository = orderRepository;
-    this.restaurantRepository = restaurantRepository;
+    this.restaurantLookupApi = restaurantLookupApi;
     this.meterRegistry = meterRegistry;
-    this.consumerService = consumerService;
-    this.courierRepository = courierRepository;
-    this.courierAssignmentStrategy = courierAssignmentStrategy;
+    this.consumerValidationApi = consumerValidationApi;
+    this.courierAvailabilityApi = courierAvailabilityApi;
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order createOrder(long consumerId, long restaurantId,
                            List<MenuItemIdAndQuantity> lineItems) {
-    Restaurant restaurant = restaurantRepository.findById(restaurantId)
+    RestaurantDetails restaurant = restaurantLookupApi.findRestaurantById(restaurantId)
             .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
 
 
     List<OrderLineItem> orderLineItems = makeOrderLineItems(lineItems, restaurant);
 
-    Order order = new Order(consumerId, restaurant, orderLineItems);
+    Order order = new Order(consumerId, restaurantId, orderLineItems);
 
-    consumerService.validateOrderForConsumer(consumerId, order.getOrderTotal());
+    consumerValidationApi.validateOrderForConsumer(consumerId, order.getOrderTotal());
 
     // TODO - charge a credit card too
 
@@ -69,14 +71,14 @@ public class OrderService {
     return order;
   }
 
-  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, Restaurant restaurant) {
+  private List<OrderLineItem> makeOrderLineItems(List<MenuItemIdAndQuantity> lineItems, RestaurantDetails restaurant) {
     return lineItems.stream().map(li -> {
-      MenuItem om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
+      MenuItemDTO om = restaurant.findMenuItem(li.getMenuItemId()).orElseThrow(() -> new InvalidMenuItemIdException(li.getMenuItemId()));
       return new OrderLineItem(li.getMenuItemId(), om.getName(), om.getPrice(), li.getQuantity());
     }).collect(toList());
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order cancel(Long orderId) {
     Order order = tryToFindOrder(orderId);
 
@@ -85,7 +87,7 @@ public class OrderService {
     return order;
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public Order reviseOrder(long orderId, OrderRevision orderRevision) {
     Order order = tryToFindOrder(orderId);
     order.revise(orderRevision);
@@ -99,66 +101,40 @@ public class OrderService {
   }
 
   public void scheduleDelivery(Order order, LocalDateTime readyBy) {
-    List<Courier> couriers = courierRepository.findAllAvailable();
-    Courier courier = courierAssignmentStrategy.assignCourier(couriers, order);
-
-    courier.addAction(Action.makePickup(order));
-
-    LocalDateTime estimatedDeliveryTime = estimateDeliveryTime(courier, order, readyBy);
-    courier.addAction(Action.makeDropoff(order, estimatedDeliveryTime));
-
-    order.schedule(courier);
-
-    logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
-            order.getId(), courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
-
+    RestaurantDetails restaurant = restaurantLookupApi.findRestaurantById(order.getRestaurantId())
+            .orElseThrow(() -> new RestaurantNotFoundException(order.getRestaurantId()));
+    Address address = restaurant.getAddress();
+    CourierAssignment assignment = courierAvailabilityApi.assignCourierForDelivery(order.getId(),
+            address == null ? null : address.getLatitude(),
+            address == null ? null : address.getLongitude(),
+            readyBy);
+    order.schedule(assignment.getCourierId());
     meterRegistry.ifPresent(mr -> mr.counter("courier_assignments").increment());
   }
-
-  private LocalDateTime estimateDeliveryTime(Courier courier, Order order, LocalDateTime readyBy) {
-    if (courier.hasLocation() && order.getRestaurant() != null
-            && order.getRestaurant().getAddress() != null
-            && order.getRestaurant().getAddress().getLatitude() != null) {
-
-      double pickupDistance = DistanceOptimizedCourierAssignmentStrategy.haversineDistance(
-              courier.getCurrentLatitude(), courier.getCurrentLongitude(),
-              order.getRestaurant().getAddress().getLatitude(),
-              order.getRestaurant().getAddress().getLongitude());
-
-      long pickupMinutes = (long) DistanceOptimizedCourierAssignmentStrategy.estimateDeliveryMinutes(pickupDistance);
-      LocalDateTime pickupArrival = LocalDateTime.now().plusMinutes(pickupMinutes);
-      LocalDateTime effectiveReadyTime = pickupArrival.isAfter(readyBy) ? pickupArrival : readyBy;
-
-      return effectiveReadyTime.plusMinutes(15);
-    }
-
-    return readyBy.plusMinutes(30);
-  }
-
 
   private Order tryToFindOrder(Long orderId) {
     return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void notePreparing(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePreparing();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void noteReadyForPickup(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteReadyForPickup();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void notePickedUp(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.notePickedUp();
   }
 
-  @Transactional
+  @Transactional(OrderPersistenceConfiguration.TRANSACTION_MANAGER)
   public void noteDelivered(long orderId) {
     Order order = tryToFindOrder(orderId);
     order.noteDelivered();

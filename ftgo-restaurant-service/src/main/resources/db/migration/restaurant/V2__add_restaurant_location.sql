@@ -1,0 +1,2 @@
+ALTER TABLE restaurants ADD COLUMN latitude DOUBLE NULL;
+ALTER TABLE restaurants ADD COLUMN longitude DOUBLE NULL;

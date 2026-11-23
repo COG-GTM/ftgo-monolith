@@ -5,7 +5,7 @@
 | Module | Existing Tests | Classes Covered |
 |--------|---------------|-----------------|
 | `ftgo-common` | `MoneyTest`, `MoneySerializationTest` | `Money`, `MoneyModule` |
-| `ftgo-domain` | `CourierAssignmentStrategyTest` | `DistanceOptimizedCourierAssignmentStrategy` |
+| `ftgo-courier-service` | `CourierAssignmentStrategyTest` | `DistanceOptimizedCourierAssignmentStrategy` |
 | `ftgo-order-service` | `OrderControllerTest` | `OrderController` (GET only) |
 | `ftgo-application` | `FtgoApplicationTest` | Integration / E2E (requires DB) |
 
@@ -15,10 +15,10 @@
 
 ## Phase 1 — Domain Model (Pure Logic, No Mocks Needed)
 
-> Module: `ftgo-domain` · Test framework: JUnit 4 (already in `build.gradle`)
+> Modules: the service that owns each entity · Test framework: JUnit 4 (already in `build.gradle`)
 
 ### 1.1 `OrderTest`
-**File:** `ftgo-domain/src/test/java/.../domain/OrderTest.java`
+**File:** `ftgo-order-service/src/test/java/.../orderservice/domain/OrderTest.java`
 
 | # | Test Case | What It Verifies |
 |---|-----------|-----------------|
@@ -36,7 +36,7 @@
 | 12 | `shouldFollowFullHappyPath` | APPROVED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED |
 
 ### 1.2 `CourierTest`
-**File:** `ftgo-domain/src/test/java/.../domain/CourierTest.java`
+**File:** `ftgo-courier-service/src/test/java/.../courierservice/domain/CourierTest.java`
 
 | # | Test Case |
 |---|-----------|
@@ -51,7 +51,7 @@
 | 9 | `hasLocationReturnsFalseWhenNotSet` |
 
 ### 1.3 `PlanTest`
-**File:** `ftgo-domain/src/test/java/.../domain/PlanTest.java`
+**File:** `ftgo-courier-service/src/test/java/.../courierservice/domain/PlanTest.java`
 
 | # | Test Case |
 |---|-----------|
@@ -61,7 +61,7 @@
 | 4 | `shouldHandleEmptyPlan` |
 
 ### 1.4 `RestaurantTest`
-**File:** `ftgo-domain/src/test/java/.../domain/RestaurantTest.java`
+**File:** `ftgo-restaurant-service/src/test/java/.../restaurantservice/domain/RestaurantTest.java`
 
 | # | Test Case |
 |---|-----------|
@@ -245,12 +245,7 @@ Phase 5  →  Mock HttpServletRequest/Response (spring-test)
 
 ### Suggested build.gradle additions
 
-**`ftgo-domain/build.gradle`** — add Mockito for Phase 1 helper tests:
-```groovy
-testCompile "org.mockito:mockito-core:2.23.4"
-```
-
-No other dependency changes needed — the other modules already pull in `spring-boot-starter-test` which includes JUnit 4, Mockito, Hamcrest, and Spring Test.
+No dependency changes needed — the service modules already pull in `spring-boot-starter-test` which includes JUnit 4, Mockito, Hamcrest, and Spring Test.
 
 ---
 
@@ -261,11 +256,11 @@ No other dependency changes needed — the other modules already pull in `spring
 ./gradlew test
 
 # Specific module
-./gradlew :ftgo-domain:test
+./gradlew :ftgo-courier-service:test
 ./gradlew :ftgo-order-service:test
 
 # Single test class
-./gradlew :ftgo-domain:test --tests "*.OrderTest"
+./gradlew :ftgo-order-service:test --tests "*.OrderTest"
 ```
 
 ---
