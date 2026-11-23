@@ -18,7 +18,7 @@ We want front-end errors, user-reported bugs, and session replays to land in Sen
 Sentry integration. Back-end instrumentation is out of scope.
 
 ARB triggers: T3 (new external vendor: Sentry SaaS + `browser.sentry-cdn.com` script), T2 (data
-classification: `sendDefaultPii=true` and session replay with text unmasked send user IP, page content and
+classification: `sendDefaultPii` (off by default since the security baseline; `SENTRY_SEND_DEFAULT_PII=true` turns it on) and session replay with text unmasked send user IP, page content and
 form input to a third party), T6 (new unauthenticated endpoint `GET /config/sentry`).
 
 ## Decision
@@ -89,7 +89,7 @@ C4Container
 ## Operations
 
 - **On-call rotation:** TBD — owner to confirm before ARB.
-- **Runbook:** set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) before starting the JAR.
+- **Runbook:** set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`, and `SENTRY_SEND_DEFAULT_PII=true` to send user IPs and other default PII) before starting the JAR.
 - **Dashboards / alarms:** Sentry issue stream for project `java-spring-boot`.
 - **Rollback plan:** unset `SENTRY_DSN` (SDK stays disabled) or revert the commit.
 - **Migration / cut-over plan:** N/A.
