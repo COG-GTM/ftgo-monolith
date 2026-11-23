@@ -15,6 +15,48 @@ plugins {
 }
 
 
+ext {
+    mysqlConnectorVersion = "8.4.0"
+
+    // Spring Boot BOM properties, so modules using io.spring.dependency-management get the same floor.
+    securityBomProperties = [
+        "jackson.version"   : "2.18.12",
+        // Spring Boot 2.0 deadlocks on startup with Tomcat 8.5.43+; newer Tomcat needs the Spring Boot upgrade.
+        "tomcat.version"    : "8.5.42",
+        "spring.version"    : "5.0.20.RELEASE",
+        "logback.version"   : "1.2.13",
+    ]
+
+    securityGroupVersions = [
+        "com.fasterxml.jackson.core"     : "2.18.12",
+        "com.fasterxml.jackson.datatype" : "2.18.12",
+        "com.fasterxml.jackson.module"   : "2.18.12",
+        "org.apache.tomcat.embed"        : "8.5.42",
+        "org.springframework"            : "5.0.20.RELEASE",
+        "ch.qos.logback"                 : "1.2.13",
+        "org.codehaus.groovy"            : "2.4.21",
+    ]
+
+    securityVersions = [
+        "com.fasterxml.jackson.core:jackson-databind"     : "2.18.12",
+        "org.yaml:snakeyaml"                              : "1.33",
+        "org.dom4j:dom4j"                                 : "2.1.4",
+        "org.hibernate.validator:hibernate-validator"     : "6.0.23.Final",
+        "org.hibernate:hibernate-core"                    : "5.2.18.Final",
+        "org.hibernate:hibernate-entitymanager"           : "5.2.18.Final",
+        "org.springframework.data:spring-data-jpa"        : "2.0.14.RELEASE",
+        "org.springframework.data:spring-data-commons"    : "2.0.14.RELEASE",
+        "com.google.guava:guava"                          : "32.1.3-jre",
+        "net.minidev:json-smart"                          : "2.4.11",
+        "org.apache.commons:commons-lang3"                : "3.18.0",
+        "org.apache.httpcomponents:httpclient"            : "4.5.14",
+        "commons-codec:commons-codec"                     : "1.15",
+        "junit:junit"                                     : "4.13.2",
+        "org.assertj:assertj-core"                        : "3.27.7",
+        "org.xmlunit:xmlunit-core"                        : "2.10.0",
+    ]
+}
+
 subprojects {
 
     apply plugin: "java"
@@ -22,6 +64,37 @@ subprojects {
     targetCompatibility = '1.8'
 
     group = "net.chrisrichardson.ftgo"
+
+    // Security baseline: minimum patched versions for vulnerable libraries.
+    // See docs/security/SECURE_CODING_STANDARDS.md before lowering any of these.
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                def group = details.requested.group
+                def name = details.requested.name
+                def securityVersion = securityVersions["${group}:${name}"] ?: securityGroupVersions[group]
+                if (securityVersion) {
+                    details.useVersion securityVersion
+                    details.because "security baseline"
+                }
+            }
+            dependencySubstitution {
+                substitute module("mysql:mysql-connector-java") with module("com.mysql:mysql-connector-j:${mysqlConnectorVersion}")
+                substitute module("dom4j:dom4j") with module("org.dom4j:dom4j:2.1.4")
+                substitute module("commons-lang:commons-lang") with module("org.apache.commons:commons-lang3:3.18.0")
+            }
+        }
+    }
+
+    plugins.withId("io.spring.dependency-management") {
+        securityBomProperties.each { property, version -> project.ext.set(property, version) }
+        dependencyManagement {
+            dependencies {
+                securityVersions.each { coordinates, version -> dependency "${coordinates}:${version}" }
+                dependency "com.mysql:mysql-connector-j:${mysqlConnectorVersion}"
+            }
+        }
+    }
 
     repositories {
         mavenCentral()

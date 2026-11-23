@@ -1,0 +1,41 @@
+# Snyk policy. Each ignore is a critical issue whose only fix is a Spring Boot / Tomcat major upgrade.
+# They expire so the security-scan job fails again if the upgrade has not landed. See docs/security/SECURE_CODING_STANDARDS.md.
+version: v1.25.0
+ignore:
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-15307781:
+    - '*':
+        reason: "Tomcat 8.5 is EOL; fix needs Tomcat 9.0.113+ (Spring Boot 2.1+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-16691231:
+    - '*':
+        reason: "Tomcat 8.5 is EOL; fix needs Tomcat 9.0.118+ (Spring Boot 2.1+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-8523186:
+    - '*':
+        reason: "Tomcat 8.5 is EOL; fix needs Tomcat 9.0.98+ (Spring Boot 2.1+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-8547999:
+    - '*':
+        reason: "Tomcat 8.5 is EOL; fix needs Tomcat 9.0.98+ (Spring Boot 2.1+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORK-19267098:
+    - '*':
+        reason: "Fix only in Spring Framework 7.0.9 (Java 17+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORK-2436751:
+    - '*':
+        reason: "Spring4Shell needs Spring 5.2.20+/5.3.18+ (Spring Boot 2.2+); not exploitable on Java 8 (requires JDK 9+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORKBOOT-15701835:
+    - '*':
+        reason: "Fix only in Spring Boot 3.5.12+ (Java 17+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORKBOOT-15701836:
+    - '*':
+        reason: "Fix only in Spring Boot 3.5.12+ (Java 17+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORKBOOT-16191022:
+    - '*':
+        reason: "Fix only in Spring Boot 3.5.14+ (Java 17+). Tracked as the Spring Boot upgrade in docs/security/SECURE_CODING_STANDARDS.md."
+        expires: 2027-02-22T00:00:00.000Z
+patch: {}
