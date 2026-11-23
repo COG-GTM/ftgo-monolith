@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
 import net.chrisrichardson.ftgo.common.Money;
-import net.chrisrichardson.ftgo.courierservice.domain.Action;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryAction;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +12,7 @@ public class GetOrderResponse {
   private Money orderTotal;
   private String restaurantName;
   private Long assignedCourier;
-  private List<Action> courierActions;
+  private List<DeliveryAction> courierActions;
   private LocalDateTime estimatedDeliveryTime;
 
   private GetOrderResponse() {
@@ -27,7 +27,7 @@ public class GetOrderResponse {
   }
 
   public GetOrderResponse(long orderId, String state, Money orderTotal, String restaurantName,
-                           Long assignedCourier, List<Action> courierActions,
+                           Long assignedCourier, List<DeliveryAction> courierActions,
                            LocalDateTime estimatedDeliveryTime) {
     this.orderId = orderId;
     this.state = state;
@@ -66,11 +66,11 @@ public class GetOrderResponse {
     return restaurantName;
   }
 
-  public List<Action> getCourierActions() {
+  public List<DeliveryAction> getCourierActions() {
     return courierActions;
   }
 
-  public void setCourierActions(List<Action> courierActions) {
+  public void setCourierActions(List<DeliveryAction> courierActions) {
     this.courierActions = courierActions;
   }
 

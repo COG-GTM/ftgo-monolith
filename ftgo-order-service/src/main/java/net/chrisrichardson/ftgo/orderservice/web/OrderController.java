@@ -1,7 +1,7 @@
 package net.chrisrichardson.ftgo.orderservice.web;
 
-import net.chrisrichardson.ftgo.courierservice.domain.Action;
-import net.chrisrichardson.ftgo.courierservice.domain.ActionType;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryAction;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryActionType;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.orderservice.domain.Order;
 import net.chrisrichardson.ftgo.orderservice.domain.OrderRepository;
@@ -72,15 +72,15 @@ public class OrderController {
   }
 
   private GetOrderResponse makeGetOrderResponse(Order order) {
-    List<Action> courierActions = order.getAssignedCourierId() == null
+    List<DeliveryAction> courierActions = order.getAssignedCourierId() == null
             ? null
             : courierService.findDeliveryActions(order.getAssignedCourierId(), order.getId());
 
     LocalDateTime estimatedDelivery = null;
     if (courierActions != null) {
       estimatedDelivery = courierActions.stream()
-              .filter(a -> a.getType() == ActionType.DROPOFF)
-              .map(Action::getTime)
+              .filter(a -> a.getType() == DeliveryActionType.DROPOFF)
+              .map(DeliveryAction::getTime)
               .findFirst()
               .orElse(null);
     }

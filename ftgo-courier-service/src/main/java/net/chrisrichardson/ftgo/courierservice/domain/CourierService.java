@@ -2,6 +2,10 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignment;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAvailabilityApi;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryAction;
+import net.chrisrichardson.ftgo.courierservice.api.DeliveryActionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class CourierService {
+import static java.util.stream.Collectors.toList;
+
+public class CourierService implements CourierAvailabilityApi {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -55,8 +61,9 @@ public class CourierService {
     courier.updateLocation(latitude, longitude);
   }
 
+  @Override
   @Transactional
-  public Courier assignCourierForDelivery(long orderId, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {
+  public CourierAssignment assignCourierForDelivery(long orderId, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {
     List<Courier> couriers = courierRepository.findAllAvailable();
     Courier courier = courierAssignmentStrategy.assignCourier(couriers, pickupLatitude, pickupLongitude);
 
@@ -66,14 +73,18 @@ public class CourierService {
 
     logger.info("Order {} assigned to courier {} (active deliveries: {}, ETA: {})",
             orderId, courier.getId(), courier.getActiveDeliveryCount(), estimatedDeliveryTime);
-    return courier;
+    return new CourierAssignment(courier.getId(), estimatedDeliveryTime);
   }
 
+  @Override
   @Transactional(readOnly = true)
-  public List<Action> findDeliveryActions(long courierId, long orderId) {
+  public List<DeliveryAction> findDeliveryActions(long courierId, long orderId) {
     return courierRepository.findById(courierId)
             .orElseThrow(() -> new CourierNotFoundException(courierId))
-            .actionsForDelivery(orderId);
+            .actionsForDelivery(orderId)
+            .stream()
+            .map(a -> new DeliveryAction(DeliveryActionType.valueOf(a.getType().name()), a.getTime()))
+            .collect(toList());
   }
 
   private LocalDateTime estimateDeliveryTime(Courier courier, Double pickupLatitude, Double pickupLongitude, LocalDateTime readyBy) {

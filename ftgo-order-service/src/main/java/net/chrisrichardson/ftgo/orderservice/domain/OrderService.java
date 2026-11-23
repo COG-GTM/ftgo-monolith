@@ -3,7 +3,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.micrometer.core.instrument.MeterRegistry;
 import net.chrisrichardson.ftgo.consumerservice.domain.ConsumerService;
 import net.chrisrichardson.ftgo.common.Address;
-import net.chrisrichardson.ftgo.courierservice.domain.Courier;
+import net.chrisrichardson.ftgo.courierservice.api.CourierAssignment;
 import net.chrisrichardson.ftgo.courierservice.domain.CourierService;
 import net.chrisrichardson.ftgo.restaurantservice.domain.MenuItem;
 import net.chrisrichardson.ftgo.restaurantservice.domain.Restaurant;
@@ -104,11 +104,11 @@ public class OrderService {
     Restaurant restaurant = restaurantService.findById(order.getRestaurantId())
             .orElseThrow(() -> new RestaurantNotFoundException(order.getRestaurantId()));
     Address address = restaurant.getAddress();
-    Courier courier = courierService.assignCourierForDelivery(order.getId(),
+    CourierAssignment assignment = courierService.assignCourierForDelivery(order.getId(),
             address == null ? null : address.getLatitude(),
             address == null ? null : address.getLongitude(),
             readyBy);
-    order.schedule(courier.getId());
+    order.schedule(assignment.getCourierId());
     meterRegistry.ifPresent(mr -> mr.counter("courier_assignments").increment());
   }
 

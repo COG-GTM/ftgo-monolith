@@ -1,5 +1,6 @@
 package net.chrisrichardson.ftgo.courierservice.domain;
 
+import net.chrisrichardson.ftgo.courierservice.api.NoCourierAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

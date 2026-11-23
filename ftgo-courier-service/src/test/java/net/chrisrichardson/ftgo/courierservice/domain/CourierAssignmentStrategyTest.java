@@ -2,6 +2,7 @@ package net.chrisrichardson.ftgo.courierservice.domain;
 
 import net.chrisrichardson.ftgo.common.Address;
 import net.chrisrichardson.ftgo.common.PersonName;
+import net.chrisrichardson.ftgo.courierservice.api.NoCourierAvailableException;
 import org.junit.Before;
 import org.junit.Test;
 

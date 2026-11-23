@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo.courierservice.domain;
+package net.chrisrichardson.ftgo.courierservice.api;
 
 public class NoCourierAvailableException extends RuntimeException {
   public NoCourierAvailableException() {
