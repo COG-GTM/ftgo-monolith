@@ -69,15 +69,17 @@ subprojects {
     // Security baseline: minimum patched versions for vulnerable libraries.
     // See docs/security/SECURE_CODING_STANDARDS.md before lowering any of these.
     def belowSecurityFloor = { String requested, String floor ->
-        def req = (requested ?: "").findAll(/\d+/)*.toInteger()
-        def min = floor.findAll(/\d+/)*.toInteger()
+        def numbers = { String v -> ((v ?: "") =~ /^\d+(\.\d+)*/).with { it.find() ? it.group().tokenize('.')*.toInteger() : [] } }
+        def preRelease = { String v -> v ==~ /(?i).*[.-](alpha|beta|m\d+|rc\d*|cr\d*|snapshot).*/ }
+        def req = numbers(requested)
+        def min = numbers(floor)
         if (req.isEmpty()) return true
         for (int i = 0; i < Math.max(req.size(), min.size()); i++) {
             int r = i < req.size() ? req[i] : 0
             int m = i < min.size() ? min[i] : 0
             if (r != m) return r < m
         }
-        return false
+        return preRelease(requested) && !preRelease(floor)
     }
 
     configurations.all {
@@ -86,7 +88,9 @@ subprojects {
                 def group = details.requested.group
                 def name = details.requested.name
                 def securityVersion = securityVersions["${group}:${name}"] ?: securityGroupVersions[group]
-                if (securityVersion && belowSecurityFloor(details.requested.version, securityVersion)) {
+                // Tomcat is pinned exactly: Spring Boot 2.0 deadlocks on startup with 8.5.43+.
+                def pinned = group == "org.apache.tomcat.embed"
+                if (securityVersion && (pinned || belowSecurityFloor(details.requested.version, securityVersion))) {
                     details.useVersion securityVersion
                     details.because "security baseline"
                 }
