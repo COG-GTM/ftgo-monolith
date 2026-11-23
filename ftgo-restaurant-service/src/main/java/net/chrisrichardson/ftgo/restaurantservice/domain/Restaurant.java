@@ -58,6 +58,10 @@ public class Restaurant {
     return id;
   }
 
+  public List<MenuItem> getMenuItems() {
+    return menuItems;
+  }
+
   public Address getAddress() {
     return address;
   }
