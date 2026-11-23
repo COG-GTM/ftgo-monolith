@@ -58,3 +58,6 @@ workflows:
       - semgrep
       - snyk:
           context: security-scanning
+          filters:
+            branches:
+              only: master

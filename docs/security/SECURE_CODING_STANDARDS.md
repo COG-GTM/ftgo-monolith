@@ -7,7 +7,7 @@ These rules apply to every change in this repository. The `semgrep` and `snyk` C
 | Check | Tool | Fails the build when |
 |---|---|---|
 | Static analysis (SAST) | Semgrep `p/java`, `p/javascript`, `p/secrets`, `p/dockerfile` | any finding of severity `ERROR` |
-| Dependency vulnerabilities (SCA) | Snyk Open Source (`snyk test --all-sub-projects`) | any `critical` issue with an available fix (runs when `SNYK_TOKEN` is set in the `security-scanning` CircleCI context; keep it out of project-level variables so other jobs can't read it) |
+| Dependency vulnerabilities (SCA) | Snyk Open Source (`snyk test --all-sub-projects`) | any `critical` issue with an available fix (runs on `master` only, with `SNYK_TOKEN` from the `security-scanning` CircleCI context; the context must exist, even empty, and the token stays out of project-level variables so branch builds can't read it. PRs are covered by the Snyk GitHub checks) |
 
 Run them locally before opening a PR:
 
