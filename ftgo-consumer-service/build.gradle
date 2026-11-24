@@ -1,7 +1,6 @@
 dependencies {
     api project(":common-swagger")
     api project(":ftgo-consumer-service-api")
-    api project(":ftgo-domain")
 
     api libs.spring.jpa
     api libs.spring.web

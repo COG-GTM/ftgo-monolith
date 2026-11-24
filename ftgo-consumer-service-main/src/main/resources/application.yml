@@ -1,0 +1,17 @@
+server:
+  port: 8082
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: ftgo-consumer-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}/ftgo_consumer?useSSL=false&allowPublicKeyRetrieval=true
+    username: ftgo_consumer_user
+    password: ${FTGO_CONSUMER_DB_PASSWORD}
+  flyway:
+    locations: classpath:db/consumer/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate

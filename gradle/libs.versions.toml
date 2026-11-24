@@ -9,6 +9,7 @@ awaitility = "4.2.2"
 json-path = "2.3.0"
 mysql-connector-j = "8.4.0"
 commons-lang3 = "3.18.0"
+testcontainers = "2.0.5"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -21,6 +22,7 @@ jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway-plugin" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway-plugin" }
 commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 springdoc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
@@ -31,6 +33,8 @@ json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+testcontainers-junit = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:testcontainers-mysql", version.ref = "testcontainers" }
 mockito-core = { module = "org.mockito:mockito-core" }
 byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent" }
 

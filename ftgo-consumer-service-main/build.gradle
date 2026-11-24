@@ -1,0 +1,18 @@
+apply plugin: FtgoServicePlugin
+
+ext['testcontainers.version'] = libs.versions.testcontainers.get()
+
+dependencies {
+    implementation project(":ftgo-consumer-service")
+    implementation libs.flyway.core
+    runtimeOnly libs.flyway.mysql
+    runtimeOnly libs.mysql
+
+    testImplementation project(":ftgo-application")
+    testImplementation libs.spring.test
+    testImplementation libs.testcontainers.junit
+    testImplementation libs.testcontainers.mysql
+    testRuntimeOnly project(":ftgo-flyway")
+}
+
+tasks.named('bootJar') { archiveFileName = 'ftgo-consumer-service-main.jar' }
