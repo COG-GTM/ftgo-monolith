@@ -1,4 +1,4 @@
-package net.chrisrichardson.ftgo;
+package net.chrisrichardson.ftgo.common.web;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletRequest;
