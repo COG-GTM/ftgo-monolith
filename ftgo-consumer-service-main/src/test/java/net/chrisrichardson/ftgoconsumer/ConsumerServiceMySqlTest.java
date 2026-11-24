@@ -82,6 +82,7 @@ class ConsumerServiceMySqlTest {
       assertPublicParity(monolithPort, "/consumers/1/", null, 200, "{\"consumerId\":0,\"name\":" + name + "}");
       assertPublicParity(monolithPort, "/consumers/2", null, 404, "");
       assertMalformedCreateParity(monolithPort);
+      assertMethodNotAllowedParity(monolithPort);
     }
 
     assertValidation(1, "{\"orderTotal\":\"24.68\"}", 204);
@@ -104,7 +105,23 @@ class ConsumerServiceMySqlTest {
     HttpResponse<byte[]> consumer = send(consumerPort, "/consumers", "{");
     assertThat(monolith.statusCode()).isEqualTo(400);
     assertThat(consumer.statusCode()).isEqualTo(monolith.statusCode());
+    assertThat(monolith.headers().firstValue("X-Correlation-ID")).contains("consumer-parity");
+    assertThat(consumer.headers().firstValue("X-Correlation-ID")).contains("consumer-parity");
     assertThat(withoutTimestamp(consumer.body())).containsExactly(withoutTimestamp(monolith.body()));
+  }
+
+  private void assertMethodNotAllowedParity(int monolithPort) throws Exception {
+    HttpResponse<byte[]> monolith = deleteConsumer(monolithPort);
+    HttpResponse<byte[]> consumer = deleteConsumer(consumerPort);
+    assertThat(monolith.statusCode()).isEqualTo(405);
+    assertThat(consumer.statusCode()).isEqualTo(monolith.statusCode());
+    assertThat(monolith.headers().firstValue("X-Correlation-ID")).isEmpty();
+    assertThat(consumer.headers().firstValue("X-Correlation-ID")).isEmpty();
+    assertThat(withoutTimestamp(consumer.body())).containsExactly(withoutTimestamp(monolith.body()));
+  }
+
+  private HttpResponse<byte[]> deleteConsumer(int port) throws Exception {
+    return http.send(request(port, "/consumers/1").DELETE().build(), HttpResponse.BodyHandlers.ofByteArray());
   }
 
   private byte[] withoutTimestamp(byte[] body) throws Exception {
@@ -120,11 +137,15 @@ class ConsumerServiceMySqlTest {
   }
 
   private HttpResponse<byte[]> send(int port, String path, String json) throws Exception {
-    HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-        .header("X-Correlation-ID", "consumer-parity");
+    HttpRequest.Builder request = request(port, path);
     if (json != null) {
       request.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(json));
     }
     return http.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());
+  }
+
+  private HttpRequest.Builder request(int port, String path) {
+    return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+        .header("X-Correlation-ID", "consumer-parity");
   }
 }
